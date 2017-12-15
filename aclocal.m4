@@ -20,116 +20,6 @@ You have another version of autoconf.  It may work, but is not guaranteed to.
 If you have problems, you may need to regenerate the build system entirely.
 To do so, use the procedure documented by the package, typically 'autoreconf'.])])
 
-# ===========================================================================
-#      http://www.gnu.org/software/autoconf-archive/ax_append_flag.html
-# ===========================================================================
-#
-# SYNOPSIS
-#
-#   AX_APPEND_FLAG(FLAG, [FLAGS-VARIABLE])
-#
-# DESCRIPTION
-#
-#   FLAG is appended to the FLAGS-VARIABLE shell variable, with a space
-#   added in between.
-#
-#   If FLAGS-VARIABLE is not specified, the current language's flags (e.g.
-#   CFLAGS) is used.  FLAGS-VARIABLE is not changed if it already contains
-#   FLAG.  If FLAGS-VARIABLE is unset in the shell, it is set to exactly
-#   FLAG.
-#
-#   NOTE: Implementation based on AX_CFLAGS_GCC_OPTION.
-#
-# LICENSE
-#
-#   Copyright (c) 2008 Guido U. Draheim <guidod@gmx.de>
-#   Copyright (c) 2011 Maarten Bosmans <mkbosmans@gmail.com>
-#
-#   This program is free software: you can redistribute it and/or modify it
-#   under the terms of the GNU General Public License as published by the
-#   Free Software Foundation, either version 3 of the License, or (at your
-#   option) any later version.
-#
-#   This program is distributed in the hope that it will be useful, but
-#   WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-#   Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License along
-#   with this program. If not, see <http://www.gnu.org/licenses/>.
-#
-#   As a special exception, the respective Autoconf Macro's copyright owner
-#   gives unlimited permission to copy, distribute and modify the configure
-#   scripts that are the output of Autoconf when processing the Macro. You
-#   need not follow the terms of the GNU General Public License when using
-#   or distributing such scripts, even though portions of the text of the
-#   Macro appear in them. The GNU General Public License (GPL) does govern
-#   all other use of the material that constitutes the Autoconf Macro.
-#
-#   This special exception to the GPL applies to versions of the Autoconf
-#   Macro released by the Autoconf Archive. When you make and distribute a
-#   modified version of the Autoconf Macro, you may extend this special
-#   exception to the GPL to apply to your modified version as well.
-
-#serial 6
-
-AC_DEFUN([AX_APPEND_FLAG],
-[dnl
-AC_PREREQ(2.64)dnl for _AC_LANG_PREFIX and AS_VAR_SET_IF
-AS_VAR_PUSHDEF([FLAGS], [m4_default($2,_AC_LANG_PREFIX[FLAGS])])
-AS_VAR_SET_IF(FLAGS,[
-  AS_CASE([" AS_VAR_GET(FLAGS) "],
-    [*" $1 "*], [AC_RUN_LOG([: FLAGS already contains $1])],
-    [
-     AS_VAR_APPEND(FLAGS,[" $1"])
-     AC_RUN_LOG([: FLAGS="$FLAGS"])
-    ])
-  ],
-  [
-  AS_VAR_SET(FLAGS,[$1])
-  AC_RUN_LOG([: FLAGS="$FLAGS"])
-  ])
-AS_VAR_POPDEF([FLAGS])dnl
-])dnl AX_APPEND_FLAG
-
-# ===========================================================================
-#    http://www.gnu.org/software/autoconf-archive/ax_require_defined.html
-# ===========================================================================
-#
-# SYNOPSIS
-#
-#   AX_REQUIRE_DEFINED(MACRO)
-#
-# DESCRIPTION
-#
-#   AX_REQUIRE_DEFINED is a simple helper for making sure other macros have
-#   been defined and thus are available for use.  This avoids random issues
-#   where a macro isn't expanded.  Instead the configure script emits a
-#   non-fatal:
-#
-#     ./configure: line 1673: AX_CFLAGS_WARN_ALL: command not found
-#
-#   It's like AC_REQUIRE except it doesn't expand the required macro.
-#
-#   Here's an example:
-#
-#     AX_REQUIRE_DEFINED([AX_CHECK_LINK_FLAG])
-#
-# LICENSE
-#
-#   Copyright (c) 2014 Mike Frysinger <vapier@gentoo.org>
-#
-#   Copying and distribution of this file, with or without modification, are
-#   permitted in any medium without royalty provided the copyright notice
-#   and this notice are preserved. This file is offered as-is, without any
-#   warranty.
-
-#serial 1
-
-AC_DEFUN([AX_REQUIRE_DEFINED], [dnl
-  m4_ifndef([$1], [m4_fatal([macro ]$1[ is not defined; is a m4 file missing?])])
-])dnl AX_REQUIRE_DEFINED
-
 # Copyright (C) 2002-2014 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
@@ -1260,8 +1150,10 @@ AC_SUBST([am__tar])
 AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
+m4_include([m4/ax_append_flag.m4])
 m4_include([m4/ax_cflags_warn_all.m4])
 m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
+m4_include([m4/ax_required_defined.m4])
 m4_include([m4/cxxabi.m4])
 m4_include([m4/libtool.m4])
 m4_include([m4/ltoptions.m4])
