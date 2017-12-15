@@ -1,0 +1,183 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat à l'énergie atomique et aux énergies              */
+/*         alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Librairie   : Collection
+// Module      : Abstract collections
+// Fichier     : VirtualCollection.inline
+// Description :
+//   Définition of the inline methods of the class VirtualCollection.
+//
+
+/*************************************************/
+/* Inline methods of the class VirtualCollection */
+/*************************************************/
+
+inline bool
+VirtualCollection::normalize(PCVirtualCollectionCursor& startCursor,
+      PCVirtualCollectionCursor& endCursor) const {
+   if (startCursor && !startCursor->isValid())
+      startCursor = nullptr;
+   if (endCursor && !endCursor->isValid())
+      endCursor = nullptr;
+   if (startCursor && endCursor && (*startCursor > *endCursor))
+      return false;
+   return startCursor || endCursor || !isEmpty();
+}
+
+inline bool
+VirtualCollection::normalizeReverse(PCVirtualCollectionCursor& startCursor,
+      PCVirtualCollectionCursor& endCursor) const {
+   if (startCursor && !startCursor->isValid())
+      startCursor = nullptr;
+   if (endCursor && !endCursor->isValid())
+      endCursor = nullptr;
+   if (startCursor && endCursor && (*startCursor < *endCursor))
+      return false;
+   return startCursor || endCursor || !isEmpty();
+}
+
+inline void
+VirtualCollection::_fullAssign(const VirtualCollection& source, const ExtendedReplaceParameters&)
+   {  AbstractCollection::operator=(source); }
+
+inline void
+VirtualCollection::_add(EnhancedObject* object, const ExtendedInsertionParameters& parameters,
+      VirtualCollectionCursor* cursor) {
+   AssumeAllocation(object)
+   AddGuardian<EnhancedObject> guard(*this, object, parameters);
+   AssumeCondition((cursor == nullptr) || (&cursor->getSSupport() == this));
+   guard.release();
+}
+
+inline void
+VirtualCollection::_addAll(const VirtualCollection& source, const ExtendedInsertionParameters& parameters,
+      VirtualCollectionCursor* cursor, const VirtualCollectionCursor* startSource,
+      const VirtualCollectionCursor* endSource) {
+   AssumeCondition(((cursor == nullptr) || (&cursor->getSSupport() == this))
+      && ((startSource == nullptr) || (&startSource->getSSupport() == &source))
+      && ((endSource == nullptr) || (&endSource->getSSupport() == &source)));
+}
+
+inline void
+VirtualCollection::_moveTo(VirtualCollection& destination,
+      const ExtendedReplaceParameters& parameters, VirtualCollectionCursor* cursor,
+      VirtualCollectionCursor* destinationCursor) {
+   AssumeCondition(!parameters.isDuplicate() && !parameters.isFree())
+   AssumeCondition(((cursor == nullptr) || (&cursor->getSSupport() == this))
+         && ((destinationCursor == nullptr) || (&destinationCursor->getSSupport() == &destination)))
+}
+
+inline void
+VirtualCollection::_moveAllTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+      const VirtualCollectionCursor* startCursor, const VirtualCollectionCursor* endCursor,
+      VirtualCollectionCursor* destinationCursor) {
+   AssumeCondition(((startCursor == nullptr) || (&startCursor->getSSupport() == this))
+      && ((endCursor == nullptr) || (&endCursor->getSSupport() == this))
+      && ((destinationCursor == nullptr) || (&destinationCursor->getSSupport() == &destination)));
+}
+
+inline void
+VirtualCollection::_remove(const ExtendedSuppressParameters& parameters,
+      VirtualCollectionCursor* cursor) {
+   AssumeCondition((cursor == nullptr) || ((&cursor->getSSupport() == this)))
+   AssumeCondition(cursor || (parameters.getRelativePosition() != RPExact))
+}
+
+inline void
+VirtualCollection::_removeAll(const ExtendedSuppressParameters& parameters,
+      const VirtualCollectionCursor* start, const VirtualCollectionCursor* end) {
+   AssumeCondition((start == nullptr) || (&start->getSSupport() == this))
+   AssumeCondition((end == nullptr) || (&end->getSSupport() == this))
+}
+
+inline void
+VirtualCollection::_replace(EnhancedObject* object,
+      const ExtendedReplaceParameters& parameters, VirtualCollectionCursor* cursor) {
+   AssumeAllocation(object)
+   AddGuardian<EnhancedObject> guard(*this, object, parameters);
+   AssumeCondition((cursor == nullptr) || (&cursor->getSSupport() == this))
+   guard.release();
+}
+
+inline EnhancedObject*
+VirtualCollection::_getElement(const ExtendedLocateParameters& parameters,
+      const VirtualCollectionCursor* cursor) const {
+   AssumeCondition((cursor == nullptr) || (&cursor->getSSupport() == this))
+   return nullptr;
+}
+
+class VirtualCollection::CollectionAccess {
+  public:
+   typedef VirtualCollection::ExtendedLocateParameters ExtendedLocateParameters;
+   typedef VirtualCollection::ExtendedInsertionParameters ExtendedInsertionParameters;
+   typedef VirtualCollection::ExtendedSuppressParameters ExtendedSuppressParameters;
+   typedef VirtualCollection::ExtendedReplaceParameters ExtendedReplaceParameters;
+   static void fullAssign(VirtualCollection& receiver, const VirtualCollection& source, const ExtendedReplaceParameters& parameters)
+      {  receiver._fullAssign(source, parameters); }
+   static void add(VirtualCollection& receiver, EnhancedObject* object,
+         const ExtendedInsertionParameters& parameters, VirtualCollectionCursor* cursor=nullptr)
+      {  receiver._add(object, parameters, cursor); }
+   static void addAll(VirtualCollection& receiver, const VirtualCollection& source,
+         const ExtendedInsertionParameters& parameters, VirtualCollectionCursor* cursor=nullptr,
+         const VirtualCollectionCursor* startSource=nullptr, const VirtualCollectionCursor* endSource=nullptr)
+      {  receiver._addAll(source, parameters, cursor, startSource, endSource); }
+   static void moveTo(VirtualCollection& receiver, VirtualCollection& destination,
+         const ExtendedReplaceParameters& parameters, VirtualCollectionCursor* cursor=nullptr,
+         VirtualCollectionCursor* destinationCursor=nullptr)
+      {  receiver._moveTo(destination, parameters, cursor, destinationCursor); }
+   static void moveAllTo(VirtualCollection& receiver, VirtualCollection& destination,
+         const ExtendedReplaceParameters& parameters, const VirtualCollectionCursor* startCursor=nullptr,
+         const VirtualCollectionCursor* endCursor=nullptr, VirtualCollectionCursor* destinationCursor=nullptr)
+      {  receiver._moveAllTo(destination, parameters, startCursor, endCursor, destinationCursor); }
+   static void swap(VirtualCollection& receiver, VirtualCollection& source) { receiver._swap(source); }
+   static void remove(VirtualCollection& receiver, const ExtendedSuppressParameters& parameters,
+         VirtualCollectionCursor* cursor=nullptr)
+      {  receiver._remove(parameters, cursor); }
+   static void removeAll(VirtualCollection& receiver, const ExtendedSuppressParameters& parameters,
+         const VirtualCollectionCursor* start=nullptr, const VirtualCollectionCursor* end=nullptr)
+      {  receiver._removeAll(parameters, start, end); }
+   static void replace(VirtualCollection& receiver, EnhancedObject* object,
+         const ExtendedReplaceParameters& parameters, VirtualCollectionCursor* cursor=nullptr)
+      {  receiver._replace(object, parameters, cursor); }
+   static EnhancedObject* getElement(const VirtualCollection& receiver, const ExtendedLocateParameters& parameters,
+         const VirtualCollectionCursor* cursor=nullptr)
+      {  return receiver._getElement(parameters, cursor); }
+};
+
+class VirtualCollectionCursor::CursorAccess {
+  public:
+   typedef VirtualCollectionCursor::ExtendedLocateParameters ExtendedLocateParameters;
+   typedef VirtualCollectionCursor::ExtendedInsertionParameters ExtendedInsertionParameters;
+   typedef VirtualCollectionCursor::ExtendedSuppressParameters ExtendedSuppressParameters;
+   typedef VirtualCollectionCursor::ExtendedReplaceParameters ExtendedReplaceParameters;
+   typedef VirtualCollectionCursor::Position Position;
+
+   static bool isPositionned(const VirtualCollectionCursor& cursor, const ExtendedLocateParameters& pos,
+         const VirtualCollectionCursor* referenceCursor=nullptr)
+      {  return cursor._isPositionned(pos, referenceCursor); }
+   static bool position(VirtualCollectionCursor& cursor, const Position& pos)
+      {  return cursor._position(pos); }
+   static VirtualCollection& getSupport(const VirtualCollectionCursor& cursor)
+      {  return (VirtualCollection&) AbstractCursor::getSupport(cursor); }
+};

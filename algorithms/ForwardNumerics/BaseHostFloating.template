@@ -1,0 +1,280 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2005-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : ForwardNumerics
+// Unit      : Floating
+// File      : BaseHostFloating.template
+// Description :
+//   Implementation of a class of native floating points in connection
+//   with soft floating points.
+//
+
+#ifndef Numerics_BaseHostFloatingTemplate
+#define Numerics_BaseHostFloatingTemplate
+
+#include "ForwardNumerics/BaseHostFloating.h"
+
+namespace Numerics {}
+
+#include "ForwardNumerics/BaseFloating.template"
+
+namespace Numerics {
+
+/******************************************************/
+/* Implementation of the template class TFloatingBase */
+/******************************************************/
+
+template <class TypeTraits>
+void
+TFloatingBase<TypeTraits>::fillMantissa(Mantissa& mantissa) const {
+   unsigned int doubleContent[UByteSizeImplementation/sizeof(unsigned int)+1];
+   memcpy(doubleContent, &dDouble, UByteSizeImplementation);
+   unsigned int* mask = (unsigned int*) doubleContent;
+   if (TypeTraits::isBigEndian())
+      mask += (UByteSizeImplementation/sizeof(unsigned int)-1);
+   int lastCellIndex = mantissa.lastCellIndex();
+   for (int mantissaIndex = 0; mantissaIndex < lastCellIndex; ++mantissaIndex) {
+      mantissa[mantissaIndex] = *mask;
+      if (TypeTraits::isBigEndian())
+         --mask;
+      else
+         ++mask;
+   };
+   int shift = TypeTraits::UBitSizeMantissa % (sizeof(unsigned int)*8);
+   mantissa[lastCellIndex] = (shift == 0) ? *mask
+      : ((*mask) & ~((~0U) << shift));
+}
+
+template <class TypeTraits>
+void
+TFloatingBase<TypeTraits>::setMantissa(const Mantissa& mantissa) {
+   unsigned int doubleContent[UByteSizeImplementation/sizeof(unsigned int)+1];
+   memcpy(doubleContent, &dDouble, UByteSizeImplementation);
+   unsigned int* mask = (unsigned int*) doubleContent;
+   if (TypeTraits::isBigEndian())
+      mask += (UByteSizeImplementation/sizeof(unsigned int)-1);
+   int lastCellIndex = mantissa.lastCellIndex();
+   for (int mantissaIndex = 0; mantissaIndex < lastCellIndex; ++mantissaIndex) {
+      *mask = mantissa[mantissaIndex];
+      if (TypeTraits::isBigEndian())
+         --mask;
+      else
+         ++mask;
+   };
+   int shift = TypeTraits::UBitSizeMantissa % (sizeof(unsigned int)*8);
+   if (shift == 0)
+      *mask = mantissa[lastCellIndex];
+   else
+      *mask |= (mantissa[lastCellIndex] & ~((~0U) << shift));
+   memcpy(&dDouble, doubleContent, UByteSizeImplementation);
+}
+
+template <class TypeTraits>
+TFloatingBase<TypeTraits>&
+TFloatingBase<TypeTraits>::operator=(const BuiltDouble& source) {
+   setMantissa(source.getMantissa());
+   setBasicExponent(source.getBasicExponent().getValue());
+   setSign(source.isPositive());
+   return *this;
+}
+
+template <class TypeTraits>
+unsigned int
+TFloatingBase<TypeTraits>::getBasicExponent() const {
+   unsigned char doubleContent[UByteSizeImplementation];
+   memcpy(doubleContent, &dDouble, UByteSizeImplementation);
+   unsigned char* mask = (unsigned char*) doubleContent;
+   if (TypeTraits::isLittleEndian())
+      mask += UByteSizeImplementation-1;
+   unsigned int result = 0;
+   int shift = TypeTraits::UBitSizeExponent-7;
+   result |= (*mask & 0x7f) << shift;
+   while ((shift -= 8) >= 0) {
+      if (TypeTraits::isLittleEndian())
+         --mask;
+      else
+         ++mask;
+      result |= *mask << shift;
+   };
+   if (TypeTraits::isLittleEndian())
+      --mask;
+   else
+      ++mask;
+   if (shift > -8)
+      result |= *mask >> (-shift);
+   return result;
+}
+
+template <class TypeTraits>
+void
+TFloatingBase<TypeTraits>::setBasicExponent(unsigned int exponent) {
+   unsigned char doubleContent[UByteSizeImplementation];
+   memcpy(doubleContent, &dDouble, UByteSizeImplementation);
+   unsigned char* mask = (unsigned char*) doubleContent;
+   if (TypeTraits::isLittleEndian())
+      mask += UByteSizeImplementation-1;
+   int shift = TypeTraits::UBitSizeExponent-7;
+
+#if defined(__GNUC__) && !defined(__clang__)
+   int shiftAssert = TypeTraits::UBitSizeExponent;
+   AssumeCondition((shiftAssert >= sizeof(unsigned int)*8)
+         || (((~0U << shiftAssert) & exponent) == 0))
+#else
+#if defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshift-count-overflow"
+#endif
+   AssumeCondition((TypeTraits::UBitSizeExponent >= sizeof(unsigned int)*8)
+         || (((~0U << TypeTraits::UBitSizeExponent) & exponent) == 0))
+   // AssumeCondition((TypeTraits::UBitSizeExponent == sizeof(unsigned int)*8)
+   //       || (((~1U << (TypeTraits::UBitSizeExponent-1)) & exponent) == 0))
+#if defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+#endif
+
+   *mask |= exponent >> shift;
+   while ((shift -= 8) >= 0) {
+      if (TypeTraits::isLittleEndian())
+         --mask;
+      else
+         ++mask;
+      *mask |= exponent >> shift;
+   };
+   if (TypeTraits::isLittleEndian())
+      --mask;
+   else
+      ++mask;
+   if (shift > -8)
+      *mask |= exponent << (-shift);
+   memcpy(&dDouble, doubleContent, UByteSizeImplementation);
+}
+
+/*******************************************************/
+/* Implementation of the template class TDoubleElement */
+/*******************************************************/
+
+template <class FloatingBaseTraits>
+bool
+TDoubleElement<FloatingBaseTraits>::isNaN() const {
+   if (!hasInftyExponent())
+      return false;
+   Mantissa mantissa;
+   inherited::fillMantissa(mantissa);
+   return !mantissa.isZero();
+}
+
+template <class FloatingBaseTraits>
+bool
+TDoubleElement<FloatingBaseTraits>::isInternZero() const {
+   if (inherited::getBasicExponent() != 0)
+      return false;
+   Mantissa mantissa;
+   inherited::fillMantissa(mantissa);
+   return mantissa.isZero();
+}
+
+template <class FloatingBaseTraits>
+bool
+TDoubleElement<FloatingBaseTraits>::isSNaN() const {
+   if (!hasInftyExponent())
+      return false;
+   Mantissa mantissa;
+   inherited::fillMantissa(mantissa);
+   return !mantissa.isZero() && !mantissa.cbitArray(UBitSizeMantissa-1);
+}
+
+template <class FloatingBaseTraits>
+bool
+TDoubleElement<FloatingBaseTraits>::isQNaN() const {
+   if (!hasInftyExponent())
+      return false;
+   Mantissa mantissa;
+   inherited::fillMantissa(mantissa);
+   return mantissa.cbitArray(UBitSizeMantissa-1);
+}
+
+template <class FloatingBaseTraits>
+bool
+TDoubleElement<FloatingBaseTraits>::isInfty() const {
+   if (!hasInftyExponent())
+      return false;
+   Mantissa mantissa;
+   inherited::fillMantissa(mantissa);
+   return mantissa.isZero();
+}
+
+template <class FloatingBaseTraits>
+void
+TDoubleElement<FloatingBaseTraits>::write(STG::IOObject::OSBase& out, WriteParameters& params) const {
+   if (params.isDecimal())
+      out << (double) inherited::implementation();
+   else {
+      Mantissa mantissa;
+      inherited::fillMantissa(mantissa);
+      out.put(inherited::isPositive() ? '+' : '-').put(' ');
+      mantissa.write(out, typename Mantissa::FormatParameters().setFullBinary(mantissa.getSize()));
+      out << " 2^ " << inherited::queryExponent();
+   };
+}
+
+
+template <class FloatingBaseTraits>
+bool
+TDoubleElement<FloatingBaseTraits>::isPuiss2() const {
+   Mantissa mantissa;
+   inherited::fillMantissa(mantissa);
+   return mantissa.isZero();
+}
+
+template <class FloatingBaseTraits>
+DoubleErrors
+TDoubleElement<FloatingBaseTraits>::queryErrors() const {
+   unsigned int basicExponent = inherited::getBasicExponent();
+   if (basicExponent == 0) {
+      if (inherited::isZero())
+         return DoubleErrors();
+      return inherited::isPositive() ? DoubleErrors().setPositiveUnderflow() : DoubleErrors().setNegativeUnderflow();
+   }
+   else if (basicExponent == inherited::getMaxExponent()+inherited::getZeroExponent()+1) {
+      if (isInfty())
+         return inherited::isPositive() ? DoubleErrors().setPositiveOverflow() : DoubleErrors().setNegativeOverflow();
+      return isQNaN() ? DoubleErrors().setQNaN() : DoubleErrors().setSNaN();
+   };
+   return DoubleErrors();
+}
+
+template <class FloatingBaseTraits>
+void
+TDoubleElement<FloatingBaseTraits>::read(STG::IOObject::ISBase& in, ReadParameters& params) {
+   BuiltDouble softDouble;
+   inherited::clear();
+   softDouble.read(in, params);
+   inherited::operator=(softDouble);
+}
+
+} // end of namespace Numerics
+
+#endif // Numerics_BaseHostFloatingTemplate
+

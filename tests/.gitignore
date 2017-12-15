@@ -1,0 +1,15 @@
+*.swp
+*#
+*.exe
+*.instr_diagnosis_*
+Fluctuat_*
+*_done
+*_out
+*_in
+*.cmi
+*.cmo
+table.txt
+*.fluctuat.ii
+*_fluctuat
+accuracy_table.json
+create_accuracy_table

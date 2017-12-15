@@ -1,0 +1,515 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Concrete collections
+// File      : TreeCommon.template
+// Description :
+//   Implementation of a template class TGenericTree as a common definition for trees.
+//
+
+#ifndef COL_TreeCommonTemplate
+#define COL_TreeCommonTemplate
+
+#include "Collection/ConcreteCollection/TreeCommon.h"
+
+namespace COL {}
+
+#include "Collection/Implementation/ImplCommonTree.template"
+#include "Collection/VirtualCollection/VirtualTree.template"
+
+namespace COL {
+
+/***********************************************************/
+/* Implementation of the template class TGenericTreeCursor */
+/***********************************************************/
+
+template <class TypeNode, class TypeImplCursor, class TypeImplTree>
+bool
+TGenericTreeCursor<TypeNode, TypeImplCursor, TypeImplTree>::_isPositionned(
+      const ExtendedLocateParameters& elpPos, const VirtualCollectionCursor* pvccCursor) const {
+   VirtualTreeCursor::_isPositionned(elpPos, pvccCursor);
+   const ExtendedTreeLocateParameters& pos = (const ExtendedTreeLocateParameters&) elpPos;
+   const thisType& cursor = (const thisType&) *pvccCursor;
+   if (pos.isBrother())
+      return pvccCursor ? TypeImplCursor::isBrother(cursor, pos)
+         :  TypeImplCursor::isBrother(TypeImplCursor(getSupport()), pos);
+   else if (pos.isSons())
+      return pvccCursor ? TypeImplCursor::isSon(cursor, pos)
+         :  TypeImplCursor::isSon(TypeImplCursor(getSupport()), pos);
+   else // (pos.isInnerSons())
+      return pvccCursor ? TypeImplCursor::isDescendant(cursor, pos)
+         :  TypeImplCursor::isDescendant(TypeImplCursor(getSupport()), pos);
+}
+
+template <class TypeNode, class TypeImplCursor, class TypeImplTree>
+bool
+TGenericTreeCursor<TypeNode, TypeImplCursor, TypeImplTree>::_position(const Position& pPos) {
+   VirtualTreeCursor::_position(pPos);
+   const TreePosition& pos = (const TreePosition&) pPos;
+   switch (pos.getDescentMode()) {
+      case TreePosition::DMBrother: return TypeImplCursor::setBrother(pos, getSupport());
+      case TreePosition::DMSon: return TypeImplCursor::setSon(pos, getSupport());
+      case TreePosition::DMFather:
+         {  bool result = TypeImplCursor::setFather();
+            if (result && !(result = !pos.isInvalid()))
+               TypeImplCursor::setBrother(pos, getSupport());
+            return result;
+         }
+      case TreePosition::DMRoot:
+         if (pos.isInvalid()) {
+            TypeImplCursor::invalidate();
+            return false;
+         }
+         else
+            return TypeImplCursor::setRoot(getSupport());
+   };
+   return TypeImplCursor::isValid();
+}
+
+/*****************************************************/
+/* Implementation of the template class TGenericTree */
+/*****************************************************/
+
+template <class TypeNode, class TypeImplCursor, class TypeImplTree>
+int
+TGenericTree<TypeNode, TypeImplCursor, TypeImplTree>::queryInternCount(
+      const ExtendedTreeLocateParameters& parameters, const Cursor* start, const Cursor* end) const {
+   int result = 0;
+   bool isDetermined = false;
+   if (!start || !end) {
+      if (!start && !end) {
+         if ((isDetermined = (!parameters.isSingleLevel() || !parameters.isInnerSons())) != false)
+            result = parameters.isSingleLevel() ? (isEmpty() ? 0 : 1) : TypeImplTree::getCount();
+      }
+      else if ((isDetermined = (parameters.isSingleLevel() && !parameters.isInnerSons())) != false) {
+         const Cursor* cursor = start ? start : end;
+         if (parameters.isBrother()) {
+            bool isLeft = (bool) (start == nullptr);
+            result = cursor->getImplementation().hasFlatSupport()
+               ? cursor->getImplementation().lastSupport().queryCount(parameters,
+                     isLeft ? nullptr : &cursor->getImplementation().lastCursor(),
+                     isLeft ? &cursor->getImplementation().lastCursor() : nullptr)
+               : (((cursor->getMode() == VirtualTreeCursor::VMDownCursor) || isEmpty()) ? 0 : 1);
+         }
+         else if (parameters.isSons()) {
+            result = cursor->isValid()
+               ? cursor->getImplementation().lastElement().getSons().count()
+               : 0;
+         };
+      };
+   };
+   if (!isDetermined)
+      result = VirtualTree::pqueryCount(parameters, start, end);
+   return result;
+}
+
+template <class TypeNode, class TypeImplCursor, class TypeImplTree>
+void
+TGenericTree<TypeNode, TypeImplCursor, TypeImplTree>::_add(
+      Node* anObject, const ExtendedTreeInsertionParameters& parameters,
+      Cursor* cursor) {
+   VirtualTree::_add(anObject, parameters, cursor);
+   AddGuardian<Node> guard(*this, anObject, parameters);
+   anObject = guard.handleDuplication();
+   if (!hasRoot()) {
+      TypeImplTree::setRoot(anObject);
+      guard.release();
+      if (cursor && !parameters.isRemote())
+         cursor->setToRoot();
+   }
+   else if (!parameters.isInnerSons()) { // add as brother
+      if (cursor) {
+         if (parameters.isRemote()) {
+            guard.release();
+            if (parameters.isSons())
+               TypeImplTree::addRemoteSon(anObject, *cursor, parameters);
+            else
+               TypeImplTree::addRemoteBrother(anObject, *cursor, parameters);
+         }
+         else {
+            if (parameters.isSons())
+               cursor->pushSon(*this);
+            guard.release();
+            TypeImplTree::addBrother(anObject, *cursor, parameters);
+         };
+      }
+      else {
+         TypeImplCursor invalidSonCursor(*this);
+         invalidSonCursor.pushSon(*this);
+         guard.release();
+         TypeImplTree::addBrother(anObject, invalidSonCursor, parameters);
+      };
+   }
+   else { // add as inner son
+      if (!parameters.isInsertion()) {
+         ExtendedTreeInsertionParameters paramsCopy(parameters);
+         paramsCopy.setSons();
+         guard.release();
+         thisType::_add(anObject, paramsCopy, cursor);
+      }
+      else {
+         PPCursor garbageCursor;
+         if (!cursor) {
+            garbageCursor = newCursor();
+            cursor = garbageCursor.key();
+            cursor->setRoot(*this);
+         }
+         else if (cursor->isUpRoot())
+            cursor->setRoot(*this);
+         VirtualCollectionCursor::Position pos(parameters.isAfter()
+            ? VirtualCollectionCursor::Position::DStart : VirtualCollectionCursor::Position::DEnd);
+         cursor->setSon(pos, *this);
+         AssumeCondition(cursor->isValid())
+         while (cursor->setSon(pos, *this));
+         if (cursor->isDownFinal())
+            cursor->setFather();
+         guard.release();
+         TypeImplTree::addBrother(anObject, *cursor, parameters);
+      };
+   };
+}
+
+template <class TypeNode, class TypeImplCursor, class TypeImplTree>
+void
+TGenericTree<TypeNode, TypeImplCursor, TypeImplTree>::_moveTo(
+      thisType& destination, const ExtendedTreeReplaceParameters& parameters,
+      Cursor* cursor, Cursor* destinationCursor) {
+   typedef typename FlatCollection::CollectionAccess FlatCollectionAccess;
+   if (this != &destination)
+      VirtualTree::pmoveTo(destination, parameters, cursor, destinationCursor);
+   else {
+      VirtualTree::_moveTo(destination, parameters, cursor, destinationCursor);
+
+      TreeMoveNotification move;
+      if (cursor)
+         move.suppression() = *cursor;
+      else
+         move.suppression().setRoot(*this);
+      TypeImplTree::setElementCursor(move.suppression(), parameters.getSuppress());
+      if (cursor)
+         move.setOrigin(*cursor);
+
+      TypeImplCursor insertionCursor;
+      if (destinationCursor)
+         insertionCursor = *destinationCursor;
+      PPFlatCursor flatInsertionCursor;
+      TypeImplTree::setParentCursor(insertionCursor, flatInsertionCursor,
+         parameters.getInsertion());
+
+      ComparisonResult levelCompare = move.suppression().levelCompare(insertionCursor);
+      if ((levelCompare == CRLess) || (levelCompare == CREqual))
+         return;
+      insertionCursor.pushSon(*this);
+      if (flatInsertionCursor.isValid())
+         insertionCursor.lastCursor() = *flatInsertionCursor;
+
+      notifyCursorUpdate(move);
+      try {
+         ExtendedReplaceParameters paramsCopy(parameters);
+         ((ExtendedSuppressParameters&) paramsCopy).setExact();
+         FlatCollectionAccess::moveTo(move.suppression().lastSupport(), insertionCursor.lastSupport(),
+               paramsCopy, &move.suppression().lastCursor(), &insertionCursor.lastCursor());
+      }
+      catch (...) {
+         move.notifyInvalidation();
+         if (cursor)
+            cursor->normalize();
+         throw;
+      };
+      if (destinationCursor && !parameters.getInsertion().isRemote()) {
+         if (insertionCursor.getLevel() > destinationCursor->getLevel())
+            destinationCursor->pushSon(*this);
+         destinationCursor->TypeImplCursor::lastCursor() = insertionCursor.lastCursor();
+      };
+      move.notifyPerformedMove(insertionCursor);
+      if (cursor)
+         cursor->normalize();
+   };
+}
+
+template <class TypeNode, class TypeImplCursor, class TypeImplTree>
+void
+TGenericTree<TypeNode, TypeImplCursor, TypeImplTree>::_moveAllTo(thisType& destination,
+      const ExtendedTreeReplaceParameters& parameters, const Cursor* startCursor,
+      const Cursor* endCursor, Cursor* destinationCursor) {
+   typedef typename FlatCollection::CollectionAccess FlatCollectionAccess;
+   VirtualTree::_moveAllTo(destination, parameters, startCursor, endCursor, destinationCursor);
+
+   TreeBoundInvalidateNotification invalidation;
+   FlatCollection *startParent=nullptr, *endParent=nullptr;
+   bool isValid = TypeImplTree::queryCollectionCursor(startCursor,
+         parameters.getSuppress().queryLocate(),
+         startParent, invalidation.start(), &invalidation.parent());
+   if (parameters.getSuppress().isAfter() && invalidation.start().isValid()) {
+      if (!invalidation.start()->setToNext())
+         return;
+   };
+   isValid = isValid && TypeImplTree::queryCollectionCursor(endCursor,
+         parameters.getSuppress().queryLocate(),
+         endParent, invalidation.end());
+   if (parameters.getSuppress().isBefore() && invalidation.end().isValid()) {
+      if (!invalidation.end()->setToPrevious())
+         return;
+   };
+   AssumeCondition(isValid && (startParent == endParent))
+
+   PPFlatCursor flatInsertionCursor;
+   TypeImplCursor insertionCursor(destination);
+   if (destinationCursor)
+      insertionCursor = *destinationCursor;
+   destination.setParentCursor(insertionCursor, flatInsertionCursor,
+         parameters.getInsertion().queryLocate());
+
+   int moved = 0;
+   if (&destination == this) {
+      typename TypeImplCursor::StackPrefix prefixCursor(insertionCursor);
+      if (invalidation.contain(insertionCursor, prefixCursor))
+         return; // the insertion occurs on one of the sons of the removed element
+   }
+   else
+      moved = invalidation.countElement(*this);
+
+   notifyCursorUpdate(invalidation);
+   ExtendedReplaceParameters params(parameters);
+   ((ExtendedSuppressParameters&) params).setExact();
+   FlatCollectionAccess::moveAllTo(*startParent, destination.getSElement(&insertionCursor).sons(),
+         params, invalidation.start().key(), invalidation.end().key(), flatInsertionCursor.key());
+   if (&destination != this) {
+      TypeImplTree::count() -= moved;
+      destination.TypeImplTree::count() += moved;
+   };
+}
+
+template <class TypeNode, class TypeImplCursor, class TypeImplTree>
+void
+TGenericTree<TypeNode, TypeImplCursor, TypeImplTree>::_remove(
+      const ExtendedSuppressParameters& espParameters, VirtualCollectionCursor* treeCursor) {
+   typedef typename FlatCollection::CollectionAccess FlatCollectionAccess;
+   VirtualTree::_remove(espParameters, treeCursor);
+   const ExtendedTreeSuppressParameters& parameters = (const ExtendedTreeSuppressParameters&) espParameters;
+   Cursor* cursor = (Cursor*) treeCursor;
+   if (parameters.isInnerSons() || HandlerSonsAndSubTreeCast::castFrom(
+            (typename HandlerSonsAndSubTreeCast::Base*) HandlerSonsAndSubTreeCast::Base::castFromCopyHandler(
+            thisType::_getElement(parameters.queryLocate(), treeCursor)))->containSons()) {
+      TreeInvalidateNotification invalidation(*this);
+      if (treeCursor)
+         invalidation.element() = *cursor;
+      else
+         invalidation.element().setRoot(*this);
+      TypeImplTree::setElementCursor(invalidation.element(), parameters.queryLocate());
+      if (treeCursor)
+         invalidation.setOrigin(*cursor);
+      notifyCursorUpdate(invalidation);
+      ExtendedSuppressParameters suppression(parameters);
+      suppression.setExact();
+
+      if (parameters.isInnerSons())
+         TypeImplTree::removeAtomic(invalidation.element(), suppression);
+      else { // iterative destruction
+         if (parameters.isFree()) {
+            RouteFreeAction action(*this, parameters.isSons());
+            Cursor cursor(*this);
+            invalidation.element().swap(cursor);
+            VirtualTree::foreachSubnodeDo(action, cursor);
+         }
+         else
+            TypeImplTree::remove(invalidation.element(), suppression);
+      };
+   }
+   else { // !parameters.isInnerSons() && the element to remove is atomic
+      FlatCollection* flatCollection = nullptr;
+      PPFlatCursor flatCursor;
+      TypeImplTree::queryCollectionCursor(cursor, parameters.queryLocate(),
+         flatCollection, flatCursor);
+      if (flatCollection) {
+         FlatCollectionAccess::remove(*flatCollection, parameters, flatCursor.key());
+         TypeImplTree::count()--;
+         TreeNormalizationAfterSuppressionNotification normalization(*this);
+         notifyCursorUpdate(normalization);
+      }
+      else {
+         if (parameters.isFree())
+            TypeImplTree::freeRoot();
+         else
+            TypeImplTree::removeRoot();
+         InvalidateNotification invalidation;
+         notifyCursorUpdate(invalidation);
+      };
+   };
+}
+
+template <class TypeNode, class TypeImplCursor, class TypeImplTree>
+void
+TGenericTree<TypeNode, TypeImplCursor, TypeImplTree>::_removeAll(
+      const ExtendedSuppressParameters& espParameters,
+      const VirtualCollectionCursor* vccStart, const VirtualCollectionCursor* vccEnd) {
+   const ExtendedTreeSuppressParameters& parameters = (const ExtendedTreeSuppressParameters&) espParameters;
+   if (!vccStart && !vccEnd) {
+      if (hasRoot())
+         thisType::_remove(parameters, nullptr);
+   }
+   else {
+      VirtualTree::_removeAll(espParameters, vccStart, vccEnd);
+      AssumeCondition(!parameters.isInnerSons())
+
+      const Cursor* start = (const Cursor*) vccStart;
+      const Cursor* end = (const Cursor*) vccEnd;
+      TreeBoundInvalidateNotification invalidation;
+      FlatCollection *startParent=nullptr, *endParent=nullptr;
+      bool isValid = TypeImplTree::queryCollectionCursor(start, parameters.queryLocate(),
+         startParent, invalidation.start(), &invalidation.parent());
+      if (parameters.isAfter() && invalidation.start().isValid()) {
+         if (!invalidation.start()->setToNext())
+            return;
+      };
+      isValid = isValid && TypeImplTree::queryCollectionCursor(end, parameters.queryLocate(),
+         endParent, invalidation.end());
+      if (parameters.isBefore() && invalidation.end().isValid()) {
+         if (!invalidation.end()->setToPrevious())
+            return;
+      };
+      AssumeCondition(isValid && (startParent == endParent))
+      notifyCursorUpdate(invalidation);
+
+      if (parameters.isFree()) {
+         RouteFreeAction action(*this, parameters.isSons());
+         PPCursor cursor = newCursor();
+         ((TypeImplCursor&) *cursor) = invalidation.parent();
+         cursor->pushSon(*this);
+         if (invalidation.start().isValid())
+            cursor->TypeImplCursor::lastCursor() = *invalidation.start();
+         else
+            cursor->TypeImplCursor::lastCursor().setToFirst();
+         cursor->setToInnerFirstSon();
+         if (invalidation.end().isValid()) {
+            invalidation.parent().pushSon(*this);
+            invalidation.parent().lastCursor() = *invalidation.end();
+            while (cursor->tsetToNext(Cursor::RBottomUp, action)
+                  && !invalidation.parent().isEqual(*cursor));
+            TypeImplTree::removeAtomic(invalidation.parent(), ExtendedSuppressParameters().setFree());
+            invalidation.parent().setFather();
+         }
+         else {
+            while (cursor->tsetToNext(Cursor::RBottomUp, action)
+                  && !invalidation.parent().isEqual(*cursor));
+         };
+      }
+      else
+         TypeImplTree::removeAll(invalidation.parent(), invalidation.start().key(),
+               invalidation.end().key());
+   };
+}
+
+template <class TypeNode, class TypeImplCursor, class TypeImplTree>
+void
+TGenericTree<TypeNode, TypeImplCursor, TypeImplTree>::_replace(EnhancedObject* peoAnObject,
+      const ExtendedReplaceParameters& erpParameters, VirtualCollectionCursor* treeCursor) {
+   typedef typename FlatCollection::CollectionAccess FlatCollectionAccess;
+   VirtualTree::_replace(peoAnObject, erpParameters, treeCursor);
+   const ExtendedTreeReplaceParameters& parameters
+      = (const ExtendedTreeReplaceParameters&) erpParameters;
+   AddGuardian<EnhancedObject> guard(*this, peoAnObject, erpParameters);
+   TypeImplCursor elementCursor(*this);
+   Cursor* cursor = (Cursor*) treeCursor;
+   if (treeCursor)
+      elementCursor = *cursor;
+   TypeImplTree::setElementCursor(elementCursor, parameters.getSuppress().queryLocate());
+   Node* oldElement = (Node*) &TypeImplTree::getSElement(&elementCursor);
+   Node* anObject = (Node*) HandlerSonsAndSubTreeCast::castFrom((typename HandlerSonsAndSubTreeCast::Base*)
+      HandlerSonsAndSubTreeCast::Base::castFromCopyHandler(peoAnObject));
+   AssumeCondition(anObject->hasSons()
+         ? oldElement->hasSons() && oldElement->getSons().isEmpty()
+         : !oldElement->hasSons())
+   if (elementCursor.hasFlatSupport()) {
+      ExtendedReplaceParameters params(parameters);
+      ((ExtendedSuppressParameters&) params.releaseFreeOnError()).setExact();
+      oldElement->swapSons(*anObject);
+      try {
+         FlatCollectionAccess::replace(elementCursor.lastSupport(), peoAnObject,
+               params, &elementCursor.lastCursor());
+      }
+      catch (...) { oldElement->swapSons(*anObject); throw; }
+      guard.release();
+   }
+   else {
+      oldElement->swapSons(*anObject);
+      if (parameters.getSuppress().isFree())
+         TypeImplTree::freeRoot();
+      else
+         TypeImplTree::removeRoot();
+      TypeImplTree::setRoot(anObject);
+      guard.release();
+   };
+}
+
+template <class TypeNode, class TypeImplCursor, class TypeImplTree>
+EnhancedObject*
+TGenericTree<TypeNode, TypeImplCursor, TypeImplTree>::_getElement(
+      const ExtendedLocateParameters& elpParameters, const VirtualCollectionCursor* pvccCursor) const {
+   typedef typename FlatCollection::CollectionAccess FlatCollectionAccess;
+   VirtualTree::_getElement(elpParameters, pvccCursor);
+   const ExtendedTreeLocateParameters& parameters
+      = (const ExtendedTreeLocateParameters&) elpParameters;
+   const TGenericTreeCursor<TypeNode, TypeImplCursor, TypeImplTree>* cursor = (const TGenericTreeCursor<TypeNode, TypeImplCursor, TypeImplTree>*) pvccCursor;
+   if (parameters.isSons())
+      return FlatCollectionAccess::getElement(
+         TypeImplTree::getSElement(cursor).getSons(), parameters);
+   if (parameters.isInnerSons()) {
+      TypeImplCursor elementCursor;
+      if (pvccCursor)
+         elementCursor = *cursor;
+      TypeImplTree::setElementCursor(elementCursor, parameters);
+      return HandlerSonsAndSubTreeCast::castTo(&TypeImplTree::getSElement(&elementCursor));
+   };
+   // back to the brother level
+   return (pvccCursor && cursor->hasFlatSupport())
+      ? FlatCollectionAccess::getElement(cursor->TypeImplCursor::lastSupport(), parameters,
+            &cursor->TypeImplCursor::lastCursor())
+      : HandlerSonsAndSubTreeCast::castTo(&root());
+}
+
+template <class TypeNode, class TypeImplCursor, class TypeImplTree>
+void
+TGenericTree<TypeNode, TypeImplCursor, TypeImplTree>::_swap(VirtualCollection& source)
+   {  TypeImplTree::swap((thisType&) source); }
+
+template <class TypeNode, class TypeImplCursor, class TypeImplTree>
+bool
+TGenericTree<TypeNode, TypeImplCursor, TypeImplTree>::_hasSons(const VirtualTreeCursor& cursor) const
+   {  return ((const Cursor&) cursor).elementAt().containSons(); }
+
+template <class TypeNode, class TypeImplCursor, class TypeImplTree>
+bool
+TGenericTree<TypeNode, TypeImplCursor, TypeImplTree>::_canBeFather(const VirtualTreeCursor& cursor) const
+   {  return ((const Cursor&) cursor).elementAt().hasSons(); }
+
+template <class TypeNode, class TypeImplCursor, class TypeImplTree>
+int
+TGenericTree<TypeNode, TypeImplCursor, TypeImplTree>::_querySonsCount(const VirtualTreeCursor& cursor) const
+   {  return ((const Cursor&) cursor).elementAt().getSons().count(); }
+
+} // end of namespace COL
+
+#endif // COL_TreeCommonTemplate

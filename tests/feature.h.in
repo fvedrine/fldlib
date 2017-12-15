@@ -1,0 +1,46 @@
+#if @HAVE_FLOAT_ALLOW_READ_EXCEPTION@
+#define FLOAT_ALLOW_READ_EXCEPTION                                  1
+#endif
+
+#if @HAVE_FLOAT_GENERIC_BASE_LONG@
+#define FLOAT_GENERIC_BASE_LONG                                     1
+#endif
+
+#if @HAVE_FLOAT_GENERIC_BASE_UNSIGNED@
+#define FLOAT_GENERIC_BASE_UNSIGNED                                 1
+#endif
+
+#if @HAVE_FLOAT_LONG_WRITE@
+#define FLOAT_LONG_WRITE                                            1
+#endif
+
+#if @HAVE_FLOAT_PURE_ZONOTOPE@
+#define FLOAT_PURE_ZONOTOPE                                         1
+#endif
+
+#if @HAVE_FLOAT_REAL_BITS_NUMBER@
+#define FLOAT_REAL_BITS_NUMBER                                      @VALUE_FLOAT_REAL_BITS_NUMBER@
+#endif
+
+#if @HAVE_FLOAT_TRIGGER_PERCENT@
+#define FLOAT_TRIGGER_PERCENT                                       @VALUE_FLOAT_TRIGGER_PERCENT@
+#endif
+
+#if @HAVE_FLOAT_ZONOTOPE_ALLOW_SIMPLEX@
+#define FLOAT_ZONOTOPE_ALLOW_SIMPLEX                                1
+#endif
+
+#if @HAVE_FLOAT_ZONOTOPE_DOES_ABSORB_HIGH_LEVEL@
+#define FLOAT_ZONOTOPE_DOES_ABSORB_HIGH_LEVEL                       1
+#endif
+
+#if @HAVE_FLOAT_ZONOTOPE_DOES_EXCLUDE_CONSTANT_FROM_SYMBOL_ABSORPTION@
+#define FLOAT_ZONOTOPE_DOES_EXCLUDE_CONSTANT_FROM_SYMBOL_ABSORPTION 1
+#endif
+
+#if @HAVE_FLOAT_ZONOTOPE_LIMIT_SYMBOL_ABSORPTION@
+#define FLOAT_ZONOTOPE_LIMIT_SYMBOL_ABSORPTION                      @VALUE_FLOAT_ZONOTOPE_LIMIT_SYMBOL_ABSORPTION@
+#endif
+
+#define FLOAT_INIT_MESSAGE                                          TOSTRING(@PACKAGE_STRING@) " software --- CEA LIST --- LSL Laboratory"
+

@@ -1,0 +1,331 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Concrete collections
+// File      : TreeCommonFlatAccess.h
+// Description :
+//   Definition of a flat collection access for trees.
+//
+
+/************************************************************/
+/* DefTypeElement             : type of elements            */
+/* DefMapAccess               : access by key               */
+/* DefBaseMultipleInterface   : definition of the interface */
+/************************************************************/
+
+#ifndef DefBaseMultipleInterface
+   LocationResult locateKeyAsSon(TypeKey key, TypeTreeCursor& cursor, RelativePosition pos=RPExact) const
+      {  cursor.setToInvalidSon();
+         return lastSupport(cursor).locateKey(key, lastCursor(cursor), pos);
+      }
+   LocationResult locateKeyAsBrother(TypeKey key,
+         TypeTreeCursor& cursor, RelativePosition pos=RPExact) const
+      {  return lastSupport(cursor).locateKey(key, lastCursor(cursor), pos); }
+   DefTypeElement& findKeyAsSon(TypeKey key, TypeTreeCursor& cursor)
+      {  TypeSortedCollection& locateCollection = getTree(cursor).getSons(cursor.elementAt());
+         return TypeSortedTreeCast::castFrom(locateCollection.findKey(key));
+      }
+   DefTypeElement& findKeyAsBrother(TypeKey key, TypeTreeCursor& cursor)
+      {  TypeSortedCollection& locateCollection = lastSupport(cursor);
+         return TypeSortedTreeCast::castFrom(locateCollection.findKey(key));
+      }
+   const DefTypeElement& findKeyAsSon(TypeKey key, TypeTreeCursor& cursor) const
+      {  const TypeSortedCollection& locateCollection = getTree(cursor).getSons(cursor.elementAt());
+         return TypeSortedTreeCast::castFrom(locateCollection.findKey(key));
+      }
+   const DefTypeElement& findKeyAsBrother(TypeKey key, TypeTreeCursor& cursor) const
+      {  const TypeSortedCollection& locateCollection = lastSupport(cursor);
+         return TypeSortedTreeCast::castFrom(locateCollection.findKey(key));
+      }
+#endif // DefBaseMultipleInterface
+
+#ifndef DefMapAccess
+   bool locateOrAddAsSon(DefTypeElement* element, TypeTreeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  AssumeAllocation(element)
+         TypeTree& tree = getTree(cursor);
+         cursor.setToInvalidSon();
+         TypeSortedCollection& insertionCollection = lastSupport(cursor);
+         LocationResult result = insertionCollection.locate(TypeSortedTreeCast::castTo(*element), lastCursor(cursor));
+         if (!result)
+            tree.add(TypeSortedTreeCast::castTo(element),
+               VirtualTree::ExtendedTreeInsertionParameters().setDuplicate(dupMode)
+                  .setRelativePosition(result.getInsertionPosition()),
+               &cursor);
+         return result;
+      }
+   bool locateOrAddAsBrother(DefTypeElement* element, TypeTreeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  AssumeAllocation(element)
+         TypeTree& tree = getTree(cursor);
+         TypeSortedCollection& insertionCollection = lastSupport(cursor);
+         LocationResult result = insertionCollection.locate(TypeSortedTreeCast::castTo(*element), lastCursor(cursor));
+         if (!result)
+            tree.add(TypeSortedTreeCast::castTo(element),
+               VirtualTree::ExtendedTreeInsertionParameters().setDuplicate(dupMode)
+                  .setRelativePosition(result.getInsertionPosition()),
+               &cursor);
+         return result;
+      }
+
+   bool locateOrAddCopyAsSon(const DefTypeElement& element, TypeTreeCursor& cursor)
+      {  return locateOrAddAsSon(const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate); }
+   bool locateOrAddCopyAsBrother(const DefTypeElement& element, TypeTreeCursor& cursor)
+      {  return locateOrAddAsBrother(const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate); }
+
+   LocationResult locateAsSon(const DefTypeElement& element,
+      TypeTreeCursor& cursor, RelativePosition pos = RPExact) const
+      {  cursor.setToInvalidSon();
+         return ((const TypeSortedCollection&) lastSupport(cursor))
+            .locate(TypeSortedTreeCast::castTo(element), lastCursor(cursor), pos);
+      }
+   LocationResult locateAsBrother(const DefTypeElement& element,
+      TypeTreeCursor& cursor, RelativePosition pos = RPExact) const
+      {  return lastSupport(cursor).locate(TypeSortedTreeCast::castTo(element), lastCursor(cursor), pos); }
+
+   void addOrReplaceSonAt(TypeTreeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode removeMode=RMRemove, RemoveMode removeModeOnError=RMRemove)
+      {  if (locateOrAddSon(element, cursor, dupMode)) {
+            VirtualTree::ExtendedTreeReplaceParameters replaceParameters;
+            replaceParameters.getSInsertion().setDuplicate(dupMode).setFreeOnError(removeModeOnError);
+            replaceParameters.getSSuppress().setFree(removeMode);
+            getTree(cursor).replace(TypeSortedTreeCast::castTo(element),
+                  replaceParameters, &cursor);
+         };
+      }
+   void addOrReplaceBrotherAt(TypeTreeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode removeMode=RMRemove, RemoveMode removeModeOnError=RMRemove)
+      {  if (locateOrAddBrother(element, cursor, dupMode)) {
+            VirtualTree::ExtendedTreeReplaceParameters replaceParameters;
+            replaceParameters.getSInsertion().setDuplicate(dupMode).setFreeOnError(removeModeOnError);
+            replaceParameters.getSSuppress().setFree(removeMode);
+            getTree(cursor).replace(TypeSortedTreeCast::castTo(element),
+                  replaceParameters, &cursor);
+         };
+      }
+   void addCopyOrReplaceSonAt(TypeTreeCursor& cursor, const DefTypeElement& element,
+         RemoveMode removeMode=RMRemove)
+      {  if (locateOrAddSon(const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate)) {
+            VirtualTree::ExtendedTreeReplaceParameters replaceParameters;
+            replaceParameters.getSInsertion().setFreeOnError();
+            replaceParameters.getSSuppress().setFree(removeMode);
+            getTree(cursor).replace(TypeSortedTreeCast::castTo(element.createSCopy()),
+                  replaceParameters, &cursor);
+         };
+      }
+   void addCopyOrReplaceBrotherAt(TypeTreeCursor& cursor, const DefTypeElement& element,
+         RemoveMode removeMode=RMRemove)
+      {  if (locateOrAddBrother(const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate)) {
+            VirtualTree::ExtendedTreeReplaceParameters replaceParameters;
+            replaceParameters.getSInsertion().setFreeOnError();
+            replaceParameters.getSSuppress().setFree(removeMode);
+            getTree(cursor).replace(TypeSortedTreeCast::castTo(element.createSCopy()),
+                  replaceParameters, &cursor);
+         };
+      }
+
+   bool gotoAnySon(TypeTreeCursor& cursor, const DefTypeElement& element, RelativePosition pos=VirtualCollection::RPUndefined) const
+      {  cursor.setToInvalidSon();
+         return lastCursor(cursor).gotoAny(TypeSortedTreeCast::castTo(element), pos);
+      }
+   bool gotoAnyBrother(TypeTreeCursor& cursor, const DefTypeElement& element, RelativePosition pos=VirtualCollection::RPUndefined) const
+      {  return lastCursor(cursor).gotoAny(TypeSortedTreeCast::castTo(element), pos); }
+
+   bool isSonElement(TypeTreeCursor& cursor, const DefTypeElement& element) const
+      {  const TypeSortedCollection& locateCollection = getTree(cursor).getSons(cursor.elementAt());
+         return locateCollection.isElement(TypeSortedTreeCast::castTo(element));
+      }
+   bool isBrotherElement(TypeTreeCursor& cursor, const DefTypeElement& element) const
+      {  const TypeSortedCollection& locateCollection = lastSupport(cursor);
+         return locateCollection.isElement(TypeSortedTreeCast::castTo(element));
+      }
+   bool containSon(TypeTreeCursor& cursor, const DefTypeElement& element) const
+      {  const TypeSortedCollection& locateCollection = getTree(cursor).getSons(cursor.elementAt());
+         return locateCollection.isElement(TypeSortedTreeCast::castTo(element));
+      }
+   bool containBrother(TypeTreeCursor& cursor, const DefTypeElement& element) const
+      {  const TypeSortedCollection& locateCollection = lastSupport(cursor);
+         return locateCollection.isElement(TypeSortedTreeCast::castTo(element));
+      }
+#else // !DefMapAccess
+   void addAsSon(TypeKey key, DefTypeElement* element, TypeTreeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  getTree(cursor).add(TypeSortedTreeCast::castTo(element),
+            ExtendedTreeMapInsertionParameters(key).setDuplicate(dupMode)
+               .getInsertionPosition().setSons(),
+            &cursor);
+      }
+   void addAsBrother(TypeKey key, DefTypeElement* element, TypeTreeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  getTree(cursor).add(TypeSortedTreeCast::castTo(element),
+            ExtendedTreeMapInsertionParameters(key).setDuplicate(dupMode).getInsertionPosition(),
+            &cursor);
+      }
+   void addAsRemoteSon(TypeKey key, DefTypeElement* element, const TypeTreeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  getTree(cursor).add(TypeSortedTreeCast::castTo(element),
+            ExtendedTreeMapInsertionParameters(key).setDuplicate(dupMode)
+               .getInsertionPosition().setSons().setRemote(),
+            &cursor);
+      }
+   void addAsRemoteBrother(TypeKey key, DefTypeElement* element, const TypeTreeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  getTree(cursor).add(TypeSortedTreeCast::castTo(element),
+            ExtendedTreeMapInsertionParameters(key).setDuplicate(dupMode)
+               .getInsertionPosition().setRemote(),
+            &cursor);
+      }
+
+   void addNewAsSon(TypeKey key, DefTypeElement* element, TypeTreeCursor& cursor)
+      {  getTree(cursor).add(TypeSortedTreeCast::castTo(element),
+            ExtendedTreeMapInsertionParameters(key)
+               .getInsertionPosition().setSons().setFreeOnError(),
+            &cursor);
+      }
+   void addNewAsBrother(TypeKey key, DefTypeElement* element, TypeTreeCursor& cursor)
+      {  getTree(cursor).add(TypeSortedTreeCast::castTo(element),
+            ExtendedTreeMapInsertionParameters(key).getInsertionPosition().setFreeOnError(),
+            &cursor);
+      }
+   void addNewAsRemoteSon(TypeKey key, DefTypeElement* element, const TypeTreeCursor& cursor)
+      {  getTree(cursor).add(TypeSortedTreeCast::castTo(element),
+            ExtendedTreeMapInsertionParameters(key).setRemote()
+               .getInsertionPosition().setSons().setFreeOnError(),
+            &cursor);
+      }
+   void addNewAsRemoteBrother(TypeKey key, DefTypeElement* element, const TypeTreeCursor& cursor)
+      {  getTree(cursor).add(TypeSortedTreeCast::castTo(element),
+            ExtendedTreeMapInsertionParameters(key).setRemote()
+               .getInsertionPosition().setFreeOnError(),
+            &cursor);
+      }
+
+   void addCopyAsSon(TypeKey key, const DefTypeElement& element, TypeTreeCursor& cursor)
+      { addAsSon(key, const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate); }
+   void addCopyAsBrother(TypeKey key, const DefTypeElement& element, TypeTreeCursor& cursor)
+      { addAsBrother(key, const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate); }
+   void addCopyAsRemoteSon(TypeKey key, const DefTypeElement& element, const TypeTreeCursor& cursor)
+      { addAsRemoteSon(key, const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate); }
+   void addCopyAsRemoteBrother(TypeKey key, const DefTypeElement& element, const TypeTreeCursor& cursor)
+      { addAsRemoteBrother(key, const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate); }
+
+   void insertAsFirstSon(TypeTreeCursor& cursor, TypeKey key, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode removeModeOnError=RMRemove)
+      {  getTree(cursor).add(TypeSortedTreeCast::castTo(element),
+            ExtendedTreeMapInsertionParameters(key).setDuplicate(dupMode)
+               .getInsertionPosition().setSons().setAfter(),
+            &cursor);
+      }
+   void insertAsLastSon(TypeTreeCursor& cursor, TypeKey key, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode removeModeOnError=RMRemove)
+      {  getTree(cursor).add(TypeSortedTreeCast::castTo(element),
+            ExtendedTreeMapInsertionParameters(key).setDuplicate(dupMode)
+               .getInsertionPosition().setSons().setBefore(),
+            &cursor);
+      }
+   void insertAsNext(TypeTreeCursor& cursor, TypeKey key, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode removeModeOnError=RMRemove)
+      {  getTree(cursor).add(TypeSortedTreeCast::castTo(element),
+            ExtendedTreeMapInsertionParameters(key).setDuplicate(dupMode)
+               .getInsertionPosition().setAfter(),
+            &cursor);
+      }
+   void insertAsPrevious(TypeTreeCursor& cursor, TypeKey key, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode removeModeOnError=RMRemove)
+      {  getTree(cursor).add(TypeSortedTreeCast::castTo(element),
+            ExtendedTreeMapInsertionParameters(key).setDuplicate(dupMode)
+               .getInsertionPosition().setBefore(),
+            &cursor);
+      }
+
+   void insertCopyAsFirstSon(TypeTreeCursor& cursor, TypeKey key, const DefTypeElement& element)
+      { insertAsFirstSon(cursor, key, &const_cast<DefTypeElement*>(&element), VirtualCollection::AMDuplicate); }
+   void insertCopyAsLastSon(TypeTreeCursor& cursor, TypeKey key, const DefTypeElement& element)
+      { insertAsLastSon(cursor, key, &const_cast<DefTypeElement*>(&element), VirtualCollection::AMDuplicate); }
+   void insertCopyAsNext(TypeTreeCursor& cursor, TypeKey key, const DefTypeElement& element)
+      { insertAsNext(cursor, key, &const_cast<DefTypeElement*>(&element), VirtualCollection::AMDuplicate); }
+   void insertCopyAsPrevious(TypeTreeCursor& cursor, TypeKey key, const DefTypeElement& element)
+      { insertAsPrevious(cursor, key, &const_cast<DefTypeElement*>(&element), VirtualCollection::AMDuplicate); }
+
+   void insertNewAsFirstSon(TypeTreeCursor& cursor, TypeKey key, DefTypeElement* element)
+      { insertAsFirstSon(cursor, key, const_cast<DefTypeElement*>(element), VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree); }
+   void insertNewAsLastSon(TypeTreeCursor& cursor, TypeKey key, DefTypeElement* element)
+      { insertAsLastSon(cursor, key, const_cast<DefTypeElement*>(element), VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree); }
+   void insertNewAsNext(TypeTreeCursor& cursor, TypeKey key, DefTypeElement* element)
+      { insertAsNext(cursor, key, const_cast<DefTypeElement*>(element), VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree); }
+   void insertNewAsPrevious(TypeTreeCursor& cursor, TypeKey key, DefTypeElement* element)
+      { insertAsPrevious(cursor, key, const_cast<DefTypeElement*>(element), VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree); }
+
+   bool locateOrAddAsSon(TypeKey key, DefTypeElement* element, TypeTreeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  AssumeAllocation(element)
+         TypeTree& tree = getTree(cursor);
+         cursor.setToInvalidSon();
+         TypeSortedCollection& insertionCollection = lastSupport(cursor);
+         LocationResult result = insertionCollection.locateKey(key, lastCursor(cursor));
+         if (!result)
+            tree.add(TypeSortedTreeCast::castTo(element), VirtualTree::ExtendedTreeInsertionParameters()
+               .setDuplicate(dupMode).setRelativePosition(result.getInsertionPosition()),
+               &cursor);
+         return result;
+      }
+   bool locateOrAddAsBrother(TypeKey key, DefTypeElement* element, TypeTreeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  AssumeAllocation(element)
+         TypeTree& tree = getTree(cursor);
+         TypeSortedCollection& insertionCollection = lastSupport(cursor);
+         LocationResult result = insertionCollection.locateKey(key, lastCursor(cursor));
+         if (!result)
+            tree.add(TypeSortedTreeCast::castTo(element), VirtualTree::ExtendedTreeInsertionParameters()
+               .setDuplicate(dupMode).setRelativePosition(result.getInsertionPosition()),
+               &cursor);
+         return result;
+      }
+
+   bool locateOrAddCopyAsSon(TypeKey key, const DefTypeElement& element, TypeTreeCursor& cursor)
+      {  return locateOrAddAsSon(const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate); }
+   bool locateOrAddCopyAsBrother(TypeKey key, const DefTypeElement& element, TypeTreeCursor& cursor)
+      {  return locateOrAddAsBrother(const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate); }
+
+   void addOrReplaceSonAt(TypeTreeCursor& cursor, TypeKey key, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode removeMode=RMRemove, RemoveMode removeModeOnError=RMRemove)
+      {  if (locateOrAddSon(key, element, cursor, dupMode))
+            getTree(cursor).replace(TypeSortedTreeCast::castTo(element),
+               VirtualTree::ExtendedTreeReplaceParameters().setDuplicate(dupMode).setFree(removeMode)
+                  .setFreeOnError(removeModeOnError), &cursor);
+      }
+   void addOrReplaceBrotherAt(TypeTreeCursor& cursor, TypeKey key, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode removeMode=RMRemove, RemoveMode removeModeOnError=RMRemove)
+      {  if (locateOrAddBrother(key, element, cursor, dupMode))
+            getTree(cursor).replace(TypeSortedTreeCast::castTo(element),
+               VirtualTree::ExtendedTreeReplaceParameters().setDuplicate(dupMode).setFree(removeMode)
+                  .setFreeOnError(removeModeOnError), &cursor);
+      }
+   void addCopyOrReplaceSonAt(TypeTreeCursor& cursor, TypeKey key, const DefTypeElement& element,
+         RemoveMode removeMode=RMRemove)
+      {  if (locateOrAddSon(key, const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate))
+            getTree(cursor).replace(TypeSortedTreeCast::castTo(element.createSCopy()),
+               VirtualTree::ExtendedTreeReplaceParameters().setFreeOnError().setFree(removeMode), &cursor);
+      }
+   void addCopyOrReplaceBrotherAt(TypeTreeCursor& cursor, TypeKey key, const DefTypeElement& element,
+         RemoveMode removeMode=RMRemove)
+      {  if (locateOrAddBrother(key, const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate))
+            getTree(cursor).replace(TypeSortedTreeCast::castTo(element.createSCopy()),
+               VirtualTree::ExtendedTreeReplaceParameters().setFree(removeMode).setFreeOnError(), &cursor);
+      }
+#endif // !DefMapAccess
+

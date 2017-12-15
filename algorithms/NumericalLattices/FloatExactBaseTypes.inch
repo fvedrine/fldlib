@@ -1,0 +1,485 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2015-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : NumericalDomains
+// Unit      : FloatExact
+// File      : FloatExactBaseTypes.inch
+// Description :
+//   Definition of a class of floating point comparison
+//
+
+#ifndef DefineGeneric
+
+#define DefineSingleTemplateHeader(RealBitsNumber)                   \
+   template <int RealBitsNumber>
+#define DefineFloatConversion TFloatConversion
+#define DefineBuiltAccess Numerics::DDouble::BuiltAccess
+#define DefineDoubleTemplateParameters(MantissaCellSize, ExponentCellSize) \
+   <MantissaCellSize, ExponentCellSize>
+#define DefineSingleTemplateParameters(RealBitsNumber)               \
+   <RealBitsNumber>
+#define DefineDoubleTraitsTemplateHeader(RealBitsNumber, SizeMantissa, SizeExponent) \
+   template <int RealBitsNumber, int SizeMantissa, int SizeExponent>
+#define DefineBuiltDoubleTraits BuiltDoubleTraits
+#define DefineBuiltDouble TBuiltDouble
+#define DefineBuiltReal TBuiltReal
+#define DefineMantissaExponentTemplateParameters(SizeMantissa, SizeExponent) \
+   <SizeMantissa, SizeExponent>
+#define DefineRealMantissaExponentTemplateParameters(RealBitsNumber, SizeMantissa, SizeExponent) \
+   <RealBitsNumber, SizeMantissa, SizeExponent>
+#define DefineBuiltFloat TBuiltFloat
+#define DefineReadDouble TReadDouble
+#define DefineBaseTypeConstReference                                 \
+   unsigned int
+#define DefineBaseType                                               \
+   unsigned int
+#define DefineIsBigEndian isBigEndian
+#define DefineFillContent fillContent
+#define DefineSizeofBaseTypeInBits                                   \
+   (sizeof(unsigned int)*8)
+#define DefineSetContent setContent
+
+#else
+
+#define DefineSingleTemplateHeader(RealBitsNumber)                   \
+   template <class BaseStoreTraits, int RealBitsNumber>
+#define DefineFloatConversion TGFloatConversion
+#define DefineBuiltAccess Numerics::DDouble::GBuiltAccess
+#define DefineSingleTemplateParameters(RealBitsNumber)               \
+   <BaseStoreTraits, RealBitsNumber>
+#define DefineDoubleTraitsTemplateHeader(RealBitsNumber, SizeMantissa, SizeExponent) \
+   template <class BaseStoreTraits, int RealBitsNumber, int SizeMantissa, int SizeExponent>
+#define DefineBuiltDoubleTraits GBuiltDoubleTraits
+#define DefineBuiltDouble TGBuiltDouble
+#define DefineBuiltReal TGBuiltReal
+#define DefineMantissaExponentTemplateParameters(SizeMantissa, SizeExponent) \
+   <BaseStoreTraits, SizeMantissa, SizeExponent>
+#define DefineRealMantissaExponentTemplateParameters(RealBitsNumber, SizeMantissa, SizeExponent) \
+   <BaseStoreTraits, RealBitsNumber, SizeMantissa, SizeExponent>
+#define DefineBuiltFloat TGBuiltFloat
+#define DefineReadDouble TGReadDouble
+#define DefineBaseTypeConstReference                                 \
+   typename BaseStoreTraits::BaseTypeConstReference
+#define DefineBaseType                                               \
+   typename BaseStoreTraits::BaseType
+#define DefineIsBigEndian gisBigEndian
+#define DefineFillContent gfillContent
+#define DefineSizeofBaseTypeInBits                                   \
+   BaseStoreTraits::sizeBaseInBits()
+#define DefineSetContent gsetContent
+
+#endif
+
+namespace DDoubleExact {
+
+DefineSingleTemplateHeader(URealBitsNumber)
+class DefineFloatConversion : public DefineBuiltAccess
+      ::TFloatConversion DefineMantissaExponentTemplateParameters(
+#ifndef DefineGeneric
+      (URealBitsNumber+(8*sizeof(unsigned))+5-1)/(8*sizeof(unsigned)), 2
+#else
+      (URealBitsNumber+BaseStoreTraits::USizeBaseInBits+5-1)/BaseStoreTraits::USizeBaseInBits, 2
+#endif
+   ) {
+  public:
+   DefineFloatConversion() {}
+   DefineFloatConversion(const DefineFloatConversion DefineSingleTemplateParameters(URealBitsNumber)& source) = default;
+};
+
+DefineDoubleTraitsTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
+class DefineBuiltDoubleTraits : public Numerics::DefineBuiltDoubleTraits
+      DefineMantissaExponentTemplateParameters(USizeMantissa, USizeExponent) {
+  private:
+   typedef Numerics::DefineBuiltDoubleTraits DefineMantissaExponentTemplateParameters(USizeMantissa, USizeExponent) inherited;
+
+  public:
+   typedef DDoubleExact::DefineFloatConversion DefineSingleTemplateParameters(URealBitsNumber) FloatConversion;
+#ifndef DefineGeneric
+   typedef Numerics::UnsignedBaseStoreTraits BaseStoreTraits;
+#endif
+
+   typedef typename inherited::Exponent Exponent;
+   // overriden to avoid race conditions with global variables
+   static Exponent getZeroExponent(const Exponent&) { return Exponent(typename Exponent::Zero()); }
+   static Exponent getOneExponent(const Exponent&) { return Exponent(typename Exponent::One()); }
+   static Exponent getMinusOneExponent(const Exponent&) { return Exponent(typename Exponent::MinusOne()); }
+   static Exponent getInftyExponent(const Exponent&) { return Exponent(typename Exponent::Max()); }
+   static Exponent getMaxExponent(const Exponent&) { return Exponent(typename Exponent::Zero()); }
+};
+
+DefineDoubleTraitsTemplateHeader(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber)
+class DefineBuiltFloat
+   :  public Numerics::DefineReadDouble<
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber) >,
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber+5, UExponentBitsNumber) > > {
+  private:
+   typedef Numerics::DefineReadDouble<
+      Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber) >,
+      Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber+5, UExponentBitsNumber) > > inherited;
+   typedef DefineBuiltFloat DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber) thisType;
+
+  public:
+   typedef Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber) > BaseDouble;
+
+  public:
+   typedef typename inherited::ReadParameters ReadParameters;
+   DefineBuiltFloat() {}
+   DefineBuiltFloat(unsigned int value) : inherited(value) {}
+   DefineBuiltFloat(const typename inherited::IntConversion& value, ReadParameters& params)
+      :  inherited(value, params) {}
+   DefineBuiltFloat(const DefineFloatConversion DefineSingleTemplateParameters(URealBitsNumber)& value,
+         ReadParameters& params)
+      :  inherited(value, params) {}
+   DefineBuiltFloat(const thisType& source) = default;
+
+   void expAssign(BaseDouble& errorMin, BaseDouble& errorMax, ReadParameters& params);
+   void logAssign(BaseDouble& errorMin, BaseDouble& errorMax, ReadParameters& params);
+   void sqrtAssign(ReadParameters& params);
+
+   static const int BitSizeMantissa = inherited::BitSizeMantissa;
+   static const int BitSizeExponent = inherited::BitSizeExponent;
+};
+
+DefineSingleTemplateHeader(URealBitsNumber)
+class DefineBuiltReal
+   :  public Numerics::DefineReadDouble<
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) >,
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber+5, 15) > > {
+  public:
+   typedef Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) > BaseDouble;
+
+  private:
+   typedef Numerics::DefineReadDouble<
+      Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) >,
+      Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber+5, 15) > > inherited;
+   typedef DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber) thisType;
+
+  protected:
+   const char* queryDebugValue() const;
+   typedef const char* (DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber)::*PQueryDebugValue)() const;
+   static PQueryDebugValue pqueryDebugValue;
+
+  public:
+   typedef typename inherited::ReadParameters ReadParameters;
+
+   DefineBuiltReal() {}
+   DefineBuiltReal(DefineBaseTypeConstReference value) : inherited(value) {}
+   DefineBuiltReal(const typename inherited::IntConversion& value, ReadParameters& params) : inherited(value, params) {}
+   DefineBuiltReal(const typename inherited::FloatConversion& value, ReadParameters& params) : inherited(value, params) {}
+   DefineBuiltReal(const thisType& source) = default;
+   DefineBuiltReal(const Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) >& source)
+      :  inherited(source) {}
+
+   thisType& opposite() { return (thisType&) inherited::opposite(); }
+   void expAssign(BaseDouble& errorMin, BaseDouble& errorMax, ReadParameters& params);
+   void logAssign(BaseDouble& errorMin, BaseDouble& errorMax, ReadParameters& params);
+
+   static const int BitSizeMantissa = inherited::BitSizeMantissa;
+   static const int BitSizeExponent = inherited::BitSizeExponent;
+
+   bool isOne() const
+      {  return inherited::getMantissa().isZero()
+               && inherited::getBasicExponent() == inherited::getZeroExponent()
+               && !inherited::isNegative();
+      }
+   bool isTwoPower() const { return inherited::getMantissa().isZero(); }
+   bool isFourPower() const
+      {  return inherited::getMantissa().isZero()
+            && (inherited::getBasicExponent() - inherited::getZeroExponent()).cbitArray(0);
+      }
+};
+
+inline bool
+DefineIsBigEndian() {
+#if defined(__GNUC__) && !defined(__MINGW32__)
+#if BYTE_ORDER == BIG_ENDIAN
+   return true;
+#else
+   return false;
+#endif
+#else
+   int dummy = 0x1234;
+   unsigned char dummy[4];
+   memcpy((unsigned char*) dummy, &dummy, 4);
+   return *dummy == 0x12;
+#endif
+}
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+void
+DefineFillContent(TypeBuiltDouble& builtDouble,
+      const TypeImplementation& source/*, int sourceExponentSize, int sourceMantissaSize*/) {
+#ifdef DefineGeneric
+   typedef typename TypeBuiltDouble::BuiltDouble::BaseStoreTraits BaseStoreTraits;
+#endif
+   // AssumeCondition(sizeof(source)*8 == sourceExponentSize+sourceMantissaSize+1)
+   // AssumeCondition(builtDouble.bitSizeMantissa() >= sourceMantissaSize
+   //       && builtDouble.bitSizeExponent() >= sourceExponentSize)
+   static const int sourceSizeInSizeofUnsigned
+#ifndef DefineGeneric
+      = (sizeof(source) + sizeof(unsigned) - 1)/sizeof(unsigned);
+#else
+      = (8*sizeof(source) + BaseStoreTraits::USizeBaseInBits - 1) / BaseStoreTraits::USizeBaseInBits;
+#endif
+   DefineBaseType doubleContent[sourceSizeInSizeofUnsigned];
+   doubleContent[sourceSizeInSizeofUnsigned-1] = 0;
+   memcpy(&doubleContent[0], &source, sizeof(source));
+
+   {  DefineBaseType* mask = doubleContent;
+      if (DefineIsBigEndian())
+         mask += sourceSizeInSizeofUnsigned-1;
+      // int sourceMantissaSizeInSizeofUnsigned
+      // #ifndef DefineGeneric
+      //    = (sourceMantissaSize + sizeof(unsigned) - 1)/sizeof(unsigned);
+      // #else
+      //    = (8*sourceMantissaSize + BaseStoreTraits::sizeBaseInBits() - 1)/BaseStoreTraits::sizeBaseInBits();
+      // #endif
+      // int shiftMantissa = (builtDouble.bitSizeMantissa() - sourceMantissaSize)
+      //       % DefineSizeofBaseTypeInBits;
+      // int lastCellIndex = (builtDouble.bitSizeMantissa()-1-shiftMantissa)/DefineSizeofBaseTypeInBits;
+      int lastCellIndex = (builtDouble.bitSizeMantissa() - 1)/DefineSizeofBaseTypeInBits;
+      // int mantissaIndex = lastCellIndex+1-sourceMantissaSizeInSizeofUnsigned;
+      // AssumeCondition(mantissaIndex >= 0)
+      for (int mantissaIndex = 0 /* */; mantissaIndex < lastCellIndex; ++mantissaIndex) {
+         builtDouble.getSMantissa()[mantissaIndex] = *mask;
+         if (DefineIsBigEndian())
+            --mask;
+         else
+            ++mask;
+      };
+      // int shift = (builtDouble.bitSizeMantissa()-shiftMantissa) % DefineSizeofBaseTypeInBits;
+      int shift = builtDouble.bitSizeMantissa() % DefineSizeofBaseTypeInBits;
+      builtDouble.getSMantissa()[lastCellIndex] = (shift == 0) ? *mask
+#ifndef DefineGeneric
+         : ((*mask) & ~((~0U) << shift));
+#else
+         : BaseStoreTraits::getLowPart(*mask, shift);
+#endif
+      // if (shiftMantissa > 0)
+      //    builtDouble.getSMantissa() <<= shiftMantissa;
+   }
+   {  unsigned char* mask = (unsigned char*) doubleContent;
+      unsigned char* signedMask = mask;
+      if (!DefineIsBigEndian()) {
+         signedMask += sizeof(source)-1;
+         mask = signedMask;
+      };
+      builtDouble.setNegative((*signedMask) & 0x80);
+
+      // AssumeCondition(sourceExponentSize <= DefineSizeofBaseTypeInBits) // not implemented
+      DefineBaseType result = 0x0;
+      // int shift = sourceExponentSize-7;
+      int shift = builtDouble.bitSizeExponent()-7;
+      if (shift >= 0) {
+#ifndef DefineGeneric
+         result |= (*mask & 0x7f) << shift;
+#else
+         result |= BaseStoreTraits::getStoreHighPart(*mask & 0x7f, shift);
+#endif
+         while ((shift -= 8) >= 0) {
+            if (!DefineIsBigEndian())
+               --mask;
+            else
+               ++mask;
+#ifndef DefineGeneric
+            result |= *mask << shift;
+#else
+            result |= BaseStoreTraits::getStoreHighPart(*mask, shift);
+#endif
+         };
+         if (!DefineIsBigEndian())
+            --mask;
+         else
+            ++mask;
+         if (shift > -8)
+#ifndef DefineGeneric
+            result |= *mask >> (-shift);
+#else
+            result |= BaseStoreTraits::getHighPart(*mask, -shift);
+#endif
+      }
+      else
+#ifndef DefineGeneric
+         result |= (*mask & 0x7f) >> (-shift);
+#else
+         result |= BaseStoreTraits::getHighPart(*mask & 0x7f, -shift);
+#endif
+      builtDouble.getSBasicExponent()[0] = result;
+      // int shiftExponent = (builtDouble.bitSizeExponent() - sourceExponentSize)
+      //       % DefineSizeofBaseTypeInBits;
+      // if (shiftExponent > 0) {
+      // #ifndef DefineGeneric
+      //    if (result | (1U << (sourceExponentSize-1)))
+      // #else
+      //    if (BaseStoreTraits::getBit(result, sourceExponentSize-1))
+      // #endif
+      //       builtDouble.getSBasicExponent() <<= shiftExponent;
+      //    else {
+      //       builtDouble.getSBasicExponent().inc();
+      //       builtDouble.getSBasicExponent() <<= shiftExponent;
+      //       builtDouble.getSBasicExponent().dec();
+      //    };
+      // };
+   }
+}
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+void
+DefineSetContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble) {
+#ifndef DefineGeneric
+   DefineBaseType doubleContent[(sizeof(result) + sizeof(unsigned) - 1)/sizeof(unsigned)];
+   memset(doubleContent, 0, sizeof(unsigned)*((sizeof(result) + sizeof(unsigned) - 1)/sizeof(unsigned)));
+#else
+   typedef typename TypeBuiltDouble::BuiltDouble::BaseStoreTraits BaseStoreTraits;
+   DefineBaseType doubleContent[(sizeof(result)*8 + BaseStoreTraits::USizeBaseInBits - 1)/BaseStoreTraits::USizeBaseInBits];
+   memset(doubleContent, 0, sizeof(DefineBaseType)
+         *((8*sizeof(result) + BaseStoreTraits::USizeBaseInBits - 1)/BaseStoreTraits::USizeBaseInBits));
+#endif
+   {  unsigned char* mask = (unsigned char*) doubleContent;
+      if (!DefineIsBigEndian())
+         mask += sizeof(result)-1;
+      if (builtDouble.isNegative())
+         *mask |= 0x80;
+      int shift = builtDouble.bitSizeExponent()-7;
+
+      DefineBaseType exponent = builtDouble.getBasicExponent()[0];
+#if defined(__GNUC__) && !defined(__clang__)
+      int shiftAssert = builtDouble.bitSizeExponent();
+      AssumeCondition((shiftAssert >= (int) DefineSizeofBaseTypeInBits)
+#ifndef DefineGeneric
+            || (((~0U << shiftAssert) & exponent) == 0)
+#else
+            || BaseStoreTraits::isZeroValue(BaseStoreTraits::getHighPart(exponent, shiftAssert))
+#endif
+         )
+#else
+#if defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshift-count-overflow"
+#endif
+
+      AssumeCondition(((int) builtDouble.bitSizeExponent() >= (int) DefineSizeofBaseTypeInBits)
+#ifndef DefineGeneric
+            || (((~0U << builtDouble.bitSizeExponent()) & exponent) == 0)
+#else
+            || BaseStoreTraits::isZeroValue(BaseStoreTraits::getHighPart(exponent, builtDouble.bitSizeExponent()))
+#endif
+         )
+      // AssumeCondition((TypeBuiltDouble::BitSizeExponent == DefineSizeofBaseTypeInBits)
+      //    #ifndef DefineGeneric
+      //       || (((~1U << (TypeBuiltDouble::BitSizeExponent-1)) & exponent) == 0)
+      //    #else
+      //       || BaseStoreTraits::isZeroValue(BaseStoreTraits::getHighPart(exponent, builtDouble.bitSizeExponent()))
+      //    #endif
+      //    )
+#if defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+#endif
+
+#ifndef DefineGeneric
+      *mask |= exponent >> shift;
+#else
+      *mask |= BaseStoreTraits::getHighPart(exponent, shift);
+#endif
+      while ((shift -= 8) >= 0) {
+         if (!DefineIsBigEndian())
+            --mask;
+         else
+            ++mask;
+#ifndef DefineGeneric
+         *mask |= exponent >> shift;
+#else
+         *mask |= BaseStoreTraits::getHighPart(exponent, shift);
+#endif
+      };
+      if (!DefineIsBigEndian())
+         --mask;
+      else
+         ++mask;
+      if (shift > -8)
+#ifndef DefineGeneric
+         *mask |= exponent << (-shift);
+#else
+         *mask |= BaseStoreTraits::getStoreHighPart(exponent, -shift);
+#endif
+   }
+
+   {  DefineBaseType* mask = (DefineBaseType*) doubleContent;
+      if (DefineIsBigEndian())
+         mask += ((8*sizeof(result)-1)/DefineSizeofBaseTypeInBits);
+      int lastCellIndex = builtDouble.getMantissa().lastCellIndex();
+      for (int mantissaIndex = 0; mantissaIndex < lastCellIndex; ++mantissaIndex) {
+         *mask = builtDouble.getMantissa()[mantissaIndex];
+         if (DefineIsBigEndian())
+            --mask;
+         else
+            ++mask;
+      };
+      int shift = builtDouble.bitSizeMantissa() % DefineSizeofBaseTypeInBits;
+      if (shift == 0)
+         *mask = builtDouble.getMantissa()[lastCellIndex];
+      else
+#ifndef DefineGeneric
+         *mask |= (builtDouble.getMantissa()[lastCellIndex] & ~((~0U) << shift));
+#else
+         *mask |= BaseStoreTraits::getLowPart(builtDouble.getMantissa()[lastCellIndex], shift);
+#endif
+   }
+   memcpy(&result, doubleContent, sizeof(result));
+}
+
+} // end of namespace DDoubleExact
+
+#undef DefineSingleTemplateHeader
+#undef DefineFloatConversion
+#undef DefineBuiltAccess
+#undef DefineDoubleTemplateParameters
+#undef DefineSingleTemplateParameters
+#undef DefineDoubleTraitsTemplateHeader
+#undef DefineBuiltDoubleTraits
+#undef DefineBuiltDouble
+#undef DefineBuiltReal
+#undef DefineMantissaExponentTemplateParameters
+#undef DefineRealMantissaExponentTemplateParameters
+#undef DefineBuiltFloat
+#undef DefineReadDouble
+#undef DefineBaseTypeConstReference
+#undef DefineBaseType
+#undef DefineIsBigEndian
+#undef DefineFillContent
+#undef DefineSizeofBaseTypeInBits
+#undef DefineSetContent
+

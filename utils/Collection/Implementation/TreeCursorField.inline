@@ -1,0 +1,149 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2013-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Low level implementation of tree collections
+// File      : TreeCursorField.inline
+// Description :
+//   Definition of intern classes to GenericTreeCursor.
+//
+
+class CollectionCursorLevel : public ImplListElement {
+  private:
+   PNT::AutoPointer<VirtualCollectionCursor> apvcCursor;
+   
+  protected:
+   virtual ComparisonResult _compare(const EnhancedObject& asource) const override;
+
+  public:
+   CollectionCursorLevel(VirtualCollection::PPCursor cursor)
+      {  if (cursor.isValid())
+            apvcCursor.absorbElement(cursor.extractElement());
+      }
+   CollectionCursorLevel(const CollectionCursorLevel& source) = default;
+   DefineCopy(CollectionCursorLevel)
+   DDefineAssign(CollectionCursorLevel)
+
+   VirtualCollectionCursor& cursor() const { return *apvcCursor; }
+   const VirtualCollectionCursor& getCursor() const { return *apvcCursor; }
+   VirtualCollectionCursor* getCursor() { return apvcCursor.extractElement(); }
+   virtual bool isValid() const override
+      {  return apvcCursor.isValid() && apvcCursor->hasSupport(); }
+};
+
+class CollectionCursorsStack : public TList<CollectionCursorLevel> {
+  public:
+   typedef VirtualTreeCursor::ExtendedComparisonResult ExtendedComparisonResult;
+
+  private:
+   typedef TList<CollectionCursorLevel> inherited;
+   
+  protected:
+   virtual ComparisonResult _compare(const EnhancedObject& asource) const override
+      {  return fullCompare((const CollectionCursorsStack&) castFromCopyHandler(asource)).getBasicResult(); }
+
+  public:
+   CollectionCursorsStack() {}
+   CollectionCursorsStack(const CollectionCursorsStack& source) : inherited(source, AMDuplicate) {}
+   virtual ~CollectionCursorsStack() { inherited::freeAll(); }
+   DefineCopy(CollectionCursorsStack)
+   DDefineAssign(CollectionCursorsStack)
+
+   CollectionCursorsStack& operator=(const CollectionCursorsStack& source)
+      {  inherited::_fullAssign(source, ExtendedReplaceParameters().setDuplicate().setFree());
+         return *this;
+      }
+
+   ExtendedComparisonResult fullCompare(const CollectionCursorsStack& source) const;
+   ComparisonResult levelCompare(const CollectionCursorsStack& source) const;
+   void intersect(const CollectionCursorsStack& source, CollectionCursorsStack& thisDiff,
+         CollectionCursorsStack& sourceDiff, CollectionCursorsStack& common);
+   bool isDown(const CollectionCursorsStack& source) const
+      {  if (count() == source.count()+1)
+            return false;
+         if (source.isEmpty())
+            return true;
+         Cursor cursor(*this);
+         cursor.setToLast();
+         cursor.setToPrevious();
+         return cursor.elementAt().getCursor().isEqual(source.getLast().getCursor());
+      }
+   bool isEqual(const CollectionCursorsStack& source) const
+      {  return isEmpty() ? source.isEmpty()
+            : (source.isEmpty()
+                  ? (getLast().getCursor().isEqual(source.getLast().getCursor()))
+                  : false);
+      }
+   bool isParentEqual(const CollectionCursorsStack& source) const
+      {  return isEmpty() ? source.isEmpty()
+            : (source.isEmpty()
+                  ? (&getLast().getCursor().getSupport()
+                        == &source.getLast().getCursor().getSupport())
+                  : false);
+      }
+   VirtualCollectionCursor& lastCursor() const { return getLast().cursor(); }
+   GenericTreeElement& lastElement() const 
+      {  return (GenericTreeElement&) getLast().getCursor().elementAt(); }
+   VirtualCollectionCursor& parentCursor() const
+      {  Cursor cursor(*this);
+         bool isValid = cursor.setToLast() && cursor.setToPrevious();
+         AssumeCondition(isValid)
+         return cursor.elementAt().cursor();
+      }
+   const VirtualCollectionCursor& getParentCursor() const { return parentCursor(); }
+   void push(const VirtualCollection::PPCursor& cursor)
+      {  insertAtEnd(new CollectionCursorLevel(cursor), AMNoDuplicate, RMFree); }
+   bool push()
+      {  bool result = !lastElement().isFinal();
+         if (result)
+            insertNewAtEnd(new CollectionCursorLevel(lastElement().getSons().newCursor()));
+         return result;
+      }
+   bool push(const VirtualCollectionCursor& sonCursor)
+      {  AssumeCondition(isEmpty() || (&lastElement().getSons() == &sonCursor.getSupport()))
+         insertNewAtEnd(new CollectionCursorLevel(sonCursor));
+         return true;
+      }
+   void pop() { freeLast(); }
+   VirtualCollection::PPCursor popLastCursor()
+      {	 VirtualCollection::PPCursor result(getSLast().getCursor(), PNT::Pointer::Init());
+         freeLast();
+         return result;
+      }
+   void clear() { inherited::freeAll(); }
+   virtual bool isValid() const override;
+   bool normalize();
+
+   bool hasPrefix(const CollectionCursorsStack& source, CollectionCursorsStack::Cursor& stackCursor);
+   void cut(const CollectionCursorsStack::Cursor& stackCursor)
+      {  inherited::_removeAll(ExtendedSuppressParameters().setFree().setAfter(), &stackCursor);
+         if (stackCursor.isValid())
+            stackCursor.elementSAt().cursor().invalidate();
+      }
+   void replacePrefix(CollectionCursorsStack::Cursor& oldPrefix, const CollectionCursorsStack& newPrefix)
+      {  inherited::freeAll(oldPrefix);
+         inherited::_addAll(newPrefix, ExtendedInsertionParameters().setAfter().setDuplicate());
+      }
+};
+

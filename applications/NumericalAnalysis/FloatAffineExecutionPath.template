@@ -1,0 +1,998 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2011-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : NumericalDomains
+// Unit      : Affine relationships
+// File      : FloatAffineExecutionPath.template
+// Description :
+//   Implementation of a class of affine relations.
+//
+
+#include "NumericalAnalysis/FloatAffineExecutionPath.h"
+
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+#include "NumericalDomains/FloatAffineBase.template"
+#else
+#include "NumericalDomains/FloatAffineBaseGeneric.template"
+#endif
+
+#ifndef FLOAT_LONG_WRITE
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+#include "NumericalLattices/FloatAffineBaseTypes.template"
+#else
+#include "NumericalLattices/FloatAffineBaseTypesGeneric.template"
+#endif
+#endif
+
+namespace NumericalDomains { namespace DAffine {
+
+template <class TypeExecutionPath>
+const char*
+TBaseFloatAffine<TypeExecutionPath>::queryDebugRealValue(const BuiltReal& value) {
+   typename inherited::DebugStream out;
+   BuiltReal::WriteParameters defaultParams;
+   value.write(out, defaultParams);
+   static std::string result;
+   result = out.content();
+   return result.c_str();
+}
+
+template <class TypeExecutionPath>
+const char*
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryEquationValue(const TEquation<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>& equation)
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryEquationValue(const TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>& equation)
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+TBaseFloatAffine<TypeExecutionPath>::queryEquationValue(const TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>& equation)
+#endif
+{  typename inherited::DebugStream out;
+   BuiltReal::WriteParameters defaultParams;
+   equation.write(out, defaultParams.setDecimal());
+   static std::string result;
+   result = out.content();
+   return result.c_str();
+}
+
+template <class TypeExecutionPath>
+const char*
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryEquationValueAsInterval(const TEquation<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>& equation)
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryEquationValueAsInterval(const TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>& equation)
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+TBaseFloatAffine<TypeExecutionPath>::queryEquationValueAsInterval(const TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>& equation)
+#endif
+{  typename inherited::DebugStream out;
+   BuiltReal min, max;
+   equation.retrieveBound(min, max, false /* hasExternalCoefficient */);
+   BuiltReal::WriteParameters defaultParams;
+   out.put('[');
+   min.write(out, defaultParams);
+   out.writesome(", ");
+   max.write(out, defaultParams);
+   out.put(']');
+   static std::string result;
+   result = out.content();
+   return result.c_str();
+}
+
+template <class TypeExecutionPath>
+const char*
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryBaseZonotopeValue(const TBaseFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>& zonotope)
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryBaseZonotopeValue(const TGBaseFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>& zonotope)
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+TBaseFloatAffine<TypeExecutionPath>::queryBaseZonotopeValue(const TGBaseFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>& zonotope)
+#endif
+{  typename inherited::DebugStream out;
+   zonotope.writeZonotope(out);
+   static std::string result;
+   result = out.content();
+   return result.c_str();
+}
+
+template <class TypeExecutionPath>
+const char*
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryBaseZonotopeValueAsInterval(const TBaseFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>& zonotope)
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryBaseZonotopeValueAsInterval(const TGBaseFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>& zonotope)
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+TBaseFloatAffine<TypeExecutionPath>::queryBaseZonotopeValueAsInterval(const TGBaseFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>& zonotope)
+#endif
+{  typename inherited::DebugStream out;
+   zonotope.writeInterval(out);
+   static std::string result;
+   result = out.content();
+   return result.c_str();
+}
+
+template <class TypeExecutionPath>
+const char*
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryFloatZonotopeValue(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 23, 8, float>& zonotope)
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryFloatZonotopeValue(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 23, 8, float>& zonotope)
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+TBaseFloatAffine<TypeExecutionPath>::queryFloatZonotopeValue(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 23, 8, float>& zonotope)
+#endif
+{  typename inherited::DebugStream out;
+   zonotope.writeZonotope(out);
+   static std::string result;
+   result = out.content();
+   return result.c_str();
+}
+
+template <class TypeExecutionPath>
+const char*
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryFloatZonotopeValueAsInterval(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 23, 8, float>& zonotope)
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryFloatZonotopeValueAsInterval(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 23, 8, float>& zonotope)
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+TBaseFloatAffine<TypeExecutionPath>::queryFloatZonotopeValueAsInterval(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 23, 8, float>& zonotope)
+#endif
+{  typename inherited::DebugStream out;
+   zonotope.writeInterval(out);
+   static std::string result;
+   result = out.content();
+   return result.c_str();
+}
+
+template <class TypeExecutionPath>
+const char*
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryDoubleZonotopeValue(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 52, 11, double>& zonotope)
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryDoubleZonotopeValue(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 52, 11, double>& zonotope)
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+TBaseFloatAffine<TypeExecutionPath>::queryDoubleZonotopeValue(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 52, 11, double>& zonotope)
+#endif
+{  typename inherited::DebugStream out;
+   zonotope.writeZonotope(out);
+   static std::string result;
+   result = out.content();
+   return result.c_str();
+}
+
+template <class TypeExecutionPath>
+const char*
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryDoubleZonotopeValueAsInterval(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 52, 11, double>& zonotope)
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryDoubleZonotopeValueAsInterval(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 52, 11, double>& zonotope)
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+TBaseFloatAffine<TypeExecutionPath>::queryDoubleZonotopeValueAsInterval(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 52, 11, double>& zonotope)
+#endif
+{  typename inherited::DebugStream out;
+   zonotope.writeInterval(out);
+   static std::string result;
+   result = out.content();
+   return result.c_str();
+}
+
+template <class TypeExecutionPath>
+const char*
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>& zonotope)
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>& zonotope)
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>& zonotope)
+#endif
+{  typename inherited::DebugStream out;
+   zonotope.writeZonotope(out);
+   static std::string result;
+   result = out.content();
+   return result.c_str();
+}
+
+template <class TypeExecutionPath>
+const char*
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>& zonotope)
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>& zonotope)
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>& zonotope)
+#endif
+{  typename inherited::DebugStream out;
+   zonotope.writeInterval(out);
+   static std::string result;
+   result = out.content();
+   return result.c_str();
+}
+
+template <class TypeExecutionPath>
+template <class TypeFloatAffine>
+void
+TBaseFloatAffine<TypeExecutionPath>::assumeCompare(const TypeFloatAffine& source, bool isOnlyInterval) const {
+   BaseExecutionPath::Mode mode = inherited::getMode();
+   if (mode == BaseExecutionPath::MRealAndImplementation) {
+      inherited::assumeDomain("i=[");
+      typename TypeFloatAffine::BuiltDouble minImplementation, maxImplementation;
+      typename TypeFloatAffine::BuiltDouble::ReadParameters defaultDoubleParams;
+#ifndef FLOAT_LONG_WRITE
+      defaultDoubleParams.setNative();
+      inherited::assumeDomainUntil(']');
+      inherited::assumeDomain("{[");
+#endif
+      inherited::readValueFromInput(minImplementation, defaultDoubleParams);
+      inherited::assumeDomain(", ");
+      inherited::readValueFromInput(maxImplementation, defaultDoubleParams);
+      inherited::assumeDomainUntil(']');
+#ifndef FLOAT_LONG_WRITE
+      inherited::assumeDomain('}');
+#endif
+      if (!(minImplementation == source.getMinImplementation())
+            || !(maxImplementation == source.getMaxImplementation())) {
+         if ((!minImplementation.isNaN() || !source.getMinRelativeError().isNaN())
+               && (!maxImplementation.isNaN() || !source.getMaxRelativeError().isNaN())) {
+            typename TypeFloatAffine::BuiltDouble::WriteParameters params;
+            inherited::emitErrorReadValueFromInput("float implementation is not as expected",
+                  source.getMinImplementation(), source.getMaxImplementation(),
+                     "current implementation",
+                  minImplementation, maxImplementation, "expected implementation",
+                  params.setDecimal());
+         };
+      };
+
+      BuiltReal min, max;
+      BuiltReal::ReadParameters defaultRealParams;
+      BaseExecutionPath::QuickDouble::ReadParameters quickParams;
+      if (!source.hasTopReal()) {
+         BuiltReal minReal, maxReal;
+         source.getRealDomain().retrieveBound(minReal, maxReal, false /* hasExternalCoefficient */);
+         inherited::assumeDomain(", r=[");
+#ifndef FLOAT_LONG_WRITE
+         {  BaseExecutionPath::QuickDouble min, max;
+            inherited::readValueFromInput(min, quickParams);
+            inherited::assumeDomain(", ");
+            inherited::readValueFromInput(max, quickParams);
+         }
+         // if (!(QuickDouble(minReal) == min) || !(QuickDouble(maxReal) == max)) {
+         //    QuickDouble::WriteParameters params;
+         //    emitErrorReadValueFromInput("real is not as expected",
+         //          min, max, "current real value",
+         //          QuickDouble(minReal), QuickDouble(maxReal), "expected real",
+         //          params.setDecimal());
+         // };
+#else
+         inherited::readValueFromInput(min, defaultRealParams);
+         inherited::assumeDomain(", ");
+         inherited::readValueFromInput(max, defaultRealParams);
+         if (!(minReal == min) || !(maxReal == max)) {
+            if ((!minReal.isNaN() || !min.isNaN())
+                  && (!maxReal.isNaN() || !max.isNaN())) {
+               BuiltReal::WriteParameters params;
+               TypeExecutionPath::emitErrorReadValueFromInput("real is not as expected",
+                     min, max, "current real value",
+                     minReal, maxReal, "expected real",
+                     params.setDecimal());
+            };
+         };
+#endif
+         inherited::assumeDomain(']');
+         if (!isOnlyInterval) {
+            inherited::assumeDomain('{');
+            inherited::assumeDomainUntil('}');
+         }
+      }
+      else
+         inherited::assumeDomain(", r=[-oo, +oo]");
+
+      if (!source.hasTopError()) {
+         BuiltReal minError, maxError;
+         source.getError().retrieveBound(minError, maxError, false /* hasExternalCoefficient */);
+         inherited::assumeDomain(", e=[");
+         min.clear(); max.clear();
+#ifndef FLOAT_LONG_WRITE
+         {  BaseExecutionPath::QuickDouble min, max;
+            inherited::readValueFromInput(min, quickParams);
+            inherited::assumeDomain(", ");
+            inherited::readValueFromInput(max, quickParams);
+         }
+         // if (!(QuickDouble(minError) == min) || !(QuickDouble(maxError) == max)) {
+         //    QuickDouble::WriteParameters params;
+         //    emitErrorReadValueFromInput("error is not as expected",
+         //          min, max, "current error",
+         //          QuickDouble(minError), QuickDouble(maxError), "expected error",
+         //          params.setDecimal());
+         // };
+#else
+         inherited::readValueFromInput(min, defaultRealParams);
+         inherited::assumeDomain(", ");
+         inherited::readValueFromInput(max, defaultRealParams);
+         if (!(minError == min) || !(maxError == max)) {
+            if ((!minError.isNaN() || !min.isNaN())
+                  && (!maxError.isNaN() || !max.isNaN())) {
+               BuiltReal::WriteParameters params;
+               TypeExecutionPath::emitErrorReadValueFromInput("error is not as expected",
+                     min, max, "current error",
+                     minError, maxError, "expected error",
+                     params.setDecimal());
+            };
+         };
+#endif
+         inherited::assumeDomain(']');
+         if (!isOnlyInterval) {
+            inherited::assumeDomain('{');
+            inherited::assumeDomainUntil('}');
+         }
+
+         inherited::assumeDomain(", re=[");
+         minImplementation.clear(); maxImplementation.clear();
+#ifndef FLOAT_LONG_WRITE
+         inherited::assumeDomainUntil(']');
+         inherited::assumeDomain("{[");
+#endif
+         inherited::readValueFromInput(minImplementation, defaultDoubleParams);
+         inherited::assumeDomain(", ");
+         inherited::readValueFromInput(maxImplementation, defaultDoubleParams);
+         inherited::assumeDomainUntil(']');
+#ifndef FLOAT_LONG_WRITE
+         inherited::assumeDomain('}');
+#endif
+         if (!(minImplementation == source.getMinRelativeError())
+               || !(maxImplementation == source.getMaxRelativeError())) {
+            if ((!minImplementation.isNaN() || !source.getMinRelativeError().isNaN())
+                  && (!maxImplementation.isNaN() || !source.getMaxRelativeError().isNaN())) {
+               typename TypeFloatAffine::BuiltDouble::WriteParameters params;
+               inherited::emitErrorReadValueFromInput("relative error is not as expected",
+                     source.getMinRelativeError(), source.getMaxRelativeError(), "current relative error",
+                     minImplementation, maxImplementation, "expected relative error",
+                     params.setDecimal());
+            };
+         };
+      }
+      else
+         inherited::assumeDomain(", e=[-oo, +oo], re=[-oo, +oo]");
+      inherited::assumeDomain('\n');
+   }
+   else {
+      if (mode == BaseExecutionPath::MOnlyReal) {
+         if (!source.hasTopReal()) {
+            inherited::assumeDomain("i=xxx, r=[");
+            BuiltReal minReal, maxReal;
+            source.getRealDomain().retrieveBound(minReal, maxReal, false /* hasExternalCoefficient */);
+#ifndef FLOAT_LONG_WRITE
+            BaseExecutionPath::QuickDouble min, max;
+            BaseExecutionPath::QuickDouble::ReadParameters quickParams;
+            inherited::readValueFromInput(min, quickParams);
+            inherited::assumeDomain(", ");
+            inherited::readValueFromInput(max, quickParams);
+            // if (!(QuickDouble(minReal) == min) || !(QuickDouble(maxReal) == max)) {
+            //    QuickDouble::WriteParameters params;
+            //    emitErrorReadValueFromInput("real is not as expected",
+            //          min, max, "current real value",
+            //          QuickDouble(minReal), QuickDouble(maxReal), "expected real",
+            //          params.setDecimal());
+            // };
+#else
+            BuiltReal min, max;
+            BuiltReal::ReadParameters defaultRealParams;
+            inherited::readValueFromInput(min, defaultRealParams);
+            inherited::assumeDomain(", ");
+            inherited::readValueFromInput(max, defaultRealParams);
+            if (!(minReal == min) || !(maxReal == max)) {
+               if ((!minReal.isNaN() || !min.isNaN())
+                     && (!maxReal.isNaN() || !max.isNaN())) {
+                  BuiltReal::WriteParameters params;
+                  TypeExecutionPath::emitErrorReadValueFromInput("real is not as expected",
+                        min, max, "current real value",
+                        minReal, maxReal, "expected real",
+                        params.setDecimal());
+               };
+            };
+#endif
+            inherited::assumeDomain(']');
+            if (!isOnlyInterval) {
+               inherited::assumeDomain('{');
+               inherited::assumeDomainUntil('}');
+            }
+         }
+         else
+            inherited::assumeDomain("i=xxx, r=[-oo, +oo]");
+         inherited::assumeDomain(", e=xxx, re=xxx");
+      }
+      else {
+         inherited::assumeDomain("i=[");
+         typename TypeFloatAffine::BuiltDouble minImplementation, maxImplementation;
+         typename TypeFloatAffine::BuiltDouble::ReadParameters defaultDoubleParams;
+#ifndef FLOAT_LONG_WRITE
+         defaultDoubleParams.setNative();
+         inherited::assumeDomainUntil(']');
+         inherited::assumeDomain("{[");
+#endif
+         inherited::readValueFromInput(minImplementation, defaultDoubleParams);
+         inherited::assumeDomain(", ");
+         inherited::readValueFromInput(maxImplementation, defaultDoubleParams);
+         inherited::assumeDomainUntil(']');
+#ifndef FLOAT_LONG_WRITE
+         inherited::assumeDomain('}');
+#endif
+         if (!(minImplementation == source.getMinImplementation())
+               || !(maxImplementation == source.getMaxImplementation())) {
+            if ((!minImplementation.isNaN() || !source.getMinImplementation().isNaN())
+                  && (!maxImplementation.isNaN() || !source.getMaxImplementation().isNaN())) {
+               typename TypeFloatAffine::BuiltDouble::WriteParameters params;
+               inherited::emitErrorReadValueFromInput("float implementation is not as expected",
+                     source.getMinImplementation(), source.getMaxImplementation(), "current implementation",
+                     minImplementation, maxImplementation, "expected implementation",
+                     params.setDecimal());
+            };
+         };
+         inherited::assumeDomain(", r=xxx, e=xxx, re=xxx");
+      }
+      inherited::assumeDomain('\n');
+   };
+}
+
+template <class TypeExecutionPath>
+template <class TypeFloatAffine>
+void
+TBaseFloatAffine<TypeExecutionPath>::writeCompare(const TypeFloatAffine& source, bool isOnlyInterval) const {
+   BaseExecutionPath::Mode mode = inherited::getMode();
+   if (mode == BaseExecutionPath::MRealAndImplementation) {
+      inherited::writeDomain("i=[");
+#ifndef FLOAT_LONG_WRITE
+      BaseExecutionPath::QuickDouble::WriteParameters quickParams;
+      quickParams.setDecimal();
+      {  inherited::writeValueToOutput(BaseExecutionPath::QuickDouble(source.getMinImplementation()), quickParams);
+         inherited::writeDomain(", ");
+         inherited::writeValueToOutput(BaseExecutionPath::QuickDouble(source.getMaxImplementation()), quickParams);
+      }
+#else
+      typename TypeFloatAffine::BuiltDouble::WriteParameters defaultDoubleParams;
+      defaultDoubleParams.setDecimal();
+      inherited::writeValueToOutput(source.getMinImplementation(), defaultDoubleParams);
+      inherited::writeDomain(", ");
+      inherited::writeValueToOutput(source.getMaxImplementation(), defaultDoubleParams);
+#endif
+      inherited::writeDomain(']');
+#ifndef FLOAT_LONG_WRITE
+      inherited::writeDomain("{[");
+      typename TypeFloatAffine::BuiltDouble::WriteParameters defaultDoubleParams;
+      defaultDoubleParams.setNative();
+      inherited::writeValueToOutput(source.getMinImplementation(), defaultDoubleParams);
+      inherited::writeDomain(", ");
+      inherited::writeValueToOutput(source.getMaxImplementation(), defaultDoubleParams);
+      inherited::writeDomain("]}");
+#endif
+
+      BuiltReal::WriteParameters defaultRealParams;
+      if (!source.hasTopReal()) {
+         BuiltReal minReal, maxReal;
+         source.getRealDomain().retrieveBound(minReal, maxReal, false /* hasExternalCoefficient */);
+         inherited::writeDomain(", r=[");
+#ifndef FLOAT_LONG_WRITE
+         {  inherited::writeValueToOutput(BaseExecutionPath::QuickDouble(minReal), quickParams);
+            inherited::writeDomain(", ");
+            inherited::writeValueToOutput(BaseExecutionPath::QuickDouble(maxReal), quickParams);
+         }
+         defaultRealParams.setNative();
+#else
+         defaultRealParams.setDecimal();
+         inherited::writeValueToOutput(minReal, defaultRealParams);
+         inherited::writeDomain(", ");
+         inherited::writeValueToOutput(maxReal, defaultRealParams);
+#endif
+         inherited::writeDomain(']');
+         if (!isOnlyInterval) {
+            inherited::writeDomain('{');
+            inherited::writeValueToOutput(source.getRealDomain(), defaultRealParams);
+            inherited::writeDomain('}');
+         }
+      }
+      else
+         inherited::writeDomain(", r=[-oo, +oo]");
+
+      if (!source.hasTopError()) {
+         BuiltReal minError, maxError;
+         source.getError().retrieveBound(minError, maxError, false /* hasExternalCoefficient */);
+         inherited::writeDomain(", e=[");
+#ifndef FLOAT_LONG_WRITE
+         {  inherited::writeValueToOutput(BaseExecutionPath::QuickDouble(minError), quickParams);
+            inherited::writeDomain(", ");
+            inherited::writeValueToOutput(BaseExecutionPath::QuickDouble(maxError), quickParams);
+         }
+#else
+         inherited::writeValueToOutput(minError, defaultRealParams);
+         inherited::writeDomain(", ");
+         inherited::writeValueToOutput(maxError, defaultRealParams);
+#endif
+         inherited::writeDomain(']');
+         if (!isOnlyInterval) {
+            inherited::writeDomain('{');
+            inherited::writeValueToOutput(source.getError(), defaultRealParams);
+            inherited::writeDomain('}');
+         }
+
+         inherited::writeDomain(", re=[");
+#ifndef FLOAT_LONG_WRITE
+         {  inherited::writeValueToOutput(BaseExecutionPath::QuickDouble(source.getMinRelativeError()), quickParams);
+            inherited::writeDomain(", ");
+            inherited::writeValueToOutput(BaseExecutionPath::QuickDouble(source.getMaxRelativeError()), quickParams);
+         }
+#else
+         inherited::writeValueToOutput(source.getMinRelativeError(), defaultDoubleParams);
+         inherited::writeDomain(", ");
+         inherited::writeValueToOutput(source.getMaxRelativeError(), defaultDoubleParams);
+#endif
+         inherited::writeDomain(']');
+#ifndef FLOAT_LONG_WRITE
+         inherited::writeDomain("{[");
+         inherited::writeValueToOutput(source.getMinRelativeError(), defaultDoubleParams);
+         inherited::writeDomain(", ");
+         inherited::writeValueToOutput(source.getMaxRelativeError(), defaultDoubleParams);
+         inherited::writeDomain("]}");
+#endif
+      }
+      else
+         inherited::writeDomain(", e=[-oo, +oo], re=[-oo, +oo]");
+
+      inherited::writeDomain('\n');
+   }
+   else {
+      if (mode == BaseExecutionPath::MOnlyReal) {
+         if (!source.hasTopReal()) {
+            inherited::writeDomain("i=xxx, r=[");
+            BuiltReal::WriteParameters defaultRealParams;
+            BuiltReal minReal, maxReal;
+            source.getRealDomain().retrieveBound(minReal, maxReal, false /* hasExternalCoefficient */);
+#ifndef FLOAT_LONG_WRITE
+            BaseExecutionPath::QuickDouble::WriteParameters quickParams;
+            quickParams.setDecimal();
+            {  inherited::writeValueToOutput(BaseExecutionPath::QuickDouble(minReal), quickParams);
+               inherited::writeDomain(", ");
+               inherited::writeValueToOutput(BaseExecutionPath::QuickDouble(maxReal), quickParams);
+            }
+            defaultRealParams.setNative();
+#else
+            defaultRealParams.setDecimal();
+            inherited::writeValueToOutput(minReal, defaultRealParams);
+            inherited::writeDomain(", ");
+            inherited::writeValueToOutput(maxReal, defaultRealParams);
+#endif
+            inherited::writeDomain(']');
+            if (!isOnlyInterval) {
+               inherited::writeDomain('{');
+               inherited::writeValueToOutput(source.getRealDomain(), defaultRealParams);
+               inherited::writeDomain('}');
+            }
+         }
+         else
+            inherited::writeDomain("i=xxx, r=[-oo, +oo]");
+         inherited::writeDomain(", e=xxx, re=xxx");
+      }
+      else { // mode == BaseExecutionPath::MOnlyImplementation
+         inherited::writeDomain("i=[");
+#ifndef FLOAT_LONG_WRITE
+         BaseExecutionPath::QuickDouble::WriteParameters quickParams;
+         quickParams.setDecimal();
+         {  inherited::writeValueToOutput(BaseExecutionPath::QuickDouble(source.getMinImplementation()), quickParams);
+            inherited::writeDomain(", ");
+            inherited::writeValueToOutput(BaseExecutionPath::QuickDouble(source.getMaxImplementation()), quickParams);
+         }
+#else
+         typename TypeFloatAffine::BuiltDouble::WriteParameters defaultDoubleParams;
+         defaultDoubleParams.setDecimal();
+         inherited::writeValueToOutput(source.getMinImplementation(), defaultDoubleParams);
+         inherited::writeDomain(", ");
+         inherited::writeValueToOutput(source.getMaxImplementation(), defaultDoubleParams);
+#endif
+         inherited::writeDomain(']');
+#ifndef FLOAT_LONG_WRITE
+         inherited::writeDomain("{[");
+         typename TypeFloatAffine::BuiltDouble::WriteParameters defaultDoubleParams;
+         defaultDoubleParams.setNative();
+         inherited::writeValueToOutput(source.getMinImplementation(), defaultDoubleParams);
+         inherited::writeDomain(", ");
+         inherited::writeValueToOutput(source.getMaxImplementation(), defaultDoubleParams);
+         inherited::writeDomain("]}");
+#endif
+         inherited::writeDomain(", r=xxx, e=xxx, re=xxx");
+      }
+      inherited::writeDomain('\n');
+   }
+}
+
+template <class TypeExecutionPath>
+template <class TypeFloatAffine>
+void
+TBaseFloatAffine<TypeExecutionPath>::writeBranchCompare(const TypeFloatAffine& source, bool isUnstable) const {
+   if (isUnstable) {
+      BaseExecutionPath::Mode mode = inherited::getMode();
+      if (mode == BaseExecutionPath::MOnlyReal) {
+         inherited::writeDomain("unstable test: (xxx, ");
+         BuiltReal::WriteParameters defaultRealParams;
+         inherited::writeValueToOutput(source.getRealDomain(), defaultRealParams);
+         inherited::writeDomain(", xxx)\n");
+      }
+      else if (mode == BaseExecutionPath::MOnlyImplementation) {
+         inherited::writeDomain("unstable test: (");
+         typename TypeFloatAffine::BuiltDouble::WriteParameters defaultDoubleParams;
+         defaultDoubleParams.setDecimal();
+         inherited::writeValueToOutput(source.getMinImplementation(), defaultDoubleParams);
+         inherited::writeDomain(", ");
+         inherited::writeValueToOutput(source.getMaxImplementation(), defaultDoubleParams);
+         inherited::writeDomain(", xxx, ");
+         BuiltReal::WriteParameters defaultRealParams;
+         inherited::writeValueToOutput(source.getError(), defaultRealParams);
+         inherited::writeDomain(")\n");
+      }
+   };
+}
+
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryDebugRealValue)(const BuiltReal&) = &TBaseFloatAffine<TypeExecutionPath>::queryDebugRealValue;
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryEquationValue)(const TEquation<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>&) = &TBaseFloatAffine<TypeExecutionPath>::queryEquationValue;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryEquationValueAsInterval)(const TEquation<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>&) = &TBaseFloatAffine<TypeExecutionPath>::queryEquationValueAsInterval;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryBaseZonotopeValue)(const TBaseFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>&) = &TBaseFloatAffine<TypeExecutionPath>::queryBaseZonotopeValue;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryBaseZonotopeValueAsInterval)(const TBaseFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>&) = &TBaseFloatAffine<TypeExecutionPath>::queryBaseZonotopeValueAsInterval;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryFloatZonotopeValue)(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 23, 8, float>&) = &TBaseFloatAffine<TypeExecutionPath>::queryFloatZonotopeValue;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryFloatZonotopeValueAsInterval)(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 23, 8, float>&) = &TBaseFloatAffine<TypeExecutionPath>::queryFloatZonotopeValueAsInterval;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryDoubleZonotopeValue)(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 52, 11, double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryDoubleZonotopeValue;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryDoubleZonotopeValueAsInterval)(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 52, 11, double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryDoubleZonotopeValueAsInterval;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValue)(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValueAsInterval)(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval;
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryEquationValue)(const TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>&) = &TBaseFloatAffine<TypeExecutionPath>::queryEquationValue;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryEquationValueAsInterval)(const TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>&) = &TBaseFloatAffine<TypeExecutionPath>::queryEquationValueAsInterval;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryBaseZonotopeValue)(const TGBaseFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>&) = &TBaseFloatAffine<TypeExecutionPath>::queryBaseZonotopeValue;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryBaseZonotopeValueAsInterval)(const TGBaseFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>&) = &TBaseFloatAffine<TypeExecutionPath>::queryBaseZonotopeValueAsInterval;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryFloatZonotopeValue)(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 23, 8, float>&) = &TBaseFloatAffine<TypeExecutionPath>::queryFloatZonotopeValue;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryFloatZonotopeValueAsInterval)(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 23, 8, float>&) = &TBaseFloatAffine<TypeExecutionPath>::queryFloatZonotopeValueAsInterval;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryDoubleZonotopeValue)(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 52, 11, double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryDoubleZonotopeValue;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryDoubleZonotopeValueAsInterval)(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 52, 11, double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryDoubleZonotopeValueAsInterval;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValue)(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValueAsInterval)(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval;
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryEquationValue)(const TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>&) = &TBaseFloatAffine<TypeExecutionPath>::queryEquationValue;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryEquationValueAsInterval)(const TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>&) = &TBaseFloatAffine<TypeExecutionPath>::queryEquationValueAsInterval;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryBaseZonotopeValue)(const TGBaseFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>&) = &TBaseFloatAffine<TypeExecutionPath>::queryBaseZonotopeValue;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryBaseZonotopeValueAsInterval)(const TGBaseFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>&) = &TBaseFloatAffine<TypeExecutionPath>::queryBaseZonotopeValueAsInterval;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryFloatZonotopeValue)(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 23, 8, float>&) = &TBaseFloatAffine<TypeExecutionPath>::queryFloatZonotopeValue;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryFloatZonotopeValueAsInterval)(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 23, 8, float>&) = &TBaseFloatAffine<TypeExecutionPath>::queryFloatZonotopeValueAsInterval;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryDoubleZonotopeValue)(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 52, 11, double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryDoubleZonotopeValue;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryDoubleZonotopeValueAsInterval)(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 52, 11, double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryDoubleZonotopeValueAsInterval;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValue)(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue;
+template <class TypeExecutionPath>
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValueAsInterval)(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval;
+#endif
+
+template <class TypeExecutionPath>
+void
+TBaseFloatAffine<TypeExecutionPath>::retrieveBranch(int cases,
+      BaseExecutionPath::BooleanChoice& realChoice, BaseExecutionPath::BooleanChoice& errorChoice,
+      bool executionResult) const {
+   bool doesChooseDefaultErrorChoice = false;
+   BaseExecutionPath::BooleanChoice defaultErrorChoice = executionResult
+         ? BaseExecutionPath::BCTrue : BaseExecutionPath::BCFalse;
+   if (inherited::fSupportFirstFollowFloat)
+      doesChooseDefaultErrorChoice = true;
+   inherited::followNewBranch(cases, realChoice, errorChoice, doesChooseDefaultErrorChoice,
+         defaultErrorChoice);
+}
+
+
+template <class TypeExecutionPath>
+unsigned
+TBaseFloatAffine<TypeExecutionPath>::getConversionValue(unsigned realNumber, unsigned implementationNumber,
+      unsigned firstReal, unsigned lastReal, unsigned firstImplementation, unsigned lastImplementation,
+      unsigned commonNumber, unsigned firstCommon, unsigned lastCommon, unsigned executionResult,
+      unsigned result, bool realChoice, bool implementationChoice) {
+   unsigned addition;
+   if (realNumber == 0 || implementationNumber == 0) {
+      if (implementationNumber != 0) {
+         if (!inherited::fSupportFirstFollowFloat)
+            addition = result + firstImplementation;
+         else
+            addition = (result == 0)
+               ? executionResult : ((result + firstImplementation < executionResult)
+               ? (result + firstImplementation)
+               : ((result+1) + firstImplementation));
+      }
+      else {
+         if (!inherited::fSupportFirstFollowFloat)
+            addition = result + firstReal;
+         else
+            addition = (result == 0)
+               ? executionResult : ((result + firstReal < executionResult)
+               ? (result + firstReal)
+               : ((result+1) + firstReal));
+      };
+   }
+   else if (realNumber == 1 || implementationNumber == 1) {
+      if (implementationNumber > 1) { // realNumber == 1
+         if (result == 0) {
+            if (commonNumber == 1) {
+               AssumeCondition(firstCommon == firstReal)
+               addition = firstCommon;
+            }
+            else { // commonNumber = 0
+               if (!inherited::fSupportFirstFollowFloat)
+                  addition = implementationChoice ? firstImplementation : firstReal;
+               else
+                  addition = implementationChoice ? executionResult : firstReal;
+            };
+         }
+         else { // result > 0
+            AssumeCondition(implementationChoice && !realChoice)
+            addition = firstImplementation + result;
+            if (commonNumber == 1 && addition < firstCommon)
+               --addition;
+            else if (inherited::fSupportFirstFollowFloat) {
+               if (commonNumber == 0 && addition <= executionResult)
+                  --addition;
+            };
+         };
+      }
+      else { // implementationNumber == 1 && realNumber >= 1
+         if (result == 0) {
+            if (commonNumber == 1) {
+               AssumeCondition(firstCommon == firstImplementation)
+               addition = firstCommon;
+            }
+            else {
+               if (!inherited::fSupportFirstFollowFloat)
+                  addition = implementationChoice ? firstImplementation : firstReal;
+               else
+                  addition = implementationChoice ? executionResult : firstReal;
+                  // if (firstReal <= executionResult && executionResult <= lastReal)
+                  //    addition = executionResult;
+                  // else
+                  //    addition = firstReal;
+            };
+         }
+         else { // result > 0
+            AssumeCondition(realChoice && !implementationChoice)
+            addition = firstReal + result;
+            if (commonNumber == 1 && addition < firstCommon)
+               --addition;
+         };
+      }
+   }
+   else { // realNumber > 1 && implementationNumber > 1
+      if (realChoice && implementationChoice) {
+         AssumeCondition(result < commonNumber)
+         if (!inherited::fSupportFirstFollowFloat)
+            addition = firstCommon + result;
+         else {
+            if (firstCommon <= executionResult && executionResult <= lastCommon) {
+               if (result == 0)
+                  addition = executionResult;
+               else { // result > 0
+                  addition = firstCommon + result;
+                  if (addition <= executionResult)
+                     --addition;
+               }
+            }
+            else
+               addition = firstCommon + result;
+         };
+      }
+      else {
+         AssumeCondition(realChoice != implementationChoice)
+         if (realChoice)
+            addition = firstReal + result;
+         else
+            addition = firstImplementation + result;
+      }
+   };
+   return addition;
+}
+
+template <class TypeExecutionPath>
+unsigned
+TBaseFloatAffine<TypeExecutionPath>::getConversionBranch(unsigned conversionNumber, unsigned firstReal,
+      unsigned lastReal, unsigned firstImplementation, unsigned lastImplementation,
+      bool& realChoice, bool& implementationChoice, unsigned executionResult, unsigned& alternativeResult) const {
+   unsigned firstCommon = firstReal < firstImplementation ? firstImplementation : firstReal;
+   unsigned lastCommon = lastReal < lastImplementation ? lastReal : lastImplementation;
+   unsigned commonNumber = (firstCommon <= lastCommon) ? (lastCommon-firstCommon+1) : 0;
+   unsigned realNumber = (firstReal <= lastReal) ? (lastReal-firstReal+1) : 0;
+   unsigned implementationNumber = (firstImplementation <= lastImplementation) ? (lastImplementation - firstImplementation+1) : 0;
+
+   unsigned addition = 0;
+   alternativeResult = ~0U;
+   unsigned result = inherited::followNewConversionBranch(conversionNumber,
+         realChoice, implementationChoice, realNumber, implementationNumber, commonNumber,
+         firstReal-firstCommon, firstImplementation-firstCommon, alternativeResult);
+   addition = getConversionValue(realNumber, implementationNumber, firstReal, lastReal,
+         firstImplementation, lastImplementation, commonNumber, firstCommon, lastCommon,
+         executionResult, result, realChoice, implementationChoice);
+   if (realChoice != implementationChoice)
+      alternativeResult = getConversionValue(realNumber, implementationNumber, firstReal, lastReal,
+         firstImplementation, lastImplementation, commonNumber, firstCommon, lastCommon,
+         executionResult, alternativeResult, !realChoice, !implementationChoice);
+   return addition;
+}
+
+template <class TypeExecutionPath, int USizeMantissa, int USizeExponent, typename TypeImplementation>
+const char*
+TFloatZonotope<TypeExecutionPath, USizeMantissa, USizeExponent, TypeImplementation>::queryDebugValue() const {
+   typename TypeExecutionPath::DebugStream out;
+   inherited::writeZonotope(out);
+   static std::string result;
+   result = out.content();
+   return result.c_str();
+}
+
+template <class TypeExecutionPath, int USizeMantissa, int USizeExponent, typename TypeImplementation>
+const char*
+TFloatZonotope<TypeExecutionPath, USizeMantissa, USizeExponent, TypeImplementation>::queryLightDebugValue() const {
+   typename TypeExecutionPath::DebugStream out;
+   inherited::writeInterval(out);
+   static std::string result;
+   result = out.content();
+   return result.c_str();
+}
+
+template <class TypeExecutionPath, int USizeMantissa, int USizeExponent, typename TypeImplementation>
+typename TFloatZonotope<TypeExecutionPath, USizeMantissa, USizeExponent, TypeImplementation>::PQueryDebugValue
+TFloatZonotope<TypeExecutionPath, USizeMantissa, USizeExponent, TypeImplementation>::pqueryDebugValue
+   = &TFloatZonotope<TypeExecutionPath, USizeMantissa, USizeExponent, TypeImplementation>::queryDebugValue;
+
+template <class TypeExecutionPath, int USizeMantissa, int USizeExponent, typename TypeImplementation>
+typename TFloatZonotope<TypeExecutionPath, USizeMantissa, USizeExponent, TypeImplementation>::PQueryDebugValue
+TFloatZonotope<TypeExecutionPath, USizeMantissa, USizeExponent, TypeImplementation>::pqueryLightDebugValue
+   = &TFloatZonotope<TypeExecutionPath, USizeMantissa, USizeExponent, TypeImplementation>::queryLightDebugValue;
+
+template <class TypeExecutionPath>
+TMergeBranches<TypeExecutionPath>::TMergeBranches(const char* file, int line)
+   :  fActive((inherited::getMode() != BaseExecutionPath::MRealAndImplementation)
+         && inherited::isSynchronizedWith(file, line)),
+      fIsTableSynchronized(false),
+      uNumberOfFloatBranches(0), uNumberOfRealBranches(0),
+      uFloatSelection(0), uRealSelection(0) {
+   if (fActive) {
+      mtMergeTable = inherited::initialMergeTable();
+      if (inherited::doesFollowFlow())
+         inherited::readUntilBranchNumbers(uNumberOfFloatBranches, uNumberOfRealBranches);
+
+      inherited::selectBranch(uFloatSelection, uRealSelection,
+            uNumberOfFloatBranches, uNumberOfRealBranches);
+      if (inherited::getMode() == BaseExecutionPath::MOnlyImplementation)
+         ++uNumberOfFloatBranches;
+      else
+         ++uNumberOfRealBranches;
+      if (inherited::hasOutput())
+         inherited::writeBranchNumbers(uNumberOfFloatBranches, uNumberOfRealBranches);
+   }
+   else
+      inherited::clearSynchronizationBranches();
+}
+
+template <class TypeExecutionPath>
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TMergeBranches<TypeExecutionPath>&
+TMergeBranches<TypeExecutionPath>::operator<<(TFloatZonotope<TypeExecutionPath, USizeMantissa, USizeExponent, TypeImplementation>& value) {
+   if (!fActive)
+      return *this;
+   if (!fIsTableSynchronized) {
+      mtMergeTable.setAfterMerge(inherited::symbolsManager());
+      fIsTableSynchronized = true;
+   };
+
+   typedef typename TFloatZonotope<TypeExecutionPath, USizeMantissa, USizeExponent, TypeImplementation>::BuiltDouble BuiltDouble;
+   BaseExecutionPath::Mode mode = inherited::getMode();
+   AssumeCondition(mode != BaseExecutionPath::MRealAndImplementation)
+   value.updateLocalState();
+
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+   typedef TEquation<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath> > Equation;
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+   typedef TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath> > Equation;
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+   typedef TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath> > Equation;
+#endif
+   if (inherited::doesFollowFlow()) {
+      int floatBranchesToRead = uNumberOfFloatBranches;
+      int realBranchesToRead = uNumberOfRealBranches;
+      if (mode == BaseExecutionPath::MOnlyImplementation)
+         --floatBranchesToRead;
+      else
+         --realBranchesToRead;
+      while (floatBranchesToRead > 0 || realBranchesToRead > 0) {
+         bool hasImplementation = false;
+         typename BuiltDouble::ReadParameters defaultImplParams;
+         typename BuiltDouble::WriteParameters writeImplParams;
+         writeImplParams.setDecimal();
+         typename Equation::ReadParameters defaultEquationParams(inherited::symbolsManager(), mtMergeTable);
+         defaultEquationParams.setReadDefinition();
+         typename Equation::WriteParameters writeEquationParams;
+         writeEquationParams.setWriteDefinition().setDecimal();
+         bool doesMergeValue = false;
+
+         inherited::readSynchronizedValue(floatBranchesToRead, uFloatSelection, uNumberOfFloatBranches,
+               realBranchesToRead, uRealSelection, uNumberOfRealBranches, mode, value,
+               defaultImplParams, writeImplParams, defaultEquationParams, writeEquationParams,
+               ahluHighLevelUpdates, hasImplementation, doesMergeValue);
+      };
+   };
+
+   typename Equation::WriteParameters equationWriteParams;
+   equationWriteParams.setWriteDefinition().setDecimal();
+   typename BuiltDouble::WriteParameters implWriteParams;
+   implWriteParams.setDecimal();
+   inherited::writeSynchronizedValue(mode, value, implWriteParams, equationWriteParams);
+   return *this;
+}
+
+template <class TypeExecutionPath>
+bool
+TMergeBranches<TypeExecutionPath>::operator<<(BaseExecutionPath::end) {
+   if (!fActive) {
+      inherited::notifyPossibleMerge();
+      return true;
+   };
+   // inherited::getMode() != BaseExecutionPath::MRealAndImplementation
+   if (!inherited::synchronizeCurrentFlow(uFloatSelection, uRealSelection,
+         uNumberOfFloatBranches, uNumberOfRealBranches))
+      return false;
+   int count = ahluHighLevelUpdates.count();
+   for (int index = 0; index < count; ++index) {
+      const auto& update = ahluHighLevelUpdates[index];
+      update.equation->addHighLevel(update.highLevelError, inherited::symbolsManager(),
+            false /* hasExternalCoefficient */);
+   };
+   ahluHighLevelUpdates.removeAll();
+   return true;
+}
+
+}} // end of namespace NumericalDomains::DAffine
+

@@ -1,0 +1,121 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Abstract collections
+// File      : ELMCollection.incc
+// Description :
+//   Implementation of element typing in collections.
+//
+
+#include "Collection/ELMCollection.incheader"
+
+#ifndef DefTypeInheritedCollection
+
+#ifdef DefTypeSorted
+bool
+DefTypeCollection::locateOrAdd(DefTypeElement* element, AddMode dupMode) {
+   TPassPointer<DefTypeCursor> cursor = newCursor();
+   bool result = false;
+   if ((result = DefTypeFinal _locate(*DefTypeCCastToCollectHandler(element), *cursor,
+                          ExtendedLocateParameters(RPBefore))) == false)
+       DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+           ExtendedInsertionParameters(dupMode, RMRemove, RPAfter), cursor.key());
+   return result;
+}
+
+bool
+DefTypeCollection::locateOrAdd(DefTypeElement* element, DefTypeCursor& cursor,
+      AddMode dupMode) {
+   bool result = false;
+   if ((result = DefTypeFinal _locate(*DefTypeCCastToCollectHandler(element), cursor,
+                          ExtendedLocateParameters(RPBefore))) == false)
+       DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+           ExtendedInsertionParameters(dupMode, RMRemove, RPAfter), &cursor);
+   return result;
+}
+
+bool
+DefTypeCollection::locateOrAddCopy(const DefTypeElement& element) {
+   TPassPointer<DefTypeCursor> cursor = newCursor();
+   bool result = false;
+   if ((result = DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element), *cursor,
+                          ExtendedLocateParameters(RPBefore))) == false)
+       DefTypeFinal _add(&DefTypeElement::castToCopyHandler(const_cast<DefTypeElement&>(element)),
+          ExtendedInsertionParameters(AMDuplicate, RMRemove, RPAfter), cursor.key());
+   return result;
+}
+
+bool
+DefTypeCollection::locateOrAddCopy(const DefTypeElement& element, DefTypeCursor& cursor) {
+   bool result = false;
+   if ((result = DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element), cursor,
+                          ExtendedLocateParameters(RPBefore))) == false)
+       DefTypeFinal _add(&DefTypeElement::castToCopyHandler(const_cast<DefTypeElement&>(element)),
+          ExtendedInsertionParameters(AMDuplicate, RMRemove, RPAfter), &cursor);
+   return result;
+}
+
+void
+DefTypeCollection::addOrReplaceAt(DefTypeCursor& cursor, DefTypeElement* element,
+      AddMode dupMode=AMNoDuplicate, RemoveMode freeMode=RMRemove, RemoveMode remModeOnError=RMRemove) {
+   ComparisonResult result = CRNonComparable;
+   try {
+      result = DefTypeFinal _compareElement(cursor.elementAt(), *element);
+      AssumeCondition(result != CRNonComparable)
+   }
+   catch (...) {
+      if ((remModeOnError == RMFree) && element)
+         delete element;
+      throw;
+   };
+   if ((result == CRLess) || (result == CRGreater))
+      DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+         ExtendedInsertionParameters(dupMode, remModeOnError, result == CRLess ? RPBefore : RPAfter),
+         &cursor);
+   else
+      DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+         ExtendedReplaceParameters().setDuplicate().setFreeOnError().setFree(freeMode),
+         &cursor);
+}
+
+void
+DefTypeCollection::addCopyOrReplaceAt(DefTypeCursor& cursor, const DefTypeElement& element) {
+   ComparisonResult result = DefTypeFinal _compareElement(cursor.elementAt(), *element);
+   AssumeCondition(result != CRNonComparable)
+   if ((result == CRLess) || (result == CRGreater))
+      DefTypeFinal _add(&DefTypeElement::castToCopyHandler(const_cast<DefTypeElement&>(element)),
+         ExtendedInsertionParameters(AMDuplicate, RMRemove, result == CRLess ? RPBefore : RPAfter),
+         &cursor);
+   else
+      DefTypeFinal _replace(&DefTypeElement::castToCopyHandler(const_cast<DefTypeElement&>(element)),
+         ExtendedReplaceParameters(AMDuplicate, RMRemove, RMFree), &cursor);
+}
+
+#endif
+
+#endif // DefTypeInheritedCollection
+
+#include "Collection/ELMCollection.incfoot"
+

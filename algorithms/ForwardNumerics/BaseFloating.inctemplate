@@ -1,0 +1,4471 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2005-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : ForwardNumerics
+// Unit      : Floating
+// File      : BaseFloating.inctemplate
+// Description :
+//   Implementation of a class of floating points with unbound size.
+//
+
+#ifndef DefineGeneric
+
+#define DefineTypeMantissaAndReadTemplateHeader(TypeMantissa, TypeReadParameters) \
+   template <class TypeMantissa, class TypeReadParameters>
+#define DefineBaseType                                     \
+   unsigned int
+#define DefineBaseTypeConstReference                       \
+   unsigned int
+#define DefineBuiltAccess BuiltAccess
+#define DefineMantissaAndExponentTemplateHeader(SizeMantissa, SizeExponent) \
+   template <int SizeMantissa, int SizeExponent>
+#define DefineMantissaAndExponentTemplateParameters(SizeMantissa, SizeExponent) \
+   <SizeMantissa, SizeExponent>
+#define DefineSizeofBaseTypeInBits                         \
+   (sizeof(unsigned int)*8)
+#define DefineBuiltDoubleTraits BuiltDoubleTraits
+#define DefineBuiltDouble TBuiltDouble
+#define DefineReadDouble TReadDouble
+#define DefineRightShift DDouble::BuiltAccess::trightShift
+
+#else
+
+#define DefineTypeMantissaAndReadTemplateHeader(TypeMantissa, TypeReadParameters) \
+   template <class BaseStoreTraits, class TypeMantissa, class TypeReadParameters>
+#define DefineBaseType                                     \
+   typename BaseStoreTraits::BaseType
+#define DefineBaseTypeConstReference                       \
+   typename BaseStoreTraits::BaseTypeConstReference
+#define DefineBuiltAccess GBuiltAccess
+#define DefineMantissaAndExponentTemplateHeader(SizeMantissa, SizeExponent) \
+   template <class BaseStoreTraits, int SizeMantissa, int SizeExponent>
+#define DefineMantissaAndExponentTemplateParameters(SizeMantissa, SizeExponent) \
+   <BaseStoreTraits, SizeMantissa, SizeExponent>
+#define DefineSizeofBaseTypeInBits                         \
+   BaseStoreTraits::sizeBaseInBits()
+#define DefineBuiltDoubleTraits GBuiltDoubleTraits
+#define DefineBuiltDouble TGBuiltDouble
+#define DefineReadDouble TGReadDouble
+#define DefineRightShift TypeTraits::trightShift
+
+#endif
+
+namespace DDouble {
+
+DefineTypeMantissaAndReadTemplateHeader(TypeMantissa, TypeReadParameters)
+Access::Carry
+DefineBuiltAccess::trightShift(
+#ifdef DefineGeneric
+      BaseStoreTraits,
+#endif
+      TypeMantissa& mantissa, int shift, DefineBaseTypeConstReference value,
+      TypeReadParameters& params, bool isNegative, int bitSizeMantissa) {
+   AssumeCondition((shift >= 0) && (bitSizeMantissa >= shift))
+   bool doesAdd = false;
+   bool isRoundToEven = false;
+   bool isApproximate = false;
+   Access::Carry result;
+   params.clearEffectiveRoundToEven();
+   if (!mantissa.hasZero(shift)) {
+      if (params.isNearestRound()) {
+         if (!params.isApproximate(isNegative ? TypeReadParameters::Down : TypeReadParameters::Up)
+               || !mantissa.hasZero(shift-1))
+            doesAdd = mantissa.cbitArray(shift-1);
+         if (doesAdd && !params.isApproximate() && params.isRoundToEven()) {
+            isRoundToEven = mantissa.hasZero(shift-1) && !params.isApproximate();
+            if (isRoundToEven)
+               params.setEffectiveRoundToEven();
+         };
+      }
+      else if (params.isHighestRound())
+         doesAdd = !isNegative;
+      else if (params.isLowestRound())
+         doesAdd = isNegative;
+      isApproximate = true;
+   };
+   mantissa >>= shift;
+   bool isOddValue = (bitSizeMantissa == shift)
+#ifndef DefineGeneric
+         && (value & 1U);
+#else
+         && (BaseStoreTraits::getBit(value, 0));
+#endif
+   if (doesAdd && ((doesAdd = (!isRoundToEven
+         || (!isOddValue ? mantissa.cbitArray(0): !mantissa.cbitArray(0)))) != false)) {
+      mantissa.inc();
+      if (mantissa.cbitArray(bitSizeMantissa-shift)) {
+         result.carry() = true;
+         mantissa.setFalseBitArray(bitSizeMantissa-shift);
+      };
+   };
+   if (isApproximate) {
+      if (isNegative)
+         params.setApproximate(doesAdd ? TypeReadParameters::Down : TypeReadParameters::Up);
+      else
+         params.setApproximate(doesAdd ? TypeReadParameters::Up : TypeReadParameters::Down);
+   };
+   if (result.hasCarry()) {
+      ++value;
+#ifndef DefineGeneric
+      if ((value == 0U) || ((shift < (int) DefineSizeofBaseTypeInBits) && (value >= (1U << shift))))
+#else
+      typename BaseStoreTraits::BaseType limit = 0x1;
+      BaseStoreTraits::leftShift(limit, shift);
+      if (BaseStoreTraits::isZeroValue(value)
+            || ((shift < (int) DefineSizeofBaseTypeInBits) && (value >= limit)))
+#endif
+         return result;
+      else
+         result.carry() = false;
+   };
+#ifndef DefineGeneric
+   if ((((bitSizeMantissa-1) % DefineSizeofBaseTypeInBits)+1) >= (shift % DefineSizeofBaseTypeInBits))
+      mantissa[(bitSizeMantissa-shift) / DefineSizeofBaseTypeInBits]
+         |= (value << ((bitSizeMantissa-shift) % DefineSizeofBaseTypeInBits));
+   else {
+      mantissa[(bitSizeMantissa-shift) / DefineSizeofBaseTypeInBits]
+         |= (value << (bitSizeMantissa-shift) % DefineSizeofBaseTypeInBits);
+      mantissa[(bitSizeMantissa-shift) / DefineSizeofBaseTypeInBits + 1]
+         = (value >> (DefineSizeofBaseTypeInBits - (bitSizeMantissa-shift) % DefineSizeofBaseTypeInBits));
+   };
+#else
+   BaseStoreTraits::storeIntoHighPart(value,
+      (bitSizeMantissa-shift) % DefineSizeofBaseTypeInBits,
+      mantissa[(bitSizeMantissa-shift) / DefineSizeofBaseTypeInBits]);
+   if ((((bitSizeMantissa-1) % (DefineSizeofBaseTypeInBits))+1)
+         < (shift % (DefineSizeofBaseTypeInBits)))
+      mantissa[(bitSizeMantissa-shift) / DefineSizeofBaseTypeInBits + 1]
+         = BaseStoreTraits::getHighPart(value, DefineSizeofBaseTypeInBits
+            - (bitSizeMantissa-shift) % (DefineSizeofBaseTypeInBits));
+#endif
+   return result;
+}
+
+} // end of namespace DDouble
+
+/***********************************************************************/
+/* Implementation of the template class TBuiltDouble and TGBuiltDouble */
+/***********************************************************************/
+
+DefineMantissaAndExponentTemplateHeader(UBitSizeMantissa, UBitSizeExponent)
+typename DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters(UBitSizeMantissa, UBitSizeExponent)::Exponent
+DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters(UBitSizeMantissa, UBitSizeExponent)::zeroExponent
+   = typename DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters(UBitSizeMantissa, UBitSizeExponent)::Exponent(
+      typename DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters(UBitSizeMantissa, UBitSizeExponent)::Exponent::Zero());
+
+DefineMantissaAndExponentTemplateHeader(UBitSizeMantissa, UBitSizeExponent)
+typename DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters(UBitSizeMantissa, UBitSizeExponent)::Exponent
+DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters(UBitSizeMantissa, UBitSizeExponent)::oneExponent
+   = typename DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters(UBitSizeMantissa, UBitSizeExponent)::Exponent(
+      typename DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters(UBitSizeMantissa, UBitSizeExponent)::Exponent::One());
+
+DefineMantissaAndExponentTemplateHeader(UBitSizeMantissa, UBitSizeExponent)
+typename DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters(UBitSizeMantissa, UBitSizeExponent)::Exponent
+DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters(UBitSizeMantissa, UBitSizeExponent)::minusOneExponent
+   = typename DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters(UBitSizeMantissa, UBitSizeExponent)::Exponent(
+      typename DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters(UBitSizeMantissa, UBitSizeExponent)::Exponent::MinusOne());
+
+DefineMantissaAndExponentTemplateHeader(UBitSizeMantissa, UBitSizeExponent)
+typename DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters(UBitSizeMantissa, UBitSizeExponent)::Exponent
+DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters(UBitSizeMantissa, UBitSizeExponent)::inftyExponent
+   = typename DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters(UBitSizeMantissa, UBitSizeExponent)::Exponent(
+      typename DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters(UBitSizeMantissa, UBitSizeExponent)::Exponent::Max());
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>::DefineBuiltDouble(DefineBaseTypeConstReference value,
+      const thisType* sourceForSizes)
+   :  biMantissa(), biExponent(), fNegative(false) {
+   if (sourceForSizes) {
+      biMantissa.setSize(sourceForSizes->biMantissa.getSize());
+      biExponent.setSize(sourceForSizes->biExponent.getSize());
+   };
+#ifndef DefineGeneric
+   if (value != 0U)
+#else
+   if (!BaseStoreTraits::isZeroValue(value))
+#endif
+   {  
+#ifndef DefineGeneric
+      int logResult = log_base_2(value);
+#else
+      int logResult = BaseStoreTraits::log_base_2(value);
+#endif
+      AssumeCondition(logResult <= bitSizeMantissa())
+      biMantissa = value;
+      biMantissa <<= (bitSizeMantissa()-logResult+1);
+      biExponent = TypeTraits::getZeroExponent(biExponent);
+      biExponent.add(logResult-1);
+   };
+}
+
+template <class TypeTraits>
+void
+DefineBuiltDouble<TypeTraits>::setChunk(const void* chunk, bool isChunkLittleEndian) {
+   biMantissa.clear();
+   biExponent.clear();
+   int sizeMantissa = bitSizeMantissa(), sizeExponent = bitSizeExponent();
+   int byteSizeImplementation = (sizeMantissa + sizeExponent + 1 + 7)/8;
+   typename TypeTraits::CharChunk localChunk;
+   TypeTraits::setChunkSize(byteSizeImplementation);
+   TypeTraits::copyChunk(localChunk, chunk, byteSizeImplementation);
+   bool isBigEndian = DDouble::Access::isBigEndian();
+
+   unsigned char* mask = &localChunk[0];
+   int mantissaIndex = 0,
+       lastMantissaIndex = (sizeMantissa + DefineSizeofBaseTypeInBits - 1)
+            / DefineSizeofBaseTypeInBits - 1;
+   int charInMantissa = 0;
+   if (isBigEndian)
+      charInMantissa = ((DefineSizeofBaseTypeInBits+7)/8 - 1);
+   if (!isChunkLittleEndian)
+      mask += byteSizeImplementation-1;
+
+   int mantissaChar = (sizeMantissa + 7) / 8;
+   for (; mantissaIndex <= lastMantissaIndex; ++mantissaIndex) {
+      int localLimit = (DefineSizeofBaseTypeInBits+7)/8;
+      for (int local = 0; local < localLimit; ++local) {
+         if (mantissaChar == 0)
+            goto LExponent;
+         biMantissa[mantissaIndex] |= ((DefineBaseType) *mask << (charInMantissa*8));
+         if (isBigEndian)
+            --charInMantissa;
+         else
+            ++charInMantissa;
+         if (isChunkLittleEndian)
+            ++mask;
+         else
+            --mask;
+         --mantissaChar;
+      };
+      charInMantissa = 0;
+      if (isBigEndian)
+         charInMantissa = localLimit - 1;
+   };
+LExponent:
+   biMantissa.normalize();
+
+   mask = &localChunk[0];
+   int exponentIndex = 0,
+       lastExponentIndex = (sizeExponent + DefineSizeofBaseTypeInBits - 1)
+            / DefineSizeofBaseTypeInBits - 1;
+   int charInExponent = 0;
+   if (!isBigEndian)
+      charInExponent = ((DefineSizeofBaseTypeInBits+7)/8 - 1);
+   if (isChunkLittleEndian)
+      mask += byteSizeImplementation-1;
+   fNegative = *mask & 0x80;
+
+   int exponentChar = (sizeExponent + 7) / 8;
+   for (exponentIndex = lastExponentIndex; exponentIndex >= 0; --exponentIndex) {
+      int localLimit = (DefineSizeofBaseTypeInBits+7)/8;
+      for (int local = 0; local < localLimit; ++local) {
+         if (exponentChar == 0)
+            goto LEnd;
+#ifndef DefineGeneric
+         biExponent[exponentIndex] |= ((unsigned int) *mask << (charInExponent*8));
+#else
+         biExponent[exponentIndex] |= BaseStoreTraits::getStoreHighPart(
+               (typename BaseStoreTraits::BaseType) *mask, charInExponent*8);
+#endif
+         if (isBigEndian)
+            ++charInExponent;
+         else
+            --charInExponent;
+         if (isChunkLittleEndian)
+            --mask;
+         else
+            ++mask;
+         --exponentChar;
+      };
+      charInExponent = 0;
+      if (!isBigEndian)
+         charInExponent = (localLimit - 1);
+   };
+
+LEnd:
+   if ((sizeExponent % 8) == 0) {
+      if (sizeExponent % DefineSizeofBaseTypeInBits == 0)
+         biExponent <<= 1;
+      else
+         biExponent >>= ((lastExponentIndex + 1)*DefineSizeofBaseTypeInBits - sizeExponent - 1);
+      if (*mask & 0x80)
+         biExponent.setTrueBitArray(0);
+   }
+   else
+      biExponent >>= ((lastExponentIndex + 1)*DefineSizeofBaseTypeInBits - sizeExponent - 1);
+   
+   biExponent.normalize();
+}
+
+template <class TypeTraits>
+void
+DefineBuiltDouble<TypeTraits>::fillChunk(void* chunk, bool isChunkLittleEndian) const { // byteSize = UByteSizeImplementation/sizeof(unsigned int)+1
+   int sizeMantissa = bitSizeMantissa(), sizeExponent = bitSizeExponent();
+   int byteSizeImplementation = (sizeMantissa + sizeExponent + 1 + 7)/8;
+   typename TypeTraits::CharChunk localChunk;
+   TypeTraits::setChunkSize(byteSizeImplementation);
+   TypeTraits::clearChunk(localChunk, byteSizeImplementation);
+   bool isBigEndian = DDouble::Access::isBigEndian();
+
+   unsigned char* mask = &localChunk[0];
+   int mantissaIndex = 0,
+       lastMantissaIndex = (sizeMantissa + DefineSizeofBaseTypeInBits - 1)
+            / (DefineSizeofBaseTypeInBits) - 1;
+   int charInMantissa = 0;
+   if (isBigEndian)
+      charInMantissa = ((DefineSizeofBaseTypeInBits+7)/8 - 1);
+   if (!isChunkLittleEndian)
+      mask += byteSizeImplementation-1;
+
+   int mantissaChar = (sizeMantissa + 7) / 8;
+   for (; mantissaIndex <= lastMantissaIndex; ++mantissaIndex) {
+      int localLimit = (DefineSizeofBaseTypeInBits+7)/8;
+      for (int local = 0; local < localLimit; ++local) {
+         if (mantissaChar == 0)
+            goto LExponent;
+#ifndef DefineGeneric
+         *mask = (unsigned char) (biMantissa[mantissaIndex] >> (charInMantissa*8));
+#else
+         *mask = (unsigned char) BaseStoreTraits
+               ::getHighPart(biMantissa[mantissaIndex], charInMantissa*8);
+#endif
+         if (isBigEndian)
+            --charInMantissa;
+         else
+            ++charInMantissa;
+         if (isChunkLittleEndian)
+            ++mask;
+         else
+            --mask;
+         --mantissaChar;
+      };
+      charInMantissa = 0;
+      if (isBigEndian)
+         charInMantissa = (localLimit - 1);
+   };
+LExponent:
+   mask = &localChunk[0];
+   int exponentIndex = 0,
+       lastExponentIndex = (sizeExponent + DefineSizeofBaseTypeInBits - 1)
+            / DefineSizeofBaseTypeInBits - 1;
+   int charInExponent = 0;
+   if (!isBigEndian)
+      charInExponent = ((DefineSizeofBaseTypeInBits+7)/8 - 1);
+   if (isChunkLittleEndian)
+      mask += byteSizeImplementation-1;
+   if (fNegative)
+      *mask |= 0x80;
+
+   typename TypeTraits::Exponent copyExponent = biExponent;
+   bool isMinor = false;
+   if (sizeExponent % 8 == 0) {
+      isMinor = biExponent.cbitArray(0);
+      if (sizeExponent % DefineSizeofBaseTypeInBits == 0)
+         copyExponent >>= 1;
+      else
+         copyExponent.leftShiftAssign((lastExponentIndex + 1)*DefineSizeofBaseTypeInBits
+               - sizeExponent - 1);
+   }
+   else
+      copyExponent.leftShiftAssign((lastExponentIndex + 1)*DefineSizeofBaseTypeInBits
+            - sizeExponent - 1);
+
+   int exponentChar = (sizeExponent + 7) / 8;
+   for (exponentIndex = lastExponentIndex; exponentIndex >= 0; --exponentIndex) {
+      int localLimit = (DefineSizeofBaseTypeInBits+7)/8;
+      for (int local = 0; local < localLimit; ++local) {
+         if (exponentChar == 0)
+            goto LEnd;
+#ifndef DefineGeneric
+         *mask |= (unsigned char) (copyExponent[exponentIndex] >> (charInExponent*8));
+#else
+         *mask |= (unsigned char) BaseStoreTraits::getHighPart(copyExponent[exponentIndex],
+               charInExponent*8);
+#endif
+         if (isBigEndian)
+            ++charInExponent;
+         else
+            --charInExponent;
+         if (isChunkLittleEndian)
+            --mask;
+         else
+            ++mask;
+         --exponentChar;
+      };
+      charInExponent = 0;
+      if (!isBigEndian)
+         charInExponent = (localLimit - 1);
+   };
+LEnd:
+   if (((sizeExponent % 8) == 0) && isMinor)
+      *mask |= 0x80;
+
+   TypeTraits::retrieveChunk(chunk, localChunk, byteSizeImplementation);
+}
+
+template <class TypeTraits>
+void
+DefineBuiltDouble<TypeTraits>::setInteger(const IntConversion& valueSource, ReadParameters& params) {
+   biMantissa.clear();
+   biExponent.clear();
+   fNegative = valueSource.isNegative();
+   IntConversion value(valueSource);
+   if (fNegative)
+      value.opposite();
+   value.setUnsigned();
+   if (value.isDifferentZero()) {
+      int logResult = value.log_base_2();
+      if ((value.getSize() > bitSizeMantissa()) && (logResult > bitSizeMantissa()+1)) {
+         DefineRightShift(
+#ifdef DefineGeneric
+            typename TypeTraits::BaseStoreTraits(),
+#endif
+            value, (logResult-bitSizeMantissa()-1), 0x0, params, fNegative, value.getSize());
+         for (int index = 0; index < (int) ((value.getSize()-1)/DefineSizeofBaseTypeInBits+1);
+               ++index)
+            biMantissa[index] = (DefineBaseType) value[index];
+         biMantissa.normalize();
+         biExponent = TypeTraits::getZeroExponent(biExponent);
+         biExponent.add(logResult-1);
+      }
+      else if (logResult <= bitSizeMantissa()) {
+         for (int index = 0; index < (int) ((value.getSize()-1)/DefineSizeofBaseTypeInBits+1);
+               ++index)
+            biMantissa[index] = (DefineBaseType) value[index];
+         biMantissa.normalize();
+         biMantissa <<= (bitSizeMantissa()-logResult+1);
+         biExponent = TypeTraits::getZeroExponent(biExponent);
+         biExponent.add(logResult-1);
+      }
+      else if (value.getSize() > bitSizeMantissa()) { // logResult == bitSizeMantissa()+1
+         value &= (IntConversion().neg() <<= bitSizeMantissa()).neg();
+         for (int index = 0; index < (int) ((value.getSize()-1)/DefineSizeofBaseTypeInBits+1);
+               ++index)
+            biMantissa[index] = (DefineBaseType) value[index];
+         biMantissa.normalize();
+         biExponent = TypeTraits::getZeroExponent(biExponent);
+         biExponent.add(bitSizeMantissa());
+      };
+   };
+}
+
+template <class TypeTraits>
+void
+DefineBuiltDouble<TypeTraits>::setFloat(const FloatConversion& value, ReadParameters& params) {
+   fNegative = value.isNegative();
+   biExponent.clear();
+   biMantissa.clear();
+   if (value.isZeroExponent() && value.isZeroMantissa())
+      return;
+   if (value.isInftyExponent()) {
+      biExponent = TypeTraits::getInftyExponent(biExponent);
+      if (value.isZeroMantissa()) {
+         params.setOverflow();
+         return;
+      };
+      if (value.getSizeMantissa() < bitSizeMantissa()) {
+         for (int index = (value.getSizeMantissa()-1)/DefineSizeofBaseTypeInBits; 
+               index >= 0; --index)
+            biMantissa[index] = (DefineBaseType) value.mantissa()[index];
+         biMantissa.normalize();
+         biMantissa <<= (bitSizeMantissa()-value.getSizeMantissa());
+      }
+      else { // value.getSizeMantissa() >= bitSizeMantissa()
+         typename FloatConversion::Mantissa mantissa(value.mantissa());
+         mantissa >>= (value.getSizeMantissa()-bitSizeMantissa());
+         for (int index = (bitSizeMantissa()-1)/DefineSizeofBaseTypeInBits; 
+               index >= 0; --index)
+            biMantissa[index] = (DefineBaseType) mantissa[index];
+         if (params.keepSignalingConversion() && biMantissa.isZero()) {
+            biMantissa.neg();
+            biMantissa.setFalseBitArray(bitSizeMantissa()-1);
+         };
+      };
+      if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+         params.setSNaNOperand();
+         if (!params.keepSignalingConversion())
+            biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+      };
+   }
+   else if (value.getSizeExponent() < bitSizeExponent()) { // double <- float
+      AssumeCondition((bitSizeExponent() >= log_base_2(bitSizeMantissa()))
+         && (value.getSizeMantissa() <= bitSizeMantissa()))
+
+      int logMantissa = value.isZeroExponent() ? value.mantissa().log_base_2()
+         : (value.getSizeMantissa() + 1);
+
+      for (int index = (value.getSizeExponent()-1)/DefineSizeofBaseTypeInBits; 
+            index >= 0; --index)
+         biExponent[index] = (DefineBaseType) value.exponent()[index];
+      biExponent.normalize();
+      typename TypeTraits::Exponent add;
+      add.setSize(bitSizeExponent());
+      biExponent.add(add.neg(bitSizeExponent()-value.getSizeExponent())
+            <<= (value.getSizeExponent()-1));
+         
+      if (value.isZeroExponent()) 
+         biExponent.sub(value.getSizeMantissa() - logMantissa);
+
+      for (int index = (value.getSizeMantissa()-1)/DefineSizeofBaseTypeInBits; 
+            index >= 0; --index)
+         biMantissa[index] = (DefineBaseType) value.mantissa()[index];
+      biMantissa <<= (bitSizeMantissa() - logMantissa + 1);
+      biMantissa.normalize();
+   }
+   else if (value.getSizeExponent() > bitSizeExponent()) { // float <- double
+      AssumeCondition((value.getSizeExponent() >= log_base_2(value.getSizeMantissa()))
+         && value.getSizeMantissa() >= bitSizeMantissa())
+
+      typename FloatConversion::Exponent subExponent;
+      subExponent.neg(value.getSizeExponent()-bitSizeExponent())
+         <<= (bitSizeExponent()-1);
+      typename FloatConversion::Exponent newExponent = value.exponent();
+      if (!newExponent.sub(subExponent).hasCarry() && !newExponent.isZero()) {
+         if (newExponent >= typename FloatConversion::Exponent().neg(bitSizeExponent())) {
+            params.setOverflow();
+            biExponent = TypeTraits::getInftyExponent(biExponent);
+            biMantissa.clear();
+            if (params.upApproximateInfty()) {
+               if (params.upApproximateInversionForNear() && params.isNearestRound()) {
+                  typename FloatConversion::Mantissa mantissa = value.mantissa();
+                  int shift = value.getSizeMantissa() - bitSizeMantissa();
+                  if (shift > 0)
+                     DefineRightShift(
+#ifdef DefineGeneric
+                        typename TypeTraits::BaseStoreTraits(),
+#endif
+                        mantissa, shift, 0x0, params, fNegative, value.getSizeMantissa());
+               }
+               else
+                  params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+            };
+            if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+               biMantissa.neg();
+               biExponent.dec();
+               params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+            };
+            return;
+         };
+         for (int index = (bitSizeExponent()-1)/DefineSizeofBaseTypeInBits; 
+               index >= 0; --index)
+            biExponent[index] = (DefineBaseType) newExponent[index];
+         biExponent.normalize();
+
+         typename FloatConversion::Mantissa mantissa = value.mantissa();
+         int shift = value.getSizeMantissa() - bitSizeMantissa();
+         if (shift > 0) {
+            DefineRightShift(
+#ifdef DefineGeneric
+               typename TypeTraits::BaseStoreTraits(),
+#endif
+               mantissa, shift, 0x0, params, fNegative, value.getSizeMantissa());
+            if (mantissa.cbitArray(bitSizeMantissa())) {
+               ++biExponent;
+               mantissa.setFalseBitArray(bitSizeMantissa());
+               if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+                  params.setOverflow();
+                  if (!biMantissa.isZero()) {
+                     biMantissa.clear();
+                     if (!params.isApproximate())
+                        params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+                  };
+                  if (params.upApproximateInfty()) {
+                     if (!(params.upApproximateInversionForNear() && params.isNearestRound()))
+                        params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+                  };
+                  if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+                     biMantissa.neg();
+                     biExponent.dec();
+                     params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+                  };
+                  return;
+               };
+            };
+         };
+         for (int index = (bitSizeMantissa()-1)/DefineSizeofBaseTypeInBits; 
+               index >= 0; --index)
+            biMantissa[index] = (DefineBaseType) mantissa[index];
+         biMantissa.normalize();
+      }
+      else {
+         biExponent.clear();
+         newExponent.neg().inc();
+         if (newExponent < bitSizeMantissa()) {
+            typename FloatConversion::Mantissa mantissa = value.mantissa();
+            int shift = (value.getSizeMantissa() - bitSizeMantissa())
+                  + newExponent.getValue() + 1;
+            if (shift > 0) {
+               if (DefineRightShift(
+#ifdef DefineGeneric
+                     typename TypeTraits::BaseStoreTraits(),
+#endif
+                     mantissa, shift, 0x1, params, fNegative, value.getSizeMantissa()).hasCarry())
+                  biExponent.inc();
+               if (mantissa.cbitArray(bitSizeMantissa())) {
+                  biExponent.inc();
+                  mantissa.setFalseBitArray(bitSizeMantissa());
+               };
+               if (biExponent.isZero())
+                  params.setUnderflow();
+            }
+            else
+               params.setUnderflow();
+            for (int index = (bitSizeMantissa()-1)/DefineSizeofBaseTypeInBits; 
+                  index >= 0; --index)
+               biMantissa[index] = (DefineBaseType) mantissa[index];
+            biMantissa.normalize();
+         }
+         else {
+            params.setUnderflow();
+            bool doesAdd = false;
+            if (params.isNearestRound())
+               doesAdd = (newExponent == bitSizeMantissa())
+                  && (!params.isRoundToEven() || !value.mantissa().isZero());
+            else if (params.isHighestRound())
+               doesAdd = !fNegative;
+            else if (params.isLowestRound())
+               doesAdd = fNegative;
+            if (fNegative)
+               params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+            else
+               params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+            biMantissa = doesAdd ? 0x1 : 0x0;
+            if (!doesAdd && fNegative && !params.acceptMinusZero())
+               fNegative = false;
+         };
+      };
+   }
+   else { // value.getSizeExponent() == bitSizeExponent()
+      for (int index = (value.getSizeExponent()-1)/DefineSizeofBaseTypeInBits; 
+            index >= 0; --index)
+         biExponent[index] = (DefineBaseType) value.exponent()[index];
+      biExponent.normalize();
+
+      if (value.getSizeMantissa() <= bitSizeMantissa()) {
+         for (int index = (value.getSizeMantissa()-1)/DefineSizeofBaseTypeInBits; 
+               index >= 0; --index)
+            biMantissa[index] = (DefineBaseType) value.mantissa()[index];
+         biMantissa <<= (bitSizeMantissa() - value.getSizeMantissa());
+         biMantissa.normalize();
+      }
+      else { // value.getSizeMantissa() > bitSizeMantissa()
+         typename FloatConversion::Mantissa sourceMantissa(value.mantissa());
+         DefineRightShift(
+#ifndef DefineGeneric
+#else
+               typename TypeTraits::BaseStoreTraits(),
+#endif
+               sourceMantissa, (value.getSizeMantissa() - bitSizeMantissa()),
+               0x0, params, fNegative, value.getSizeMantissa());
+         if (sourceMantissa.cbitArray(bitSizeMantissa())) {
+            ++biExponent;
+            sourceMantissa.setFalseBitArray(bitSizeMantissa());
+            if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+               params.setOverflow();
+               biMantissa.clear();
+               if (!biMantissa.isZero()) {
+                  biMantissa.clear();
+                  if (!params.isApproximate())
+                     params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+               };
+               if (params.upApproximateInfty()) {
+                  if (!(params.upApproximateInversionForNear() && params.isNearestRound()))
+                     params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+               };
+               if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+                  biMantissa.neg();
+                  biExponent.dec();
+                  params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+               };
+               return;
+            };
+         };
+         for (int index = (bitSizeMantissa()-1)/DefineSizeofBaseTypeInBits; 
+               index >= 0; --index)
+            biMantissa[index] = (DefineBaseType) sourceMantissa[index];
+         biMantissa.normalize();
+      };
+   };
+}
+
+template <class TypeTraits>
+void
+DefineBuiltDouble<TypeTraits>::retrieveInteger(IntConversion& result, ReadParameters& params) const {
+   bool isNaNValue = false;
+   if (isNaN()) {
+      if (isSNaN())
+         params.setSNaNOperand();
+      isNaNValue = true;
+   };
+   if (fNegative && result.isUnsigned()) {
+      params.setUpApproximate();
+      result.assign((unsigned int) 0);
+      return;
+   };
+   if (biExponent < TypeTraits::getZeroExponent(biExponent)) {
+      bool doesAdd = false;
+      if (!isZero()) {
+         if (params.isNearestRound()) {
+            if ((doesAdd = (biExponent == TypeTraits::getMinusOneExponent(biExponent))) != false)
+               doesAdd = !biMantissa.isZero();
+         }
+         else if (params.isHighestRound())
+            doesAdd = !fNegative;
+         else if (params.isLowestRound())
+            doesAdd = fNegative;
+         if (fNegative)
+            params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+         else
+            params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+      };
+      if (result.isUnsigned())
+         result.assign(doesAdd ? (unsigned int) 1 : (unsigned int) 0);
+      else
+         result.assign(doesAdd ? (fNegative ? -1 : 1) : 0);
+      return;
+   };
+   Exponent digits = biExponent;
+   digits.sub(TypeTraits::getZeroExponent(biExponent));
+   if (digits >= result.getMaxDigits()) {
+      if (!fNegative || (digits > (result.getMaxDigits())) || !biMantissa.isZero()) {
+         params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+         params.setOverflow();
+      };
+      if (fNegative || (isNaNValue && params.isConvertNaNNegative()))
+         result.setMin();
+      else
+         result.setMax();
+      return;
+   };
+
+   Mantissa localResult = biMantissa;
+   if ((DefineBaseType) bitSizeMantissa() > digits.getValue()) {
+      if (DefineRightShift(
+#ifdef DefineGeneric
+               typename TypeTraits::BaseStoreTraits(),
+#endif
+               localResult, bitSizeMantissa()-digits.getValue(), 0x1, params,
+               fNegative, bitSizeMantissa()).hasCarry()
+            || ((bitSizeMantissa() > result.getMaxDigits())
+               && localResult.cbitArray(result.getMaxDigits()))) {
+         if (!fNegative || ((bitSizeMantissa() > result.getMaxDigits())
+               && !localResult.hasZero(result.getMaxDigits()))) {
+            params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+            params.setOverflow();
+         };
+         if (fNegative)
+            result.setMin();
+         else
+            result.setMax();
+         return;
+      };
+   }
+   else {
+      localResult <<= (digits.getValue()-bitSizeMantissa());
+      localResult.setTrueBitArray(digits.getValue());
+   };
+   for (int index = 0; index < (int) ((result.getSize()-1)/DefineSizeofBaseTypeInBits+1);
+         ++index)
+      result[index] = (DefineBaseType) localResult[index];
+   if (fNegative)
+      result.opposite();
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::plusAssignSureNN(const thisType& source, ReadParameters& params) {
+   AssumeCondition(isNormalized() && source.isNormalized())
+   if (biExponent == source.biExponent) {
+      typename Mantissa::Carry carry = biMantissa.add(source.biMantissa);
+      if (DefineRightShift(
+#ifdef DefineGeneric
+            typename TypeTraits::BaseStoreTraits(),
+#endif
+            biMantissa, 1, carry.carry(), params, fNegative, bitSizeMantissa()).hasCarry())
+         biExponent.inc();
+      biExponent.inc();
+      if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+         params.setOverflow();
+         if (!biMantissa.isZero()) {
+            biMantissa.clear();
+            if (!params.isApproximate())
+               params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+         };
+         if (params.upApproximateInfty())
+            params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+         if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+            biMantissa.neg();
+            biExponent.dec();
+            params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+         };
+      };
+      return *this;
+   };
+   if (biExponent < source.biExponent) {
+      if (source.biExponent - biExponent > bitSizeMantissa()) {
+         bool doesAdd = false;
+         bool isRoundToEven = false;
+         if (params.isNearestRound()) {
+            doesAdd = ((source.biExponent - biExponent) == bitSizeMantissa()+1);
+            if (doesAdd && params.isRoundToEven()) {
+               isRoundToEven = biMantissa.isZero();
+               if (isRoundToEven)
+                  params.setEffectiveRoundToEven();
+            };
+         }
+         else if (params.isHighestRound())
+            doesAdd = !fNegative;
+         else if (params.isLowestRound())
+            doesAdd = fNegative;
+
+         biExponent = source.biExponent;
+         biMantissa = source.biMantissa;
+         if (doesAdd && ((doesAdd = (!isRoundToEven || biMantissa.cbitArray(0))) != false)
+               && biMantissa.inc().hasCarry()) {
+            biExponent.inc();
+            if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+               params.setOverflow();
+               if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+                  biMantissa.neg();
+                  biExponent.dec();
+                  params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+                  return *this;
+               }
+               else if (params.upApproximateInfty()) {
+                  params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+                  return *this;
+               };
+            };
+         };
+         if (fNegative)
+            params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+         else
+            params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+         return *this;
+      };
+      int shift = (source.biExponent - biExponent).getValue();
+      biExponent = source.biExponent;
+      bool hasOverflow = DefineRightShift(
+#ifdef DefineGeneric
+            typename TypeTraits::BaseStoreTraits(),
+#endif
+            biMantissa, shift, 0x1, params, fNegative, bitSizeMantissa()).hasCarry();
+      if (biMantissa.add(source.biMantissa).hasCarry() || hasOverflow) {
+         DefineRightShift(
+#ifdef DefineGeneric
+               typename TypeTraits::BaseStoreTraits(),
+#endif
+               biMantissa, 1, 0x0, params, fNegative, bitSizeMantissa());
+         biExponent.inc();
+         if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+            params.setOverflow();
+            if (!biMantissa.isZero()) {
+               biMantissa.clear();
+               if (!params.isApproximate())
+                  params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+            };
+            if (params.upApproximateInfty())
+               params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+            if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+               biMantissa.neg();
+               biExponent.dec();
+               params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+            };
+         };
+      }
+      else if (params.hasEffectiveRoundToEven()) {
+         if (biMantissa.cbitArray(0)) {
+            if (params.isApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down)) {
+               params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+               if (biMantissa.inc().hasCarry()) {
+                  ++biExponent;
+                  if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+                     params.setOverflow();
+                     if (!biMantissa.isZero()) {
+                        biMantissa.clear();
+                        if (!params.isApproximate())
+                           params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+                     };
+                     if (params.upApproximateInfty())
+                        params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+                     if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+                        biMantissa.neg();
+                        biExponent.dec();
+                        params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+                     };
+                  };
+               };
+            }
+            else { // params.isApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up)
+               biMantissa.setFalseBitArray(0);
+               params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+            };
+         };
+      };
+      return *this;
+   };
+   // biExponent > source.biExponent
+
+   if ((biExponent - source.biExponent) > bitSizeMantissa()) {
+      bool doesAdd = false;
+      bool isRoundToEven = false;
+      if (params.isNearestRound()) {
+         doesAdd = ((biExponent - source.biExponent) == bitSizeMantissa()+1);
+         if (doesAdd && params.isRoundToEven()) {
+            isRoundToEven = source.biMantissa.isZero();
+            if (isRoundToEven)
+               params.setEffectiveRoundToEven();
+         };
+      }
+      else if (params.isHighestRound())
+         doesAdd = !fNegative;
+      else if (params.isLowestRound())
+         doesAdd = fNegative;
+
+      if (doesAdd && ((doesAdd = (!isRoundToEven || biMantissa.cbitArray(0))) != false)
+            && biMantissa.inc().hasCarry()) {
+         ++biExponent;
+         if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+            params.setOverflow();
+            if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+               biMantissa.neg();
+               biExponent.dec();
+               params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+               return *this;
+            }
+            else if (params.upApproximateInfty()) {
+               params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+               return *this;
+            };
+         };
+      };
+      if (fNegative)
+         params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+      else
+         params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+      return *this;
+   };
+   int shift = (biExponent - source.biExponent).getValue();
+   Mantissa sourceMantissa = source.biMantissa;
+   if (DefineRightShift(
+#ifdef DefineGeneric
+            typename TypeTraits::BaseStoreTraits(),
+#endif
+            sourceMantissa, shift, 0x1, params, fNegative, bitSizeMantissa()).hasCarry()
+         || biMantissa.add(sourceMantissa).hasCarry()) {
+      DefineRightShift(
+#ifdef DefineGeneric
+            typename TypeTraits::BaseStoreTraits(),
+#endif
+            biMantissa, 1, 0x0, params, fNegative, bitSizeMantissa());
+      biExponent.inc();
+      if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+         params.setOverflow();
+         if (!biMantissa.isZero()) {
+            biMantissa.clear();
+            if (!params.isApproximate())
+               params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+         };
+         if (params.upApproximateInfty())
+            params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+         if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+            biMantissa.neg();
+            biExponent.dec();
+            params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+         };
+      };
+   }
+   else if (params.hasEffectiveRoundToEven()) {
+      if (biMantissa.cbitArray(0)) {
+         if (params.isApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down)) {
+            params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+            if (biMantissa.inc().hasCarry()) {
+               ++biExponent;
+               if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+                  params.setOverflow();
+                  if (!biMantissa.isZero()) {
+                     biMantissa.clear();
+                     if (!params.isApproximate())
+                        params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+                  };
+                  if (params.upApproximateInfty())
+                     params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+                  if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+                     biMantissa.neg();
+                     biExponent.dec();
+                     params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+                  };
+               };
+            };
+         }
+         else { // params.isApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up)
+            biMantissa.setFalseBitArray(0);
+            params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+         };
+      };
+   };
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::plusAssignSureND(const thisType& source, ReadParameters& params) {
+   AssumeCondition(isNormalized() && (source.biExponent.isZero()))
+   int maxShift = source.biMantissa.log_base_2();
+   if ((maxShift == 1)
+#ifndef DefineGeneric
+            && (source.biMantissa.getValue() == 0)
+#else
+            && BaseStoreTraits::isZeroValue(source.biMantissa.getValue())
+#endif
+         )
+      return *this;
+   if (biExponent > maxShift) {
+      bool doesAdd = false;
+      bool isRoundToEven = false;
+      if (params.isNearestRound()) {
+         doesAdd = biExponent == maxShift+1;
+         if (doesAdd && params.isRoundToEven()) {
+            isRoundToEven = source.biMantissa.hasZero(maxShift-1);
+            if (isRoundToEven)
+               params.setEffectiveRoundToEven();
+         };
+      }
+      else if (params.isHighestRound())
+         doesAdd = !fNegative;
+      else if (params.isLowestRound())
+         doesAdd = fNegative;
+      if (doesAdd && ((doesAdd = (!isRoundToEven || biMantissa.cbitArray(0))) != false)
+            && biMantissa.inc().hasCarry())
+         ++biExponent;
+      if (fNegative)
+         params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+      else
+         params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+      return *this;
+   };
+   Mantissa sourceMantissa = source.biMantissa;
+   if (DefineRightShift(
+#ifdef DefineGeneric
+            typename TypeTraits::BaseStoreTraits(),
+#endif
+            sourceMantissa, biExponent.getValue() - 1, 0x0, params,
+            fNegative, bitSizeMantissa()).hasCarry()
+         || biMantissa.add(sourceMantissa).hasCarry()) {
+      DefineRightShift(
+#ifdef DefineGeneric
+            typename TypeTraits::BaseStoreTraits(),
+#endif
+            biMantissa, 1, 0x0, params, fNegative, bitSizeMantissa());
+      biExponent.inc();
+      if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+         params.setOverflow();
+         if (!biMantissa.isZero()) {
+            biMantissa.clear();
+            if (!params.isApproximate())
+               params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+         };
+         if (params.upApproximateInfty())
+            params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+         if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+            biMantissa.neg();
+            biExponent.dec();
+            params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+         };
+      };
+   }
+   else if (params.hasEffectiveRoundToEven()) {
+      if (biMantissa.cbitArray(0)) {
+         if (params.isApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down)) {
+            params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+            if (biMantissa.inc().hasCarry()) {
+               ++biExponent;
+               if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+                  params.setOverflow();
+                  if (!biMantissa.isZero()) {
+                     biMantissa.clear();
+                     if (!params.isApproximate())
+                        params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+                  };
+                  if (params.upApproximateInfty())
+                     params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+                  if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+                     biMantissa.neg();
+                     biExponent.dec();
+                     params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+                  };
+               };
+            };
+         }
+         else { // params.isApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up)
+            params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+            biMantissa.setFalseBitArray(0);
+         };
+      };
+   };
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::plusAssignSureDN(const thisType& source, ReadParameters& params) {
+   AssumeCondition(biExponent.isZero() && source.isNormalized())
+   int maxShift = biMantissa.log_base_2();
+   if ((maxShift == 1)
+#ifndef DefineGeneric
+            && (biMantissa.getValue() == 0)
+#else
+            && BaseStoreTraits::isZeroValue(biMantissa.getValue())
+#endif
+         ) {
+      biExponent = source.biExponent;
+      biMantissa = source.biMantissa;
+      return *this;
+   };
+   if (source.biExponent > maxShift) {
+      bool doesAdd = false;
+      bool isRoundToEven = false;
+      if (params.isNearestRound()) {
+         doesAdd = (source.biExponent == maxShift+1);
+         if (doesAdd && params.isRoundToEven()) {
+            isRoundToEven = biMantissa.hasZero(maxShift-1);
+            if (isRoundToEven)
+               params.setEffectiveRoundToEven();
+         };
+      }
+      else if (params.isHighestRound())
+         doesAdd = !fNegative;
+      else if (params.isLowestRound())
+         doesAdd = fNegative;
+      biExponent = source.biExponent;
+      biMantissa = source.biMantissa;
+      if (doesAdd && ((doesAdd = (!isRoundToEven || biMantissa.cbitArray(0))) != false)
+            && biMantissa.inc().hasCarry()) {
+         biExponent.inc();
+         if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+            if (params.upApproximateInfty())
+               params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+            params.setOverflow();
+            if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+               biMantissa.neg();
+               biExponent.dec();
+               params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+               return *this;
+            };
+         };
+      };
+      if (fNegative)
+         params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+      else
+         params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+      return *this;
+   };
+   biExponent = source.biExponent;
+   bool hasOverflow = DefineRightShift(
+#ifdef DefineGeneric
+         typename TypeTraits::BaseStoreTraits(),
+#endif
+         biMantissa, source.biExponent.getValue() - 1, 0x0, params,
+         fNegative, bitSizeMantissa()).hasCarry();
+   if (biMantissa.add(source.biMantissa).hasCarry() || hasOverflow) {
+      DefineRightShift(
+#ifdef DefineGeneric
+            typename TypeTraits::BaseStoreTraits(),
+#endif
+            biMantissa, 1, 0x0, params, fNegative, bitSizeMantissa());
+      biExponent.inc();
+      if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+         params.setOverflow();
+         if (!biMantissa.isZero()) {
+            biMantissa.clear();
+            if (!params.isApproximate())
+               params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+         };
+         if (params.upApproximateInfty())
+            params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+         if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+            biMantissa.neg();
+            biExponent.dec();
+            params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+         };
+      };
+   }
+   else if (params.hasEffectiveRoundToEven()) {
+      if (biMantissa.cbitArray(0)) {
+         if (params.isApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down)) {
+            params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+            if (biMantissa.inc().hasCarry()) {
+               biExponent.inc();
+               if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+                  params.setOverflow();
+                  if (params.upApproximateInfty())
+                     params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+                  if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+                     biMantissa.neg();
+                     biExponent.dec();
+                     params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+                  };
+               };
+            };
+         }
+         else { // params.isApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up)
+            params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+            biMantissa.setFalseBitArray(0);
+         };
+      };
+   };
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::plusAssignSureDD(const thisType& source, ReadParameters& params) {
+   AssumeCondition(biExponent.isZero() && source.biExponent.isZero())
+   if (biMantissa.add(source.biMantissa).hasCarry())
+      biExponent.inc();
+   else
+      params.setUnderflow();
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::minusAssignSureNN(const thisType& source, ReadParameters& params) {
+   AssumeCondition(isNormalized() && source.isNormalized())
+   if (biExponent == source.biExponent) {
+      typename Mantissa::Carry carry = biMantissa.sub(source.biMantissa);
+      AssumeCondition(!carry.hasCarry())
+      if (biMantissa.isZero()) {
+         biExponent.clear();
+         fNegative = (params.acceptMinusZero() && params.isLowestRound()) ? true : false;
+         params.setUnderflow();
+      }
+      else {
+         int shift = bitSizeMantissa() - biMantissa.log_base_2() + 1;
+         biMantissa <<= shift;
+#ifndef DefineGeneric
+         if (biExponent <= shift)
+#else
+         Exponent shiftExponent = getBasicExponent(shift);
+         if (biExponent <= shiftExponent)
+#endif
+         {  biMantissa >>= (shift-biExponent.getValue()+1);
+            biMantissa.setTrueBitArray(bitSizeMantissa()-(shift-biExponent.getValue()+1));
+            biExponent.clear();
+            params.setUnderflow();
+         }
+         else
+#ifndef DefineGeneric
+            biExponent -= getBasicExponent(shift);
+#else
+            biExponent -= shiftExponent;
+#endif
+      };
+      return *this;
+   };
+
+   AssumeCondition(biExponent > source.biExponent)
+   if ((biExponent - source.biExponent) > bitSizeMantissa()) {
+      bool shouldDecFirst = ((biExponent - source.biExponent) <= bitSizeMantissa()+2)
+         && biMantissa.isZero();
+      bool doesSub = false;
+      bool doesDoubleSub = false, isActiveDouble = false;
+      if (params.isNearestRound()) {
+         if (!shouldDecFirst) {
+            doesSub = ((biExponent - source.biExponent) == bitSizeMantissa()+1);
+            if (doesSub && params.isRoundToEven()) {
+               if (source.biMantissa.isZero()) {
+                  params.setEffectiveRoundToEven();
+                  if (!biMantissa.cbitArray(0))
+                     doesSub = false;
+               };
+            };
+         }
+         else if ((biExponent - source.biExponent) == bitSizeMantissa()+1) {
+            // biMantissa.isZero()
+            doesSub = true;
+            doesDoubleSub = source.biMantissa.cbitArray(bitSizeMantissa()-1);
+            isActiveDouble = true;
+            if (doesDoubleSub && params.isRoundToEven()) {
+               if (source.biMantissa.hasZero(bitSizeMantissa()-1))
+                  params.setEffectiveRoundToEven();
+            };
+         }
+         else { // handle the case isRoundToEven
+            // biMantissa.isZero() && (biExponent - source.biExponent) == bitSizeMantissa()+2
+            doesSub = !source.biMantissa.isZero();
+            shouldDecFirst = false;
+         };
+      }
+      else {
+         if (params.isHighestRound())
+            doesSub = fNegative;
+         else if (params.isLowestRound())
+            doesSub = !fNegative;
+         else // params.isZeroRound()
+            doesSub = true;
+         if (shouldDecFirst) {
+            if ((biExponent - source.biExponent) == bitSizeMantissa()+1) {
+               doesDoubleSub = doesSub;
+               isActiveDouble = true;
+               doesSub = true;
+            }
+            else
+               shouldDecFirst = false;
+         };
+      }
+      if (doesSub && biMantissa.dec().hasCarry()) {
+         --biExponent;
+         if (((biExponent - source.biExponent) == bitSizeMantissa()) && source.biMantissa.isZero())
+            return *this; // no approximation
+         if (doesDoubleSub)
+            biMantissa.setFalseBitArray(0);
+         if (isActiveDouble)
+            doesSub = doesDoubleSub;
+      };
+      if (fNegative)
+         params.setApproximate(doesSub ? ReadParameters::Up : ReadParameters::Down);
+      else
+         params.setApproximate(doesSub ? ReadParameters::Down : ReadParameters::Up);
+      return *this;
+   };
+
+   int shift = (biExponent - source.biExponent).getValue();
+   Mantissa sourceMantissa(source.biMantissa);
+   if (shift == 1) {
+      bool hasMinor = sourceMantissa.cbitArray(0);
+      sourceMantissa >>= 1;
+      sourceMantissa.setTrueBitArray(bitSizeMantissa()-1);
+
+      if (biMantissa.sub(sourceMantissa).hasCarry()) {
+         int newShift = bitSizeMantissa() - biMantissa.log_base_2() + 1;
+         if (hasMinor) {
+            AssumeCondition(biMantissa.cbitArray(bitSizeMantissa() - newShift))
+            biMantissa <<= 1;
+            if (biMantissa.dec().hasCarry() || ((newShift > 1)
+                  && (!biMantissa.cbitArray(bitSizeMantissa() - newShift + 1))))
+              ++newShift;
+            if (newShift > 1)
+               biMantissa <<= (newShift-1);
+         }
+         else
+            biMantissa <<= newShift;
+
+         if (biExponent <= newShift) {
+            biMantissa >>= (newShift-biExponent.getValue()+1);
+            biMantissa.setTrueBitArray(bitSizeMantissa()-(newShift-biExponent.getValue()+1));
+            biExponent = 0;
+            params.setUnderflow();
+         }
+         else
+            biExponent -= getBasicExponent(newShift);
+      }
+      else if (hasMinor) {
+         bool doesSub = false;
+         if (params.isHighestRound())
+            doesSub = fNegative;
+         else if (params.isLowestRound())
+            doesSub = !fNegative;
+         else // params.isZeroRound()
+            doesSub = true;
+         bool doesDec = false;
+         if ((biMantissa.isZero() && !params.isApproximate() && ((doesDec = true) != false)
+                  && biMantissa.dec().hasCarry())
+               || (!doesDec && doesSub && ((doesSub = (!params.isRoundToEven() || biMantissa.cbitArray(0))) != false)
+                     && biMantissa.dec().hasCarry())) {
+            --biExponent;
+            return *this; // no precision loss
+         };
+         if (fNegative)
+            params.setApproximate(doesSub ? ReadParameters::Up : ReadParameters::Down);
+         else
+            params.setApproximate(doesSub ? ReadParameters::Down : ReadParameters::Up);
+      };
+
+      return *this;
+   };
+
+   bool hasMinorTwo = sourceMantissa.cbitArray(shift-1),
+        hasMinorOne = sourceMantissa.cbitArray(shift-2);
+   bool isSureApproximate = !sourceMantissa.hasZero(shift-2);
+   sourceMantissa >>= shift;
+   sourceMantissa.setTrueBitArray(bitSizeMantissa()-shift);
+   bool hasDigits = !biMantissa.sub(sourceMantissa).hasCarry();
+   if (!hasDigits) {
+      biExponent.dec();
+      hasDigits = biExponent.isZero();
+   };
+   if (hasDigits) {
+      if (hasMinorOne || hasMinorTwo || isSureApproximate) {
+         bool doesSub = false;
+         bool isRoundToEven = false;
+         if (params.isNearestRound()) {
+            doesSub = hasMinorTwo;
+            if (doesSub && params.isRoundToEven()) {
+               isRoundToEven = !hasMinorOne && !isSureApproximate;
+               if (isRoundToEven)
+                  params.setEffectiveRoundToEven();
+            };
+         }
+         else if (params.isHighestRound())
+            doesSub = fNegative;
+         else if (params.isLowestRound())
+            doesSub = !fNegative;
+         else // params.isZeroRound()
+            doesSub = true;
+
+         bool doesDec = false;
+         if ((biMantissa.isZero()
+                  && (hasMinorTwo || (params.isNearestRound()
+                        && hasMinorOne && (!params.isRoundToEven() || isSureApproximate)))
+                  && ((doesDec = true) != false) && biMantissa.dec().hasCarry())
+            || (!doesDec && doesSub && ((doesSub = (!isRoundToEven || biMantissa.cbitArray(0))) != false)
+                  && biMantissa.dec().hasCarry())) { // if doesDec, case isRoundToEven is naturally correct
+            biExponent.dec();
+            if (params.isNearestRound())
+               doesSub = hasMinorTwo ? hasMinorOne : true;
+            else if (doesSub)
+               doesSub = hasMinorOne || isSureApproximate;
+            biMantissa.setBitArray(0, hasMinorTwo ? !doesSub : true);
+            if (!hasMinorOne && !isSureApproximate)
+               return *this;
+         };
+         if (fNegative)
+            params.setApproximate(doesSub ? ReadParameters::Up : ReadParameters::Down);
+         else
+            params.setApproximate(doesSub ? ReadParameters::Down : ReadParameters::Up);
+      };
+      return *this;
+   };
+
+   biMantissa <<= 1;
+   if (hasMinorTwo)
+      biMantissa.dec();
+   if (hasMinorOne || isSureApproximate) {
+      bool doesSub = false;
+      if (params.isNearestRound())
+         doesSub = hasMinorOne && (!params.isRoundToEven() || isSureApproximate || biMantissa.cbitArray(0));
+      else if (params.isHighestRound())
+         doesSub = fNegative;
+      else if (params.isLowestRound())
+         doesSub = !fNegative;
+      else // params.isZeroRound()
+         doesSub = true;
+      if (doesSub)
+         biMantissa.dec();
+      if (fNegative)
+         params.setApproximate(doesSub ? ReadParameters::Up : ReadParameters::Down);
+      else
+         params.setApproximate(doesSub ? ReadParameters::Down : ReadParameters::Up);
+   };
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::minusAssignSureND(const thisType& source, ReadParameters& params) {
+   AssumeCondition(isNormalized() && source.biExponent.isZero())
+   if (source.biMantissa.isZero())
+      return *this;
+
+   int nbSourceDigits = source.biMantissa.log_base_2();
+   if (biExponent > nbSourceDigits) {
+      bool shouldDecFirst = (biExponent <= nbSourceDigits+2) && biMantissa.isZero();
+      bool doesSub = false;
+      bool doesDoubleSub = false, isActiveDouble = false;
+      if (params.isNearestRound()) {
+         if (!shouldDecFirst) {
+            doesSub = (biExponent == nbSourceDigits+1);
+            if (doesSub && params.isRoundToEven()) {
+               if (source.biMantissa.hasZero(nbSourceDigits-1)) {
+                  params.setEffectiveRoundToEven();
+                  if (!biMantissa.cbitArray(0))
+                     doesSub = false;
+               };
+            };
+         }
+         else if (biExponent == nbSourceDigits+1) {
+            // biMantissa.isZero()
+            doesSub = true;
+            doesDoubleSub = source.biMantissa.cbitArray(nbSourceDigits-2);
+            isActiveDouble = true;
+            if (params.isRoundToEven()) {
+               if ((nbSourceDigits <= 2) && source.biMantissa.hasZero(nbSourceDigits-2))
+                  params.setEffectiveRoundToEven();
+            };
+         }
+         else { // handle with the case isRoundToEven
+            doesSub = (nbSourceDigits > 1) && !source.biMantissa.hasZero(nbSourceDigits-1);
+            shouldDecFirst = false;
+            // if (!doesSub) params.setEffectiveRoundToEven();
+         };
+      }
+      else {
+         if (params.isHighestRound())
+            doesSub = fNegative;
+         else if (params.isLowestRound())
+            doesSub = !fNegative;
+         else // params.isZeroRound()
+            doesSub = true;
+         if (shouldDecFirst) {
+            if (biExponent == nbSourceDigits+1) {
+               doesDoubleSub = doesSub;
+               isActiveDouble = true;
+               doesSub = true;
+            }
+            else
+               shouldDecFirst = false;
+         };
+      };
+      if (doesSub && biMantissa.dec().hasCarry()) {
+         biExponent.dec();
+         if ((biExponent == nbSourceDigits)
+               && ((nbSourceDigits <= 1) || source.biMantissa.hasZero(nbSourceDigits-1)))
+            return *this; // no approximation
+         if (doesDoubleSub)
+            biMantissa.setFalseBitArray(0);
+         if (isActiveDouble)
+            doesSub = doesDoubleSub;
+      };
+      if (fNegative)
+         params.setApproximate(doesSub ? ReadParameters::Up : ReadParameters::Down);
+      else
+         params.setApproximate(doesSub ? ReadParameters::Down : ReadParameters::Up);
+      return *this;
+   };
+
+   int sourceShift = biExponent.getValue()-1;
+   if (sourceShift == 0) {
+      if (biMantissa.sub(source.biMantissa).hasCarry()) {
+         biExponent = 0;
+         params.setUnderflow();
+      };
+      return *this;
+   };
+
+   Mantissa sourceMantissa(source.biMantissa);
+   bool hasMinorTwo = sourceMantissa.cbitArray(sourceShift-1),
+        hasMinorOne = (sourceShift > 1) ? sourceMantissa.cbitArray(sourceShift-2) : 0;
+   bool isSureApproximate = (sourceShift > 1) ? !sourceMantissa.hasZero(sourceShift-2) : false;
+   sourceMantissa >>= sourceShift;
+   bool hasDigits = !biMantissa.sub(sourceMantissa).hasCarry();
+   if (!hasDigits) {
+      biExponent.dec();
+      hasDigits = biExponent.isZero();
+   };
+   if (hasDigits) {
+      if (hasMinorOne || hasMinorTwo || isSureApproximate) {
+         bool doesSub = false;
+         bool isRoundToEven = false;
+         if (params.isNearestRound()) {
+            doesSub = hasMinorTwo;
+            if (doesSub && params.isRoundToEven()) {
+               isRoundToEven = !hasMinorOne && !isSureApproximate;
+               if (isRoundToEven)
+                  params.setEffectiveRoundToEven();
+            };
+         }
+         else if (params.isHighestRound())
+            doesSub = fNegative;
+         else if (params.isLowestRound())
+            doesSub = !fNegative;
+         else // params.isZeroRound()
+            doesSub = true;
+         bool doesDec = false;
+         if ((biMantissa.isZero()
+                  && (hasMinorTwo || (params.isNearestRound()
+                        && hasMinorOne && (!params.isRoundToEven() || isSureApproximate)))
+                  && ((doesDec = true) != false) && biMantissa.dec().hasCarry())
+            || (!doesDec && doesSub && ((doesSub = (!isRoundToEven || biMantissa.cbitArray(0))) != false)
+                  && biMantissa.dec().hasCarry())) { // if doesDec, case isRoundToEven is naturally correct
+            biExponent.dec();
+            if (params.isNearestRound())
+               doesSub = hasMinorTwo ? hasMinorOne : true;
+            else if (doesSub)
+               doesSub = hasMinorOne || isSureApproximate;
+            biMantissa.setBitArray(0, hasMinorTwo ? !doesSub : true);
+            if (!hasMinorOne && !isSureApproximate)
+               return *this;
+         };
+         if (fNegative)
+            params.setApproximate(doesSub ? ReadParameters::Up : ReadParameters::Down);
+         else
+            params.setApproximate(doesSub ? ReadParameters::Down : ReadParameters::Up);
+      };
+      return *this;
+   };
+
+   biMantissa <<= 1;
+   if (hasMinorTwo)
+      biMantissa.dec();
+   if (hasMinorOne || isSureApproximate) {
+      bool doesSub = false;
+      if (params.isNearestRound())
+         doesSub = hasMinorOne && (!params.isRoundToEven() || isSureApproximate || biMantissa.cbitArray(0));
+      else if (params.isHighestRound())
+         doesSub = fNegative;
+      else if (params.isLowestRound())
+         doesSub = !fNegative;
+      else // params.isZeroRound()
+         doesSub = true;
+      if (doesSub)
+         biMantissa.dec();
+      if (fNegative)
+         params.setApproximate(doesSub ? ReadParameters::Up : ReadParameters::Down);
+      else
+         params.setApproximate(doesSub ? ReadParameters::Down : ReadParameters::Up);
+   };
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::minusAssignSureDD(const thisType& source, ReadParameters& params) {
+   AssumeCondition(biExponent.isZero() && source.biExponent.isZero())
+   typename Mantissa::Carry carry = biMantissa.sub(source.biMantissa);
+   params.setUnderflow();
+   AssumeCondition(!carry.hasCarry())
+   if (biMantissa.isZero())
+      fNegative = (params.acceptMinusZero() && params.isLowestRound()) ? true : false;
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::plusAssignDouble(const thisType& source, ReadParameters& params) {
+   if (!biExponent.isZero()) {
+      if (biExponent != TypeTraits::getInftyExponent(biExponent)) {
+         if (!source.biExponent.isZero()) {
+            if (source.biExponent != TypeTraits::getInftyExponent(biExponent)) {
+               if (fNegative == source.fNegative)
+                  return plusAssignSureNN(source, params);
+               ComparisonResult compareExponent = biExponent.compare(source.biExponent);
+               if ((compareExponent == CRGreater)
+                     || ((compareExponent == CREqual) && biMantissa >= source.biMantissa))
+                  return minusAssignSureNN(source, params);
+               thisType thisCopy = *this;
+               *this = source;
+               minusAssignSureNN(thisCopy, params);
+               return *this;
+            };
+            // source.biExponent == TypeTraits::getInftyExponent(biExponent)
+            fNegative = source.fNegative;
+            biMantissa = source.biMantissa;
+            if (!biMantissa.isZero()) {
+               if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+                  params.setSNaNOperand();
+                  biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+               };
+            };
+            biExponent = TypeTraits::getInftyExponent(biExponent);
+            return *this;
+         };
+
+         if (fNegative == source.fNegative)
+            return plusAssignSureND(source, params);
+         return minusAssignSureND(source, params);
+      };
+
+      // biExponent == TypeTraits::getInftyExponent(biExponent)
+      if (biMantissa.isZero()) {
+         if (source.biExponent == TypeTraits::getInftyExponent(biExponent)) {
+            if (!source.biMantissa.isZero()) {
+               biMantissa = source.biMantissa;
+               if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+                  params.setSNaNOperand();
+                  biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+               };
+               fNegative = source.fNegative;
+            }
+            else if (source.fNegative != fNegative) {
+               params.setInftyMinusInfty();
+               biMantissa.clear();
+               biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+               // biMantissa.neg();
+               // biMantissa.setFalseBitArray(bitSizeMantissa()-1);
+            };
+         };
+      }
+      else {
+         if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+            params.setSNaNOperand();
+            biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+         }
+         else if (source.isSNaN())
+            params.setSNaNOperand();
+      };
+      return *this;
+   };
+   
+   // biExponent == 0
+   if (source.biExponent.isZero()) {
+      if (fNegative == source.fNegative)
+         return plusAssignSureDD(source, params);
+      if (biMantissa >= source.biMantissa)
+         minusAssignSureDD(source, params);
+      else {
+         thisType thisCopy = *this;
+         *this = source;
+         minusAssignSureDD(thisCopy, params);
+      };
+      return *this;
+   };
+      
+   // biExponent == 0 && source.biExponent != 0
+   if (source.biExponent == TypeTraits::getInftyExponent(biExponent)) {
+      fNegative = source.fNegative;
+      biExponent = source.biExponent;
+      biMantissa = source.biMantissa;
+      if (!biMantissa.isZero()) {
+         if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+            params.setSNaNOperand();
+            biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+         };
+      };
+      return *this;
+   };
+   
+   // biExponent == 0 && source.biExponent != 0 && source.biExponent != TypeTraits::getInftyExponent(biExponent)
+   if (fNegative == source.fNegative)
+      return plusAssignSureDN(source, params);
+   thisType thisCopy = *this;
+   *this = source;
+   minusAssignSureND(thisCopy, params);
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::minusAssignDouble(const thisType& source, ReadParameters& params) {
+   if (!biExponent.isZero()) {
+      if (biExponent != TypeTraits::getInftyExponent(biExponent)) {
+         if (!source.biExponent.isZero()) {
+            if (source.biExponent != TypeTraits::getInftyExponent(biExponent)) {
+               if (fNegative != source.fNegative)
+                  return plusAssignSureNN(source, params);
+               ComparisonResult compareExponent = biExponent.compare(source.biExponent);
+               if ((compareExponent == CRGreater)
+                     || ((compareExponent == CREqual) && biMantissa >= source.biMantissa))
+                  return minusAssignSureNN(source, params);
+               thisType thisCopy = *this;
+               *this = source;
+               fNegative = !fNegative;
+               minusAssignSureNN(thisCopy, params);
+               return *this;
+            };
+            
+            // source.biExponent == TypeTraits::getInftyExponent(biExponent)
+            fNegative = !source.fNegative;
+            biMantissa = source.biMantissa;
+            if (!biMantissa.isZero()) {
+               if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+                  params.setSNaNOperand();
+                  biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+               };
+               if (params.keepNaNSign())
+                  fNegative = !fNegative;
+            };
+            biExponent = source.biExponent;
+            return *this;
+         };
+
+         // source.biExponent == 0
+         if (fNegative != source.fNegative)
+            return plusAssignSureND(source, params);
+         minusAssignSureND(source, params);
+         return *this;
+      };
+
+      // biExponent == TypeTraits::getInftyExponent(biExponent)
+      if (biMantissa.isZero()) {
+         if (source.biExponent == TypeTraits::getInftyExponent(biExponent)) {
+            if (!source.biMantissa.isZero()) {
+               biMantissa = source.biMantissa;
+               if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+                  params.setSNaNOperand();
+                  biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+               };
+               fNegative = source.fNegative;
+            }
+            else if (source.fNegative == fNegative) {
+               params.setInftyMinusInfty();
+               biMantissa.clear();
+               biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+               // biMantissa.neg();
+               // biMantissa.setFalseBitArray(bitSizeMantissa()-1);
+            };
+         };
+      }
+      else {
+         if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+            params.setSNaNOperand();
+            biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+         }
+         else if (source.isSNaN())
+            params.setSNaNOperand();
+      };
+
+      return *this;
+   };
+   
+   // biExponent == 0
+   if (source.biExponent.isZero()) {
+      if (fNegative != source.fNegative)
+         return plusAssignSureDD(source, params);
+      if (biMantissa >= source.biMantissa)
+         minusAssignSureDD(source, params);
+      else {
+        thisType thisCopy = *this;
+        *this = source;
+        fNegative = !fNegative;
+        minusAssignSureDD(thisCopy, params);
+      };
+      return *this;
+   };
+
+   // biExponent == 0 && source.biExponent != 0
+   if (source.biExponent == TypeTraits::getInftyExponent(biExponent)) {
+      fNegative = !source.fNegative;
+      biExponent = TypeTraits::getInftyExponent(biExponent);
+      biMantissa = source.biMantissa;
+      if (!biMantissa.isZero()) {
+         if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+            params.setSNaNOperand();
+            biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+         };
+         if (params.keepNaNSign())
+            fNegative = !fNegative;
+      };
+      return *this;
+   };
+   
+   // biExponent == 0 && source.biExponent != 0 && source.biExponent != TypeTraits::getInftyExponent(biExponent)
+   if (fNegative != source.fNegative)
+      return plusAssignSureDN(source, params);
+   thisType thisCopy = *this;
+   *this = source;
+   fNegative = !fNegative;
+   minusAssignSureND(thisCopy, params);
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::multAssign(DefineBaseTypeConstReference value,
+      ReadParameters& params) {
+   if (value != 0) {
+      int valueDigits = log_base_2(value);
+      if (isNormalized()) {
+         typename TypeTraits::ExtendedMantissa mantissa(biMantissa);
+         typename TypeTraits::ExtendedMantissa::Carry carry = mantissa.multAssign(value);
+         if (carry.hasCarry()) {
+            AssumeCondition((valueDigits == log_base_2(carry.carry()))
+                  || (valueDigits == 1+log_base_2(carry.carry())))
+#ifndef DefineGeneric
+            if ((carry.carry() & (1U << (valueDigits-1))) == 0)
+#else
+            if (!BaseStoreTraits::getBit(carry.carry(), valueDigits-1))
+#endif
+            {  --valueDigits;
+#ifndef DefineGeneric
+               AssumeCondition((carry.carry() & (1U << (valueDigits-1))) != 0)
+#else
+               AssumeCondition(BaseStoreTraits::getBit(carry.carry(), valueDigits-1))
+#endif
+            };
+            if (DefineRightShift(
+#ifndef DefineGeneric
+                  mantissa, valueDigits, carry.carry() & ~(~0U << (valueDigits-1)),
+#else
+                  typename TypeTraits::BaseStoreTraits(),
+                  mantissa, valueDigits, BaseStoreTraits::getLowPart(carry.carry(), valueDigits-1),
+#endif
+                  params, fNegative, bitSizeMantissa()+1).hasCarry())
+               ++valueDigits;
+            biMantissa = mantissa;
+            bool hasOverflowExponent = mantissa.cbitArray(bitSizeMantissa())
+                ? biExponent.plusAssign(valueDigits + 1).hasCarry()
+                : biExponent.plusAssign(valueDigits).hasCarry();
+            if (hasOverflowExponent || (biExponent >= TypeTraits::getInftyExponent(biExponent))) {
+               params.setOverflow();
+               if (hasOverflowExponent || (biExponent > TypeTraits::getInftyExponent(biExponent)) || !biMantissa.isZero()) {
+                  biExponent = TypeTraits::getInftyExponent(biExponent);
+                  biMantissa.clear();
+                  if (!params.isApproximate())
+                     params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+               };
+               if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+                  biMantissa.neg();
+                  biExponent.dec();
+                  params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+               }
+               else if (params.upApproximateInfty())
+                  params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+            };
+         };
+      }
+      else if (biExponent.isZero()) {
+         typename TypeTraits::Mantissa::Carry carry = biMantissa.multAssign(value);
+         if (carry.hasCarry()) {
+            int shift = log_base_2(carry.carry())-1;
+            if (shift > 0) {
+               if (DefineRightShift(
+#ifdef DefineGeneric
+                     typename TypeTraits::BaseStoreTraits(),
+#endif
+                     biMantissa, shift, carry.carry(), params, fNegative, bitSizeMantissa()).hasCarry())
+                  ++shift;
+               biMantissa.normalize();
+               biExponent = (DefineBaseType) (shift+1);
+            }
+            else
+               biExponent = 0x1;
+         }
+         else
+            params.setUnderflow();
+      }
+      else { // biExponent == TypeTraits::getInftyExponent(biExponent);
+         if (!getMantissa().isZero())
+            biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+      };
+   }
+   else if (biExponent != TypeTraits::getInftyExponent(biExponent)) { // uValue == 0
+      biMantissa.clear();
+      biExponent.clear();
+      params.setUnderflow();
+   }
+   else { // biExponent == TypeTraits::getInftyExponent(biExponent) -> NaN
+      if (biMantissa.isZero()) {
+         biMantissa.clear();
+         biMantissa.neg();
+         biMantissa.setFalseBitArray(bitSizeMantissa()-1);
+      }
+      else
+         biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+   };
+   return *this;
+}
+
+template <class TypeTraits>
+void
+DefineBuiltDouble<TypeTraits>::addExtension(const thisType& source,
+      typename TypeTraits::ExtendedMantissa::EnhancedMultResult& result,
+      ReadParameters& params, bool isPositiveAdd, int& logResult, bool& exponentHasCarry,
+      bool& isResultPositiveExponent, bool& doesAddExponent) {
+   DefineBuiltDouble<typename TypeTraits::MultExtension> mult, add;
+   mult.setSign(!fNegative);
+   for (int index = 0; index < biExponent.getCellSize(); ++index)
+      mult.getSBasicExponent()[index] = (DefineBaseType) biExponent[index];
+   int multSize = ((const typename TypeTraits::ExtendedMantissa&) biMantissa).getMultResultCellSize(result);
+   for (int index = 0; index < multSize; ++index)
+      mult.getSMantissa()[index] = (DefineBaseType) result[index];
+   mult.getSMantissa().normalize();
+   if (logResult < 2*bitSizeMantissa()+1)
+      mult.getSMantissa() <<= 2*bitSizeMantissa()-logResult+1;
+   if (mult.getSBasicExponent().cbitArray(bitSizeExponent()-1)) {
+      mult.getSBasicExponent().setFalseBitArray(bitSizeExponent()-1);
+      mult.getSBasicExponent().setTrueBitArray(bitSizeExponent());
+      if (exponentHasCarry) {
+         if (isResultPositiveExponent)
+            mult.getSBasicExponent().setTrueBitArray(bitSizeExponent()-1);
+         else {
+            mult.getSBasicExponent().setFalseBitArray(bitSizeExponent());
+            if (mult.getSBasicExponent().isZero())
+               mult.getSBasicExponent() = 0x1;
+         };
+      };
+   }
+   else {
+      if (exponentHasCarry) {
+         if (isResultPositiveExponent) {
+            mult.getSBasicExponent().setTrueBitArray(bitSizeExponent()-1);
+            mult.getSBasicExponent().setTrueBitArray(bitSizeExponent());
+         }
+         else {
+            if (!mult.getBasicExponent().cbitArray(bitSizeExponent()-1))
+               mult.getSBasicExponent() = 0x1;
+            else
+               mult.getSBasicExponent().setFalseBitArray(bitSizeExponent()-1);
+         };
+      }
+      else
+         mult.getSBasicExponent().setTrueBitArray(bitSizeExponent()-1);
+   };
+   logResult = 2*bitSizeMantissa()+1;
+   if (doesAddExponent) {
+      mult.getSBasicExponent().inc();
+      doesAddExponent = false;
+   };
+
+   add.setSign(isPositiveAdd ? source.isPositive() : !source.isPositive());
+   for (int index = 0; index < source.getBasicExponent().getCellSize(); ++index)
+      add.getSBasicExponent()[index] = source.getBasicExponent()[index];
+   for (int index = 0; index < source.getMantissa().getCellSize(); ++index)
+      add.getSMantissa()[index] = source.getMantissa()[index];
+   int denormalizedShift = 0;
+   if (source.getBasicExponent().isZero()) {
+      if (source.getMantissa().isZero())
+         goto LSetResult;
+      denormalizedShift = bitSizeMantissa()-source.getMantissa().log_base_2()+1;
+      params.clearFlowException();
+   };
+   add.getSMantissa() <<= bitSizeMantissa()+1+denormalizedShift;
+   if (add.getSBasicExponent().cbitArray(bitSizeExponent()-1)) {
+      add.getSBasicExponent().setFalseBitArray(bitSizeExponent()-1);
+      add.getSBasicExponent().setTrueBitArray(bitSizeExponent());
+   }
+   else {
+      add.getSBasicExponent().setTrueBitArray(bitSizeExponent()-1);
+      if (denormalizedShift > 1)
+         add.getSBasicExponent().sub(denormalizedShift-1);
+   };
+
+   if (mult.isNegative() == add.isNegative())
+      mult.plusAssignSureNN(add, params);
+   else if (mult.isNegative() ? (mult <= add.opposite()) : (mult >= add.opposite()))
+      mult.minusAssignSureNN(add, params);
+   else {
+      add.opposite();
+      add.minusAssignSureNN(mult, params);
+      mult = add;
+   };
+LSetResult:
+   fNegative = mult.isNegative();
+   for (int index = 0; index < biExponent.getCellSize(); ++index)
+      biExponent[index] = (DefineBaseType) mult.getSBasicExponent()[index];
+   biExponent.normalize();
+   for (int index = 0; index < multSize; ++index)
+      result[index] = (DefineBaseType) mult.getSMantissa()[index];
+   result.setTrueBitArray(2*bitSizeMantissa()+1);
+   if (mult.getSBasicExponent().cbitArray(bitSizeExponent())) {
+      if (mult.getSBasicExponent().cbitArray(bitSizeExponent()-1)) { // infty
+         isResultPositiveExponent = true;
+         exponentHasCarry = true;
+      }
+      else { // positive
+         biExponent.setTrueBitArray(bitSizeExponent()-1);
+         exponentHasCarry = false;
+      };
+   }
+   else {
+      if (mult.getSBasicExponent().cbitArray(bitSizeExponent()-1)) { // negative
+         biExponent.setFalseBitArray(bitSizeExponent()-1);
+         exponentHasCarry = false;
+      }
+      else { // zero
+         biExponent.setTrueBitArray(bitSizeExponent()-1);
+         isResultPositiveExponent = false;
+         exponentHasCarry = true;
+      };
+   };
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::multAssignNN(const thisType& source, const MultParameters& multParams) {
+   AssumeCondition(isNormalized() && source.isNormalized())
+   ReadParameters& params = multParams.readParams();
+   typename TypeTraits::ExtendedMantissa::MultResult aresult;
+   // result.setSize(2*bitSizeMantissa());
+   typename TypeTraits::ExtendedMantissa::EnhancedMultResult&
+      result = (typename TypeTraits::ExtendedMantissa::EnhancedMultResult&) aresult;
+   result.setSize(2*bitSizeMantissa()+2);
+
+   typename TypeTraits::ExtendedMantissa mantissa(biMantissa);
+   typename TypeTraits::ExtendedMantissa sourceMantissa(source.biMantissa);
+   mantissa.mult(sourceMantissa, aresult);
+   int logResult = 2*bitSizeMantissa()+1;
+   bool doesAddExponent = false;
+   if (!result.cbitArray(logResult))
+      --logResult;
+   else
+      doesAddExponent = true;
+   AssumeCondition(result.cbitArray(logResult))
+
+   bool doesAdd = false;
+   bool isRoundToEven = false;
+   bool isApproximate = false;
+   bool exponentHasCarry = false;
+   bool isResultPositiveExponent = !source.hasNegativeExponent();
+   if (isResultPositiveExponent)
+      exponentHasCarry = biExponent.plusAssign(source.biExponent
+         -TypeTraits::getZeroExponent(biExponent)).hasCarry();
+   else {
+      Exponent subExponent = TypeTraits::getZeroExponent(biExponent);
+      subExponent -= source.biExponent;
+      exponentHasCarry = biExponent.sub(subExponent).hasCarry();
+      isResultPositiveExponent = !exponentHasCarry && (biExponent >= TypeTraits::getZeroExponent(biExponent));
+   };
+
+   bool doesAddExtension = false;
+   if (multParams.hasAdd()) {
+      doesAddExtension = multParams.hasSameSign(fNegative);
+      addExtension(multParams.getAddSource(), result, params,
+         multParams.isPositiveAdditive(), logResult, exponentHasCarry, isResultPositiveExponent,
+         doesAddExponent);
+   };
+
+   int shift = logResult-bitSizeMantissa();
+   if (((isApproximate = !result.hasZero(shift)) != false) || params.isApproximate()) {
+      if (params.isNearestRound()) {
+         doesAdd = (shift > 0) && result.cbitArray(shift-1);
+         if (doesAdd && params.isRoundToEven()) {
+            isRoundToEven = result.hasZero(shift-1) && !params.isApproximate();
+            if (isRoundToEven)
+               params.setEffectiveRoundToEven();
+         };
+      }
+      else if (params.isHighestRound())
+         doesAdd = (isApproximate || !multParams.hasAdd()) ? !fNegative : (!fNegative && doesAddExtension);
+      else if (params.isLowestRound())
+         doesAdd = (isApproximate || !multParams.hasAdd()) ? fNegative : (fNegative && doesAddExtension);
+   };
+   result >>= shift;
+   AssumeCondition(result.cbitArray(bitSizeMantissa()))
+   if (doesAdd && ((doesAdd = (!isRoundToEven || result.cbitArray(0))) != false)) {
+      result.inc();
+      if (!result.cbitArray(bitSizeMantissa())) {
+         result >>= 1;
+         AssumeCondition(!doesAddExponent)
+         doesAddExponent = true;
+      };
+   };
+   if (isApproximate) {
+      if (fNegative)
+         params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+      else
+         params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+   };
+   int lastCellIndex = biMantissa.lastCellIndex();
+   for (int index = 0; index <= lastCellIndex; ++index)
+      biMantissa[index] = (DefineBaseType) aresult[index];
+   biMantissa.normalizeLastCell();
+
+   if (isResultPositiveExponent) {
+      if (exponentHasCarry || (doesAddExponent && biExponent.inc().hasCarry())) {
+         biExponent = TypeTraits::getInftyExponent(biExponent);
+         biMantissa.clear();
+      }
+      else if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+         if (!biMantissa.isZero()) {
+            biMantissa.clear();
+            if (!params.isApproximate())
+               params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+         };
+      }
+      else
+         return *this;
+
+      params.setOverflow();
+      if (params.upApproximateInfty())
+         params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+      if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+         biMantissa.neg();
+         biExponent.dec();
+         params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+      };
+      return *this;
+   };
+
+   if (doesAddExponent && biExponent.inc().hasCarry())
+      exponentHasCarry = false;
+   if (exponentHasCarry || biExponent.isZero()) {
+      biExponent.neg().inc();
+      Exponent subExponent = biExponent;
+      biExponent.clear();
+      params.setUnderflow();
+      if (subExponent < bitSizeMantissa()) { // denormalized
+         if (DefineRightShift(
+#ifdef DefineGeneric
+               typename TypeTraits::BaseStoreTraits(),
+#endif
+               biMantissa, subExponent.getValue()+1, 0x1, params,
+               fNegative, bitSizeMantissa()).hasCarry()) {
+            biExponent.inc();
+            params.clearUnderflow();
+         };
+      }
+      else {
+         bool doesAdd = false;
+         if (params.isNearestRound()) {
+            doesAdd = (subExponent == bitSizeMantissa());
+            if (doesAdd && biMantissa.isZero()) {
+               if (!fNegative) {
+                  if (params.isUpApproximate()
+                        || (!params.isApproximate() && params.isRoundToEven()))
+                     doesAdd = false;
+               }
+               else {
+                  if (params.isDownApproximate()
+                        || (!params.isApproximate() && params.isRoundToEven()))
+                     doesAdd = false;
+               };
+            };
+         }
+         else if (params.isHighestRound())
+            doesAdd = !fNegative;
+         else if (params.isLowestRound())
+            doesAdd = fNegative;
+         biMantissa = doesAdd ? 0x1 : 0x0;
+         if (fNegative)
+            params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+         else
+            params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+         if (!doesAdd && fNegative && !params.acceptMinusZero())
+            fNegative = false;
+      };
+   }
+   else if ((biExponent == Exponent(typename Exponent::Basic(), bitSizeExponent(), 0x1))
+         && biMantissa.isZero()
+         && params.isApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up))
+      params.setUnderflow();
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::multAssignND(const thisType& source, const MultParameters& multParams) {
+   AssumeCondition(isNormalized() && source.isDenormalized())
+   ReadParameters& params = multParams.readParams();
+   typename TypeTraits::ExtendedMantissa::MultResult aresult;
+   aresult.setSize(2*bitSizeMantissa()+2);
+   typename TypeTraits::ExtendedMantissa::EnhancedMultResult&
+      result = (typename TypeTraits::ExtendedMantissa::EnhancedMultResult&) aresult;
+   result.setSize(2*bitSizeMantissa()+2);
+
+   typename TypeTraits::ExtendedMantissa mantissa(biMantissa);
+   typename TypeTraits::ExtendedMantissa sourceMantissa(source.biMantissa);
+   sourceMantissa.setFalseBitArray(bitSizeMantissa());
+   mantissa.mult(sourceMantissa, aresult);
+   int logResult = result.log_base_2()-1; // <= 2*bitSizeMantissa()
+   AssumeCondition(result.cbitArray(logResult))
+
+   bool doesAdd = false;
+   bool isRoundToEven = false;
+   bool isApproximate = false;
+   Exponent subExponent = TypeTraits::getZeroExponent(biExponent);
+   int add = 2*bitSizeMantissa()-logResult -1;
+   if (add > 0)
+      subExponent.add(add);
+   else if (add < 0)
+      subExponent.sub(-add);
+   bool isResultPositiveExponent = false; 
+   bool isExponentHasCarry = biExponent.sub(subExponent).hasCarry();
+
+   bool doesAddExtension = false;
+   if (multParams.hasAdd()) {
+      bool doesAddExponent = false;
+      doesAddExtension = multParams.hasSameSign(fNegative);
+      addExtension(multParams.getAddSource(), result, params,
+         multParams.isPositiveAdditive(), logResult, isExponentHasCarry, isResultPositiveExponent,
+         doesAddExponent);
+   };
+
+   AssumeCondition(result.cbitArray(logResult))
+   int shift = logResult-bitSizeMantissa();
+   if (((isApproximate = !result.hasZero(shift)) != false) || params.isApproximate()) {
+      if (params.isNearestRound()) {
+         doesAdd = (shift > 0) && result.cbitArray(shift-1);
+         if (doesAdd && params.isRoundToEven()) {
+            isRoundToEven = result.hasZero(shift-1) && !params.isApproximate();
+            if (isRoundToEven)
+               params.setEffectiveRoundToEven();
+         };
+      }
+      else if (params.isHighestRound())
+         doesAdd = (isApproximate || !multParams.hasAdd()) ? !fNegative : (!fNegative && doesAddExtension);
+      else if (params.isLowestRound())
+         doesAdd = (isApproximate || !multParams.hasAdd()) ? fNegative : (fNegative && doesAddExtension);
+   };
+   result >>= shift;
+   AssumeCondition(result.cbitArray(bitSizeMantissa()))
+   if (doesAdd && ((doesAdd = (!isRoundToEven || result.cbitArray(0))) != false)) {
+      result.inc();
+      if (!result.cbitArray(bitSizeMantissa())) {
+         result >>= 1;
+         biExponent.inc();
+         if (biExponent.isZero())
+            isExponentHasCarry = false;
+      };
+   };
+   if (isApproximate) {
+      if (fNegative)
+         params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+      else
+         params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+   };
+   int lastCellIndex = biMantissa.lastCellIndex();
+   for (int index = 0; index <= lastCellIndex; ++index)
+      biMantissa[index] = (unsigned) aresult[index];
+   biMantissa.normalizeLastCell();
+
+   if (isExponentHasCarry || biExponent.isZero()) {
+      params.setUnderflow();
+      biExponent.neg().inc();
+      if (biExponent < bitSizeMantissa()) { // denormalized
+         if (DefineRightShift(
+#ifdef DefineGeneric
+               typename TypeTraits::BaseStoreTraits(),
+#endif
+               biMantissa, biExponent.getValue()+1, 0x1, params, fNegative, bitSizeMantissa()).hasCarry()) {
+            biExponent = 0x1;
+            params.clearUnderflow();
+            return *this;
+         };
+      }
+      else {
+         bool doesAdd = false;
+         if (params.isNearestRound()) {
+            doesAdd = biExponent == bitSizeMantissa();
+            if (doesAdd && biMantissa.isZero()) {
+               if (!fNegative) {
+                  if (params.isUpApproximate()
+                        || (!params.isApproximate() && params.isRoundToEven()))
+                     doesAdd = false;
+               }
+               else {
+                  if (params.isDownApproximate()
+                        || (!params.isApproximate() && params.isRoundToEven()))
+                     doesAdd = false;
+               };
+            };
+         }
+         else if (params.isHighestRound())
+            doesAdd = !fNegative;
+         else if (params.isLowestRound())
+            doesAdd = fNegative;
+         if (fNegative)
+            params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+         else
+            params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+         biMantissa = doesAdd ? 0x1 : 0x0;
+         if (!doesAdd && fNegative && !params.acceptMinusZero())
+            fNegative = false;
+      };
+      biExponent.clear();
+   }
+   else if ((biExponent == Exponent(typename Exponent::Basic(), bitSizeExponent(), 0x1))
+         && biMantissa.isZero()
+         && params.isApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up))
+      params.setUnderflow();
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::multAssignDN(const thisType& source, const MultParameters& multParams) {
+   AssumeCondition(isDenormalized() && source.isNormalized())
+   ReadParameters& params = multParams.readParams();
+   typename TypeTraits::ExtendedMantissa::MultResult aresult;
+   aresult.setSize(2*bitSizeMantissa()+2);
+   typename TypeTraits::ExtendedMantissa::EnhancedMultResult&
+      result = (typename TypeTraits::ExtendedMantissa::EnhancedMultResult&) aresult;
+   result.setSize(2*bitSizeMantissa()+2);
+
+   typename TypeTraits::ExtendedMantissa mantissa(biMantissa);
+   typename TypeTraits::ExtendedMantissa sourceMantissa(source.biMantissa);
+   mantissa.setFalseBitArray(bitSizeMantissa());
+   mantissa.mult(sourceMantissa, aresult);
+   int logResult = result.log_base_2()-1; // <= 2*bitSizeMantissa()
+   AssumeCondition(result.cbitArray(logResult))
+
+   bool doesAdd = false;
+   bool isRoundToEven = false;
+   bool isApproximate = false;
+   Exponent subExponent = TypeTraits::getZeroExponent(biExponent);
+   int add = 2*bitSizeMantissa()-logResult -1;
+   if (add > 0)
+      subExponent.add(add);
+   else if (add < 0)
+      subExponent.sub(-add);
+   bool isResultPositiveExponent = false; 
+   biExponent = source.biExponent;
+   bool exponentHasCarry = biExponent.sub(subExponent).hasCarry();
+
+   bool doesAddExtension = false;
+   if (multParams.hasAdd()) {
+      bool doesAddExponent = false;
+      doesAddExtension = multParams.hasSameSign(fNegative);
+      addExtension(multParams.getAddSource(), result, params,
+         multParams.isPositiveAdditive(), logResult, exponentHasCarry, isResultPositiveExponent,
+         doesAddExponent);
+   };
+   
+   AssumeCondition(result.cbitArray(logResult))
+   int shift = logResult-bitSizeMantissa();
+   if (((isApproximate = !result.hasZero(shift)) != false) || params.isApproximate()) {
+      if (params.isNearestRound()) {
+         doesAdd = (shift > 0) && result.cbitArray(shift-1);
+         if (doesAdd && params.isRoundToEven()) {
+            isRoundToEven = result.hasZero(shift-1) && !params.isApproximate();
+            if (isRoundToEven)
+               params.setEffectiveRoundToEven();
+         };
+      }
+      else if (params.isHighestRound())
+         doesAdd = (isApproximate || !multParams.hasAdd()) ? !fNegative : (!fNegative && doesAddExtension);
+      else if (params.isLowestRound())
+         doesAdd = (isApproximate || !multParams.hasAdd()) ? fNegative : (fNegative && doesAddExtension);
+   };
+   result >>= shift;
+   AssumeCondition(result.cbitArray(bitSizeMantissa()))
+   bool doesAddExponent = false;
+   if (doesAdd && ((doesAdd = (!isRoundToEven || result.cbitArray(0))) != false)) {
+      result.inc();
+      if (!result.cbitArray(bitSizeMantissa())) {
+         result >>= 1;
+         doesAddExponent = true;
+      };
+   };
+   if (isApproximate) {
+      if (fNegative)
+         params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+      else
+         params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+   };
+   int lastCellIndex = biMantissa.lastCellIndex();
+   for (int index = 0; index <= lastCellIndex; ++index)
+      biMantissa[index] = (DefineBaseType) aresult[index];
+   biMantissa.normalizeLastCell();
+
+   if (doesAddExponent && biExponent.inc().hasCarry())
+      exponentHasCarry = false;
+   if (exponentHasCarry || biExponent.isZero()) {
+      params.setUnderflow();
+      biExponent.neg().inc();
+      if (biExponent < bitSizeMantissa()) { // denormalized
+         if (DefineRightShift(
+#ifdef DefineGeneric
+               typename TypeTraits::BaseStoreTraits(),
+#endif
+               biMantissa, biExponent.getValue()+1, 0x1, params, fNegative, bitSizeMantissa()).hasCarry()) {
+            params.clearUnderflow();
+            biExponent = 1U;
+            return *this;
+         };
+      }
+      else {
+         bool doesAdd = false;
+         if (params.isNearestRound()) {
+            doesAdd = biExponent == bitSizeMantissa();
+            if (doesAdd && biMantissa.isZero()) {
+               if (!fNegative) {
+                  if (params.isUpApproximate()
+                        || (!params.isApproximate() && params.isRoundToEven()))
+                     doesAdd = false;
+               }
+               else {
+                  if (params.isDownApproximate()
+                        || (!params.isApproximate() && params.isRoundToEven()))
+                     doesAdd = false;
+               };
+            };
+         }
+         else if (params.isHighestRound())
+            doesAdd = !fNegative;
+         else if (params.isLowestRound())
+            doesAdd = fNegative;
+         if (fNegative)
+            params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+         else
+            params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+         biMantissa = doesAdd ? 0x1 : 0x0;
+         if (!doesAdd && fNegative && !params.acceptMinusZero())
+            fNegative = false;
+      };
+      biExponent.clear();
+   }
+   else if ((biExponent == 1U) && biMantissa.isZero()
+         && params.isApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up))
+      params.setUnderflow();
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::multAssignDD(const thisType& source, const MultParameters& multParams) {
+   AssumeCondition(isDenormalized() && source.isDenormalized())
+   ReadParameters& params = multParams.readParams();
+   params.setUnderflow();
+   bool doesAdd = false;
+   if (params.isHighestRound())
+      doesAdd = !fNegative;
+   else if (params.isLowestRound())
+      doesAdd = fNegative;
+   if (fNegative)
+      params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+   else
+      params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+   if (multParams.hasAdd() && !multParams.getAddSource().isZero()) {
+      params.clearFlowException();
+      const thisType& addSource = multParams.getAddSource();
+      if (addSource.biExponent == TypeTraits::getInftyExponent(biExponent)) {
+         params.clearApproximate();
+         fNegative = multParams.isPositiveAdditive() ? addSource.fNegative
+            : !addSource.fNegative;
+         biMantissa = addSource.biMantissa;
+         if (!biMantissa.isZero()) {
+            fNegative = (params.keepNaNSign() || multParams.isPositiveAdditive())
+               ? addSource.fNegative : !addSource.fNegative;
+            if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+               params.setSNaNOperand();
+               biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+            };
+         };
+         biExponent = TypeTraits::getInftyExponent(biExponent);
+         return *this;
+      };
+      biMantissa = addSource.getMantissa();
+      biExponent = addSource.getBasicExponent();
+      bool doesSub =  multParams.isPositiveAdditive()
+         ? (fNegative != addSource.fNegative) : (fNegative == addSource.fNegative);
+      if (doesSub) {
+         fNegative = multParams.isPositiveAdditive() ? addSource.fNegative : !addSource.fNegative;
+         if (params.isHighestRound() || params.isLowestRound())
+            doesSub = doesAdd;
+         else if (params.isNearestRound())
+            doesSub = false;
+         doesAdd = false;
+      };
+      if (doesAdd && biMantissa.inc().hasCarry()) {
+         biExponent.inc();
+         if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+            if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+               biMantissa.neg();
+               biExponent.dec();
+               params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+            }
+            else if (params.upApproximateInfty())
+               params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+         };
+      }
+      else if (doesSub) {
+         if (biMantissa.dec().hasCarry())
+            biExponent.dec();
+         params.clearApproximate();
+         params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+      };
+      if (isDenormalized())
+         params.setUnderflow();
+      else if (isInfty())
+         params.setOverflow();
+   }
+   else {
+      biMantissa = doesAdd ? 0x1 : 0x0;
+      if (!doesAdd && fNegative && !params.acceptMinusZero())
+         fNegative = false;
+   };
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::multAssign(const thisType& source, const MultParameters& multParams) {
+   ReadParameters& params = multParams.readParams();
+   bool isOldNegative = fNegative;
+   fNegative = fNegative ? !source.fNegative : source.fNegative;
+   if (multParams.hasAdd() && multParams.isNegativeMult())
+      fNegative = !fNegative;
+   if (!biExponent.isZero()) {
+      if (biExponent != TypeTraits::getInftyExponent(biExponent)) {
+         if (!source.biExponent.isZero()) {
+            if (source.biExponent != TypeTraits::getInftyExponent(biExponent)) {
+               if (multParams.hasAdd() && (multParams.getAddSource().biExponent == TypeTraits::getInftyExponent(biExponent))) {
+                  biExponent = multParams.getAddSource().biExponent;
+                  fNegative = multParams.getAddSource().fNegative;
+                  if (multParams.isNegativeAdditive())
+                     fNegative = !fNegative;
+                  biMantissa = multParams.getAddSource().biMantissa;
+                  if (!biMantissa.isZero()) {
+                     if (params.keepNaNSign())
+                        fNegative = multParams.getAddSource().fNegative;
+                     if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+                        params.setSNaNOperand();
+                        biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+                     };
+                  };
+                  return *this;
+               };
+               return multAssignNN(source, multParams);
+            };
+            // source.biExponent == TypeTraits::getInftyExponent(biExponent)
+            biMantissa = source.biMantissa;
+            biExponent = TypeTraits::getInftyExponent(biExponent);
+            if (!biMantissa.isZero()) {
+               if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+                  params.setSNaNOperand();
+                  biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+               };
+               if (params.keepNaNSign())
+                  fNegative = source.fNegative;
+            };
+            if (multParams.hasAdd()) {
+               if (params.chooseNaNAddBeforeMult() && multParams.getAddSource().isNaN()) {
+                  biExponent = multParams.getAddSource().biExponent;
+                  fNegative = multParams.isPositiveAdditive()
+                     ? multParams.getAddSource().fNegative : !multParams.getAddSource().fNegative;
+                  biMantissa = multParams.getAddSource().biMantissa;
+                  if (!biMantissa.isZero()) {
+                     if (params.keepNaNSign())
+                        fNegative = multParams.getAddSource().fNegative;
+                     if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+                        params.setSNaNOperand();
+                        biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+                     };
+                  };
+                  return *this;
+               };
+               if (multParams.isPositiveAdditive())
+                  plusAssignDouble(multParams.getAddSource(), params);
+               else
+                  minusAssignDouble(multParams.getAddSource(), params);
+            };
+            return *this;
+         };
+         
+         // source.biExponent == 0
+         if (multParams.hasAdd() && (multParams.getAddSource().biExponent == TypeTraits::getInftyExponent(biExponent))) {
+            biExponent = multParams.getAddSource().biExponent;
+            fNegative = multParams.isPositiveAdditive()
+               ? multParams.getAddSource().fNegative : !multParams.getAddSource().fNegative;
+            biMantissa = multParams.getAddSource().biMantissa;
+            if (!biMantissa.isZero()) {
+               if (params.keepNaNSign())
+                  fNegative = multParams.getAddSource().fNegative;
+               if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+                  params.setSNaNOperand();
+                  biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+               };
+            };
+            return *this;
+         };
+         if (source.biMantissa.isZero()) {
+            biMantissa.clear();
+            biExponent.clear();
+            if (!params.acceptMinusZero())
+               fNegative = false;
+            if (multParams.hasAdd()) {
+               if (!multParams.getAddSource().isZero()) {
+                  biExponent = multParams.getAddSource().biExponent;
+                  fNegative = multParams.isPositiveAdditive()
+                     ? multParams.getAddSource().fNegative : !multParams.getAddSource().fNegative;
+                  biMantissa = multParams.getAddSource().biMantissa;
+                  if (multParams.getAddSource().isNaN()) {
+                     if (params.keepNaNSign())
+                        fNegative = multParams.getAddSource().fNegative;
+                     if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+                        params.setSNaNOperand();
+                        biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+                     };
+                  };
+               }
+               else if ((multParams.isPositiveAdditive()
+                        ? (fNegative != multParams.getAddSource().fNegative)
+                        : (fNegative == multParams.getAddSource().fNegative))
+                     && params.isPositiveZeroMAdd())
+                  fNegative = !params.isLowestRound() ? multParams.isNegativeMult() : !multParams.isNegativeMult();
+            };
+            return *this;
+         };
+         return multAssignND(source, multParams);
+      };
+
+      // biExponent == TypeTraits::getInftyExponent(biExponent)
+      if (!biMantissa.isZero()) {
+         if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+            params.setSNaNOperand();
+            biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+         }
+         else if (source.isSNaN())
+            params.setSNaNOperand();
+         if (params.keepNaNSign())
+            fNegative = isOldNegative;
+      }
+      else if (source.isNaN()) {
+         biMantissa = source.biMantissa;
+         if (params.keepNaNSign())
+            fNegative = source.fNegative;
+         if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+            params.setSNaNOperand();
+            biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+         };
+      }
+      else if (source.biMantissa.isZero() && source.biExponent.isZero()) {
+         params.setInftyMultZero();
+         biMantissa.clear();
+         biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+         // biMantissa.neg();
+         // biMantissa.setFalseBitArray(bitSizeMantissa()-1);
+         if (params.keepNaNSign())
+            fNegative = isOldNegative;
+      };
+      if (multParams.hasAdd()) {
+         if (multParams.isPositiveAdditive())
+            plusAssignDouble(multParams.getAddSource(), params);
+         else
+            minusAssignDouble(multParams.getAddSource(), params);
+      };
+      return *this;
+   };
+   
+   // biExponent == 0
+   if (source.biExponent.isZero()) {
+      if (!biMantissa.isZero() && !source.biMantissa.isZero())
+         return multAssignDD(source, multParams);
+      biMantissa.clear();
+      if (!params.acceptMinusZero())
+         fNegative = false;
+      if (multParams.hasAdd()) {
+         if (!multParams.getAddSource().isZero()) {
+            biExponent = multParams.getAddSource().biExponent;
+            fNegative = multParams.isPositiveAdditive()
+               ? multParams.getAddSource().fNegative : !multParams.getAddSource().fNegative;
+            biMantissa = multParams.getAddSource().biMantissa;
+            if (multParams.getAddSource().isNaN()) {
+               if (params.keepNaNSign())
+                  fNegative = multParams.getAddSource().fNegative;
+               if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+                  params.setSNaNOperand();
+                  biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+               };
+            };
+         }
+         else if ((multParams.isPositiveAdditive()
+                  ? (fNegative != multParams.getAddSource().fNegative) 
+                  : (fNegative == multParams.getAddSource().fNegative))
+               && params.isPositiveZeroMAdd())
+            fNegative = !params.isLowestRound() ? multParams.isNegativeMult() : !multParams.isNegativeMult();
+      };
+      return *this;
+   };
+
+   // biExponent == 0 && source.biExponent != 0
+   if (source.biExponent == TypeTraits::getInftyExponent(biExponent)) {
+      biExponent = TypeTraits::getInftyExponent(biExponent);
+      if (!source.biMantissa.isZero() || biMantissa.isZero()) {
+         if (source.biMantissa.isZero()) {
+            params.setInftyMultZero();
+            biMantissa.clear();
+            biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+            // biMantissa.neg();
+            // biMantissa.setFalseBitArray(bitSizeMantissa()-1);
+         }
+         else {
+            biMantissa = source.biMantissa;
+            if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+               params.setSNaNOperand();
+               biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+            };
+            if (params.keepNaNSign())
+               fNegative = source.fNegative;
+         };
+         if (multParams.hasAdd()) {
+            if (params.chooseNaNAddBeforeMult() && multParams.getAddSource().isNaN()) {
+               biExponent = multParams.getAddSource().biExponent;
+               fNegative = (params.keepNaNSign() || multParams.isPositiveAdditive())
+                  ? multParams.getAddSource().fNegative : !multParams.getAddSource().fNegative;
+               biMantissa = multParams.getAddSource().biMantissa;
+               if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+                  params.setSNaNOperand();
+                  biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+               };
+               return *this;
+            };
+            if (multParams.isPositiveAdditive())
+               plusAssignDouble(multParams.getAddSource(), params);
+            else
+               minusAssignDouble(multParams.getAddSource(), params);
+         };
+         return *this;
+      };
+      
+      // source.biMantissa == 0 && source.biExponent == TypeTraits::getInftyExponent(biExponent)
+      // && biExponent == 0 && biMantissa != 0
+      biMantissa.clear();
+      if (multParams.hasAdd()) {
+         if (multParams.isPositiveAdditive())
+            plusAssignDouble(multParams.getAddSource(), params);
+         else
+            minusAssignDouble(multParams.getAddSource(), params);
+      };
+      return *this;
+   };
+   
+   // biExponent == 0 && source.biExponent != 0 && source.biExponent != TypeTraits::getInftyExponent(biExponent)
+   if (biMantissa.isZero()) {
+      if (!params.acceptMinusZero())
+         fNegative = false;
+      if (multParams.hasAdd()) {
+         if (!multParams.getAddSource().isZero()) {
+            biExponent = multParams.getAddSource().biExponent;
+            fNegative = multParams.isPositiveAdditive()
+               ? multParams.getAddSource().fNegative : !multParams.getAddSource().fNegative;
+            biMantissa = multParams.getAddSource().biMantissa;
+            if (multParams.getAddSource().isNaN()) {
+               if (params.keepNaNSign())
+                  fNegative = multParams.getAddSource().fNegative;
+               if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+                  params.setSNaNOperand();
+                  biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+               };
+            };
+         }
+         else if ((multParams.isPositiveAdditive()
+                  ? (fNegative != multParams.getAddSource().fNegative)
+                  : (fNegative == multParams.getAddSource().fNegative))
+               && params.isPositiveZeroMAdd())
+            fNegative = !params.isLowestRound() ? multParams.isNegativeMult() : !multParams.isNegativeMult();
+      };
+      return *this;
+   };
+   if (multParams.hasAdd() && (multParams.getAddSource().biExponent == TypeTraits::getInftyExponent(biExponent))) {
+      biExponent = multParams.getAddSource().biExponent;
+      fNegative = multParams.isPositiveAdditive()
+         ? multParams.getAddSource().fNegative : !multParams.getAddSource().fNegative;
+      biMantissa = multParams.getAddSource().biMantissa;
+      if (!biMantissa.isZero()) {
+         if (params.keepNaNSign())
+            fNegative = multParams.getAddSource().fNegative;
+         if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+            params.setSNaNOperand();
+            biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+         };
+      };
+      return *this;
+   };
+   return multAssignDN(source, multParams);
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::multAssignDouble(const thisType& source, ReadParameters& params)
+   {  return multAssign(source, MultParameters(params)); }
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::divAssign(DefineBaseTypeConstReference value, ReadParameters& params) {
+   AssumeCondition((value > 0)
+#ifndef DefineGeneric
+         && (value < (1U << (sizeof(unsigned int)*4)))
+#else
+         && BaseStoreTraits::isZeroValue(BaseStoreTraits::getMidHighPart(value))
+#endif
+      )
+   if (isNormalized()) {
+      typename TypeTraits::ExtendedMantissa mantissa(biMantissa);
+      typename TypeTraits::ExtendedMantissa::AtomicDivisionResult result = mantissa.divAssign(value);
+      int shift = (bitSizeMantissa()+1 - mantissa.log_base_2());
+      AssumeCondition((log_base_2(value) == shift) || (log_base_2(value) == (shift+1)))
+      DefineBaseType leftQuotient = 0x0;
+      if ((shift == (int) (DefineSizeofBaseTypeInBits/2+1))
+#ifndef DefineGeneric
+            && ((result.remainder() & (1U << 4*sizeof(unsigned int))) != 0U)
+#else
+            && BaseStoreTraits::getBit(result.remainder(), DefineSizeofBaseTypeInBits/2)
+#endif
+         )
+      {  result.remainder() <<= DefineSizeofBaseTypeInBits/2;
+         leftQuotient = result.remainder() / value;
+         result.remainder() %= value;
+         result.remainder() <<= 1;
+         leftQuotient <<= 1;
+         if (result.remainder() >= value) {
+            ++leftQuotient;
+            result.remainder() -= value;
+         };
+#ifndef DefineGeneric
+         AssumeCondition(leftQuotient < (1U << 4*sizeof(unsigned int)))
+#else
+         AssumeCondition(BaseStoreTraits::isZeroValue(BaseStoreTraits::getMidHighPart(leftQuotient)))
+#endif
+      }
+      else {
+         result.remainder() <<= shift;
+         leftQuotient = result.remainder() / value;
+         result.remainder() %= value;
+      };
+      mantissa <<= shift;
+      mantissa[0] |= leftQuotient;
+#ifndef DefineGeneric
+      if (biExponent.isAtomic() && (biExponent.getValue() <= (unsigned) shift))
+#else
+      Exponent shiftExponent(typename Exponent::Basic(), bitSizeExponent(), shift);
+      if (biExponent <= shiftExponent)
+#endif
+      {  int leftshift = shift-biExponent.getValue() + 1;
+         bool doesAdd = false;
+         bool isRoundToEven = false;
+         bool isApproximate = false;
+         if (!mantissa.hasZero(leftshift)
+#ifndef DefineGeneric
+                  || (result.remainder() != 0)
+#else
+                  || !BaseStoreTraits::isZeroValue(result.remainder())
+#endif
+               ) {
+            if (params.isNearestRound()) {
+               doesAdd = mantissa.cbitArray(leftshift-1);
+               if (doesAdd && params.isRoundToEven()) {
+#ifndef DefineGeneric
+                  isRoundToEven = (result.remainder() == 0U)
+#else
+                  isRoundToEven = BaseStoreTraits::isZeroValue(result.remainder())
+#endif
+                        && mantissa.hasZero(leftshift-1);
+                  if (isRoundToEven)
+                     params.setEffectiveRoundToEven();
+               };
+            }
+            else if (params.isHighestRound())
+               doesAdd = !fNegative;
+            else if (params.isLowestRound())
+               doesAdd = fNegative;
+            isApproximate = true;
+         };
+         mantissa >>= leftshift;
+         biMantissa = mantissa;
+         biExponent.clear();
+         if (doesAdd && ((doesAdd = (!isRoundToEven || biMantissa.cbitArray(0))) != false)
+               && biMantissa.inc().hasCarry())
+            biExponent = 0x1;
+         if (isApproximate) {
+            if (fNegative)
+               params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+            else
+               params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+         };
+      }
+      else {
+         bool doesAdd = false;
+         biExponent.minusAssign(shift);
+#ifndef DefineGeneric
+         if (result.remainder() != 0)
+#else
+         if (!BaseStoreTraits::isZeroValue(result.remainder()))
+#endif
+         {  if (params.isNearestRound()) {
+#ifndef DefineGeneric
+               unsigned int doubleRemainder = 2*result.remainder();
+#else
+               typename BaseStoreTraits::BaseType doubleRemainder
+                     = BaseStoreTraits::getStoreHighPart(result.remainder(), 1);
+#endif
+               doesAdd = (doubleRemainder >= value);
+               if (doesAdd && params.isRoundToEven())
+                  doesAdd = (doubleRemainder != value) || biMantissa.cbitArray(0);
+            }
+            else if (params.isHighestRound())
+               doesAdd = !fNegative;
+            else if (params.isLowestRound())
+               doesAdd = fNegative;
+            if (fNegative)
+               params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+            else
+               params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+         };
+         biMantissa = mantissa;
+         if (doesAdd && biMantissa.inc().hasCarry()) {
+            biMantissa >>= 1;
+            biExponent.inc();
+         };
+      };
+   }
+   else if (biExponent.isZero()) {
+      typename TypeTraits::Mantissa::AtomicDivisionResult result = biMantissa.divAssign(value);
+      if (result.remainder() != 0) {
+         bool doesAdd = false;
+         if (params.isNearestRound()) {
+#ifndef DefineGeneric
+            unsigned int doubleRemainder = 2*result.remainder();
+#else
+            DefineBaseType doubleRemainder = BaseStoreTraits::getStoreHighPart(result.remainder(), 1);
+#endif
+            doesAdd = (doubleRemainder >= value);
+            if (doesAdd && params.isRoundToEven())
+               doesAdd = (doubleRemainder != value) || biMantissa.cbitArray(0);
+         }
+         else if (params.isHighestRound())
+            doesAdd = !fNegative;
+         else if (params.isLowestRound())
+            doesAdd = fNegative;
+         if (doesAdd)
+            biMantissa.inc();
+         if (fNegative)
+            params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+         else
+            params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+      };
+   };
+   // else { // biExponent == TypeTraits::getInftyExponent(biExponent); };
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::divAssignNN(const thisType& source, ReadParameters& params) {
+   AssumeCondition(isNormalized() && source.isNormalized())
+   typename Mantissa::NormalizedDivisionResult result;
+   result.quotient().setBitSize(biMantissa.getSize());
+   result.remainder().setBitSize(biMantissa.getSize()+1);
+   biMantissa.divNormalized(source.biMantissa, result);
+   AssumeCondition((result.comma() == 0) || (result.comma() == -1))
+   biMantissa = result.quotient();
+   bool doesAdd = false;
+   bool isRoundToEven = false;
+   bool isApproximate = false;
+   if (!((const typename TypeTraits::ExtendedMantissa::EnhancedRemainderResult&) result.remainder()).isZero()) {
+      if (params.isNearestRound()) {
+         doesAdd = ((const typename TypeTraits::ExtendedMantissa&) result.remainder()).cbitArray(bitSizeMantissa());
+         if (!doesAdd && ((const typename TypeTraits::ExtendedMantissa&) result.remainder()).cbitArray(bitSizeMantissa()-1)) {
+            Mantissa remainder;
+            remainder.assertSize(source.biMantissa.getSize());
+            int lastCellIndex = source.biMantissa.lastCellIndex();
+            for (int index = 0; index <= lastCellIndex; ++index)
+               remainder[index] = (DefineBaseType) result.remainder()[index];
+            doesAdd = (remainder <<= 1) >= source.biMantissa;
+            if (doesAdd && params.isNearestRound()) {
+               isRoundToEven = (remainder == source.biMantissa);
+               if (isRoundToEven)
+                  params.setEffectiveRoundToEven();
+            };
+         };
+      }
+      else if (params.isHighestRound())
+         doesAdd = !fNegative;
+      else if (params.isLowestRound())
+         doesAdd = fNegative;
+      isApproximate = true;
+   };
+   if (source.biExponent >= TypeTraits::getZeroExponent(biExponent)) {
+      Exponent subExponent = source.biExponent;
+      subExponent -= TypeTraits::getZeroExponent(biExponent);
+      subExponent.add(-result.comma()); // 0 or -1
+      if (biExponent <= subExponent) {
+         subExponent -= biExponent;
+         biExponent.clear();
+         params.setUnderflow();
+         if (subExponent < Exponent(typename Exponent::Basic(), bitSizeExponent(), bitSizeMantissa())) {
+            int shift = subExponent.getValue()+1;
+            ReadParameters newParams(params);
+            if (isApproximate)
+               newParams.clearRoundToEven();
+            if (DefineRightShift(
+#ifdef DefineGeneric
+                  typename TypeTraits::BaseStoreTraits(),
+#endif
+                  biMantissa, shift, 0x1, newParams, fNegative, bitSizeMantissa()).hasCarry()) {
+               biExponent.inc();
+               params.clearUnderflow();
+            };
+            if (!newParams.isApproximate() && doesAdd
+                  && ((doesAdd = !params.isNearestRound()) != false)) {
+               if (biMantissa.inc().hasCarry()) {
+                  biExponent.inc();
+                  params.clearUnderflow();
+               };
+               params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+               return *this;
+            }
+            else if (newParams.isApproximate()) {
+               params = newParams;
+               return *this;
+            };
+         }
+         else {
+            doesAdd = false;
+            if (params.isNearestRound()) {
+               doesAdd = (subExponent == bitSizeMantissa());
+               if (doesAdd && params.isRoundToEven())
+                  doesAdd = !biMantissa.isZero() || !((const typename TypeTraits::ExtendedMantissa::EnhancedRemainderResult&)
+                     result.remainder()).isZero();
+            }
+            else if (params.isHighestRound())
+               doesAdd = !fNegative;
+            else if (params.isLowestRound())
+               doesAdd = fNegative;
+            if (fNegative)
+               params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+            else
+               params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+            biMantissa = doesAdd ? 0x1 : 0x0;
+            if (!doesAdd && fNegative && !params.acceptMinusZero())
+               fNegative = false;
+            return *this;
+         };
+      }
+      else
+         biExponent -= subExponent;
+      if (doesAdd && ((doesAdd = (!isRoundToEven || biMantissa.cbitArray(0))) != false)
+            && biMantissa.inc().hasCarry())
+         biExponent.inc();
+   }
+   else { // source.biExponent < TypeTraits::getZeroExponent(biExponent)
+      Exponent subExponent = TypeTraits::getZeroExponent(biExponent);
+      subExponent -= source.biExponent;
+      subExponent.sub(-result.comma()); // 0 or -1
+      if (biExponent.add(subExponent).hasCarry()
+            || (biExponent == TypeTraits::getInftyExponent(biExponent))) {
+         biExponent = TypeTraits::getInftyExponent(biExponent);
+         biMantissa.clear();
+         params.setOverflow();
+         params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+         if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+            isApproximate = false;
+            biMantissa.neg();
+            biExponent.dec();
+            params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+         };
+      }
+      else if (doesAdd && ((doesAdd = (!isRoundToEven || biMantissa.cbitArray(0))) != false)
+            && biMantissa.inc().hasCarry()) {
+         biExponent.inc();
+         if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+            params.setOverflow();
+            if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+               isApproximate = false;
+               biMantissa.neg();
+               biExponent.dec();
+               params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+            }
+            else if (params.upApproximateInfty())
+               params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+         };
+      };
+   };
+   if (isApproximate) {
+      if (fNegative)
+         params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+      else
+         params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+   };
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::divAssignND(const thisType& source, ReadParameters& params) {
+   AssumeCondition(isNormalized() && source.isDenormalized())
+   typename TypeTraits::ExtendedMantissa::DivisionResult result;
+   typename TypeTraits::ExtendedMantissa mantissa(biMantissa);
+   typename TypeTraits::ExtendedMantissa sourceMantissa(source.biMantissa);
+   sourceMantissa.setFalseBitArray(bitSizeMantissa());
+
+   mantissa.div(sourceMantissa, result);
+   AssumeCondition(result.comma() >= 0)
+   bool doesAdd = false;
+   bool isRoundToEven = false;
+   bool isApproximate = false;
+   if (((const typename TypeTraits::ExtendedMantissa&) result.quotient()).cbitArray(0)
+          || !((const typename TypeTraits::ExtendedMantissa&) result.remainder()).isZero()) {
+      if (params.isNearestRound()) {
+         doesAdd = ((const typename TypeTraits::ExtendedMantissa&) result.quotient()).cbitArray(0);
+         if (doesAdd && params.isRoundToEven()) {
+            isRoundToEven = ((const typename TypeTraits::ExtendedMantissa&) result.remainder()).isZero();
+            if (isRoundToEven)
+               params.setEffectiveRoundToEven();
+         };
+      }
+      else if (params.isHighestRound())
+         doesAdd = !fNegative;
+      else if (params.isLowestRound())
+         doesAdd = fNegative;
+      isApproximate = true;
+   };
+   ((typename TypeTraits::ExtendedMantissa&) result.quotient()) >>= 1;
+   int lastCellIndex = biMantissa.lastCellIndex();
+   for (int index = 0; index <= lastCellIndex; ++index)
+      biMantissa[index] = (DefineBaseType) result.quotient()[index];
+   biMantissa.normalizeLastCell();
+
+   if (biExponent.add(TypeTraits::getZeroExponent(biExponent)).hasCarry()
+         || biExponent.add(result.comma()-1).hasCarry()
+         || (biExponent == TypeTraits::getInftyExponent(biExponent))) {
+      biExponent = TypeTraits::getInftyExponent(biExponent);
+      biMantissa.clear();
+      params.setOverflow();
+      params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+      if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+         isApproximate = false;
+         biMantissa.neg();
+         biExponent.dec();
+         params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+      };
+   }
+   else if (doesAdd && ((doesAdd = (!isRoundToEven || biMantissa.cbitArray(0))) != false)
+         && biMantissa.inc().hasCarry()) {
+      biExponent.inc();
+      if (biExponent == TypeTraits::getInftyExponent(biExponent)) {
+         params.setOverflow();
+         if (params.isInftyAvoided() && params.doesAvoidInfty(fNegative)) {
+            isApproximate = false;
+            biMantissa.neg();
+            biExponent.dec();
+            params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+         }
+         else if (params.upApproximateInfty())
+            params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+      };
+   };
+   if (isApproximate) {
+      if (fNegative)
+         params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+      else
+         params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+   };
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::divAssignDN(const thisType& source, ReadParameters& params) {
+   AssumeCondition(isDenormalized() && source.isNormalized())
+   typename TypeTraits::ExtendedMantissa::DivisionResult result;
+   typename TypeTraits::ExtendedMantissa mantissa(biMantissa);
+   mantissa.setFalseBitArray(bitSizeMantissa());
+   typename TypeTraits::ExtendedMantissa sourceMantissa(source.biMantissa);
+   mantissa.div(sourceMantissa, result);
+   AssumeCondition(result.comma() < 0)
+
+   bool doesAdd = false;
+   bool isRoundToEven = false;
+   bool isApproximate = false;
+   if (((const typename TypeTraits::ExtendedMantissa&) result.quotient()).cbitArray(0)
+          || !((const typename TypeTraits::ExtendedMantissa&) result.remainder()).isZero()) {
+      if (params.isNearestRound()) {
+         doesAdd = ((const typename TypeTraits::ExtendedMantissa&) result.quotient()).cbitArray(0);
+         if (doesAdd && params.isRoundToEven()) {
+            isRoundToEven = ((const typename TypeTraits::ExtendedMantissa&) result.remainder()).isZero();
+            if (isRoundToEven)
+               params.setEffectiveRoundToEven();
+         };
+      }
+      else if (params.isHighestRound())
+         doesAdd = !fNegative;
+      else if (params.isLowestRound())
+         doesAdd = fNegative;
+      isApproximate = true;
+   };
+   ((typename TypeTraits::ExtendedMantissa&) result.quotient()) >>= 1;
+   int lastCellIndex = biMantissa.lastCellIndex();
+   for (int index = 0; index <= lastCellIndex; ++index)
+      biMantissa[index] = (DefineBaseType) result.quotient()[index];
+   biMantissa.normalizeLastCell();
+
+   bool isNeg = fNegative;
+   if (source.biExponent >= TypeTraits::getZeroExponent(biExponent)) {
+      params.setUnderflow();
+      Exponent subExponent = source.biExponent;
+      subExponent -= TypeTraits::getZeroExponent(biExponent);
+      subExponent.add(-result.comma());
+      if (subExponent <= bitSizeMantissa()) {
+         ReadParameters newParams(params);
+         if (isApproximate)
+            newParams.clearRoundToEven();
+         if (DefineRightShift(
+#ifdef DefineGeneric
+               typename TypeTraits::BaseStoreTraits(),
+#endif
+               biMantissa, subExponent.getValue(), 0x1, newParams, fNegative, bitSizeMantissa()).hasCarry()) {
+            biExponent.inc();
+            params.clearUnderflow();
+         };
+         if (!newParams.isApproximate() && doesAdd
+               && ((doesAdd = !params.isNearestRound()) != false)) {
+            if (biMantissa.inc().hasCarry()) {
+               biExponent.inc();
+               params.clearUnderflow();
+            };
+            params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+            return *this;
+         }
+         else if (newParams.isApproximate()) {
+            params = newParams;
+            return *this;
+         };
+      }
+      else {
+         doesAdd = false;
+         if (params.isNearestRound()) {
+            doesAdd = (subExponent == bitSizeMantissa()+1);
+            if (doesAdd && params.isRoundToEven())
+               doesAdd = !biMantissa.isZero() || !((const typename TypeTraits::ExtendedMantissa&) result.remainder()).isZero();
+         }
+         else if (params.isHighestRound())
+            doesAdd = !fNegative;
+         else if (params.isLowestRound())
+            doesAdd = fNegative;
+         isApproximate = true;
+         biMantissa = doesAdd ? 0x1 : 0x0;
+         if (!doesAdd && fNegative && !params.acceptMinusZero())
+            fNegative = false;
+      };
+   }
+   else { // source.biExponent < TypeTraits::getZeroExponent(biExponent)
+      Exponent subExponent = TypeTraits::getZeroExponent(biExponent);
+      subExponent -= source.biExponent;
+      if (subExponent >= -result.comma()) {
+         subExponent.sub(-result.comma()-1);
+         biExponent = subExponent;
+      }
+      else {
+         ReadParameters newParams(params);
+         if (isApproximate)
+            newParams.clearRoundToEven();
+         if (DefineRightShift(
+#ifdef DefineGeneric
+               typename TypeTraits::BaseStoreTraits(),
+#endif
+               biMantissa, -result.comma() - subExponent.getValue(), 0x1,
+               newParams, fNegative, bitSizeMantissa()).hasCarry())
+            biExponent.inc();
+         if (!newParams.isApproximate() && doesAdd
+               && ((doesAdd = !params.isNearestRound()) != false)) {
+            if (biMantissa.inc().hasCarry())
+               biExponent.inc();
+            params.setApproximate(fNegative ? ReadParameters::Down : ReadParameters::Up);
+         }
+         else if (newParams.isApproximate())
+            params = newParams;
+         else if (isApproximate)
+            params.setApproximate(fNegative ? ReadParameters::Up : ReadParameters::Down);
+         if (biExponent.isZero())
+            params.setUnderflow();
+         return *this;
+      };
+         
+      if (doesAdd && ((doesAdd = (!isRoundToEven || biMantissa.cbitArray(0))) != false)
+            && biMantissa.inc().hasCarry()) {
+         params.clearUnderflow();
+         biExponent.inc();
+      };
+   };
+   if (isApproximate) {
+      if (isNeg)
+         params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+      else
+         params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+   };
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::divAssignDD(const thisType& source, ReadParameters& params) {
+   AssumeCondition(isDenormalized() && source.isDenormalized())
+   typename Mantissa::DivisionResult result;
+   biMantissa.div(source.biMantissa, result);
+
+   int lastCellIndex = biMantissa.lastCellIndex();
+   for (int index = 0; index <= lastCellIndex; ++index)
+      biMantissa[index] = (unsigned) result.quotient()[index];
+   biExponent = TypeTraits::getZeroExponent(biExponent);
+   if (result.comma() > 0)
+      biExponent.add(result.comma());
+   else if (result.comma() < 0)
+      biExponent.sub(-result.comma());
+   
+   bool doesAdd = false;
+   if (!((const Mantissa&) result.remainder()).isZero()) {
+      if (params.isNearestRound()) {
+         doesAdd = ((const Mantissa&) result.remainder()).cbitArray(bitSizeMantissa()-1);
+         ((Mantissa&) result.remainder()) <<= 1;
+         if (!doesAdd)
+            doesAdd = (((const Mantissa&) result.remainder()) > source.biMantissa);
+         if (!doesAdd && (!params.isRoundToEven() || biMantissa.cbitArray(0)))
+            doesAdd = (((const Mantissa&) result.remainder()) == source.biMantissa);
+      }
+      else if (params.isHighestRound())
+         doesAdd = !fNegative;
+      else if (params.isLowestRound())
+         doesAdd = fNegative;
+      if (fNegative)
+         params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+      else
+         params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+   };
+
+   if (doesAdd && biMantissa.inc().hasCarry())
+      ++biExponent;
+   return *this;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::divAssignDouble(const thisType& source, ReadParameters& params) {
+   bool isOldNegative = fNegative;
+   fNegative = fNegative ? !source.fNegative : source.fNegative;
+   if (!biExponent.isZero()) {
+      if (biExponent != TypeTraits::getInftyExponent(biExponent)) {
+         if (!source.biExponent.isZero()) {
+            if (source.biExponent != TypeTraits::getInftyExponent(biExponent))
+               return divAssignNN(source, params);
+            // source.biExponent == TypeTraits::getInftyExponent(biExponent)
+            if (!source.biMantissa.isZero()) {
+               biMantissa = source.biMantissa;
+               if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+                  params.setSNaNOperand();
+                  biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+               };
+               biExponent = TypeTraits::getInftyExponent(biExponent);
+               if (params.keepNaNSign())
+                  fNegative = source.fNegative;
+            }
+            else {
+               biMantissa.clear();
+               biExponent.clear();
+               if (!params.acceptMinusZero())
+                  fNegative = false;
+            };
+            return *this;
+         };
+         
+         // source.biExponent == 0
+         if (source.biMantissa.isZero()) {
+            params.setDivisionByZero();
+            biMantissa.clear();
+            biExponent = TypeTraits::getInftyExponent(biExponent);
+            return *this;
+         };
+         return divAssignND(source, params);
+      };
+
+      // biExponent == TypeTraits::getInftyExponent(biExponent)
+      if (!biMantissa.isZero()) {
+         if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+            params.setSNaNOperand();
+            biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+         }
+         else if (source.isSNaN())
+            params.setSNaNOperand();
+         if (params.keepNaNSign())
+            fNegative = isOldNegative;
+      }
+      else if (source.biExponent == TypeTraits::getInftyExponent(biExponent)) {
+         if (source.biMantissa.isZero()) { // produce a qNaN
+            params.setInftyOnInfty();
+            biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+            if (params.produceDivNaNPositive())
+               fNegative = false;
+         }
+         else {
+            biMantissa = source.biMantissa;
+            if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+               params.setSNaNOperand();
+               biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+            }
+            else if (source.isSNaN())
+               params.setSNaNOperand();
+            if (params.keepNaNSign())
+               fNegative = source.fNegative;
+         };
+      };
+         
+      return *this;
+   };
+   
+   // biExponent == 0
+   if (source.biExponent.isZero()) {
+      if (!biMantissa.isZero() && !source.biMantissa.isZero())
+         return divAssignDD(source, params);
+      if (source.biMantissa.isZero()) {
+         biExponent = TypeTraits::getInftyExponent(biExponent);
+         if (biMantissa.isZero()) { // produce a qNaN
+            params.setZeroOnZero();
+            biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+            if (params.produceDivNaNPositive())
+               fNegative = false;
+         }
+         else {
+            biMantissa.clear();
+            params.setDivisionByZero();
+         };
+      }
+      else if (!params.acceptMinusZero())
+         fNegative = false;
+
+      return *this;
+   };
+
+   // biExponent == 0 && source.biExponent != 0
+   if (source.biExponent == TypeTraits::getInftyExponent(biExponent)) {
+      if (!source.biMantissa.isZero()) {
+         biExponent = TypeTraits::getInftyExponent(biExponent);
+         biMantissa = source.biMantissa;
+         if (!biMantissa.cbitArray(bitSizeMantissa()-1)) {
+            params.setSNaNOperand();
+            biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+         };
+         if (params.keepNaNSign())
+            fNegative = source.fNegative;
+         return *this;
+      };
+      
+      // source.biMantissa == 0 && source.biExponent == TypeTraits::getInftyExponent(biExponent) && biExponent == 0
+      biMantissa.clear();
+      return *this;
+   };
+   
+   // biExponent == 0 && source.biExponent != 0 && source.biExponent != TypeTraits::getInftyExponent(biExponent)
+   if (biMantissa.isZero()) {
+      if (!params.acceptMinusZero())
+         fNegative = false;
+      return *this;
+   };
+   return divAssignDN(source, params);
+}
+
+template <class TypeTraits>
+void
+DefineBuiltDouble<TypeTraits>::readDecimal(STG::IOObject::ISBase& in, ReadParameters& params) {
+   int readZero = 0;
+   int read = in.get();
+   int decimalShiftExponent = 0;
+   operator=(thisType(0x0, this));
+   bool isReadNegative = false;
+   for (; isspace(read); read = in.get());
+   if ((read == '-') || (read == '+')) {
+      isReadNegative = (read == '-');
+      read = in.get();
+      for (; isspace(read); read = in.get());
+   };
+   if (read == 'o') {
+      read = in.get();
+      if (read == 'o') {
+         if (isReadNegative)
+            setMinusInfty();
+         else
+            setPlusInfty();
+         return;
+      };
+      in.unget();
+      in.unget(); // should not work on filestreams
+      params.setPartialRead();
+      return;
+   }
+   else if (read == 'N') {
+      read = in.get();
+      if (read == 'a') {
+         read = in.get();
+         if (read == 'N') {
+            setInfty();
+            biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+            return;
+         };
+         in.unget();
+      };
+      in.unget();
+      in.unget(); // should not work on filestreams
+      params.setPartialRead();
+      return;
+   }
+   for (; read == '0'; read = in.get());
+   Exponent mantissaAfterSizeExponent(typename Exponent::Basic(), bitSizeExponent(), bitSizeMantissa()+4);
+   for (; (read >= '0') && (read <= '9'); read = in.get()) {
+      if (read == '0')
+         ++readZero;
+      else {
+         while (readZero > 0) {
+            --readZero;
+            multAssign(0xa, params);
+         };
+         multAssign(0xa, params);
+         if (hasNegativeExponent()
+               || (queryExponent() < mantissaAfterSizeExponent)) // 2^4 > 10
+            plusAssign(thisType((DefineBaseType) (read - '0'), this), params);
+      };
+   };
+
+   if (read == '.') {
+      read = in.get();
+      for (; (read >= '0') && (read <= '9'); read = in.get()) {
+         if (read == '0')
+            ++readZero;
+         else {
+            while (readZero > 0) {
+               --readZero;
+               multAssign(0xa, params);
+            };
+            multAssign(0xa, params);
+            if (hasNegativeExponent()
+                  || (queryExponent() < mantissaAfterSizeExponent)) // 2^4 > 10
+               plusAssign(thisType((DefineBaseType) (read - '0'), this), params);
+         };
+         --decimalShiftExponent;
+      };
+   };
+
+   decimalShiftExponent += readZero;
+   fNegative = isReadNegative;
+
+   if (read == 'e') {
+      if (isZero()) {
+         read = in.get();
+         if ((read == '+') || (read == '-'))
+            read = in.get();
+         for (; (read >= '0') && (read <= '9'); read = in.get());
+         if (read != EOF)
+            params.setPartialRead();
+         return;
+      };
+
+      read = in.get();
+      bool isNegativeExponent = false;
+      if (read == '+')
+         read = in.get();
+      else if (read == '-') {
+         read = in.get();
+         isNegativeExponent = true;
+      };
+      int decimalExponent = 0;
+      bool isInfty = false;
+      for (; (read >= '0') && (read <= '9'); read = in.get()) {
+         int oldDecimalExponent = decimalExponent;
+         decimalExponent *= 10;
+         decimalExponent += read - '0';
+         if (decimalExponent < oldDecimalExponent) {
+            decimalExponent = 0;
+            isInfty = true;
+            break;
+         };
+      };
+      
+      if (read != EOF) {
+         in.unget();
+         params.setPartialRead();
+      };
+
+      if (!isInfty) {
+         int oldDecimalExponent = decimalExponent;
+         if (isNegativeExponent) {
+            decimalExponent = -decimalExponent;
+            oldDecimalExponent = -oldDecimalExponent;
+         };
+
+         decimalExponent += decimalShiftExponent;
+         if (((decimalShiftExponent > 0) && (decimalExponent < oldDecimalExponent))
+               || ((decimalShiftExponent < 0) && (decimalExponent > oldDecimalExponent)))
+            isInfty = true;
+         else if ((isNegativeExponent = (decimalExponent < 0)) != false) {
+            decimalExponent = -decimalExponent;
+            if (decimalExponent < 0)
+              isInfty = true;
+         };
+      };
+
+      if (isInfty) {
+         // +0, -0, +oo, -oo
+         bool isNegative = fNegative;
+         if (!isNegativeExponent)
+            setInfty();
+         else
+            setZero();
+         if (isNegative)
+            setSign(false);
+         return;
+      }
+      else if (decimalExponent == 0)
+         return;
+
+      thisType exponent(0x1);
+      unsigned int subExponentValue = 0;
+      for (DefineBaseType bitIndex
+#ifndef DefineGeneric
+               = (1U << (log_base_2(decimalExponent)-1)); bitIndex != 0; bitIndex >>= 1
+#else
+               = BaseStoreTraits::getStoreHighPart(0x1, BaseStoreTraits::log_base_2(decimalExponent)-1);
+            !BaseStoreTraits::isZeroValue(bitIndex); BaseStoreTraits::rightShift(bitIndex, 1)
+#endif
+            ) {
+         exponent.multAssign(exponent, params);
+         subExponentValue <<= 1;
+         if (decimalExponent & bitIndex)
+            exponent.multAssign(0xa, params);
+         if (isNegativeExponent && !subExponentValue && (exponent.biExponent > biExponent)) {
+            exponent.biExponent -= TypeTraits::getZeroExponent(biExponent);
+            subExponentValue += exponent.biExponent.getValue();
+            exponent.biExponent = TypeTraits::getZeroExponent(biExponent);
+         };
+      };
+      if (!isNegativeExponent) {
+         multAssign(exponent, params);
+         return;
+      };
+
+      if (!subExponentValue) {
+         divAssign(exponent, params);
+         return;
+      };
+
+      divAssign(exponent, params);
+
+      Exponent subExponent = getBasicExponent(subExponentValue);
+      if (biExponent > subExponent)
+         biExponent.minusAssign(subExponent);
+      else {
+         subExponent.minusAssign(biExponent);
+         biExponent.clear();
+         if (subExponent >= bitSizeMantissa()) {
+            bool doesAdd = false;
+            if (params.isNearestRound())
+               doesAdd = (subExponent == bitSizeMantissa());
+            else if (params.isHighestRound())
+               doesAdd = !fNegative;
+            else if (params.isLowestRound())
+               doesAdd = fNegative;
+            if (fNegative)
+               params.setApproximate(doesAdd ? ReadParameters::Down : ReadParameters::Up);
+            else
+               params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
+            biMantissa = doesAdd ? 0x1 : 0x0;
+            if (!doesAdd && fNegative && !params.acceptMinusZero())
+               fNegative = false;
+         }
+         else if (DefineRightShift(
+#ifdef DefineGeneric
+               typename TypeTraits::BaseStoreTraits(),
+#endif
+               biMantissa, subExponent.getValue()+1, 0x1, params, fNegative, bitSizeMantissa()).hasCarry())
+            biExponent.inc();
+         if (biExponent.isZero())
+            params.setUnderflow();
+      };
+      return;
+   };
+
+   // read != 'e'
+   if (read != EOF) {
+      in.unget();
+      params.setPartialRead();
+   };
+   bool isNegativeExponent = (decimalShiftExponent < 0);
+   unsigned int decimalExponent = isNegativeExponent ? -decimalShiftExponent : decimalShiftExponent;
+   if (decimalExponent == 0)
+      return;
+
+   thisType exponent(0x1);
+   for (DefineBaseType bitIndex
+#ifndef DefineGeneric
+            = (1U << (log_base_2(decimalExponent)-1)); bitIndex != 0;
+         bitIndex >>= 1
+#else
+            = BaseStoreTraits::getStoreHighPart(0x1, BaseStoreTraits::log_base_2(decimalExponent)-1);
+         !BaseStoreTraits::isZeroValue(bitIndex); BaseStoreTraits::rightShift(bitIndex, 1)
+#endif
+         ) {
+      exponent.multAssign(exponent, params);
+      if (decimalExponent & bitIndex)
+         exponent.multAssign(0xa, params);
+   };
+   if (!isNegativeExponent)
+      multAssign(exponent, params);
+   else
+      divAssign(exponent, params);
+}
+
+template <class TypeTraits>
+void
+DefineBuiltDouble<TypeTraits>::read(STG::IOObject::ISBase& in, ReadParameters& params) {
+   if (params.isNative()) {
+      in.assume('[');
+      int read = in.get();
+      fNegative = (read == '-');
+      in.assume("][");
+      biExponent.read(in, typename Exponent::FormatParameters().setFullHexaDecimal(biExponent.getSize()));
+      in.assume("][");
+      biMantissa.read(in, typename Mantissa::FormatParameters().setFullHexaDecimal(biMantissa.getSize()));
+      in.assume(']');
+   }
+   else
+      readDecimal(in, params);
+}
+
+template <class TypeTraits>
+void
+DefineBuiltDouble<TypeTraits>::writeDecimal(STG::IOObject::OSBase& out) const {
+   if (fNegative)
+      out.put('-');
+   if (isInfty()) {
+      out << "oo";
+      return;
+   };
+   if (isNaN()) {
+      out << "NaN";
+      return;
+   };
+   if (isZero()) {
+      out << "0.0";
+      int significantBits = (int) (((double) bitSizeMantissa())*log(2.0)/log(10.0));
+      while (--significantBits > 0)
+         out.put('0');
+      return;
+   };
+   ReadParameters params;
+   params.setNearestRound();
+   bool isNegativeExponent = biExponent < TypeTraits::getZeroExponent(biExponent);
+
+   thisType source = *this;
+   if (fNegative)
+      source.opposite();
+   thisType exponent;
+#ifdef StandardClassesHPP
+   COL::TVector<thisType> successiveExponents;
+#else
+   std::vector<thisType> successiveExponents;
+#endif
+   unsigned int addNegativeDecimalExponent = 0;
+   if (isNegativeExponent) {
+      exponent = thisType(0xa, this);
+      addNegativeDecimalExponent = 1;
+      while (thisType(exponent).multAssign(source, params).getBasicExponent()
+            < TypeTraits::getZeroExponent(biExponent)) {
+#ifdef StandardClassesHPP
+         successiveExponents.insertAtEnd(exponent);
+#else
+         successiveExponents.push_back(exponent);
+#endif
+         exponent.multAssign(exponent, params);
+         addNegativeDecimalExponent *= 2;
+      };
+      addNegativeDecimalExponent /= 2;
+   }
+   else {
+      exponent = thisType(0xa, this);
+      while (exponent <= source) {
+#ifdef StandardClassesHPP
+         successiveExponents.insertAtEnd(exponent);
+#else
+         successiveExponents.push_back(exponent);
+#endif
+         exponent.multAssign(exponent, params);
+      };
+   };
+   
+   unsigned int decimalExponent = 0;
+   if (isNegativeExponent) {
+#ifdef StandardClassesHPP
+      if (successiveExponents.count() == 0)
+#else
+      if (successiveExponents.size() == 0)
+#endif
+      {  source.multAssign(0xa, params);
+         ++addNegativeDecimalExponent;
+      }
+      else {
+#ifdef StandardClassesHPP
+         source.multAssign(successiveExponents.last(), params);
+#else
+         source.multAssign(successiveExponents.back(), params);
+#endif
+         int exponentAdditional = 1;
+         int indexExponent = 0;
+         while (
+            thisType(source).multAssign(successiveExponents[indexExponent], params)
+               .getBasicExponent() < TypeTraits::getZeroExponent(biExponent)) {
+#ifdef StandardClassesHPP
+            if (indexExponent < successiveExponents.count() - 1)
+#else
+            if (indexExponent < successiveExponents.size() - 1)
+#endif
+            {  exponentAdditional *= 2;
+               ++indexExponent;
+            }
+            else {
+#ifdef StandardClassesHPP
+               source.multAssign(successiveExponents.last(), params);
+#else
+               source.multAssign(successiveExponents.back(), params);
+#endif
+               addNegativeDecimalExponent += exponentAdditional;
+            };
+         };
+#ifdef StandardClassesHPP
+         int count = successiveExponents.count();
+#else
+         int count = successiveExponents.size();
+#endif
+         while (++indexExponent < count)
+#ifdef StandardClassesHPP
+            successiveExponents.removeAtEnd();
+#else
+            successiveExponents.pop_back();
+#endif
+
+#ifdef StandardClassesHPP
+         source.multAssign(successiveExponents.last(), params);
+#else
+         source.multAssign(successiveExponents.back(), params);
+#endif
+         addNegativeDecimalExponent += exponentAdditional;
+         AssumeCondition(source.getBasicExponent() >= TypeTraits::getZeroExponent(biExponent))
+#ifdef StandardClassesHPP
+         successiveExponents.removeAtEnd();
+#else
+         successiveExponents.pop_back();
+#endif
+      };
+   };
+#ifdef StandardClassesHPP
+   while (successiveExponents.count() > 0)
+#else
+   while (successiveExponents.size() > 0)
+#endif
+   {  decimalExponent <<= 1;
+#ifdef StandardClassesHPP
+      if (source >= successiveExponents.last())
+#else
+      if (source >= successiveExponents.back())
+#endif
+      {
+         decimalExponent |= 1U;
+#ifdef StandardClassesHPP
+         source.divAssign(successiveExponents.last(), params);
+#else
+         source.divAssign(successiveExponents.back(), params);
+#endif
+      };
+#ifdef StandardClassesHPP
+      successiveExponents.removeAtEnd();
+#else
+      successiveExponents.pop_back();
+#endif
+   };
+
+   AssumeCondition((source >= thisType(0x1, this)) && (source < thisType(0xa, this)))
+   bool isFirst = true;
+   int significantBits = (int) (((double) bitSizeMantissa())*log(2.0)/log(10.0));
+   int resultSize = significantBits + 4; // "0. ... \0"
+   char* result = new char[resultSize];
+   int resultIndex = 0;
+   do {
+      ReadParameters params;
+      params.setNearestRound();
+      unsigned int writeValue = 0;
+      if (source.hasPositiveOrNullExponent()) {
+         int localExponent = source.queryExponent().getValue();
+         if (localExponent == 0)
+            writeValue = 1;
+         else if (localExponent == 1)
+            writeValue = (source.biMantissa.cbitArray(bitSizeMantissa()-1) ? 3 : 2);
+         else if (localExponent == 2)
+            writeValue = (source.biMantissa.cbitArray(bitSizeMantissa()-1)
+               ? (source.biMantissa.cbitArray(bitSizeMantissa()-2) ? 7 : 6)
+               : (source.biMantissa.cbitArray(bitSizeMantissa()-2) ? 5 : 4));
+         else if (localExponent == 3) {
+            writeValue =  (source.biMantissa.cbitArray(bitSizeMantissa()-3) ? 9 : 8);
+            AssumeCondition(!source.biMantissa.cbitArray(bitSizeMantissa()-2)
+               && !source.biMantissa.cbitArray(bitSizeMantissa()-1))
+         }
+         else
+            AssumeUncalled
+         result[resultIndex++] = (char) (writeValue + '0');
+         AssumeCondition(resultIndex < resultSize)
+         source.minusAssign(thisType(writeValue, this), params);
+      }
+      else {
+         result[resultIndex++] = '0';
+         AssumeCondition(resultIndex < resultSize)
+      }
+      if (isFirst) {
+         result[resultIndex++] = '.';
+         AssumeCondition(resultIndex < resultSize)
+         isFirst = false;
+      };
+      source.multAssign(0xa, params);
+      if ((significantBits > 0) ? (source == thisType(0xa, this)) : (source > thisType(0x5, this))) {
+         int length = resultIndex;
+         while (length > 0) {
+            char ch = result[length-1];
+            if (ch == '9') {
+               result[length-1] = '0';
+               --length;
+            }
+            else if ((ch >= '0') && (ch < '9')) {
+               result[length-1] = (char) (ch + 1);
+               break;
+            }
+            else
+               --length;
+         };
+         if (length == 0) {
+            if (resultIndex < 3)
+               significantBits -= (3-resultIndex);
+            result[0] = '1';
+            result[1] = '.';
+            result[2] = '0';
+            resultIndex = 3;
+         };
+         while (--significantBits >= 0) {
+            result[resultIndex++] = '0';
+            AssumeCondition(resultIndex < resultSize)
+         };
+         break;      
+      }
+   } while (--significantBits >= 0);
+   result[resultIndex++] = '\0';
+   AssumeCondition(resultIndex <= resultSize)
+   out << result;
+   delete [] result;
+   if (isNegativeExponent)
+      decimalExponent = addNegativeDecimalExponent-decimalExponent;
+   if (decimalExponent)
+      out.put('e').put(isNegativeExponent ? '-' : '+') << (int) decimalExponent;
+}
+
+template <class TypeTraits>
+void
+DefineBuiltDouble<TypeTraits>::write(STG::IOObject::OSBase& out, const WriteParameters& params) const {
+   if (params.isBinary()) {
+      out.put(isPositive() ? '+' : '-').put(' ');
+      if (isDenormalized())
+         out << "0.";
+      else if (isNormalized())
+         out << "1.";
+      biMantissa.write(out, typename Mantissa::FormatParameters().setFullBinary(biMantissa.getSize()));
+      out << " 2^ ";
+      if (hasNegativeExponent())
+         out.put('-');
+      out << queryExponent().getValue();
+   }
+   else if (params.isNative()) {
+      out.writesome(isPositive() ? "[+][" : "[-][");
+      biExponent.write(out, typename Exponent::FormatParameters().setFullHexaDecimal(biExponent.getSize()));
+      out.writesome("][");
+      biMantissa.write(out, typename Mantissa::FormatParameters().setFullHexaDecimal(biMantissa.getSize()));
+      out.put(']');
+   }
+   else
+      writeDecimal(out);
+}
+
+template <class TypeTraits>
+typename DefineBuiltDouble<TypeTraits>::DiffDouble
+DefineBuiltDouble<TypeTraits>::queryNumberOfFloatsBetween(const thisType& source) const {
+   DiffDouble result;
+   if (fNegative == source.fNegative) {
+      Mantissa diffMantissa;
+      Exponent diffExponent = getZeroExponent();
+      bool isIncrementThis = false;
+      if (fNegative && source.fNegative) {
+         diffMantissa = biMantissa;
+         isIncrementThis = diffMantissa.sub(source.biMantissa).hasCarry();
+         AssumeCondition((biExponent > source.biExponent)
+                  || ((biExponent == source.biExponent) && !isIncrementThis))
+         diffExponent = biExponent;
+         diffExponent -= source.biExponent;
+      }
+      else {
+         diffMantissa = source.biMantissa;
+         isIncrementThis = diffMantissa.sub(biMantissa).hasCarry();
+         AssumeCondition((biExponent < source.biExponent)
+                  || ((biExponent == source.biExponent) && !isIncrementThis))
+         diffExponent = source.biExponent;
+         diffExponent -= biExponent;
+      };
+      if (isIncrementThis)
+         --diffExponent;
+
+      int lastCellIndex = diffMantissa.lastCellIndex();
+      for (int index = 0; index <= lastCellIndex; ++index)
+         result[index] = (DefineBaseType) diffMantissa[index];
+      DiffDouble diffExponentAsResult;
+      lastCellIndex = diffExponent.lastCellIndex();
+      for (int index = 0; index <= lastCellIndex; ++index)
+         diffExponentAsResult[index] = (DefineBaseType) diffExponent[index];
+      result += (diffExponentAsResult <<= bitSizeMantissa());
+   }
+   else {
+      AssumeCondition(fNegative && !source.fNegative)
+      Mantissa addMantissa = biMantissa;
+      bool isIncrementThis = addMantissa.add(source.biMantissa).hasCarry();
+      isIncrementThis = addMantissa.inc().hasCarry() || isIncrementThis;
+
+      Exponent addExponent = biExponent;
+      bool isCarryExponent = addExponent.add(source.biExponent).hasCarry();
+      if (isIncrementThis)
+         isCarryExponent = addExponent.inc().hasCarry() || isCarryExponent;
+
+      int lastCellIndex = addMantissa.lastCellIndex();
+      for (int index = 0; index <= lastCellIndex; ++index)
+         result[index] = (DefineBaseType) addMantissa[index];
+      DiffDouble addExponentAsResult;
+      lastCellIndex = addExponent.lastCellIndex();
+      for (int index = 0; index <= lastCellIndex; ++index)
+         addExponentAsResult[index] = (DefineBaseType) addExponent[index];
+      result += (addExponentAsResult <<= bitSizeMantissa());
+      if (isCarryExponent)
+        result.setTrueBitArray(bitSizeMantissa()+bitSizeExponent());
+   };
+
+   return result;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>
+DefineBuiltDouble<TypeTraits>::queryNthSuccessor(const DefineBuiltDouble<TypeTraits>::DiffDouble& diff) const {
+ if ((biExponent == TypeTraits::getInftyExponent(biExponent)) && (!biMantissa.isZero() || !fNegative))
+      return *this;
+
+   DiffDouble thisAsDiff, thisExponent;
+   int lastCellIndex = biMantissa.lastCellIndex();
+   for (int index = 0; index <= lastCellIndex; ++index)
+      thisAsDiff[index] = (DefineBaseType) biMantissa[index];
+   lastCellIndex = biExponent.lastCellIndex();
+   for (int index = 0; index <= lastCellIndex; ++index)
+      thisExponent[index] = (DefineBaseType) biExponent[index];
+   thisAsDiff |= (thisExponent <<= bitSizeMantissa());
+   thisType result;
+   if (!fNegative) {
+      if (thisAsDiff.add(diff).hasCarry() || thisAsDiff.cbitArray(bitSizeMantissa()+bitSizeExponent())) {
+         result.biExponent = TypeTraits::getInftyExponent(biExponent);
+         return result;
+      };
+   }
+   else {
+      if (thisAsDiff.sub(diff).hasCarry()) {
+         thisAsDiff.neg();
+         if (thisAsDiff.cbitArray(bitSizeMantissa()+bitSizeExponent())) {
+            result.biExponent = TypeTraits::getInftyExponent(biExponent);
+            return result;
+         };
+      }
+      else
+         result.fNegative = true;
+   };
+   lastCellIndex = result.biMantissa.lastCellIndex();
+   for (int index = 0; index <= lastCellIndex; ++index)
+      result.biMantissa[index] = (DefineBaseType) thisAsDiff[index];
+   result.biMantissa.normalize();
+   thisAsDiff >>= bitSizeMantissa();
+   lastCellIndex = result.biExponent.lastCellIndex();
+   for (int index = 0; index <= lastCellIndex; ++index)
+      result.biExponent[index] = (DefineBaseType) thisAsDiff[index];
+   if (result.biExponent == TypeTraits::getInftyExponent(biExponent))
+      result.biMantissa.clear();
+   return result;
+}
+
+template <class TypeTraits>
+bool
+DefineBuiltDouble<TypeTraits>::setToNext() {
+   if ((biExponent == TypeTraits::getInftyExponent(biExponent))
+         && (!biMantissa.isZero() || !fNegative))
+      return false;
+
+   if (!fNegative) {
+      if (biMantissa.inc().hasCarry())
+         biExponent.inc();
+   }
+   else {
+      if (biMantissa.dec().hasCarry()) {
+         if (biExponent.isZero()) {
+            biMantissa = 0x1;
+            fNegative = false;
+         }
+         else
+            biExponent.dec();
+      }
+      else if (biMantissa.isZero() && biExponent.isZero())
+         fNegative = false;
+   };
+   return true;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>
+DefineBuiltDouble<TypeTraits>::queryNthPredecessor(const DiffDouble& diff) const {
+   if ((biExponent == TypeTraits::getInftyExponent(biExponent))
+         && (!biMantissa.isZero() || fNegative))
+      return *this;
+
+   DiffDouble thisAsDiff, thisExponent;
+   int lastCellIndex = biMantissa.lastCellIndex();
+   for (int index = 0; index <= lastCellIndex; ++index)
+      thisAsDiff[index] = (DefineBaseType) biMantissa[index];
+   lastCellIndex = biExponent.lastCellIndex();
+   for (int index = 0; index <= lastCellIndex; ++index)
+      thisExponent[index] = (DefineBaseType) biExponent[index];
+   thisAsDiff |= (thisExponent <<= bitSizeMantissa());
+   thisType result;
+   result.fNegative = true;
+   if (fNegative) {
+      if (thisAsDiff.add(diff).hasCarry() || thisAsDiff.cbitArray(bitSizeMantissa()+bitSizeExponent())) {
+         result.biExponent = TypeTraits::getInftyExponent(biExponent);
+         return result;
+      };
+   }
+   else {
+      if (thisAsDiff.sub(diff).hasCarry()) {
+         thisAsDiff.neg();
+         if (thisAsDiff.cbitArray(bitSizeMantissa()+bitSizeExponent())) {
+            result.biExponent = TypeTraits::getInftyExponent(biExponent);
+            return result;
+         };
+      }
+      else
+         result.fNegative = false;
+   };
+   lastCellIndex = result.biMantissa.lastCellIndex();
+   for (int index = 0; index <= lastCellIndex; ++index)
+      result.biMantissa[index] = (DefineBaseType) thisAsDiff[index];
+   result.biMantissa.normalize();
+   thisAsDiff >>= bitSizeMantissa();
+   lastCellIndex = result.biExponent.lastCellIndex();
+   for (int index = 0; index <= lastCellIndex; ++index)
+      result.biExponent[index] = (DefineBaseType) thisAsDiff[index];
+   return result;
+}
+
+template <class TypeTraits>
+bool
+DefineBuiltDouble<TypeTraits>::setToPrevious() {
+   if ((biExponent == TypeTraits::getInftyExponent(biExponent))
+         && (!biMantissa.isZero() || fNegative))
+      return false;
+
+   if (fNegative) {
+      if (biMantissa.inc().hasCarry())
+         biExponent.inc();
+   }
+   else {
+      if (biMantissa.dec().hasCarry()) {
+         if (biExponent.isZero()) {
+            biMantissa = 0x1;
+            fNegative = true;
+         }
+         else
+            biExponent.dec();
+      };
+   };
+   return true;
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::sqrtAssign() { // u_{n+1} = (u_n + this/u_n)/2
+   AssumeCondition(!fNegative)
+   if (isZero() || isInfty())
+      return *this;
+   thisType result;
+   result.biExponent = biExponent;
+   (result.biExponent >>= 1).plusAssign(getZeroExponent() >>= 1);
+   thisType next;
+   bool doesContinue = false;
+   ReadParameters params;
+   params.setNearestRound().setRoundToEven();
+   do {
+      next = *this;
+      params.clear();
+      next.divAssign(result, params); // next = this/u_n
+      params.clear();
+      next.plusAssign(result, params); // next = this/u_n + u_n
+      next.biExponent.dec(); // next = (this/u_n + u_n)/2
+      ComparisonResult compare = next.compare(result);
+      if (compare == CRGreater) {
+         if (next.biExponent > result.biExponent) {
+            result.biExponent.inc();
+            doesContinue = (next.biExponent > result.biExponent)
+               || (!result.biMantissa.neg().isZero()) || !next.biMantissa.isZero();
+         }
+         else
+            doesContinue = result.biMantissa.inc().hasCarry()
+               || (next.biMantissa != result.biMantissa);
+      }
+      else if (compare == CRLess) {
+         if (next.biExponent < result.biExponent) {
+            result.biExponent.dec();
+            doesContinue = (next.biExponent < result.biExponent)
+               || (!Mantissa(next.biMantissa).neg().isZero()) || !result.biMantissa.isZero();
+         }
+         else
+            doesContinue = result.biMantissa.dec().hasCarry()
+               || (next.biMantissa != result.biMantissa);
+      }
+      else
+         doesContinue = false;
+      result = next;
+   } while (doesContinue);
+   // Continue with a better precision on the mantissa and with testing the both float around
+   return operator=(result);   
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::nthRootAssign(int n) {
+   AssumeCondition((n > 0) && (!fNegative || (n & 1)))
+   if (n == 1)
+      return *this;
+   else if (n == 2)
+      return sqrtAssign();
+
+   ReadParameters params;
+   params.setNearestRound().setRoundToEven();
+   // u_{p+1} = 1/n*[(n-1)*u_p + this/(u_p)^(n-1)]
+   thisType result;
+   result.biExponent = getZeroExponent();
+   if (biExponent >= getZeroExponent())
+      result.biExponent.plusAssign((Exponent(biExponent) -= getZeroExponent()) /= n);
+   else
+      result.biExponent.minusAssign((getZeroExponent() -= biExponent) /= n);
+   thisType next;
+   bool doesContinue = false;
+   do {
+      next = *this;
+      params.clear();
+      next.divAssign(thisType(result).nthExponentAssign(n-1), params);
+      params.clear();
+      ReadParameters paramsCopy(params);
+      next.plusAssign(thisType(result).multAssign((DefineBaseType) (n-1), paramsCopy), params);
+      params.clear();
+      next.divAssign(n, params);
+      ComparisonResult compare = next.compare(result);
+      if (compare == CRGreater) {
+         if (next.biExponent > result.biExponent) {
+            result.biExponent.inc();
+            doesContinue = (next.biExponent > result.biExponent)
+               || (++((result.biMantissa.neg() += next.biMantissa).neg()) >= n-1);
+         }
+         else
+            doesContinue = (++((result.biMantissa -= next.biMantissa).neg()) >= n-1);
+      }
+      else if (compare == CRLess) {
+         if (next.biExponent < result.biExponent) {
+            result.biExponent.dec();
+            doesContinue = (next.biExponent < result.biExponent)
+               || (++((result.biMantissa += Mantissa(next.biMantissa)).neg()) >= n-1);
+         }
+         else
+            doesContinue = ((result.biMantissa -= next.biMantissa) >= n-1);
+      }
+      else
+         doesContinue = false;
+      result = next;
+   } while (doesContinue);
+   // Continue with a better precision on the mantissa and with testing the 2(n-1) float around
+   return operator=(result);   
+}
+
+template <class TypeTraits>
+DefineBuiltDouble<TypeTraits>&
+DefineBuiltDouble<TypeTraits>::nthExponentAssign(int n) {
+   if (n == 0) {
+      biMantissa.clear();
+      biExponent = getZeroExponent();
+      fNegative = false;
+      return *this;
+   };
+   ReadParameters params;
+   params.setNearestRound().setRoundToEven();
+   DefineBaseType exponent = (n < 0) ? -n : n;
+   if (exponent == 0x1)
+      return (n < 0) ? inverseAssign(params) : *this;
+   thisType result = *this;
+#ifndef DefineGeneric
+   int indexBitExponent = DInteger::Access::log_base_2(exponent)-2;
+#else
+   int indexBitExponent = BaseStoreTraits::log_base_2(exponent)-2;
+#endif
+   while (indexBitExponent >= 0) {
+      params.clear();
+      result.multAssign(result, params);
+#ifndef DefineGeneric
+      if (exponent & (1U << indexBitExponent))
+#else
+      if (BaseStoreTraits::getBit(exponent, indexBitExponent))
+#endif
+      {  params.clear();
+         result.multAssign(*this, params);
+      };
+      --indexBitExponent;
+   };
+   if (n < 0) {
+      biExponent = getZeroExponent();
+      biMantissa.clear();
+      fNegative = false;
+      params.clear();
+      return divAssign(result, params);
+   }
+   else
+      return operator=(result);
+}
+
+/***********************************************************************/
+/* Implementation of the template classes TReadDouble and TGReadDouble */
+/***********************************************************************/
+
+template <class TypeDouble, class TypeDouble_n>
+void
+DefineReadDouble<TypeDouble, TypeDouble_n>::read(STG::IOObject::ISBase& in, ReadParameters& params) {
+   if (params.isNative())
+      inherited::read(in, params);
+   else {
+      EnhancedDouble result;
+      result.read(in, params);
+      result.retrieveDouble(*this, params);
+      
+      if (inherited::isZero() && !inherited::isPositive() && !params.acceptMinusZero())
+         inherited::opposite();
+   };
+}
+
+template <class TypeDouble, class TypeDouble_n>
+void
+DefineReadDouble<TypeDouble, TypeDouble_n>::write(STG::IOObject::OSBase& out, const typename inherited::WriteParameters& params) const {
+   if (!params.isDecimal() || params.isNative())
+      inherited::write(out, params);
+   else {
+      EnhancedDouble result(*this);
+      result.write(out, params);
+   };
+}
+
+template <class TypeDouble, class TypeDouble_n>
+DefineReadDouble<TypeDouble, TypeDouble_n>&
+DefineReadDouble<TypeDouble, TypeDouble_n>::nthRootAssign(int n, ReadParameters& params) {
+   EnhancedDouble result(*this);
+   result.nthRootAssign(n);
+   result.retrieveDouble(*this, params);
+   return *this;
+}
+
+template <class TypeDouble, class TypeDouble_n>
+DefineReadDouble<TypeDouble, TypeDouble_n>&
+DefineReadDouble<TypeDouble, TypeDouble_n>::nthExponentAssign(int n, ReadParameters& params) {
+   EnhancedDouble result(*this);
+   result.nthExponentAssign(n);
+   result.retrieveDouble(*this, params);
+   return *this;
+}
+
+#undef DefineTypeMantissaAndReadTemplateHeader
+#undef DefineBaseType
+#undef DefineBaseTypeConstReference
+#undef DefineBuiltAccess
+#undef DefineMantissaAndExponentTemplateHeader
+#undef DefineMantissaAndExponentTemplateParameters
+#undef DefineSizeofBaseTypeInBits
+#undef DefineBuiltDoubleTraits
+#undef DefineBuiltDouble
+#undef DefineReadDouble
+#undef DefineRightShift
+

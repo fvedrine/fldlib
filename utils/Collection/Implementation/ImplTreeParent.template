@@ -1,0 +1,351 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2013-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Low level implementation of tree collections
+// File      : ImplTreeParent.template
+// Description :
+//   Implementation of the classes GenericImplParentTree that define tree based
+//   collection implementations. The elements have a reference to their father
+//   to localize them quickly in the tree.
+//
+
+#ifndef COL_ImplCommonTreeParentTemplate
+#define COL_ImplCommonTreeParentTemplate
+
+// #include "Collection/Collection.hpp"
+#include "Collection/Implementation/ImplTreeParent.h"
+
+namespace COL {
+
+template <class TypeFlatCollection, class TypeFlatNode>
+TGenericImplParentTreeCursor<TypeFlatCollection, TypeFlatNode>::CursorPath::CursorPath(
+      const TreeSupport& tree, const TreeCursor* fstCursor,
+      const TreeCursor* sndCursor)
+   :  uAscentLevel(0), giptTree(tree) {
+   AssumeCondition(fstCursor || sndCursor)
+   if (!fstCursor) { // sndCursor != nullptr
+      int diff = sndCursor->queryLevel();
+      naDescentPath.bookPlace(1+diff);      
+      Node *sndNode = &sndCursor->element();
+      while (--diff) {
+         naDescentPath.insertAtEnd(sndNode);
+         sndNode = sndNode->parent();
+      };
+      AssumeCondition(sndNode == nullptr)
+   }
+   else if (!sndCursor) // fstCursor != nullptr
+      uAscentLevel = fstCursor->queryLevel();
+   else { // fstCursor && sndCursor
+      int diff = fstCursor->queryLevel() - sndCursor->queryLevel();
+      if (diff >= 0)
+         uAscentLevel = diff;
+      else
+         naDescentPath.bookPlace(1-diff);
+      Node *fstNode = &fstCursor->element(), *sndNode = &sndCursor->element();
+   
+      for (; diff > 0; diff--)
+         fstNode = fstNode->parent();
+      for (; diff < 0; diff++) {
+         naDescentPath.insertAtEnd(sndNode);
+         sndNode = sndNode->parent();
+      };
+      while (fstNode && sndNode && (fstNode != sndNode)) {
+         fstNode = fstNode->parent();
+         naDescentPath.insertAtEnd(sndNode);
+         sndNode = sndNode->parent();
+         uAscentLevel++;
+      };
+   };
+}
+
+/*********************************************************************/
+/* Implementation of the template class TGenericImplParentTreeCursor */
+/*********************************************************************/
+
+template <class TypeFlatCollection, class TypeFlatNode>
+bool
+TGenericImplParentTreeCursor<TypeFlatCollection, TypeFlatNode>::repairMode() {
+   if (getMode() == VMTree) {
+      if (ppscElement.isValid() && !ppscElement->isValid()) {
+         if (ppscElement->hasSupport())
+            setMode(VMInvalidCursor);
+         else {
+            setMode(VMDownCursor);
+            ppscElement.release();
+         };
+      };
+      return true;
+   }
+   else if (getMode() == VMInvalidCursor) {
+      if (ppscElement.isValid() && !ppscElement->hasSupport()) {
+         setMode(VMDownCursor);
+         ppscElement.release();
+      };
+      return true;
+   };
+   return false;
+}
+
+template <class TypeFlatCollection, class TypeFlatNode>
+int
+TGenericImplParentTreeCursor<TypeFlatCollection, TypeFlatNode>::queryLevel() const {
+   if (isUpRoot())
+      return -1;
+   if (isRoot())
+      return 0;
+   const Node* node = pnFather;
+   int result = 0;
+   for (; node != nullptr; result++)
+      node = node->parent();
+   return result;
+}
+
+template <class TypeFlatCollection, class TypeFlatNode>
+VirtualTreeCursor::ExtendedComparisonResult 
+TGenericImplParentTreeCursor<TypeFlatCollection, TypeFlatNode>::fullCompare(const thisType& source) const {
+   if (isUpRoot() || source.isUpRoot())
+      return (isUpRoot() && source.isUpRoot())
+         ? VirtualTreeCursor::ExtendedComparisonResult().setEqual()
+         : VirtualTreeCursor::ExtendedComparisonResult();
+
+   if (isRoot() || source.isRoot())
+      return (isRoot() && source.isRoot())
+         ? VirtualTreeCursor::ExtendedComparisonResult().setEqual() : (isRoot()
+         ? VirtualTreeCursor::ExtendedComparisonResult().setSmaller()
+         : VirtualTreeCursor::ExtendedComparisonResult().setBigger());
+
+   if (isEqual(source))
+      return VirtualTreeCursor::ExtendedComparisonResult().setEqual();
+      
+   int thisLevel = queryLevel(), sourceLevel = source.queryLevel();
+   Node *thisCursor = pnFather, *sourceCursor = source.pnFather;
+   if (!isOnTree() || !source.isOnTree()) {
+      if ((!isOnTree() && (thisLevel <= sourceLevel))
+         || (!source.isOnTree() && (thisLevel >= sourceLevel)))
+         return VirtualTreeCursor::ExtendedComparisonResult();
+      if (thisLevel < sourceLevel) { // isOnTree() && !source.isOnTree()
+         sourceLevel--;
+         thisCursor = &element();
+      }
+      else { // !isOnTree() && source.isOnTree()
+         thisLevel--;
+         sourceCursor = &source.element();
+      };
+   }
+   else { // isOnTree() && source.isOnTree()
+      thisCursor = &element();
+      sourceCursor = &source.element();
+   };
+
+   ComparisonResult result = CREqual;
+   
+   while (thisLevel > sourceLevel) {
+      AssumeCondition(thisCursor)
+      thisCursor = thisCursor->parent();
+      thisLevel--;
+      result = CRGreater;
+   };
+   while (sourceLevel > thisLevel) {
+      AssumeCondition(sourceCursor)
+      sourceCursor = sourceCursor->parent();
+      sourceLevel--;
+      result = CRLess;
+   };
+   AssumeCondition(thisCursor && sourceCursor && (thisLevel > 0))
+   
+   if (thisCursor == sourceCursor)
+      return (result == CRLess) ? VirtualTreeCursor::ExtendedComparisonResult().setSmaller()
+           : ((result == CRGreater) ? VirtualTreeCursor::ExtendedComparisonResult().setBigger()
+           : VirtualTreeCursor::ExtendedComparisonResult().setEqual());
+
+   while (thisCursor && sourceCursor && (sourceCursor->parent() != thisCursor->parent())) {
+      thisCursor = thisCursor->parent();
+      sourceCursor = sourceCursor->parent();
+      thisLevel--;
+   }
+   AssumeCondition(thisCursor && sourceCursor && (thisLevel > 0)) // Comparison of cursors within the same tree
+
+   PPSonsCursor thisLocalCursor = thisCursor->parent()->getSons().newCursor(),
+                sourceLocalCursor = sourceCursor->parent()->getSons().newCursor();
+   thisLocalCursor->gotoReference(*thisCursor);
+   sourceLocalCursor->gotoReference(*sourceCursor);
+   return VirtualTreeCursor::ExtendedComparisonResult().setResult(thisLocalCursor->compare(*sourceLocalCursor));
+}
+
+template <class TypeFlatCollection, class TypeFlatNode>
+bool
+TGenericImplParentTreeCursor<TypeFlatCollection, TypeFlatNode>::isBrother(
+      const thisType& cursor, const FlatExtendedLocateParameters& params) const {
+   if (pnFather != cursor.pnFather) {
+      if (((pnFather != nullptr) && !isRoot()) || ((cursor.pnFather != nullptr) && !cursor.isRoot()))
+         return false;
+      return params.isNear();
+   };
+
+   if (pnFather == nullptr)
+      return !params.isNear();
+
+   if (!ppscElement.isValid()) {
+      AssumeCondition(!cursor.ppscElement.isValid())
+      return !isRoot() || !params.isNear();
+   }
+   else {
+      if (!cursor.ppscElement.isValid() && (!isRoot() || !params.isNear()))
+         return false;
+   };
+   AssumeCondition(ppscElement.isValid())
+   return VirtualCollectionCursor::CursorAccess::isPositionned(*ppscElement, params, cursor.ppscElement.key());
+}
+
+template <class TypeFlatCollection, class TypeFlatNode>
+bool
+TGenericImplParentTreeCursor<TypeFlatCollection, TypeFlatNode>::isDescendant(
+      const thisType& source, const FlatExtendedLocateParameters& params) const {
+   AssumeCondition(source.isOnTree())
+   int level = queryLevel(), sourceLevel = source.queryLevel();
+   if (level <= sourceLevel)
+      return false;
+   Node* result = pnFather;
+   for (; sourceLevel < level-1; level--) {
+      AssumeCondition(result)
+      if (params.isAfter() && result->hasParent()
+            && (result != &result->getParent().getSons().getFirst()))
+         return false;
+      if (params.isBefore() && result->hasParent()
+            && (result != &result->getParent().getSons().getLast()))
+         return false;
+      result = result->parent();
+   };
+   AssumeCondition(result)
+   return (result == &source.element());
+}
+
+template <class TypeFlatCollection, class TypeFlatNode>
+bool
+TGenericImplParentTreeCursor<TypeFlatCollection, TypeFlatNode>::isDescendant(
+      const thisType& source, Node*& prefix, Node*& sonPrefix) const {
+   Node* mayResult = &source.element();
+   prefix = isValid() ? &element() : parentElement();
+   if (prefix == mayResult)
+      return true;
+   sonPrefix = prefix;
+   prefix = prefix->parent();
+   while ((prefix != nullptr) && (prefix != mayResult)) {
+      sonPrefix = prefix;
+      prefix = prefix->parent();
+   };
+   if (!prefix)
+      sonPrefix = nullptr;
+   return prefix != nullptr;
+}
+
+template <class TypeFlatCollection, class TypeFlatNode>
+void
+TGenericImplParentTreeCursor<TypeFlatCollection, TypeFlatNode>::intersect(
+      const thisType& source, TBasicList<Node>& thisDiff, TBasicList<Node>& sourceDiff,
+      thisType& common) {
+   common.invalidate();
+   if (isUpRoot() || source.isUpRoot()) {
+      if (!isUpRoot())
+         assignTo(thisDiff, ATPWithRoot);
+      if (!source.isUpRoot())
+         source.assignTo(sourceDiff, ATPWithRoot);
+   }
+   else if (isRoot() || source.isRoot()) {
+      if (!isRoot())
+         assignTo(thisDiff, ATPWithoutRoot);
+      if (!source.isRoot())
+         source.assignTo(sourceDiff, ATPWithoutRoot);
+   }
+   else if (isEqual(source))
+      common = *this;
+   else {
+      int thisLevel = queryLevel(), sourceLevel = source.queryLevel();
+      Node *thisCursor = pnFather, *sourceCursor = source.pnFather;
+      if (!isOnTree())
+         thisLevel--;
+      else
+         thisCursor = &element();
+      if (!source.isOnTree())
+         sourceLevel--;
+      else
+         sourceCursor = &element();
+
+      while (thisLevel > sourceLevel) {
+         AssumeCondition(thisCursor)
+         thisDiff.insertAsFirst(thisCursor);
+         thisCursor = thisCursor->parent();
+         thisLevel--;
+      };
+      while (sourceLevel > thisLevel) {
+         AssumeCondition(sourceCursor)
+         sourceDiff.insertAsFirst(sourceCursor);
+         sourceCursor = sourceCursor->parent();
+         sourceLevel--;
+      };
+
+      AssumeCondition(thisCursor && sourceCursor && (thisLevel > 0))
+      while (thisCursor && sourceCursor && (sourceCursor != thisCursor)) {
+         thisDiff.insertAsFirst(thisCursor);
+         sourceDiff.insertAsFirst(sourceCursor);
+         thisCursor = thisCursor->parent();
+         sourceCursor = sourceCursor->parent();
+         thisLevel--;
+      };
+      AssumeCondition(thisCursor && sourceCursor)
+
+      common.setMode(VMTree);
+      if (sourceCursor->hasParent()) {
+         common.pnFather = thisCursor->parent();
+         common.ppcsElement = common.pnFather->getSons().newCursor();
+         common.ppcsElement->gotoReference(*thisCursor);
+      }
+      else
+         common.pnFather = thisCursor;
+   };
+}
+
+template <class TypeFlatCollection, class TypeFlatNode>
+void
+TGenericImplParentTreeCursor<TypeFlatCollection, TypeFlatNode>::assignTo(
+      TBasicList<Node>& hierarchy, AssignToParameter param) {
+   if (!isUpRoot()) {
+      Node* thisCursor = isOnTree() ? &element() : pnFather;
+      AssumeCondition(thisCursor)
+      Node* parentCursor = thisCursor->parent();
+      while (parentCursor != nullptr) {
+         hierarchy.insertAsFirst(thisCursor);
+         thisCursor = parentCursor;
+         parentCursor = parentCursor->parent();
+      };
+      if (param == ATPWithRoot)
+         hierarchy.insertAsFirst(thisCursor);
+   };
+}
+
+} // end of namespace COL
+
+#endif // COL_ImplCommonTreeParentTemplate
+

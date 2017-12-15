@@ -1,0 +1,1162 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2011-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : NumericalDomains
+// Unit      : Affine relationships
+// File      : FloatAffine.inch
+// Description :
+//   Definition of a class of affine relations.
+//
+
+namespace NumericalDomains { namespace DAffine {
+
+class BaseExecutionPathParams : public EnhancedObject {
+  protected:
+   Numerics::DDouble::Access::ReadParameters rpMinParams, rpMaxParams, rpNearestParams;
+   SymbolsManager smSymbolsManager;
+   SymbolsManager::MergeTable mtInitialTable;
+   bool fHasSimplificationTriggerPercent;
+   BuiltReal brSimplificationTriggerPercent;
+
+  public:
+   BaseExecutionPathParams() : fHasSimplificationTriggerPercent(false) {}
+   void initializeParams()
+      {  rpNearestParams.setNearestRound();
+         rpNearestParams.setRoundToEven();
+         rpMinParams.setLowestRound();
+         rpMaxParams.setHighestRound();
+      }
+
+   SymbolsManager::MergeTable& initialMergeTable() { return mtInitialTable; }
+   SymbolsManager& symbolsManager() { return smSymbolsManager; }
+   Numerics::DDouble::Access::ReadParameters& nearestParams() { return rpNearestParams; }
+   Numerics::DDouble::Access::ReadParameters& minParams() { return rpMinParams; }
+   Numerics::DDouble::Access::ReadParameters& maxParams() { return rpMaxParams; }
+   void setSimplificationTriggerPercent(const BuiltReal& percent)
+      {  fHasSimplificationTriggerPercent = true;
+         brSimplificationTriggerPercent = percent;
+      }
+   bool hasSimplificationTriggerPercent() const { return fHasSimplificationTriggerPercent; }
+   const BuiltReal& getSimplificationTriggerPercent() const { return brSimplificationTriggerPercent; }
+};
+
+class PathExplorer {
+  private:
+   Numerics::BigInteger biStackTrace;
+   int uCurrentStackPosition;
+   unsigned uLastResult;
+   unsigned uLastResultCases;
+   unsigned uLastLogCases;
+   unsigned uPreviousLastZeroBit;
+   unsigned uPreviousLastIncBit;
+   unsigned uLastZeroBit;
+   unsigned uLastIncBit;
+   int uNumberOfUnstableBranches;
+   int uCurrentUnstableBranch;
+   bool fCurrentUnstableHasOtherBranches;
+   int uLastUnstableBranch;
+   BaseExecutionPath::Mode mMode;
+
+   unsigned uNumberOfFloatBranches;
+   unsigned uNumberOfRealBranches;
+
+   // support unstable branches in loop
+  public:
+   class AbstractImplementation : public EnhancedObject {
+      public:
+       AbstractImplementation() = default;
+       AbstractImplementation(const AbstractImplementation&) = default;
+       DefineCopy(AbstractImplementation)
+   };
+   template <class TypeImplementation>
+   class ImplementationContent : public AbstractImplementation {
+     private:
+      TypeImplementation tiContent;
+
+     public:
+      ImplementationContent(const TypeImplementation& content) : tiContent(content) {}
+      ImplementationContent(TypeImplementation&& content) : tiContent(content) {}
+      ImplementationContent(const ImplementationContent&) = default;
+      ImplementationContent(ImplementationContent&&) = default;
+      TemplateDefineCopy(ImplementationContent, TypeImplementation)
+
+      const TypeImplementation& content() const { return tiContent; }
+      TypeImplementation& content() { return tiContent; }
+   };
+   typedef COL::TCopyCollection<COL::TArray<AbstractImplementation> > AbstractImplementationArray;
+
+   class AbstractEquation : public EnhancedObject {
+      public:
+       AbstractEquation() = default;
+       AbstractEquation(const AbstractEquation&) = default;
+       DefineCopy(AbstractEquation)
+   };
+   template <class TypeEquation>
+   class EquationContent : public AbstractEquation {
+     private:
+      TypeEquation teContent;
+
+     public:
+      EquationContent(const TypeEquation& content) : teContent(content) {}
+      EquationContent(TypeEquation&& content) : teContent(content) {}
+      EquationContent(const EquationContent&) = default;
+      EquationContent(EquationContent&&) = default;
+      TemplateDefineCopy(EquationContent, TypeEquation)
+
+      const TypeEquation& content() const { return teContent; }
+      TypeEquation& content() { return teContent; }
+   };
+   typedef COL::TCopyCollection<COL::TArray<AbstractEquation> > AbstractEquationArray;
+
+  private:
+   Numerics::BigInteger biRealContainer;
+   int uCurrentContainerCounter;
+   int uRealContainerCounter;
+   AbstractImplementationArray aaiImplementationSynchronisationVector;
+   AbstractEquationArray aaeEquationSynchronisationVector;
+
+  public:
+   Numerics::BigInteger& realContainer() { return biRealContainer; }
+   int& currentContainerCounter() { return uCurrentContainerCounter; } 
+   int& realContainerCounter() { return uRealContainerCounter; }
+
+   AbstractImplementationArray& implementationSynchronisationVector() { return aaiImplementationSynchronisationVector; }
+   const AbstractImplementationArray& implementationSynchronisationVector() const { return aaiImplementationSynchronisationVector; }
+   template <class TypeImplementation>
+   const TypeImplementation& implementationFirstSynchronisation() const
+      {  const auto& result = implementationSynchronisationVector().getFirst();
+         AssumeCondition(dynamic_cast<const ImplementationContent<TypeImplementation>*>(&result))
+         return ((const ImplementationContent<TypeImplementation>&) result).content();
+      }
+
+   AbstractEquationArray& equationSynchronisationVector() { return aaeEquationSynchronisationVector; }
+   const AbstractEquationArray& equationSynchronisationVector() const { return aaeEquationSynchronisationVector; }
+   template <class TypeEquation>
+   const TypeEquation& equationFirstSynchronisation() const
+      {  const auto& result = equationSynchronisationVector().getFirst();
+         AssumeCondition(dynamic_cast<const EquationContent<TypeEquation>*>(&result))
+         return ((const EquationContent<TypeEquation>&) result).content();
+      }
+   // end of support unstable branches in loop
+
+  public:
+   PathExplorer(BaseExecutionPath::Mode mode = BaseExecutionPath::MRealAndImplementation)
+      :  uCurrentStackPosition(0), uLastResult(0), uLastResultCases(0),
+         uLastLogCases(0), uPreviousLastZeroBit(0), uPreviousLastIncBit(0),
+         uLastZeroBit(0), uLastIncBit(0), uNumberOfUnstableBranches(0),
+         uCurrentUnstableBranch(0), fCurrentUnstableHasOtherBranches(false),
+         uLastUnstableBranch(0), mMode(mode),
+         uNumberOfFloatBranches(0), uNumberOfRealBranches(0),
+         uCurrentContainerCounter(0), uRealContainerCounter(0) {}
+   PathExplorer(const PathExplorer& source) = default;
+   PathExplorer(PathExplorer&& source) = default;
+   PathExplorer& operator=(const PathExplorer& source) = default;
+   PathExplorer& operator=(PathExplorer&& source) = default;
+
+   Numerics::BigInteger& stackTrace() { return biStackTrace; }
+   int& currentStackPosition() { return uCurrentStackPosition; }
+   unsigned& lastResult() { return uLastResult; }
+   unsigned& lastResultCases() { return uLastResultCases; }
+   unsigned& lastLogCases() { return uLastLogCases; }
+   unsigned& previousLastZeroBit() { return uPreviousLastZeroBit; }
+   unsigned& previousLastIncBit() { return uPreviousLastIncBit; }
+   unsigned& lastZeroBit() { return uLastZeroBit; }
+   unsigned& lastIncBit() { return  uLastIncBit; }
+   int& numberOfUnstableBranches() { return uNumberOfUnstableBranches; }
+   int& currentUnstableBranch() { return uCurrentUnstableBranch; }
+   bool& doesCurrentUnstableHasOtherBranches() { return fCurrentUnstableHasOtherBranches; }
+   int& lastUnstableBranch() { return uLastUnstableBranch; }
+   BaseExecutionPath::Mode& mode() { return mMode; }
+
+   unsigned& numberOfFloatBranches() { return uNumberOfFloatBranches; }
+   unsigned& numberOfRealBranches() { return uNumberOfRealBranches; }
+
+   bool isFinished(BaseExecutionPath::Mode outerMode)
+      {  if (mMode == BaseExecutionPath::MRealAndImplementation)
+            uCurrentUnstableBranch = uLastUnstableBranch;
+         while (uCurrentContainerCounter > 0) {
+            if (biRealContainer.cbitArray(0)) {
+               aaeEquationSynchronisationVector.freeFirst();
+            }
+            else {
+               aaiImplementationSynchronisationVector.freeFirst();
+               aaiImplementationSynchronisationVector.freeFirst();
+               aaeEquationSynchronisationVector.freeFirst();
+            };
+            biRealContainer >>= 1;
+            --uCurrentContainerCounter;
+            --uRealContainerCounter;
+         };
+         uNumberOfUnstableBranches = uCurrentUnstableBranch; // save it
+         if (uLastLogCases > 0) {
+            AssumeCondition(uCurrentStackPosition >= (int) uLastLogCases)
+            if (uLastResult == 0) { // pop from last branch/conversion
+               AssumeCondition(uLastZeroBit == 0 || uLastIncBit < uLastZeroBit)
+               biStackTrace.clearHigh(uLastZeroBit);
+               if (uLastZeroBit > 0) {
+                  while (biStackTrace.cbitArray(uLastIncBit)) {
+                     biStackTrace.setFalseBitArray(uLastIncBit);
+                     ++uLastIncBit;
+                  };
+                  AssumeCondition(uLastIncBit < uLastZeroBit);
+                  biStackTrace.setTrueBitArray(uLastIncBit);
+               };
+            }
+            else if (uLastLogCases <= 3) { // branch
+               if (uLastLogCases >= 3)
+                  biStackTrace.bitArray(uCurrentStackPosition+2-uLastLogCases) = (uLastResult >> 2);
+               if (uLastLogCases >= 2)
+                  biStackTrace.bitArray(uCurrentStackPosition+1-uLastLogCases) = ((uLastResult & 2) >> 1);
+               biStackTrace.bitArray(uCurrentStackPosition-uLastLogCases) = uLastResult & 0x1;
+            }
+            else { // conversion
+               AssumeCondition(uCurrentStackPosition >= (int) uLastLogCases)
+               int index = (uCurrentStackPosition-uLastLogCases)/(8*sizeof(unsigned));
+               int shiftIndex = (uCurrentStackPosition-uLastLogCases) % (8*sizeof(unsigned));
+               if ((int) (8*sizeof(unsigned) - shiftIndex) > (int) uLastLogCases) {
+                  biStackTrace[index] &= ~(~(~0U << uLastLogCases) << shiftIndex);
+                  biStackTrace[index] |= uLastResult << shiftIndex;
+               }
+               else { // uLastLogCases >= (8*sizeof(unsigned) - shiftIndex)
+                  biStackTrace[index] &= ~(~0U << shiftIndex);
+                  biStackTrace[index+1] &= ~0U << (uLastLogCases - (8*sizeof(unsigned) - shiftIndex));
+                  biStackTrace[index] |= uLastResult << shiftIndex;
+                  biStackTrace[index+1] |= uLastResult >> (uLastLogCases - (8*sizeof(unsigned) - shiftIndex));
+               };
+            }
+         };
+         uCurrentStackPosition = 0;
+         uLastResult = uLastResultCases = uLastLogCases
+            = uPreviousLastZeroBit = uPreviousLastIncBit = uLastZeroBit = uLastIncBit = 0;
+         uCurrentUnstableBranch = 0;
+         fCurrentUnstableHasOtherBranches = false;
+         uLastUnstableBranch = 0;
+         mMode = outerMode;
+         return biStackTrace.isZero() && uNumberOfUnstableBranches == 0;
+      }
+   bool isFinished() { return true; }
+};
+
+class ExecutionPath : public BaseExecutionPath {
+  public:
+   class IFStream;
+   class OFStream;
+   class DebugStream;
+   typedef DAffine::PathExplorer PathExplorer;
+   static PathExplorer* currentPathExplorer;
+
+  protected:
+   static STG::IOObject::OSBase* oTraceFile;       // continuous computations
+   static STG::IOObject::ISBase* iTraceFile;       // continuous computations
+   static PathExplorer pPathExplorer;              // discrete computations
+/* static Numerics::BigInteger biStackTrace;       // discrete computations
+   static int uCurrentStackPosition;
+   static unsigned uLastResult;
+   static unsigned uLastResultCases;
+   static unsigned uLastLogCases;
+   static unsigned uPreviousLastZeroBit;
+   static unsigned uPreviousLastIncBit;
+   static unsigned uLastZeroBit;
+   static unsigned uLastIncBit;
+   static int uNumberOfUnstableBranches;
+   static int uCurrentUnstableBranch;
+   static bool fCurrentUnstableHasOtherBranches;
+   static int uLastUnstableBranch;
+   static Mode mMode; */
+   static bool fDoesFollow;
+   static bool fSupportAtomic;
+   static bool fSupportUnstableInLoop;
+   static bool fSupportVerbose;
+   static bool fSupportThreshold;
+   static bool fSupportFirstFollowFloat;
+   static BuiltReal brThreshold;
+   static BuiltReal brMaximalAccuracy;
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+   static PNT::AutoPointer<TConstraintsSet<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> > >
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+   static PNT::AutoPointer<TGConstraintsSet<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> > >
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+   static PNT::AutoPointer<TGConstraintsSet<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> > >
+#endif
+      apcsConstraints;
+
+   static const char* szFile;
+   static int uLine;
+   static const char* szSynchronisationFile;
+   static int uSynchronisationLine;
+   static const char* szCurrentFile;
+   static int uCurrentLine;
+   static bool fHasNewFile, fHasNewLine;
+
+   static BaseExecutionPathParams* pParams;
+   static bool fClosedParams;
+
+  public:
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+   typedef TEquation<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> > Equation;
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+   typedef TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> > Equation;
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+   typedef TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> > Equation;
+#endif
+
+   class EquationHolder;
+   static bool hasMultipleBranches()
+      {  return fSupportUnstableInLoop && currentPathExplorer != &ExecutionPath::pPathExplorer; }
+   static std::function<bool(const Equation&)> getConditionSameBranch();
+
+   static void setSupportAtomic() { fSupportAtomic = true; }
+   static bool doesSupportAtomic() { return fSupportAtomic; }
+   static void setSupportUnstableInLoop() { fSupportUnstableInLoop = true; }
+   static bool doesSupportUnstableInLoop() { return fSupportUnstableInLoop; }
+   static void setSupportVerbose() { fSupportVerbose = true; }
+   static bool doesSupportVerbose() { return fSupportVerbose; }
+   static void setSupportThreshold() { fSupportThreshold = true; }
+   static void setSupportFirstFollowFloat() { fSupportFirstFollowFloat = true; }
+   static void initializeGlobals(const char* fileSuffix);
+   static void finalizeGlobals();
+   static void setSimplificationTriggerPercent(double percent);
+   class Initialization {
+     public:
+      Initialization() {}
+      void setSupportAtomic() { ExecutionPath::setSupportAtomic(); }
+      void setSupportUnstableInLoop() { ExecutionPath::setSupportUnstableInLoop(); }
+      void setSupportVerbose() { ExecutionPath::setSupportVerbose(); }
+      void setSupportThreshold() { ExecutionPath::setSupportThreshold(); }
+      void setSupportFirstFollowFloat() { ExecutionPath::setSupportFirstFollowFloat(); }
+      void setResultFile(const char* fileSuffix) { initializeGlobals(fileSuffix); }
+      ~Initialization() { finalizeGlobals(); }
+      void setSimplificationTriggerPercent(double percent) { return ExecutionPath::setSimplificationTriggerPercent(percent); }
+   };
+
+   class anticipated_termination { public: anticipated_termination() {} };
+   static void flushOut() { if (oTraceFile) oTraceFile->flush(); }
+   static void writeCurrentPath(std::ostream& out)
+      {  currentPathExplorer->stackTrace().write(out, Numerics::BigInteger::FormatParameters().setBinary());
+         out << ' ' << currentPathExplorer->numberOfUnstableBranches();
+      }
+   static PathExplorer* getCurrentPathExplorer() { return currentPathExplorer; }
+   static const char* queryMessage(const STG::EReadError& error) { return error.getMessage(); }
+
+   static BaseExecutionPathParams& setParams();
+   static SymbolsManager& symbolsManager()
+      {  return pParams ? pParams->symbolsManager() : setParams().symbolsManager(); }
+   static Numerics::DDouble::Access::ReadParameters& nearestParams()
+      {  return pParams ? pParams->nearestParams() : setParams().nearestParams(); }
+   static Numerics::DDouble::Access::ReadParameters& minParams()
+      {  return pParams ? pParams->minParams() : setParams().minParams(); }
+   static Numerics::DDouble::Access::ReadParameters& maxParams()
+      {  return pParams ? pParams->maxParams() : setParams().maxParams(); }
+   static SymbolsManager::MergeTable& initialMergeTable()
+      {  return pParams ? pParams->initialMergeTable() : setParams().initialMergeTable(); }
+   static bool hasSimplificationTriggerPercent() { return pParams ? pParams->hasSimplificationTriggerPercent() : false; }
+   static const BuiltReal& getSimplificationTriggerPercent() { return pParams->getSimplificationTriggerPercent(); }
+
+   static void throwEmptyBranch(bool isUnstable)
+      {  if (isUnstable && currentPathExplorer->mode() == MOnlyImplementation) {
+            AssumeCondition(currentPathExplorer->currentUnstableBranch() > 0)
+            ++currentPathExplorer->lastResult();
+            --currentPathExplorer->currentUnstableBranch();
+            if (currentPathExplorer->lastResult() == currentPathExplorer->lastResultCases()) {
+               currentPathExplorer->lastResult() = 0;
+               currentPathExplorer->lastZeroBit() = currentPathExplorer->previousLastZeroBit();
+               currentPathExplorer->lastIncBit() = currentPathExplorer->previousLastIncBit();
+            };
+         }
+         if (oTraceFile) {
+            oTraceFile->writesome("this case is not possible!\n");
+            oTraceFile->flush();
+         };
+         throw anticipated_termination();
+      }
+
+  protected:
+   template <class TypeFloatAffine>
+   static void assumeThresholdDetection(const TypeFloatAffine& source)
+      {  if (!brThreshold.isZero()) {
+            BuiltReal relativeError;
+            source.retrieveRelativeError(relativeError);
+            if (!relativeError.isZero()) {
+               if (relativeError > brThreshold)
+                  if (doesAssumeInput()) iTraceFile->assume("warning: relative accuracy beyond threshold\n");
+            };
+         };
+      }
+   template <class TypeFloatAffine>
+   static void updateThresholdDetection(const TypeFloatAffine& source)
+      {  BuiltReal relativeError;
+         source.retrieveRelativeError(relativeError);
+         if (!relativeError.isZero()) {
+            if (!brThreshold.isZero() && relativeError > brThreshold)
+               oTraceFile->writesome("warning: relative accuracy beyond threshold\n");
+            if (relativeError > brMaximalAccuracy)
+               brMaximalAccuracy = relativeError;
+         };
+      }
+
+  public:
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+   static TConstraintsSet<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> >&
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+   static TGConstraintsSet<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> >&
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+   static TGConstraintsSet<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> >&
+#endif
+      constraints() { return *apcsConstraints; }
+
+   void persist(const char* prefix) {}
+   bool doesAbsorbHighLevel() const { return FLOAT_ZONOTOPE_DOES_ABSORB_HIGH_LEVEL; }
+   unsigned getLimitStartSymbolAbsorption() const { return FLOAT_ZONOTOPE_LIMIT_SYMBOL_ABSORPTION; }
+   bool doesExcludeConstantFromSymbolAbsorption() const { return FLOAT_ZONOTOPE_DOES_EXCLUDE_CONSTANT_FROM_SYMBOL_ABSORPTION; }
+
+   bool isPureZonotope() const
+#ifdef FLOAT_PURE_ZONOTOPE
+      {  return true; }
+#else
+      {  return false; }
+#endif
+   bool doesAllowSimplex() const { return FLOAT_ZONOTOPE_ALLOW_SIMPLEX; }
+
+  protected:
+   static void notifyPossibleSplit(const char* file, int line)
+      {  szFile = file; uLine = line; }
+   static void notifyPossibleMerge()
+      {  szFile = nullptr; uLine = 0; }
+   static Mode getMode() { return currentPathExplorer->mode(); }
+   
+   static bool doesFollow() { return fDoesFollow; }
+
+  public:
+   static bool doesFollowFlow() { return fDoesFollow && (fSupportUnstableInLoop || iTraceFile != nullptr); }
+   static STG::IOObject::ISBase* inputTraceFile() { return iTraceFile; }
+   static const char* synchronisationFile() { return szSynchronisationFile; }
+   static int synchronisationLine() { return uSynchronisationLine; }
+   static void setFollowFlow(bool doesFollow=true, STG::IOObject::ISBase* inputTraceFile=nullptr,
+         const char* synchronisationFile=nullptr, int synchronisationLine=0)
+      {  fDoesFollow = doesFollow;
+         iTraceFile = inputTraceFile;
+         szSynchronisationFile = synchronisationFile;
+         uSynchronisationLine = synchronisationLine;
+      }
+   static void clearFollowFlow() { fDoesFollow = false; }
+   static void setCurrentPathExplorer(PathExplorer* pathExplorer)
+      {  currentPathExplorer = pathExplorer; }
+   static Mode queryMode(PathExplorer* pathExplorer) { return pathExplorer->mode(); }
+
+  protected:
+   static bool doesAssumeInput() { return iTraceFile != nullptr; }
+
+  protected:
+   static bool hasOutput() { return oTraceFile; }
+
+   static bool hasThreshold() { return !brThreshold.isZero(); }
+   // static bool updateMaximalAccuracy(const BuiltReal& relativeError)
+   //    {  if (relativeError > brMaximalAccuracy)
+   //          brMaximalAccuracy = relativeError;
+   //    }
+
+   static void assumeDomain(char prefix) { if (doesAssumeInput()) iTraceFile->assume(prefix); }
+   static void assumeDomain(const char* prefix) { if (doesAssumeInput()) iTraceFile->assume(prefix); }
+   static void assumePrefixDomain(const char* prefix) { if (doesAssumeInput()) iTraceFile->assume(prefix); }
+   static void assumeDomainUntil(char delimiter)
+      {  if (doesAssumeInput()) {
+            int read = iTraceFile->get();
+            while (read != delimiter) read = iTraceFile->get();
+         }
+      }
+
+   template <class TypeAffine, class ImplReadParameters, class ImplWriteParameters,
+         class EquationReadParameters, class EquationWriteParameters,
+         class HighLevelUpdateVector>
+   static void readSynchronizedValue(int& floatBranchesToRead, int floatSelection,
+         int numberOfFloatBranches, int& realBranchesToRead, int realSelection,
+         int numberOfRealBranches, BaseExecutionPath::Mode mode, TypeAffine& value,
+         ImplReadParameters& implReadParams, ImplWriteParameters& implWriteParams,
+         EquationReadParameters& equationReadParams, EquationWriteParameters& equationWriteParams,
+         HighLevelUpdateVector& highLevelUpdates, bool& hasImplementation, bool& doesMergeValue)
+      {
+         if (!fSupportUnstableInLoop) {
+            iTraceFile->assume("ut_");
+            int read = iTraceFile->get();
+            if (read == 'f')
+               hasImplementation = true;
+            else if (read == 'r') 
+               hasImplementation = false;
+            else {
+               emitErrorFromInput("unexpected character in input file for a choice");
+               hasImplementation = true;
+            };
+
+            if (hasImplementation) {
+               if (floatBranchesToRead <= 0)
+                  emitErrorFromInput("real was expected at synchronisation point, but implementation provided");
+               --floatBranchesToRead;
+            }
+            else {
+               if (realBranchesToRead <= 0)
+                  emitErrorFromInput("implementation was expected at synchronisation point, but real provided");
+               --realBranchesToRead;
+            };
+            doesMergeValue = false;
+            if (mode == BaseExecutionPath::MOnlyReal && hasImplementation) {
+               if (floatSelection == (numberOfFloatBranches - (floatBranchesToRead+1))) {
+                  value.getSMinImplementation().read(*iTraceFile, implReadParams);
+                  implReadParams.clear();
+                  iTraceFile->assume(", ");
+                  value.getSMaxImplementation().read(*iTraceFile, implReadParams);
+                  implReadParams.clear();
+                  value.mergeComputeErrorIfNeeded();
+                  iTraceFile->assume(", ");
+                  value.getSError().read(*iTraceFile, equationReadParams);
+                  equationReadParams.clear();
+
+                  oTraceFile->writesome("ut_f ");
+                  value.getMinImplementation().write(*oTraceFile, implWriteParams);
+                  oTraceFile->writesome(", ");
+                  value.getMaxImplementation().write(*oTraceFile, implWriteParams);
+                  oTraceFile->writesome(", ");
+                  value.getError().write(*oTraceFile, equationWriteParams);
+                  oTraceFile->put('\n');
+
+                  BuiltReal highLevelError;
+                  value.getSError().plusAssign(value.getRealDomain(), TypeAffine::Equation::PCSourceRValue,
+                        symbolsManager(), highLevelError, true /* isMinus */,
+                        false /* hasExternalCoefficient */);
+                  if (!highLevelError.isZero())
+                     highLevelUpdates.insertAtEnd(value.getSError(), highLevelError);
+                  value.computeRelativeError();
+                  doesMergeValue = true;
+               };
+            }
+            else if (mode == BaseExecutionPath::MOnlyImplementation && !hasImplementation) {
+               if (realSelection == (numberOfRealBranches - (realBranchesToRead+1))) {
+                  value.mergeComputeRealIfNeeded();
+                  value.getSRealDomain().read(*iTraceFile, equationReadParams);
+                  equationReadParams.clear();
+
+                  oTraceFile->writesome("ut_r ");
+                  value.getRealDomain().write(*oTraceFile, equationWriteParams);
+                  oTraceFile->put('\n');
+
+                  BuiltReal highLevelError;
+                  value.getSError().plusAssign(value.getRealDomain(), TypeAffine::Equation::PCSourceRValue,
+                        symbolsManager(), highLevelError, true /* isMinus */,
+                        false /* hasExternalCoefficient */);
+                  if (!highLevelError.isZero())
+                     highLevelUpdates.insertAtEnd(value.getSError(), highLevelError);
+                  value.computeRelativeError();
+                  doesMergeValue = true;
+               };
+            };
+
+            if (doesMergeValue)
+               readSpacesUntilEndOfLine();
+            else {
+               if (hasImplementation)
+                  oTraceFile->writesome("ut_f");
+               else
+                  oTraceFile->writesome("ut_r");
+               copyInputToOutputUntilEndOfLine();
+            };
+         }
+         else { // fSupportUnstableInLoop
+            hasImplementation = !currentPathExplorer->realContainer().cbitArray(0);
+            if (hasImplementation) {
+               if (floatBranchesToRead <= 0)
+                  emitErrorFromInput("real was expected at synchronisation point, but implementation provided");
+               --floatBranchesToRead;
+            }
+            else {
+               if (realBranchesToRead <= 0)
+                  emitErrorFromInput("implementation was expected at synchronisation point, but real provided");
+               --realBranchesToRead;
+            };
+            doesMergeValue = false;
+            AssumeCondition(currentPathExplorer->currentContainerCounter() > 0)
+            // throw STG::EReadError();
+            if (mode == BaseExecutionPath::MOnlyReal && hasImplementation) {
+               AssumeCondition(currentPathExplorer->currentContainerCounter() > 0
+                     && currentPathExplorer->implementationSynchronisationVector().count() > 0)
+               if (floatSelection == (numberOfFloatBranches - (floatBranchesToRead+1))) {
+                  currentPathExplorer->realContainer().setBitArray(
+                        currentPathExplorer->realContainerCounter(), false);
+                  currentPathExplorer->realContainer() >>= 1;
+                  --currentPathExplorer->currentContainerCounter();
+                  value.getSMinImplementation() = currentPathExplorer
+                     ->implementationFirstSynchronisation<typename TypeAffine::BuiltDouble>();
+                  currentPathExplorer->implementationSynchronisationVector().freeFirst();
+                  value.getSMaxImplementation() = currentPathExplorer
+                     ->implementationFirstSynchronisation<typename TypeAffine::BuiltDouble>();
+                  currentPathExplorer->implementationSynchronisationVector().freeFirst();
+                  value.mergeComputeErrorIfNeeded();
+
+                  value.getSError() = currentPathExplorer
+                     ->equationFirstSynchronisation<typename TypeAffine::Equation>();
+                  currentPathExplorer->equationSynchronisationVector().freeFirst();
+                  currentPathExplorer->implementationSynchronisationVector()
+                        .insertNewAtEnd(new PathExplorer::ImplementationContent<typename TypeAffine::BuiltDouble>(
+                                 value.getMinImplementation()));
+                  currentPathExplorer->implementationSynchronisationVector()
+                        .insertNewAtEnd(new PathExplorer::ImplementationContent<typename TypeAffine::BuiltDouble>(
+                                 value.getMaxImplementation()));
+                  currentPathExplorer->equationSynchronisationVector()
+                        .insertNewAtEnd(new PathExplorer::EquationContent<typename TypeAffine::Equation>(
+                                 value.getError()));
+                  BuiltReal highLevelError;
+                  value.getSError().plusAssign(value.getRealDomain(), TypeAffine::Equation::PCSourceRValue,
+                        symbolsManager(), highLevelError, true /* isMinus */,
+                        false /* hasExternalCoefficient */);
+                  if (!highLevelError.isZero())
+                     highLevelUpdates.insertAtEnd(value.getSError(), highLevelError);
+                  value.computeRelativeError();
+                  doesMergeValue = true;
+               };
+            }
+            else if (mode == BaseExecutionPath::MOnlyImplementation && !hasImplementation) {
+               AssumeCondition(currentPathExplorer->currentContainerCounter() > 0
+                     && currentPathExplorer->equationSynchronisationVector().count() > 0)
+               hasImplementation = false;
+               if (realSelection == (numberOfRealBranches - (realBranchesToRead+1))) {
+                  currentPathExplorer->realContainer().setBitArray(
+                        currentPathExplorer->realContainerCounter(), true);
+                  currentPathExplorer->realContainer() >>= 1;
+                  --currentPathExplorer->currentContainerCounter();
+                  value.mergeComputeRealIfNeeded();
+                  value.getSRealDomain() = currentPathExplorer
+                     ->equationFirstSynchronisation<typename TypeAffine::Equation>();
+                  currentPathExplorer->equationSynchronisationVector().freeFirst();
+                  currentPathExplorer->equationSynchronisationVector()
+                        .insertNewAtEnd(new PathExplorer::EquationContent<typename TypeAffine::Equation>(
+                                 value.getRealDomain()));
+
+                  BuiltReal highLevelError;
+                  value.getSError().plusAssign(value.getRealDomain(), TypeAffine::Equation::PCSourceRValue,
+                        symbolsManager(), highLevelError, true /* isMinus */,
+                        false /* hasExternalCoefficient */);
+                  if (!highLevelError.isZero())
+                     highLevelUpdates.insertAtEnd(value.getSError(), highLevelError);
+                  value.computeRelativeError();
+                  doesMergeValue = true;
+               };
+            };
+            if (!doesMergeValue) {
+               if (hasImplementation) {
+                  currentPathExplorer->realContainer().setBitArray(
+                        currentPathExplorer->realContainerCounter(), false);
+                  currentPathExplorer->realContainer() >>= 1;
+                  --currentPathExplorer->currentContainerCounter();
+                  currentPathExplorer->implementationSynchronisationVector()
+                        .insertNewAtEnd(new PathExplorer::ImplementationContent<typename TypeAffine::BuiltDouble>(
+                           currentPathExplorer->implementationFirstSynchronisation
+                                 <typename TypeAffine::BuiltDouble>()));
+                  currentPathExplorer->implementationSynchronisationVector().freeFirst();
+                  currentPathExplorer->implementationSynchronisationVector()
+                        .insertNewAtEnd(new PathExplorer::ImplementationContent<typename TypeAffine::BuiltDouble>(
+                           currentPathExplorer->implementationFirstSynchronisation
+                                 <typename TypeAffine::BuiltDouble>()));
+                  currentPathExplorer->implementationSynchronisationVector().freeFirst();
+                  currentPathExplorer->equationSynchronisationVector()
+                        .insertNewAtEnd(new PathExplorer::EquationContent<typename TypeAffine::Equation>(
+                           currentPathExplorer->equationFirstSynchronisation
+                                 <typename TypeAffine::Equation>()));
+                  currentPathExplorer->equationSynchronisationVector().freeFirst();
+               }
+               else {
+                  currentPathExplorer->realContainer().setBitArray(
+                        currentPathExplorer->realContainerCounter(), true);
+                  currentPathExplorer->realContainer() >>= 1;
+                  --currentPathExplorer->currentContainerCounter();
+                  currentPathExplorer->equationSynchronisationVector()
+                        .insertNewAtEnd(new PathExplorer::EquationContent<typename TypeAffine::Equation>(
+                           currentPathExplorer->equationFirstSynchronisation
+                                 <typename TypeAffine::Equation>()));
+                  currentPathExplorer->equationSynchronisationVector().freeFirst();
+               };
+            };
+         }
+      }
+   template <class TypeAffine, class ImplWriteParameters, class EquationWriteParameters>
+   static void writeSynchronizedValue(BaseExecutionPath::Mode mode, const TypeAffine& value,
+         const ImplWriteParameters& implWriteParams, const EquationWriteParameters& equationWriteParams)
+      {  if (!fSupportUnstableInLoop) {
+            oTraceFile->writesome("ut_");
+            if (mode == BaseExecutionPath::MOnlyImplementation)
+               oTraceFile->put('f');
+            else {
+               AssumeCondition(mode == BaseExecutionPath::MOnlyReal)
+               oTraceFile->put('r');
+            };
+            oTraceFile->put(' ');
+            if (mode == BaseExecutionPath::MOnlyImplementation) {
+               value.getMinImplementation().write(*oTraceFile, implWriteParams);
+               oTraceFile->writesome(", ");
+               value.getMaxImplementation().write(*oTraceFile, implWriteParams);
+               oTraceFile->writesome(", ");
+               value.getError().write(*oTraceFile, equationWriteParams);
+            }
+            else {
+               AssumeCondition(mode == BaseExecutionPath::MOnlyReal)
+               value.getRealDomain().write(*oTraceFile, equationWriteParams);
+            };
+            oTraceFile->put('\n');
+         }
+         else { // fSupportUnstableInLoop
+            if (mode == BaseExecutionPath::MOnlyImplementation) {
+               currentPathExplorer->realContainer().setBitArray(
+                     currentPathExplorer->realContainerCounter(), false);
+               ++currentPathExplorer->realContainerCounter();
+               currentPathExplorer->implementationSynchronisationVector()
+                     .insertNewAtEnd(new PathExplorer::ImplementationContent<typename TypeAffine::BuiltDouble>
+                           (value.getMinImplementation()));
+               currentPathExplorer->implementationSynchronisationVector()
+                     .insertNewAtEnd(new PathExplorer::ImplementationContent<typename TypeAffine::BuiltDouble>
+                           (value.getMaxImplementation()));
+               currentPathExplorer->equationSynchronisationVector()
+                     .insertNewAtEnd(new PathExplorer::EquationContent<typename TypeAffine::Equation>
+                           (value.getError()));
+            }
+            else {
+               currentPathExplorer->realContainer().setBitArray(
+                     currentPathExplorer->realContainerCounter(), true);
+               ++currentPathExplorer->realContainerCounter();
+               currentPathExplorer->equationSynchronisationVector()
+                     .insertNewAtEnd(new PathExplorer::EquationContent<typename TypeAffine::Equation>
+                           (value.getRealDomain()));
+            };
+         };
+      }
+
+   static void readSpacesUntilEndOfLine()
+      {  int ch = iTraceFile->get();
+         while (ch == ' ')
+            ch = iTraceFile->get();
+         if (ch != '\n')
+            emitErrorFromInput("expected end of line");
+      }
+   template <class TypeImplementation, class TypeParameters>
+   static void readValueFromInput(TypeImplementation& result, TypeParameters& params)
+      {  if (doesAssumeInput()) {
+            result.read(*iTraceFile, params);
+            params.clear();
+         };
+      }
+   template <class TypeImplementation, class TypeParameters>
+   static void emitErrorReadValueFromInput(const char* message,
+         const TypeImplementation& readMinValue, const TypeImplementation& readMaxValue,
+            const char* readPrefix,
+         const TypeImplementation& expectedMinValue, const TypeImplementation& expectedMaxValue,
+            const char* expectedPrefix, const TypeParameters& params)
+      {
+#ifdef FLOAT_ALLOW_READ_EXCEPTION
+         throw STG::EReadError(message);
+#else
+         STG::IOObject::OSStream out(std::cerr);
+         out.writesome("warning: ");
+         out.writesome(message);
+         out.writesome(":\n\t");
+         out.writesome(readPrefix);
+         out.writesome(" is [");
+         readMinValue.write(out, params);
+         out.writesome(", ");
+         readMaxValue.write(out, params);
+         out.writesome("]\n\t");
+         out.writesome(expectedPrefix);
+         out.writesome(" is [");
+         expectedMinValue.write(out, params);
+         out.writesome(", ");
+         expectedMaxValue.write(out, params);
+         out.writesome("]\n");
+         out.flush();
+#endif
+      }
+   static void emitErrorFromInput(const char* message)
+      {
+#ifdef FLOAT_ALLOW_READ_EXCEPTION
+         throw STG::EReadError(message);
+#else
+         STG::IOObject::OSStream out(std::cerr);
+         out.writesome("warning: ");
+         out.writesome(message);
+         out.put('\n');
+         out.flush();
+#endif
+      }
+
+   static void writeDomain(char prefix) { oTraceFile->put(prefix); }
+   static void writeDomain(const char* prefix) { oTraceFile->writesome(prefix); }
+   static void writePrefixDomain(const char* prefix) { oTraceFile->writesome(prefix); }
+   template <class TypeImplementation, class TypeParameters>
+   static void writeValueToOutput(const TypeImplementation& value, const TypeParameters& params)
+      {  value.write(*oTraceFile, params); }
+   static void copyInputToOutputUntilEndOfLine()
+      {  int ch = iTraceFile->get();
+         while (ch != '\n' && ch != EOF) {
+            oTraceFile->put((char) ch);
+            ch = iTraceFile->get();
+         };
+         if (oTraceFile)
+            oTraceFile->put('\n');
+      }
+
+   static void assumeDivisionByZero()
+      {  if (doesAssumeInput()) iTraceFile->assume("warning: division by zero\n"); }
+   static void writeDivisionByZero()
+      {  oTraceFile->writesome("warning: division by zero\n"); }
+   static void assumeNegativeSqrt()
+      {  if (doesAssumeInput()) iTraceFile->assume("warning: negative square root\n"); }
+   static void writeNegativeSqrt()
+      {  oTraceFile->writesome("warning: negative square root\n"); }
+   static void assumeNegativePow()
+      {  if (doesAssumeInput()) iTraceFile->assume("warning: negative argument for power\n"); }
+   static void writeNegativePow()
+      {  oTraceFile->writesome("warning: negative argument for power\n"); }
+   static void assumeNegativeOrNulLog()
+      {  if (doesAssumeInput()) iTraceFile->assume("warning: negative or nul log\n"); }
+   static void writeNegativeOrNulLog()
+      {  oTraceFile->writesome("warning: negative or nul log\n"); }
+
+   static void followNewBranch(int cases, BooleanChoice& realChoice, BooleanChoice& errorChoice,
+         bool doesChooseDefaultErrorChoice, BooleanChoice defaultErrorChoice);
+   // static int followNewBranch(int cases, BooleanChoice& realChoice, BooleanChoice& errorChoice);
+   static unsigned followNewConversionBranch(unsigned conversion, bool& realChoice,
+         bool& implementationChoice, unsigned realNumber, unsigned implementationNumber,
+         unsigned commonNumber, unsigned firstRealCommon, unsigned firstImplementationCommon,
+         unsigned& alternativeResult);
+
+   static void notifySplitWithSynchronization()
+      {  szSynchronisationFile = szFile;
+         uSynchronisationLine = uLine;
+      }
+   static bool isSynchronizedWith(const char* file, int line)
+      {  return szSynchronisationFile == file && uSynchronisationLine == line; }
+   static bool hasSynchronization() { return szSynchronisationFile != nullptr; }
+   static bool synchronizeCurrentFlow(unsigned& floatSelection,
+         unsigned& realSelection, int numberOfFloatBranches, int numberOfRealBranches)
+      {  
+         if (!fSupportUnstableInLoop) {
+            if (!fDoesFollow) // nothing to synchronize
+               throw anticipated_termination();
+         }
+         else {
+            if (!fDoesFollow) {
+               // currentPathExplorer->mode() = BaseExecutionPath::MRealAndImplementation;
+               // set by the method isFinished()
+               // szSynchronisationFile = nullptr;
+               // uSynchronisationLine = 0;
+               // set by the method setFollowFlow()
+               initialMergeTable() = SymbolsManager::MergeTable();
+               szFile = nullptr;
+               uLine = 0;
+               // fDoesFollow = true;
+               // set by the method setFollowFlow()
+               // currentPathExplorer->numberOfUnstableBranches() += 2;
+               // set by the method isFinished()
+               return false;
+            }
+            // else {
+            //    currentPathExplorer->numberOfUnstableBranches() -= 2;
+            //    currentPathExplorer->currentUnstableBranch() -= 2;
+            // };
+         };
+         szSynchronisationFile = nullptr;
+         uSynchronisationLine = 0;
+         initialMergeTable() = SymbolsManager::MergeTable();
+         szFile = nullptr;
+         uLine = 0;
+         fDoesFollow = currentPathExplorer->currentUnstableBranch() < currentPathExplorer->numberOfUnstableBranches();
+         bool hasSelection = false;
+         unsigned oldSelection = 0, selection = 0, numberOfSelections = 0;
+         if (currentPathExplorer->mode() == MOnlyImplementation && numberOfRealBranches > 1) {
+            hasSelection = true;
+            oldSelection = realSelection;
+            ++realSelection;
+            if (realSelection == (unsigned) numberOfRealBranches)
+               realSelection = 0;
+            selection = realSelection;
+            numberOfSelections = numberOfRealBranches-1;
+         }
+         else if (currentPathExplorer->mode() == MOnlyReal && numberOfFloatBranches > 1) {
+            hasSelection = true;
+            oldSelection = floatSelection;
+            ++floatSelection;
+            if (floatSelection == (unsigned) numberOfFloatBranches)
+               floatSelection = 0;
+            selection = floatSelection;
+            numberOfSelections = numberOfFloatBranches-1;
+         };
+
+         if (numberOfRealBranches > 0 && numberOfFloatBranches > 0)
+            currentPathExplorer->mode() = MRealAndImplementation;
+         if (hasSelection) {
+            if (!fDoesFollow) {
+               int index = currentPathExplorer->currentStackPosition()/(8*sizeof(unsigned));
+               int shiftIndex = currentPathExplorer->currentStackPosition() % (8*sizeof(unsigned));
+               currentPathExplorer->lastResult() = selection;
+               currentPathExplorer->lastLogCases() = Numerics::DInteger::Access::log_base_2(numberOfSelections);
+               currentPathExplorer->lastResultCases() = numberOfSelections;
+
+               if ((8*sizeof(unsigned) - shiftIndex) < currentPathExplorer->lastLogCases()) {
+                  currentPathExplorer->stackTrace()[index] &= ~(~(~0U << currentPathExplorer->lastLogCases()) << shiftIndex);
+                  currentPathExplorer->stackTrace()[index] |= oldSelection << shiftIndex;
+               }
+               else {
+                  currentPathExplorer->stackTrace()[index] &= ~(~0U << shiftIndex);
+                  currentPathExplorer->stackTrace()[index+1] &= ~0U << (currentPathExplorer->lastLogCases() - (8*sizeof(unsigned) - shiftIndex));
+                  currentPathExplorer->stackTrace()[index] |= oldSelection << shiftIndex;
+                  currentPathExplorer->stackTrace()[index+1] |= oldSelection >> (currentPathExplorer->lastLogCases() - (8*sizeof(unsigned) - shiftIndex));
+               };
+               if (oldSelection < numberOfSelections) {
+                  currentPathExplorer->lastZeroBit() = currentPathExplorer->currentStackPosition()+currentPathExplorer->lastLogCases();
+                  currentPathExplorer->lastIncBit() = currentPathExplorer->currentStackPosition();
+                  currentPathExplorer->lastUnstableBranch() = currentPathExplorer->currentUnstableBranch();
+               };
+            }
+            else if (oldSelection < numberOfSelections) {
+               currentPathExplorer->lastZeroBit() = currentPathExplorer->currentStackPosition()+currentPathExplorer->lastLogCases();
+               currentPathExplorer->lastIncBit() = currentPathExplorer->currentStackPosition();
+               currentPathExplorer->lastUnstableBranch() = currentPathExplorer->currentUnstableBranch();
+            };
+            currentPathExplorer->currentStackPosition() += currentPathExplorer->lastLogCases();
+         }
+         else {
+            if (currentPathExplorer->doesCurrentUnstableHasOtherBranches())
+               currentPathExplorer->lastUnstableBranch() = currentPathExplorer->currentUnstableBranch();
+            if (!fDoesFollow && currentPathExplorer->mode() != MRealAndImplementation) {
+               currentPathExplorer->doesCurrentUnstableHasOtherBranches() = false;
+               if (!fSupportUnstableInLoop)
+                  throw anticipated_termination();
+               // currentPathExplorer->mode() = BaseExecutionPath::MRealAndImplementation;
+               // set by the method isFinished()
+               // szSynchronisationFile = nullptr;
+               // uSynchronisationLine = 0;
+               // set by the method setFollowFlow()
+               initialMergeTable() = SymbolsManager::MergeTable();
+               szFile = nullptr;
+               uLine = 0;
+               // fDoesFollow = true;
+               // set by the method setFollowFlow()
+               // currentPathExplorer->numberOfUnstableBranches() += 2;
+               // set by the method isFinished()
+               return false;
+            };
+         };
+         currentPathExplorer->doesCurrentUnstableHasOtherBranches() = false;
+         return true;
+      }
+
+   static void readUntilBranchNumbers(int& numberOfFloatBranches, int& numberOfRealBranches)
+      {  if (!fSupportUnstableInLoop) {
+            int ch = iTraceFile->get();
+            bool doesContinue = true;
+            do {
+               while (ch != 'u' && ch != EOF)
+                  ch = iTraceFile->get();
+               if (ch == EOF)
+                  {  delete iTraceFile; iTraceFile = nullptr; break; }
+               ch = iTraceFile->get();
+               if (ch == EOF)
+                  {  delete iTraceFile; iTraceFile = nullptr; break; }
+               if (ch != 't')
+                  continue;
+               ch = iTraceFile->get();
+               if (ch == EOF)
+                  {  delete iTraceFile; iTraceFile = nullptr; break; }
+               if (ch != 'f')
+                  continue;
+               ch = iTraceFile->get();
+               if (ch == EOF)
+                  {  delete iTraceFile; iTraceFile = nullptr; break; }
+               if (ch != 'n')
+                  continue;
+               ch = iTraceFile->get();
+               if (ch == EOF)
+                  {  delete iTraceFile; iTraceFile = nullptr; break; }
+               if (ch != ' ')
+                  continue;
+               iTraceFile->assume("= ");
+               iTraceFile->read(numberOfFloatBranches, false);
+               iTraceFile->assume(", utrn = ");
+               iTraceFile->read(numberOfRealBranches, false);
+               ch = iTraceFile->get();
+               while (ch == ' ')
+                  ch = iTraceFile->get();
+               if (ch != '\n')
+                  emitErrorFromInput("expected end of line when reading the float and the real branches to synchronize");
+               doesContinue = false;
+            } while (doesContinue);
+         }
+         else {
+            numberOfFloatBranches = currentPathExplorer->numberOfFloatBranches();
+            numberOfRealBranches = currentPathExplorer->numberOfRealBranches();
+         };
+      }
+   static void selectBranch(unsigned& floatSelection, unsigned& realSelection,
+         int numberOfFloatBranches, int numberOfRealBranches)
+      {  if (currentPathExplorer->mode() == MOnlyImplementation && numberOfRealBranches > 1) {
+            int number = Numerics::DInteger::Access::log_base_2(numberOfRealBranches-1);
+            int index = currentPathExplorer->currentStackPosition()/(8*sizeof(unsigned));
+            int shiftIndex = currentPathExplorer->currentStackPosition() % (8*sizeof(unsigned));
+            realSelection = (currentPathExplorer->stackTrace()[index] >> shiftIndex);
+            if ((int) (8*sizeof(unsigned) - shiftIndex) < number)
+               realSelection |= (currentPathExplorer->stackTrace()[index+1] & ~(~0U << shiftIndex)) << (8*sizeof(unsigned) - shiftIndex);
+            realSelection &= ~(~0U << number);
+         }
+         else if (currentPathExplorer->mode() == MOnlyReal && numberOfFloatBranches > 1) {
+            int number = Numerics::DInteger::Access::log_base_2(numberOfFloatBranches-1);
+            int index = currentPathExplorer->currentStackPosition()/(8*sizeof(unsigned));
+            int shiftIndex = currentPathExplorer->currentStackPosition() % (8*sizeof(unsigned));
+            floatSelection = (currentPathExplorer->stackTrace()[index] >> shiftIndex);
+            if ((int) (8*sizeof(unsigned) - shiftIndex) < number)
+               floatSelection |= (currentPathExplorer->stackTrace()[index+1] & ~(~0U << shiftIndex)) << (8*sizeof(unsigned) - shiftIndex);
+            floatSelection &= ~(~0U << number);
+         };
+      }
+   static void writeBranchNumbers(int numberOfFloatBranches, int numberOfRealBranches)
+      {  if (!fSupportUnstableInLoop) {
+            oTraceFile->writesome("utfn = ");
+            oTraceFile->write(numberOfFloatBranches, false);
+            oTraceFile->writesome(", utrn = ");
+            oTraceFile->write(numberOfRealBranches, false);
+            oTraceFile->put('\n');
+         }
+         else {
+            currentPathExplorer->numberOfFloatBranches() = numberOfFloatBranches;
+            currentPathExplorer->numberOfRealBranches() = numberOfRealBranches;
+            // [TODO] move currentContainerCounter in currentPathExplorer !
+            currentPathExplorer->currentContainerCounter() = currentPathExplorer->realContainerCounter();
+         };
+      }
+   static void assumeSourceLine()
+      {  if (fHasNewFile || fHasNewLine) {
+            if (fHasNewFile)
+               iTraceFile->assume(szCurrentFile);
+            iTraceFile->assume(':');
+            iTraceFile->read(uCurrentLine, false);
+            iTraceFile->assume('\n');
+         };
+      }
+   static void writeSourceLine()
+      {  if (fHasNewFile || fHasNewLine) {
+            if (fHasNewFile)
+               oTraceFile->writesome(szCurrentFile);
+            oTraceFile->put(':');
+            oTraceFile->write(uCurrentLine, false);
+            oTraceFile->put('\n');
+         };
+         fHasNewFile = fHasNewLine = false;
+      }
+
+  public:
+   static void clearSynchronizationBranches()
+      {  if (fSupportUnstableInLoop) {
+            // MergeBranches::readSynchronizedValue has not been called due to exception mechanism
+            int maxBitIndex = currentPathExplorer->currentContainerCounter();
+            if (maxBitIndex > 0) {
+               for (int bitIndex = 0; bitIndex < maxBitIndex; ++maxBitIndex) {
+                  if (currentPathExplorer->realContainer().cbitArray(bitIndex)) {
+                     currentPathExplorer->equationSynchronisationVector().freeFirst();
+                  }
+                  else {
+                     currentPathExplorer->implementationSynchronisationVector().freeFirst();
+                     currentPathExplorer->implementationSynchronisationVector().freeFirst();
+                     currentPathExplorer->equationSynchronisationVector().freeFirst();
+                  };
+               };
+               currentPathExplorer->realContainer() >>= maxBitIndex;
+               currentPathExplorer->currentContainerCounter() -= maxBitIndex;
+               currentPathExplorer->realContainerCounter() -= maxBitIndex;
+            };
+            // currentPathExplorer->realContainerCounter() = 0;
+            // currentPathExplorer->realContainer().clear();
+            // currentPathExplorer->currentContainerCounter() = 0;
+            // currentPathExplorer->implementationSynchronisationVector().freeAll();
+            // currentPathExplorer->equationSynchronisationVector().freeAll();
+         };
+      }
+   static void setSourceLine(const char* file, int line)
+      {  if (!fHasNewFile)
+            fHasNewFile = file != szCurrentFile;
+         if (!fHasNewLine)
+            fHasNewLine = line != uCurrentLine;
+         szCurrentFile = file;
+         uCurrentLine = line;
+      }
+};
+
+class ExecutionPath::EquationHolder : public ExecutionPath::Equation {
+  private:
+   PathExplorer* peHolder;
+
+  public:
+   EquationHolder() : peHolder(nullptr) {}
+   EquationHolder(const Equation& equation) : Equation(equation), peHolder(nullptr) {}
+   EquationHolder(Equation&& equation) : Equation(equation), peHolder(nullptr) {}
+   EquationHolder& operator=(const Equation& equation)
+      {  Equation::operator=(equation); peHolder = nullptr; return *this; }
+   EquationHolder& operator=(Equation&& equation)
+      {  Equation::operator=(equation); peHolder = nullptr; return *this; }
+   DefineCopy(EquationHolder)
+   DDefineAssign(EquationHolder)
+
+   virtual bool isStoredVariable() const { return ExecutionPath::fSupportUnstableInLoop; }
+   void setHolder(PathExplorer* holder) {  peHolder = holder; }
+   void clearHolder() { peHolder = nullptr; }
+   PathExplorer* getHolder() const { return peHolder; }
+};
+
+inline std::function<bool(const ExecutionPath::Equation&)>
+ExecutionPath::getConditionSameBranch() {
+   if (!fSupportUnstableInLoop)
+      return [](const Equation& equation){ return true; };
+
+   return [](const Equation& equation)
+      {  bool result = equation.isStoredVariable();
+         if (result) {
+            AssumeCondition(dynamic_cast<const EquationHolder*>(&equation))
+            result = currentPathExplorer == ((const EquationHolder&) equation).getHolder();
+         };
+         return result;
+      };
+}
+
+typedef TBaseFloatAffine<ExecutionPath> BaseFloatAffine;
+typedef TMergeBranches<ExecutionPath> MergeBranches;
+
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+typedef TEquation<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> > Equation;
+typedef TBaseFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> > FloatZonotope;
+typedef TBaseFloatZonotopeWithSymbolic<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> > FloatZonotopeWithSymbolic;
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+typedef TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> > Equation;
+typedef TGBaseFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> > FloatZonotope;
+typedef TGBaseFloatZonotopeWithSymbolic<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> > FloatZonotopeWithSymbolic;
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+typedef TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> > Equation;
+typedef TGBaseFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> > FloatZonotope;
+typedef TGBaseFloatZonotopeWithSymbolic<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> > FloatZonotopeWithSymbolic;
+#endif
+
+}} // end of namespace NumericalDomains::DAffine
+
+

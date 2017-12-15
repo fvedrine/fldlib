@@ -1,0 +1,1544 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2005-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : BackwardNumerics
+// Unit      : Floating
+// File      : BaseProjectionFloating.template
+// Description :
+//   Implementation of a class of floating points with unbound size.
+//
+
+#ifndef Numerics_BaseProjectionFloatingTemplate
+#define Numerics_BaseProjectionFloatingTemplate
+
+#include "BackwardNumerics/BaseProjectionFloating.h"
+
+namespace Numerics {} // for precompiled headers
+
+#include "ForwardNumerics/BaseFloating.template"
+
+namespace Numerics {
+
+/**********************************************************/
+/* Implementation of the template class TProjectionDouble */
+/**********************************************************/
+
+template <class TypeDouble, class TypeDouble_1>
+bool
+TProjectionDouble<TypeDouble, TypeDouble_1>::minusAcceptInfty(const thisType& source,
+      ReadParameters& round, bool& isHandled) {
+   isHandled = true;
+   bool isMax = round.isContextMax();
+   bool isUp = round.isContextUp();
+   bool isDirect = (isMax ? isUp : !isUp);
+   bool result = true;
+   if (inherited::getBasicExponent() == inherited::getInftyExponent()) {
+      if (inherited::getMantissa().isZero()) { // result.isInfty()
+         if (source.getBasicExponent() == inherited::getInftyExponent()) {
+            if (source.getMantissa().isZero()) { // source.isInfty()
+               if (inherited::isPositive() == source.isPositive()) {
+                  // this = ]-oo, +oo] if inherited::isPositive, [-oo, +oo[ else
+                  if (!isMax) {
+                     if (isDirect ? inherited::isPositive() : inherited::isNegative()) {
+                        inherited::getSMantissa().dec();
+                        inherited::getSBasicExponent().dec();
+                     };
+                     inherited::setNegative();
+                  }
+                  else {
+                     if (isDirect ? inherited::isNegative() : inherited::isPositive()) {
+                        inherited::getSMantissa().dec();
+                        inherited::getSBasicExponent().dec();
+                     };
+                     inherited::setPositive();
+                  };
+               }
+               else {
+                  result = false;
+                  inherited::setNegative(isMax);
+               };
+            }
+            else { // result.isInfty() && source.isNaN()
+               result = false;
+               inherited::setNegative(isMax);
+            };
+         }
+         else { // result.isInfty() && source in ]-oo, +oo[ => this = result
+            if (round.doesAvoidInfty(inherited::isNegative()) || (isDirect
+                  ? (inherited::isPositive() ? isMax : !isMax)
+                  : (inherited::isNegative() ? isMax : !isMax))) {
+               if (!isDirect)
+                  inherited::setNegative(!inherited::isNegative());
+            }
+            else
+               isHandled = false;
+         };
+      }
+      else { // result.isNaN()
+         if (inherited::isQNaN()) {
+            inherited::getSMantissa() = 0U;
+            bool isSameSign = inherited::isPositive() == source.isPositive();
+            if ((source.getBasicExponent() != inherited::getInftyExponent())
+                  || !source.getMantissa().isZero()
+                  || (isDirect ? isSameSign : !isSameSign)) {
+               result = false;
+               inherited::setNegative(isMax);
+            };
+         }
+         else if (source.getBasicExponent() == inherited::getInftyExponent()) {
+            if (source.getMantissa().isZero()) { // source.isInfty() && result.isSNaN()
+               inherited::getSMantissa() = 0U;
+               if (!isDirect && !round.keepNaNSign())
+                  inherited::setNegative(!inherited::isNegative());
+               if (!isMax ? inherited::isPositive() : inherited::isNegative())
+                  inherited::getSMantissa().inc();
+               else
+                  inherited::getSMantissa().neg();
+            }
+            else { // result.isSNaN() && source.isNaN()
+               if ((inherited::isNegative() != source.isNegative())
+                     || inherited::getMantissa() != source.getMantissa()) {
+                  if (isDirect) {
+                     if (!isMax ? inherited::isPositive() : inherited::isNegative())
+                        inherited::getSMantissa().setBitArray(inherited::bitSizeMantissa()-1, 0);
+                  }
+                  else {
+                     inherited::getSMantissa().setBitArray(inherited::bitSizeMantissa()-1, 0);
+                     if ((inherited::isNegative() != source.isNegative())
+                           || inherited::getMantissa() != source.getMantissa()) {
+                        result = false;
+                        inherited::getSMantissa() = 0U;
+                        inherited::setNegative(isMax);
+                     }
+                     else {
+                        inherited::getSMantissa() = 0U;
+                        inherited::setNegative(!isMax);
+                     };
+                  };
+               }
+               else { // result in [-oo, +oo]
+                  inherited::getSMantissa() = 0U;
+                  inherited::setNegative(!isMax);
+               };
+            };
+         }
+         else { // result.isNaN() && source in ]-oo, +oo[
+            if (!isMax ? inherited::isPositive() : inherited::isNegative())
+               inherited::getSMantissa().setBitArray(inherited::bitSizeMantissa()-1, 0);
+            if (!isDirect && !round.keepNaNSign())
+               inherited::setNegative(!inherited::isNegative());
+         };
+      };
+   }
+   else if (source.getBasicExponent() == inherited::getInftyExponent()) {
+      // result in ]-oo, +oo[ && source = infty ou NaN
+      result = false;
+      inherited::getSBasicExponent() = inherited::getInftyExponent();
+      inherited::getSMantissa() = 0U;
+      inherited::setNegative(isMax);
+   }
+   else
+      {  AssumeUncalled }
+   return result;
+}
+
+template <class TypeDouble, class TypeDouble_1>
+bool
+TProjectionDouble<TypeDouble, TypeDouble_1>::minusAccept(const thisType& source, ReadParameters& round) {
+   if ((inherited::getBasicExponent() == inherited::getInftyExponent())
+         || (source.getBasicExponent() == inherited::getInftyExponent())) {
+      bool isHandled = true;
+      bool result = minusAcceptInfty(source, round, isHandled);
+      if (isHandled)
+         return result;
+   };
+   ReadParameters params(round), roundMode(round);
+   params.clear();
+   bool isMax = round.isContextMax();
+   bool isUp = round.isContextUp();
+   if (roundMode.isZeroRound()) {
+      if (inherited::isZero()) {
+         if (!isMax)
+            roundMode.setHighestRound();
+         else
+            roundMode.setLowestRound();
+      }
+      else if (inherited::isPositive())
+         roundMode.setLowestRound();
+      else
+         roundMode.setHighestRound();
+   };
+   if (!isMax)
+      params.setHighestRound();
+   else
+      params.setLowestRound();
+
+   thisType result = *this;
+   if ((!isMax && !isUp) || (isMax && isUp)) {
+      if (roundMode.isNearestRound()) {
+         EnhancedDouble eresult(*this), esource(source); 
+         if (!isMax)
+            eresult.setToPrevious();
+         else
+            eresult.setToNext();
+         eresult.minusAssign(esource, params); 
+         bool isEven = roundMode.isRoundToEven() && !inherited::getMantissa().cbitArray(0);
+         eresult.retrieveDouble(*this, params);
+         if (inherited::isInfty() && params.isApproximate()) {
+            isEven = false;
+            params.clearApproximate();
+         };
+         if (isEven || (!isMax ? params.isUpApproximate() : params.isDownApproximate())) {
+            if (!isMax ? params.isUpApproximate() : params.isDownApproximate())
+               goto LApproximation;
+            return true;
+         };
+      }
+      else {
+         if (!isMax) {
+            if (roundMode.isHighestRound())
+               inherited::setToPrevious();
+         }
+         else {
+            if (roundMode.isLowestRound())
+               inherited::setToNext();
+         };
+         inherited::minusAssign(source, params); 
+         bool isInfty = false;
+         if (inherited::isInfty()) {
+            if (params.isApproximate())
+               params.clearApproximate();
+            if (!result.isInfty()) {
+               if (!isMax ? inherited::isNegative() : inherited::isPositive())
+                  isInfty = true;
+               else
+                  return false;
+            };
+         };
+         if (!isInfty && (!isMax ? (roundMode.isLowestRound() || params.isUpApproximate())
+                   : (roundMode.isHighestRound() || params.isDownApproximate()))) {
+            if (!isMax ? !roundMode.isLowestRound() : !roundMode.isHighestRound())
+               goto LApproximation;
+            return true;
+         };
+      };
+   }
+   else { // (isMax && !isUp) || (!isMax && isUp)
+      if (roundMode.isNearestRound()) {
+         EnhancedDouble eresult(*this), esource(source); 
+         if (!isMax)
+            eresult.setToNext();
+         else
+            eresult.setToPrevious();
+         esource.minusAssign(eresult, params); 
+         bool isEven = roundMode.isRoundToEven() && !inherited::getMantissa().cbitArray(0);
+         esource.retrieveDouble(*this, params);
+         if (inherited::isInfty() && params.isApproximate()) {
+            isEven = false;
+            params.clearApproximate();
+         };
+         if (isEven || (!isMax ? params.isUpApproximate() : params.isDownApproximate())) {
+            if (!isMax ? params.isUpApproximate() : params.isDownApproximate())
+               goto LApproximation;
+            return true;
+         };
+      }
+      else {
+         if (!isMax) {
+            if (roundMode.isLowestRound())
+               inherited::setToNext();
+         }
+         else {
+            if (roundMode.isHighestRound())
+               inherited::setToPrevious();
+         };
+         thisType newResult = source;
+         newResult.minusAssign(*this, params); 
+         *this = newResult;
+         bool isInfty = false;
+         if (inherited::isInfty()) {
+            if (params.isApproximate())
+               params.clearApproximate();
+            if (!result.isInfty()) {
+               if (!isMax ? inherited::isNegative() : inherited::isPositive())
+                  isInfty = true;
+               else
+                  return false;
+            };
+         };
+         if (!isInfty && (!isMax ? (roundMode.isHighestRound() || params.isUpApproximate())
+                   : (roundMode.isLowestRound() || params.isDownApproximate()))) {
+            if (!isMax ? !roundMode.isHighestRound() : !roundMode.isLowestRound())
+               goto LApproximation;
+            return true;
+         };
+      };
+   };
+   AssumeCondition(!params.isApproximate())
+   if (!isMax)
+      inherited::setToNext();
+   else
+      inherited::setToPrevious();
+   // return true;
+
+LApproximation:
+   thisType fst(*this);
+   bool isDirect = (!isMax && !isUp) || (isMax && isUp);
+   if (isDirect)
+      fst.plusAssign(source, roundMode);
+   else {
+      thisType sourceCopy(source);
+      sourceCopy.minusAssign(fst, roundMode);
+      fst.swap(sourceCopy);
+   };
+   ComparisonResult compare = fst.compareValue(result);
+   AssumeCondition(compare != ((isDirect ? !isMax : isMax) ? CRLess : CRGreater))
+   return (compare != ((isDirect ? !isMax : isMax) ? CRGreater : CRLess));
+}
+
+template <class TypeDouble, class TypeDouble_1>
+bool
+TProjectionDouble<TypeDouble, TypeDouble_1>::plusAcceptInfty(const thisType& source, ReadParameters& round, bool& isHandled) {
+   isHandled = true;
+   bool isMax = round.isContextMax();
+   bool result = true;
+   if (inherited::getBasicExponent() == inherited::getInftyExponent()) {
+      if (inherited::getMantissa().isZero()) { // result.isInfty()
+         if (source.getBasicExponent() == inherited::getInftyExponent()) {
+            if (source.getMantissa().isZero()) { // source.isInfty()
+               if (inherited::isPositive() != source.isPositive()) {
+                  // this = ]-oo, +oo] if inherited::isPositive(), [-oo, +oo[ else
+                  if (!isMax) {
+                     if (inherited::isPositive()) {
+                        inherited::getSMantissa().dec();
+                        inherited::getSBasicExponent().dec();
+                        inherited::setNegative();
+                     };
+                  }
+                  else {
+                     if (inherited::isNegative()) {
+                        inherited::getSMantissa().dec();
+                        inherited::getSBasicExponent().dec();
+                        inherited::setPositive();
+                     };
+                  };
+               }
+               else {
+                  result = false;
+                  inherited::setNegative(isMax);
+               };
+            }
+            else { // result.isInfty() && source.isNaN()
+               result = false;
+               inherited::setNegative(isMax);
+            };
+         }
+         // result.isInfty() && source in ]-oo, +oo[ => this = result
+         else if (!isMax
+               ? (inherited::isPositive() && !round.doesAvoidInfty(false))
+               : (inherited::isNegative() && !round.doesAvoidInfty(true)))
+            isHandled = false;
+      }
+      else { // result.isNaN()
+         if (inherited::isQNaN()) {
+            inherited::getSMantissa() = 0U;
+            if ((source.getBasicExponent() != inherited::getInftyExponent())
+                  || !source.getMantissa().isZero()
+                  || (inherited::isPositive() == source.isPositive())) {
+               result = false;
+               inherited::setNegative(isMax);
+            };
+         }
+         else if (source.getBasicExponent() == inherited::getInftyExponent()) {
+            if (source.getMantissa().isZero()) { // source.isInfty() &&  result.isSNaN()
+               inherited::getSMantissa() = 0U;
+               if (!isMax ? inherited::isPositive() : inherited::isNegative())
+                  inherited::getSMantissa().inc();
+               else
+                  inherited::getSMantissa().neg();
+            }
+            else { // result.isSNaN() && source.isNaN()
+               if ((inherited::isNegative() != source.isNegative())
+                     || inherited::getMantissa() != source.getMantissa()) {
+                  if (!isMax ? inherited::isPositive() : inherited::isNegative())
+                     inherited::getSMantissa().setBitArray(inherited::bitSizeMantissa()-1, 0);
+               }
+               else { // result in [-oo, +oo]
+                  inherited::getSMantissa() = 0U;
+                  inherited::setNegative(!isMax);
+               };
+            };
+         }
+         else { // result.isSNaN() && source in ]-oo, +oo[
+            if (!isMax ? inherited::isPositive() : inherited::isNegative())
+               inherited::getSMantissa().setBitArray(inherited::bitSizeMantissa()-1, 0);
+         };
+      };
+   }
+   else if (source.getBasicExponent() == inherited::getInftyExponent()) {
+      // result in ]-oo, +oo[ && source = infty ou NaN
+      result = false;
+      inherited::getSBasicExponent() = inherited::getInftyExponent();
+      inherited::getSMantissa() = 0U;
+      inherited::setNegative(isMax);
+   }
+   else
+      {  AssumeUncalled }
+   return result;
+}
+
+template <class TypeDouble, class TypeDouble_1>
+bool
+TProjectionDouble<TypeDouble, TypeDouble_1>::plusAccept(const thisType& source, ReadParameters& round) {
+   if ((inherited::getBasicExponent() == inherited::getInftyExponent())
+         || (source.getBasicExponent() == inherited::getInftyExponent())) {
+      bool isHandled = true;
+      bool result = plusAcceptInfty(source, round, isHandled);
+      if (isHandled)
+         return result;
+   };
+   ReadParameters params(round), roundMode(round);
+   params.clear();
+   bool isMax = round.isContextMax();
+   if (roundMode.isZeroRound()) {
+      if (inherited::isZero()) {
+         if (!isMax)
+            roundMode.setHighestRound();
+         else
+            roundMode.setLowestRound();
+      }
+      else if (inherited::isPositive())
+         roundMode.setLowestRound();
+      else
+         roundMode.setHighestRound();
+   };
+   if (!isMax)
+      params.setHighestRound();
+   else
+      params.setLowestRound();
+
+   thisType result = *this;
+   if (roundMode.isNearestRound()) {
+      EnhancedDouble eresult(*this), esource(source); 
+      if (!isMax)
+         eresult.setToPrevious();
+      else
+         eresult.setToNext();
+      eresult.plusAssign(esource, params); 
+      bool isEven = roundMode.isRoundToEven() && !inherited::getMantissa().cbitArray(0);
+      eresult.retrieveDouble(*this, params);
+      if (inherited::isInfty() && params.isApproximate()) {
+         isEven = false;
+         params.clearApproximate();
+      };
+      if (isEven || (!isMax ? params.isUpApproximate() : params.isDownApproximate())) {
+         if (!isMax ? params.isUpApproximate() : params.isDownApproximate())
+            goto LApproximation;
+         return true;
+      };
+   }
+   else {
+      if (!isMax) {
+         if (roundMode.isHighestRound())
+            inherited::setToPrevious();
+      }
+      else {
+         if (roundMode.isLowestRound())
+            inherited::setToNext();
+      };
+      inherited::plusAssign(source, params); 
+      bool isInfty = false;
+      if (inherited::isInfty()) {
+         if (params.isApproximate())
+            params.clearApproximate();
+         if (!result.isInfty()) {
+            if (!isMax ? inherited::isNegative() : inherited::isPositive())
+               isInfty = true;
+            else
+               return false;
+         };
+      };
+      if (!isInfty && (!isMax ? ((roundMode.isLowestRound()) || params.isUpApproximate())
+                : ((roundMode.isHighestRound()) || params.isDownApproximate()))) {
+         if (!isMax ? !roundMode.isLowestRound() : !roundMode.isHighestRound())
+            goto LApproximation;
+         return true;
+      };
+   };
+
+   AssumeCondition(!params.isApproximate())
+   if (!isMax)
+      inherited::setToNext();
+   else
+      inherited::setToPrevious();
+   // return true;
+
+LApproximation:
+   thisType fst(*this);
+   fst.minusAssign(source, roundMode);
+   ComparisonResult compare = fst.compareValue(result);
+   AssumeCondition(compare != (!isMax ? CRLess : CRGreater))
+   return (compare != (!isMax ? CRGreater : CRLess));
+}
+
+template <class TypeDouble, class TypeDouble_1>
+bool
+TProjectionDouble<TypeDouble, TypeDouble_1>::divAcceptInfty(const thisType& source, ReadParameters& round, bool& isHandled) {
+   isHandled = true;
+   bool isMax = round.isContextMax();
+   bool isUp = round.isContextUp();
+   bool isDirect = (isMax ? isUp : !isUp);
+   bool result = true;
+   if (inherited::getBasicExponent() == inherited::getInftyExponent()) {
+      if (inherited::getMantissa().isZero()) { // result.isInfty()
+         if (source.getBasicExponent() == inherited::getInftyExponent()) {
+            if (source.getMantissa().isZero()) { // source.isInfty()
+               // this = [epsilon, +oo[ if inherited::isPositive(), this = ]-oo, -epsilon] else
+               if (inherited::isPositive() == source.isPositive()) {
+                  if (!isMax) {
+                     if (isDirect)
+                        inherited::getSMantissa().inc();
+                     inherited::getSBasicExponent() = 0U;
+                  }
+                  else if (!isDirect) {
+                     inherited::getSBasicExponent().dec();
+                     inherited::getSMantissa().neg();
+                  };
+                  inherited::setPositive();
+               }
+               else {
+                  if (isMax) {
+                     if (isDirect)
+                        inherited::getSMantissa().inc();
+                     inherited::getSBasicExponent() = 0U;
+                  }
+                  else if (!isDirect) {
+                     inherited::getSBasicExponent().dec();
+                     inherited::getSMantissa().neg();
+                  };
+                  inherited::setNegative();
+                  if (!isDirect && inherited::isZero() && !round.acceptMinusZero())
+                     inherited::getSMantissa().inc();
+               };
+            }
+            else { // result.isInfty() && source.isNaN()
+               result = false;
+               inherited::setNegative(isMax);
+            };
+         }
+         else { // result.isInfty() && source in ]-oo, +oo[
+            if (isDirect) {
+               if (source.isZero()) {
+                  result = false;
+                  inherited::setNegative(isMax);
+               }
+               else {
+                  bool isPositive = inherited::isPositive() ? source.isPositive() : source.isNegative();
+                  if (!isMax ? isPositive : !isPositive)
+                     isHandled = false;
+                  else
+                     inherited::setNegative(!isPositive);
+               };
+            }
+            else if (source.isZero()) {
+               result = false;
+               inherited::setNegative(isMax);
+               inherited::getSBasicExponent() = 0U;
+               inherited::getSMantissa() = 1U;
+            }
+            else if (source.isPositive() != inherited::isPositive()) {
+               if (round.doesAvoidInfty(inherited::isNegative())) {
+                  result = true;
+                  inherited::setNegative(round.acceptMinusZero() ? !isMax : false);
+                  inherited::getSBasicExponent() = 0U;
+               }
+               else
+                  isHandled = false;
+            }
+            else {
+               if (round.doesAvoidInfty(inherited::isNegative())
+                     || round.isZeroRound()
+                     || (inherited::isNegative() ? (!isMax && round.isHighestRound())
+                                                 : (isMax && round.isLowestRound()))) {
+                  inherited::setPositive();
+                  inherited::getSBasicExponent() = 0U;
+               }
+               else
+                  isHandled = false;
+            };
+         };
+      }
+      else { // result.isNaN()
+         if (inherited::isQNaN()) {
+            bool isPositive = inherited::isPositive() == source.isPositive();
+            if (!source.isZero() || !source.isInfty()) {
+               result = false;
+               inherited::getSMantissa() = 0U;
+               inherited::setNegative(isMax);
+            }
+            else if (isDirect) {
+               inherited::getSMantissa() = 0U;
+               if (!source.isZero()) {
+                  inherited::getSBasicExponent() = 0U;
+                  inherited::setPositive();
+               };
+            }
+            else { // !isDirect
+               if (source.isZero()) {
+                  if (!isPositive && !round.acceptMinusZero()) {
+                     result = false;
+                     inherited::getSMantissa() = 0U;
+                     inherited::setNegative(isMax);
+                  }
+                  else {
+                     inherited::getSMantissa() = 0U;
+                     inherited::getSBasicExponent() = 0U;
+                     inherited::setNegative(isPositive);
+                  };
+               }
+               else {
+                  inherited::getSMantissa() = 0U;
+                  inherited::setNegative(isPositive);
+               };
+            };
+         }
+         else if (source.getBasicExponent() == inherited::getInftyExponent()) {
+            if (source.getMantissa().isZero()) { // source.isInfty() && result.isSNaN()
+               inherited::getSMantissa() = 0U;
+               if (!isDirect && !round.keepNaNSign())
+                  inherited::setNegative(inherited::isNegative() != source.isNegative());
+               if (!isMax ? inherited::isPositive() : inherited::isNegative())
+                  inherited::getSMantissa().inc();
+               else
+                  inherited::getSMantissa().neg();
+            }
+            else { // result.isSNaN() && source.isNaN()
+               if (inherited::getMantissa() != source.getMantissa()) {
+                  if (isDirect) {
+                     if (!isMax ? inherited::isPositive() : inherited::isNegative())
+                        inherited::getSMantissa().setBitArray(inherited::bitSizeMantissa()-1, 0);
+                     if (!round.keepNaNSign())
+                        inherited::setNegative(inherited::isPositive() != source.isPositive());
+                  }
+                  else {
+                     inherited::getSMantissa().setBitArray(inherited::bitSizeMantissa()-1, 0);
+                     if (inherited::getMantissa() != source.getMantissa()) {
+                        result = false;
+                        inherited::getSMantissa() = 0U;
+                        inherited::setNegative(isMax);
+                     }
+                     else {
+                        inherited::getSMantissa() = 0U;
+                        inherited::setNegative(!isMax);
+                     };
+                  };
+               }
+               else { // result in ]epsilon, +oo]
+                  inherited::getSMantissa() = 0U;
+                  inherited::setNegative(!isMax);
+                  if (!round.keepNaNSign()) {
+                     bool isPositive = inherited::isPositive() == source.isPositive();
+                     if (!isMax ? isPositive : !isPositive) {
+                        inherited::getSBasicExponent() = 0U;
+                        if (isDirect || (!round.acceptMinusZero() && !isPositive))
+                           inherited::getSMantissa().inc();
+                     };
+                     inherited::setNegative(!isPositive);
+                  };
+               };
+            };
+         }
+         else { // result.isSNaN() && source in ]-oo, +oo[
+            if (!isMax ? inherited::isPositive() : inherited::isNegative())
+               inherited::getSMantissa().setBitArray(inherited::bitSizeMantissa()-1, 0);
+            if (!isDirect && !round.keepNaNSign())
+               inherited::setNegative(inherited::isNegative() != source.isNegative());
+         };
+      };
+   }
+   else if (source.getBasicExponent() == inherited::getInftyExponent()) {
+      // result in ]-oo, +oo[ && source = infty ou NaN
+      result = false;
+      inherited::getSBasicExponent() = inherited::getInftyExponent();
+      inherited::getSMantissa() = 0U;
+      inherited::setNegative(isMax);
+   }
+   else if (source.isZero()) {
+      result = inherited::isZero();
+      inherited::setNegative(result ? !isMax : isMax);
+      inherited::getSBasicExponent() = inherited::getInftyExponent();
+      inherited::getSMantissa() = 0U;
+      if (isDirect) {
+         inherited::getSBasicExponent().dec();
+         inherited::getSMantissa().neg();
+      };
+   }
+   else if (inherited::isZero()) {
+      if (!isDirect) {
+         // the caller shall take the mirror negatives.
+         bool isInverse = round.doesInverseContext();
+         bool isTestRound = source.isPositive() ? !isMax : isMax;
+         if (!isInverse || (isTestRound ? round.isLowestRound() : round.isHighestRound())) {
+            inherited::setNegative(!isMax);
+            inherited::getSBasicExponent() = inherited::getInftyExponent();
+            inherited::getSMantissa() = 0U;
+            return true;
+         };
+      };
+      // isDirect || isInverse && !source.isZero()
+      isHandled = false;
+   }
+   else
+      {  AssumeUncalled }
+   return result;
+}
+
+template <class TypeDouble, class TypeDouble_1>
+bool
+TProjectionDouble<TypeDouble, TypeDouble_1>::divAccept(const thisType& source, ReadParameters& round) {
+   if ((inherited::getBasicExponent() == inherited::getInftyExponent())
+         || (source.getBasicExponent() == inherited::getInftyExponent())
+         || source.isZero() || inherited::isZero()) {
+      bool isHandled = true;
+      bool result = divAcceptInfty(source, round, isHandled);
+      if (isHandled)
+         return result;
+   };
+   ReadParameters params(round), roundMode(round);
+   params.clear();
+   params.clearAvoidInfty();
+   bool isMax = round.isContextMax();
+   bool isUp = round.isContextUp();
+   bool isDirect = (isMax && isUp) || (!isMax && !isUp);
+   bool isSourcePositive = source.isPositive();
+   bool isInverse = false;
+
+   if (inherited::isZero()) { // isDirect || isInverse && !source.isZero()
+      if (!isDirect) {
+         isInverse = round.doesInverseContext();
+         isSourcePositive = false;
+      };
+   };
+   if (roundMode.isZeroRound()) {
+      if (inherited::isZero()) {
+         if ((isDirect && source.isPositive()) ? !isMax : isMax)
+            roundMode.setHighestRound();
+         else
+            roundMode.setLowestRound();
+      }
+      else if (inherited::isPositive())
+         roundMode.setLowestRound();
+      else
+         roundMode.setHighestRound();
+   };
+   if (!isMax)
+      params.setHighestRound();
+   else
+      params.setLowestRound();
+
+   thisType result(*this);
+   if (isDirect) {
+      if (roundMode.isNearestRound()) {
+         EnhancedDouble eresult(*this), esource(source); 
+         if (isSourcePositive ? !isMax : isMax)
+            eresult.setToPrevious();
+         else
+            eresult.setToNext();
+         eresult.divAssign(esource, params); 
+         bool isEven = roundMode.isRoundToEven() && !inherited::getMantissa().cbitArray(0);
+         eresult.retrieveDouble(*this, params);
+         if (inherited::isInfty() && params.isApproximate()) {
+            isEven = false;
+            params.clearApproximate();
+         };
+         if (isEven || (!isMax ? params.isUpApproximate() : params.isDownApproximate())) {
+            if (!isMax ? params.isUpApproximate() : params.isDownApproximate())
+               goto LApproximation;
+            // goto LApproximation;
+            return true;
+         };
+      }
+      else {
+         if (isSourcePositive ? !isMax : isMax) {
+            if (roundMode.isHighestRound())
+               inherited::setToPrevious();
+         }
+         else {
+            if (roundMode.isLowestRound())
+               inherited::setToNext();
+         };
+         inherited::divAssign(source, params); 
+         bool isInfty = false;
+         if (inherited::isInfty()) {
+            if (params.isApproximate())
+               params.clearApproximate();
+            if (!result.isInfty()) {
+               if (!isMax ? inherited::isNegative() : inherited::isPositive())
+                  isInfty = true;
+               else
+                  return false;
+            };
+         };
+         if (!isInfty && (!isMax ? ((isSourcePositive ? roundMode.isLowestRound() : roundMode.isHighestRound())
+                        || params.isUpApproximate())
+                   : ((isSourcePositive ? roundMode.isHighestRound() : roundMode.isLowestRound())
+                         || params.isDownApproximate()))) {
+            if (!isMax ? !(isSourcePositive ? roundMode.isLowestRound() : roundMode.isHighestRound())
+                      : !(isSourcePositive ? roundMode.isHighestRound() : roundMode.isLowestRound()))
+               goto LApproximation;
+            // goto LApproximation;
+            return true;
+         };
+      };
+   }
+   else { // !isDirect or (isMax && !isUp) || (!isMax && isUp)
+      if (roundMode.isNearestRound()) {
+         EnhancedDouble eresult(*this), esource(source); 
+         if (isSourcePositive ? !isMax : isMax)
+            eresult.setToNext();
+         else
+            eresult.setToPrevious();
+         esource.divAssign(eresult, params); 
+         bool isEven = roundMode.isRoundToEven() && !inherited::getMantissa().cbitArray(0);
+         esource.retrieveDouble(*this, params);
+         if (isInverse && !source.isPositive()) {
+            if (params.isApproximate()) {
+               if (params.isDownApproximate())
+                  params.setUpApproximate();
+               else
+                  params.setDownApproximate();
+            };
+            inherited::setNegative(!inherited::isNegative());
+         };
+         if ((inherited::isInfty() || inherited::isZero()) && params.isApproximate()) {
+            isEven = false;
+            params.clearApproximate();
+         };
+         if (isEven || (!isMax ? params.isUpApproximate() : params.isDownApproximate())) {
+            if (!isMax ? params.isUpApproximate() : params.isDownApproximate())
+               goto LApproximation;
+            // goto LApproximation;
+            return true;
+         };
+      }
+      else {
+         if (!isInverse ? (isSourcePositive  ? !isMax : isMax)
+               : (source.isPositive() ? ((isMax && round.isZeroRound()) || round.isLowestRound())
+                                      : (roundMode.isHighestRound()))) {
+            if (isInverse || roundMode.isLowestRound())
+               inherited::setToNext();
+         }
+         else {
+            if (isInverse || roundMode.isHighestRound())
+               inherited::setToPrevious();
+         };
+         if (isInverse && !source.isPositive()) {
+            inherited::setNegative(!inherited::isNegative());
+            isSourcePositive = true;
+         };
+         thisType newResult = source;
+         newResult.divAssign(*this, params); 
+         this->swap(newResult);
+         bool isInfty = false;
+         if (inherited::isInfty() || inherited::isZero()) {
+            if (params.isApproximate())
+               params.clearApproximate();
+            if (inherited::isInfty() && !result.isZero()) {
+               if (newResult.isZero())
+                  inherited::setNegative(!inherited::isNegative() ? roundMode.isLowestRound() : roundMode.isHighestRound());
+               if (inherited::isNegative() ? isMax : !isMax)
+                  return false;
+            };
+            isInfty = true;
+         };
+         if (!isInfty && (((!isInverse || !round.isZeroRound() || isSourcePositive) ? !isMax : isMax)
+                   ? ((isSourcePositive ? roundMode.isHighestRound() : roundMode.isLowestRound())
+                        || params.isUpApproximate())
+                   : ((isSourcePositive ? roundMode.isLowestRound() : roundMode.isHighestRound())
+                        || params.isDownApproximate()))) {
+            if (!isMax ? !(isSourcePositive ? roundMode.isHighestRound() : roundMode.isLowestRound())
+                      : !(isSourcePositive ? roundMode.isLowestRound() : roundMode.isHighestRound()))
+               goto LApproximation;
+            // goto LApproximation;
+            return true;
+         };
+         if (isInverse && !source.isPositive()) {
+            isSourcePositive = false;
+         };
+      };
+   };
+   AssumeCondition(!params.isApproximate())
+   {  bool isNext = !(!isDirect && inherited::isZero());
+      if (isNext) {
+         if (!isInverse ? !isMax : isMax)
+            inherited::setToNext();
+         else
+            inherited::setToPrevious();
+      };
+      if (!isNext || (!isDirect && inherited::isZero())) {
+         inherited::setNegative(false);
+         if (result.isInfty())
+            return true;
+         inherited::getSMantissa() = 1U;
+         inherited::setNegative(isMax);
+         return false;
+      };
+   };
+   // return true;
+
+LApproximation:
+   thisType fst(*this);
+   bool isPositive = isSourcePositive ? isDirect : !isDirect;
+   if (isDirect)
+      fst.multAssign(source, roundMode);
+   else {
+      thisType sourceCopy(source);
+      sourceCopy.divAssign(fst, roundMode);
+      fst.swap(sourceCopy);
+   };
+   ComparisonResult compare = fst.compareValue(result);
+   if (isInverse) {
+      if (compare == CRLess)
+         compare = CRGreater;
+      else if (compare == CRGreater)
+         compare = CRLess;
+   };
+   AssumeCondition(compare != ((isPositive ? !isMax : isMax) ? CRLess : CRGreater))
+   return (compare != ((isPositive ? !isMax : isMax) ? CRGreater : CRLess));
+}
+
+template <class TypeDouble, class TypeDouble_1>
+bool
+TProjectionDouble<TypeDouble, TypeDouble_1>::multAcceptInfty(const thisType& source,
+      ReadParameters& round, bool& isHandled) {
+   isHandled = true;
+   bool isMax = round.isContextMax();
+   bool result = true;
+   if (inherited::getBasicExponent() == inherited::getInftyExponent()) {
+      if (inherited::getMantissa().isZero()) { // result.isInfty()
+         if (source.getBasicExponent() == inherited::getInftyExponent()) {
+            // source.isInfty() || source.isNaN()
+            result = false;
+            inherited::setNegative(isMax);
+         }
+         else if (source.isZero()) {
+            // this = [epsilon, +oo] if inherited::isPositive(), this = [-oo, -epsilon] else
+            if (!isMax ? inherited::isPositive() : inherited::isNegative()) {
+               inherited::getSMantissa().inc();
+               inherited::getSBasicExponent() = 0U;
+            };
+         }
+         else { // result.isInfty() && source in ]-oo, +oo[ && source != 0
+            bool isPositive = inherited::isPositive() ? source.isPositive() : source.isNegative();
+            if (!isMax ? isPositive : !isPositive)
+               isHandled = false;
+            else
+               inherited::setNegative(!isPositive);
+         };
+      }
+      else { // result.isNaN()
+         if (inherited::isQNaN()) {
+            bool isPositive = inherited::isPositive() == source.isPositive();
+            if (!source.isZero() || !source.isInfty()) {
+               result = false;
+               inherited::getSMantissa() = 0U;
+               inherited::setNegative(isMax);
+            }
+            else if (source.isInfty()) {
+               inherited::getSMantissa() = 0U;
+               inherited::setNegative(!isPositive);
+            }
+            else { // source.isZero()
+               if (!isPositive && !round.acceptMinusZero()) {
+                  result = false;
+                  inherited::getSMantissa() = 0U;
+                  inherited::setNegative(isMax);
+               }
+               else {
+                  inherited::getSMantissa() = 0U;
+                  inherited::getSBasicExponent() = 0U;
+                  inherited::setNegative(isPositive);
+               };
+            };
+         }
+         else if (source.getBasicExponent() == inherited::getInftyExponent()) {
+            if (source.getMantissa().isZero()) { // source.isInfty() && result.isSNaN()
+               inherited::getSMantissa() = 0U;
+               if (!isMax ? inherited::isPositive() : inherited::isNegative())
+                  inherited::getSMantissa().inc();
+               else
+                  inherited::getSMantissa().neg();
+            }
+            else { // result.isSNaN() && source.isNaN()
+               if (inherited::getMantissa() != source.getMantissa()) {
+                  if (!isMax ? inherited::isPositive() : inherited::isNegative())
+                     inherited::getSMantissa().setBitArray(inherited::bitSizeMantissa()-1, 0);
+                  if (!round.keepNaNSign())
+                     inherited::setNegative(inherited::isPositive() != source.isPositive());
+               }
+               else { // result in ]epsilon, +oo]
+                  inherited::getSMantissa() = 0U;
+                  inherited::setNegative(!isMax);
+                  if (!round.keepNaNSign()) {
+                     bool isPositive = inherited::isPositive() == source.isPositive();
+                     if (!isMax ? isPositive : !isPositive) {
+                        inherited::getSBasicExponent() = 0U;
+                        inherited::getSMantissa().inc();
+                     };
+                     inherited::setNegative(!isPositive);
+                  };
+               };
+            };
+         }
+         else { // result.isSNaN() && source in ]-oo, +oo[
+            if (!isMax ? inherited::isPositive() : inherited::isNegative())
+               inherited::getSMantissa().setBitArray(inherited::bitSizeMantissa()-1, 0);
+         };
+      };
+   }
+   else if (source.getBasicExponent() == inherited::getInftyExponent()) {
+      // result in ]-oo, +oo[ && source = infty ou NaN
+      if (!inherited::isZero() || !source.getMantissa().isZero()) {
+         result = false;
+         inherited::getSBasicExponent() = inherited::getInftyExponent();
+         inherited::getSMantissa() = 0U;
+         inherited::setNegative(isMax);
+      }
+      else {
+         inherited::getSBasicExponent() = inherited::getInftyExponent();
+         inherited::getSMantissa() = 0U;
+         inherited::getSMantissa().neg();
+         inherited::getSBasicExponent().dec();
+         inherited::setNegative(!isMax);
+      };
+   }
+   else
+      {  AssumeUncalled }
+   return result;
+}
+
+template <class TypeDouble, class TypeDouble_1>
+bool
+TProjectionDouble<TypeDouble, TypeDouble_1>::multAccept(const thisType& source, ReadParameters& round) {
+   if ((inherited::getBasicExponent() == inherited::getInftyExponent())
+         || (source.getBasicExponent() == inherited::getInftyExponent())) {
+      bool isHandled = true;
+      bool result = multAcceptInfty(source, round, isHandled);
+      if (isHandled)
+         return result;
+   };
+   ReadParameters params(round), roundMode(round);
+   params.clear();
+   bool isMax = round.isContextMax();
+   if (source.isZero()) {
+      bool result = true;
+      if (!inherited::isInfty())
+         result = false;
+      inherited::getSBasicExponent() = inherited::getInftyExponent();
+      inherited::getSBasicExponent().dec();
+      inherited::getSMantissa() = 0U;
+      inherited::getSMantissa().neg();
+      if (isMax ? result : !result)
+         inherited::setPositive();
+      else
+         inherited::setNegative();
+      return result;
+   };
+   if (roundMode.isZeroRound()) {
+      if (inherited::isZero()) {
+         if (source.isPositive() ? !isMax : isMax)
+            roundMode.setHighestRound();
+         else
+            roundMode.setLowestRound();
+      }
+      else if (inherited::isPositive())
+         roundMode.setLowestRound();
+      else
+         roundMode.setHighestRound();
+   };
+   if (!isMax)
+      params.setHighestRound();
+   else
+      params.setLowestRound();
+
+   thisType result = *this;
+   if (roundMode.isNearestRound()) {
+      EnhancedDouble eresult(*this), esource(source); 
+      if (source.isPositive() ? !isMax : isMax)
+         eresult.setToPrevious();
+      else
+         eresult.setToNext();
+      eresult.multAssign(esource, params); 
+      bool isEven = roundMode.isRoundToEven() && !inherited::getMantissa().cbitArray(0);
+      eresult.retrieveDouble(*this, params);
+      if (inherited::isInfty() && params.isApproximate()) {
+         isEven = false;
+         params.clearApproximate();
+      };
+      if (isEven || (!isMax ? params.isUpApproximate() : params.isDownApproximate())) {
+         if (!isMax ? params.isUpApproximate() : params.isDownApproximate())
+            goto LApproximation;
+         // goto LApproximation;
+         return true;
+      };
+   }
+   else {
+      if (source.isPositive() ? !isMax : isMax) {
+         if (roundMode.isHighestRound())
+            inherited::setToPrevious();
+      }
+      else {
+         if (roundMode.isLowestRound())
+            inherited::setToNext();
+      };
+      inherited::multAssign(source, params); 
+      bool isInfty = false;
+      if (inherited::isInfty()) {
+         if (params.isApproximate())
+            params.clearApproximate();
+         if (!result.isInfty()) {
+            if (!isMax ? inherited::isNegative() : inherited::isPositive())
+               isInfty = true;
+            else
+               return false;
+         };
+      };
+      if (!isInfty && (!isMax ? ((source.isPositive() ? roundMode.isLowestRound() : roundMode.isHighestRound())
+                     || params.isUpApproximate())
+                : ((source.isPositive() ? roundMode.isHighestRound() : roundMode.isLowestRound())
+                      || params.isDownApproximate()))) {
+         if (!isMax ? !(source.isPositive() ? roundMode.isLowestRound() : roundMode.isHighestRound())
+                    : !(source.isPositive() ? roundMode.isHighestRound() : roundMode.isLowestRound()))
+            goto LApproximation;
+         // goto LApproximation;
+         return true;
+      };
+   };
+   AssumeCondition(!params.isApproximate())
+   if (!isMax)
+      inherited::setToNext();
+   else
+      inherited::setToPrevious();
+   // return true;
+
+LApproximation:
+   thisType fst(*this);
+   fst.divAssign(source, roundMode);
+   ComparisonResult compare = fst.compareValue(result);
+   bool isPositive = source.isPositive();
+   AssumeCondition(compare != ((isPositive ? !isMax : isMax) ? CRLess : CRGreater))
+   return (compare != ((isPositive ? !isMax : isMax) ? CRGreater : CRLess));
+}
+
+template <class TypeDouble, class TypeDouble_1>
+TProjectionDouble<TypeDouble, TypeDouble_1>&
+TProjectionDouble<TypeDouble, TypeDouble_1>::sqrtAssign(ReadParameters& roundMode) {
+   if (inherited::isZero())
+      return *this;
+
+   int addExponent = 0;
+   if (inherited::getBasicExponent().isZero()) {
+      int log = inherited::getMantissa().log_base_2();
+      int shift = 1+inherited::bitSizeMantissa()-log;
+      inherited::getSMantissa() <<= shift;
+      inherited::getSMantissa().normalize();
+      if (shift & 1) {
+         inherited::getSBasicExponent() = 2U;
+         ++shift;
+      }
+      else
+         inherited::getSBasicExponent() = 1U;
+      addExponent = shift >> 1;
+   };
+   thisType result(*this);
+   inherited::sqrtAssign();
+   
+   ReadParameters params(roundMode);
+   if (roundMode.isLowestRound() || roundMode.isZeroRound())
+      params.setHighestRound();
+   else if (roundMode.isHighestRound())
+      params.setLowestRound();
+
+   thisType fst(*this);
+
+   fst.multAssign(*this, params);
+   ComparisonResult compare = fst.compare(result);
+   if (compare == CRLess) {
+      if (roundMode.isLowestRound() || roundMode.isZeroRound()) {
+         do {
+            inherited::setToNext();
+            fst = *this;
+            params.clear();
+            fst.multAssign(*this, params);
+            compare = fst.compare(result);
+         } while (compare == CRLess);
+         if ((compare == CREqual) && !params.isUpApproximate()) {
+            if (addExponent > 0)
+               inherited::getSBasicExponent().minusAssign(addExponent);
+            return *this;
+         };
+         roundMode.setDownApproximate();
+         inherited::setToPrevious();
+      }
+      else if (roundMode.isHighestRound()) {
+         do {
+            inherited::setToNext();
+            fst = *this;
+            params.clear();
+            fst.multAssign(*this, params);
+            compare = fst.compare(result);
+         } while (compare == CRLess);
+         if ((compare == CREqual) && !params.isDownApproximate()) {
+            if (addExponent > 0)
+               inherited::getSBasicExponent().minusAssign(addExponent);
+            return *this;
+         };
+         roundMode.setUpApproximate();
+      }
+      else { // roundMode.isNearestRound()
+         EnhancedDouble thisCopy(*this);
+         EnhancedDouble fstCopy(thisCopy);
+         EnhancedDouble resultCopy(result);
+         do {
+            thisCopy.setToNext();
+            fstCopy = thisCopy;
+            params.clear();
+            fstCopy.multAssign(thisCopy, params);
+            compare = fstCopy.compare(resultCopy);
+            if (compare == CRLess)
+               thisCopy.setToNext();
+         } while (compare == CRLess);
+         if ((compare == CREqual) && (params.isUpApproximate()
+                  || (!params.isApproximate() && roundMode.isRoundToEven() && thisCopy.getMantissa().cbitArray(1))))
+            thisCopy.setToNext();
+         else
+            thisCopy.setToPrevious();
+
+         thisCopy.retrieveDouble(*this, roundMode);
+         fst = *this;
+         params.clear();
+         fst.multAssign(*this, params);
+         compare = fst.compare(result);
+         if (compare == CRLess)
+            roundMode.setDownApproximate();
+         else if (compare == CRGreater)
+            roundMode.setUpApproximate();
+         else if (params.isDownApproximate())
+            roundMode.setUpApproximate();
+         else if (params.isUpApproximate())
+            roundMode.setDownApproximate();
+      };
+   }
+   else if (compare == CREqual) {
+      if (params.isUpApproximate())
+         roundMode.setDownApproximate();
+      else if (params.isDownApproximate())
+         roundMode.setUpApproximate();
+   }
+   else if (compare == CRGreater) {
+      if (roundMode.isHighestRound()) {
+         do {
+            inherited::setToPrevious();
+            fst = *this;
+            params.clear();
+            fst.multAssign(*this, params);
+            compare = fst.compare(result);
+         } while (compare == CRGreater);
+         if ((compare == CREqual) && !params.isDownApproximate()) {
+            if (addExponent > 0)
+               inherited::getSBasicExponent().minusAssign(addExponent);
+            return *this;
+         };
+         roundMode.setUpApproximate();
+         inherited::setToNext();
+      }
+      else if (roundMode.isLowestRound() || roundMode.isZeroRound()) {
+         do {
+            inherited::setToPrevious();
+            fst = *this;
+            params.clear();
+            fst.multAssign(*this, params);
+            compare = fst.compare(result);
+         } while (compare == CRGreater);
+         if ((compare == CREqual) && !params.isUpApproximate()) {
+            if (addExponent > 0)
+               inherited::getSBasicExponent().minusAssign(addExponent);
+            return *this;
+         };
+         roundMode.setDownApproximate();
+      }
+      else { // roundMode.isNearestRound()
+         EnhancedDouble thisCopy(*this);
+         EnhancedDouble fstCopy(thisCopy);
+         EnhancedDouble resultCopy(result);
+         do {
+            thisCopy.setToPrevious();
+            fstCopy = thisCopy;
+            params.clear();
+            fstCopy.multAssign(thisCopy, params);
+            compare = fstCopy.compare(resultCopy);
+            if (compare == CRGreater)
+               thisCopy.setToPrevious();
+         } while (compare == CRGreater);
+         if ((compare == CREqual) && (params.isDownApproximate()
+                  || (!params.isApproximate() && roundMode.isRoundToEven() && !thisCopy.getMantissa().cbitArray(1))))
+            thisCopy.setToPrevious();
+         else
+            thisCopy.setToNext();
+
+         thisCopy.retrieveDouble(*this, roundMode);
+         fst = *this;
+         params.clear();
+         fst.multAssign(*this, params);
+         compare = fst.compare(result);
+         if (compare == CRLess)
+            roundMode.setDownApproximate();
+         else if (compare == CRGreater)
+            roundMode.setUpApproximate();
+         else if (params.isDownApproximate())
+            roundMode.setUpApproximate();
+         else if (params.isUpApproximate())
+            roundMode.setDownApproximate();
+      };
+   };
+   if (addExponent > 0)
+      inherited::getSBasicExponent().minusAssign(addExponent);
+   return *this;
+}
+
+template <class TypeDouble, class TypeDouble_1>
+bool
+TProjectionDouble<TypeDouble, TypeDouble_1>::squareAccept(ReadParameters& round) {
+   bool isMax = round.isContextMax();
+   if (inherited::getBasicExponent() == inherited::getInftyExponent()) {
+      if (inherited::getMantissa().isZero()) { // result.isInfty()
+         if (isMax)
+            return true;
+      }
+      else {
+         if (inherited::isQNaN()) {
+            inherited::getSMantissa() = 0U;
+            inherited::setNegative();
+            if (!isMax)
+               inherited::getSBasicExponent() = inherited::getInftyExponent();
+            else {
+               inherited::getSBasicExponent() = 0U;
+               inherited::getSBasicExponent().neg();
+            };
+            return true;
+         }
+         else if (inherited::isPositive()) {
+            if (!isMax)
+               inherited::getSMantissa().setBitArray(inherited::bitSizeMantissa()-1, 0);
+            return true;
+         };
+      };
+   };   
+   ReadParameters params(round), roundMode(round);
+   params.clear();
+   if (inherited::isNegative()) {
+      inherited::getSMantissa() = 0U;
+      inherited::getSBasicExponent() = 0U;
+      inherited::setNegative(isMax);
+      return false;
+   };
+   if (!isMax && inherited::isZero())
+      return true;
+   if (roundMode.isZeroRound())
+      roundMode.setLowestRound();
+   if (!isMax)
+      params.setHighestRound();
+   else
+      params.setLowestRound();
+
+   if (roundMode.isNearestRound()) {
+      EnhancedDouble result(*this); 
+      if (!isMax)
+         result.setToPrevious();
+      else
+         result.setToNext();
+      result.multAssign(result, params); 
+      bool isEven = roundMode.isRoundToEven() && !inherited::getMantissa().cbitArray(0);
+      result.retrieveDouble(*this, params);
+      if (isEven || (!isMax ? params.isUpApproximate() : params.isDownApproximate()))
+         return true;
+   }
+   else {
+      if (!isMax) {
+         if (roundMode.isHighestRound())
+            inherited::setToPrevious();
+      }
+      else {
+         if (roundMode.isLowestRound())
+            inherited::setToNext();
+      };
+      inherited::multAssign(*this, params); 
+      if (!isMax ? ((roundMode.isLowestRound()) || params.isUpApproximate())
+                : ((roundMode.isHighestRound()) || params.isDownApproximate()))
+         return true;
+   };
+
+   AssumeCondition(!params.isApproximate())
+   if (!isMax)
+      inherited::setToNext();
+   else
+      inherited::setToPrevious();
+   return true;
+}
+
+template <class TypeDouble, class TypeDouble_1>
+bool
+TProjectionDouble<TypeDouble, TypeDouble_1>::sqrtAccept(ReadParameters& round) {
+   bool isMax = round.isContextMax();
+   thisType result = *this;
+   bool isInfty = false;
+   if (inherited::getBasicExponent() == inherited::getInftyExponent()) {
+      if (inherited::getMantissa().isZero()) { // result.isInfty()
+         if (isMax || round.doesAvoidInfty(false))
+            return true;
+         if (inherited::isPositive()) {
+            if (round.isNearestRound()) {
+               isInfty = true;
+               inherited::getSBasicExponent().dec();
+               inherited::getSMantissa().neg();
+            };
+         }
+         else {
+            inherited::getSMantissa() = 0U;
+            inherited::setNegative(isMax);
+            return false;
+         };
+      }
+      else {
+         if (inherited::isQNaN()) {
+            inherited::getSMantissa() = 0U;
+            inherited::setNegative(isMax);
+            return false;
+         }
+         else if (inherited::isPositive()) {
+            if (!isMax)
+               inherited::getSMantissa().setBitArray(inherited::bitSizeMantissa()-1, 0);
+            return true;
+         };
+      };
+   };   
+   if (inherited::isNegative()) {
+      inherited::getSMantissa() = 0U;
+      inherited::getSBasicExponent() = 0U;
+      inherited::setNegative(isMax);
+      return false;
+   };
+   if (!isMax && inherited::isZero())
+      return true;
+   ReadParameters params(round), roundMode(round);
+   if (isInfty)
+      roundMode.clearAvoidInfty();
+   params.clear();
+   if (roundMode.isZeroRound())
+      roundMode.setLowestRound();
+   if (!isMax)
+      params.setHighestRound();
+   else
+      params.setLowestRound();
+
+   if (roundMode.isNearestRound()) {
+      if (!inherited::getBasicExponent().isZero()) {
+         sqrtAssign(roundMode);
+         thisType fst = *this;
+         roundMode.clear();
+         fst.multAssign(fst, roundMode);
+         ComparisonResult compare = fst.compare(result);
+         if (compare == CREqual)
+            return true;
+         if (compare == CRLess) {
+            if (isMax)
+               return true;
+            inherited::setToNext();
+            fst = *this;
+            roundMode.clear();
+            fst.multAssign(fst, roundMode);
+            compare = fst.compare(result);
+            AssumeCondition(!isInfty ? compare == CRGreater : compare == CREqual)
+            return false;
+         };
+         if (!isMax)
+            return true;
+         inherited::setToPrevious();
+         fst = *this;
+         roundMode.clear();
+         fst.multAssign(fst, roundMode);
+         compare = fst.compare(result);
+         AssumeCondition(compare == CRLess)
+         return false;
+      }
+      else { // inherited::getBasicExponent().isZero()
+         inherited::multAssign(4U, roundMode);
+         roundMode.clear();
+         if (!isMax) {
+            inherited::setToPrevious();
+            if ((inherited::getBasicExponent() <= 1U) || inherited::getMantissa().isZero())
+               inherited::setToPrevious();
+         }
+         else {
+            inherited::setToNext();
+            if (inherited::getBasicExponent() <= 1U)
+               inherited::setToNext();
+         };
+         sqrtAssign(params); 
+         bool isEven = roundMode.isRoundToEven() && !result.getMantissa().cbitArray(0);
+         inherited::getSBasicExponent().dec();
+         if (isEven || (!isMax ? params.isUpApproximate() : params.isDownApproximate())) {
+            if (!isMax ? params.isUpApproximate() : params.isDownApproximate())
+               // goto LApproximation;
+               return true;
+            return true;
+         };
+      };
+   }
+   else {
+      if (!isMax) {
+         if (roundMode.isHighestRound())
+            inherited::setToPrevious();
+      }
+      else {
+         if (roundMode.isLowestRound())
+            inherited::setToNext();
+      };
+      sqrtAssign(params);
+      if (!isMax ? ((roundMode.isLowestRound() && !isInfty) || params.isUpApproximate())
+                 : ((roundMode.isHighestRound() && !isInfty) || params.isDownApproximate()))
+         return true;
+   };
+
+   AssumeCondition(!params.isApproximate())
+   if (!isMax)
+      inherited::setToNext();
+   else
+      inherited::setToPrevious();
+   return true;
+}
+
+} // end of namespace Numerics
+
+#endif // Numerics_BaseProjectionFloatingTemplate

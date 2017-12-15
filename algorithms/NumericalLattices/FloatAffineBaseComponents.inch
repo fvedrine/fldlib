@@ -1,0 +1,3077 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2011-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : NumericalDomains
+// Unit      : Affine relationships
+// File      : FloatAffineBaseComponents.inch
+// Description :
+//   Definition of a class of affine relations.
+//
+
+#ifndef DefineGeneric
+
+#define DefineSingleTemplateHeader(RealBitsNumber)                   \
+   template <int RealBitsNumber>
+#define DefineFloatConversion TFloatConversion
+#define DefineBuiltAccess BuiltAccess
+#define DefineMantissaExponentTemplateParameters(SizeMantissa, SizeExponent) \
+   <SizeMantissa, SizeExponent>
+#define DefineSingleTemplateParameters(RealBitsNumber)               \
+   <RealBitsNumber>
+#define DefineSSingleTemplateParameters(RealBitsNumber)              \
+   <RealBitsNumber>
+#define DefineDoubleTraitsTemplateHeader(RealBitsNumber, SizeMantissa, SizeExponent) \
+   template <int RealBitsNumber, int SizeMantissa, int SizeExponent>
+#define DefineBuiltDoubleTraits BuiltDoubleTraits
+#define DefineBuiltReal TBuiltReal
+#define DefineReadDouble TReadDouble
+#define DefineBuiltDoubleTraits BuiltDoubleTraits
+#define DefineBuiltDouble TBuiltDouble
+#define DefineRealMantissaExponentTemplateParameters(RealBitsNumber, SizeMantissa, SizeExponent) \
+   <RealBitsNumber, SizeMantissa, SizeExponent>
+#define DefineBaseTypeConstReference                                 \
+   unsigned int
+#define DefineBaseType                                               \
+   unsigned int
+#define DefineIsBigEndian isBigEndian
+#define DefineFillContent fillContent
+#define DefineSizeofBaseTypeInBits                                   \
+   (sizeof(unsigned int)*8)
+#define DefineSetContent setContent
+#define DefineEquationTemplateHeader(RealBitsNumber)                 \
+   template <int RealBitsNumber, class TypeBaseFloatAffine>
+#define DefineSEquationTemplateHeader(RealBitsNumber)                \
+   template <int RealBitsNumber, class TypeBaseFloatAffine>
+#define DefineEquationTemplateParameters(RealBitsNumber)             \
+   <RealBitsNumber, TypeBaseFloatAffine>
+#define DefineSEquationTemplateParameters(RealBitsNumber)            \
+   <RealBitsNumber, TypeBaseFloatAffine>
+#define DefineEquation TEquation
+#define DefineConstraint TConstraint
+#define DefineConstraintsSet TConstraintsSet
+#define DefineEquationServices TEquationServices
+#define DefineDefinedSymbol TDefinedSymbol
+
+#else
+
+#define DefineSingleTemplateHeader(RealBitsNumber)                   \
+   template <class BaseStoreTraits, int RealBitsNumber>
+#define DefineFloatConversion TGFloatConversion
+#define DefineBuiltAccess GBuiltAccess
+#define DefineMantissaExponentTemplateParameters(SizeMantissa, SizeExponent) \
+   <BaseStoreTraits, SizeMantissa, SizeExponent>
+#define DefineSingleTemplateParameters(RealBitsNumber)               \
+   <BaseStoreTraits, RealBitsNumber>
+#define DefineSSingleTemplateParameters(RealBitsNumber)              \
+   <TBaseStoreTraits, RealBitsNumber>
+#define DefineDoubleTraitsTemplateHeader(RealBitsNumber, SizeMantissa, SizeExponent) \
+   template <class BaseStoreTraits, int RealBitsNumber, int SizeMantissa, int SizeExponent>
+#define DefineBuiltDoubleTraits GBuiltDoubleTraits
+#define DefineBuiltReal TGBuiltReal
+#define DefineReadDouble TGReadDouble
+#define DefineBuiltDoubleTraits GBuiltDoubleTraits
+#define DefineBuiltDouble TGBuiltDouble
+#define DefineRealMantissaExponentTemplateParameters(RealBitsNumber, SizeMantissa, SizeExponent) \
+   <BaseStoreTraits, RealBitsNumber, SizeMantissa, SizeExponent>
+#define DefineBaseTypeConstReference                                 \
+   typename BaseStoreTraits::BaseTypeConstReference
+#define DefineBaseType                                               \
+   typename BaseStoreTraits::BaseType
+#define DefineIsBigEndian gisBigEndian
+#define DefineFillContent gfillContent
+#define DefineSizeofBaseTypeInBits                                   \
+   BaseStoreTraits::sizeBaseInBits()
+#define DefineSetContent gsetContent
+#define DefineEquationTemplateHeader(RealBitsNumber)                 \
+   template <class BaseStoreTraits, int RealBitsNumber, class TypeBaseFloatAffine>
+#define DefineSEquationTemplateHeader(RealBitsNumber)                \
+   template <class TBaseStoreTraits, int RealBitsNumber, class TypeBaseFloatAffine>
+#define DefineEquationTemplateParameters(RealBitsNumber)             \
+   <BaseStoreTraits, RealBitsNumber, TypeBaseFloatAffine>
+#define DefineSEquationTemplateParameters(RealBitsNumber)            \
+   <TBaseStoreTraits, RealBitsNumber, TypeBaseFloatAffine>
+#define DefineEquation TGEquation
+#define DefineConstraint TGConstraint
+#define DefineConstraintsSet TGConstraintsSet
+#define DefineEquationServices TGEquationServices
+#define DefineDefinedSymbol TGDefinedSymbol
+
+#endif
+
+namespace DAffine {
+
+DefineSingleTemplateHeader(URealBitsNumber)
+class DefineFloatConversion : public Numerics::DDouble::DefineBuiltAccess
+      ::TFloatConversion DefineMantissaExponentTemplateParameters((
+#ifndef DefineGeneric
+         URealBitsNumber+(8*sizeof(unsigned))+5-1)/(8*sizeof(unsigned)),
+#else
+         URealBitsNumber+BaseStoreTraits::USizeBaseInBits+5-1) / BaseStoreTraits::USizeBaseInBits,
+#endif
+         2) {
+  public:
+   DefineFloatConversion() {}
+   DefineFloatConversion(const DefineFloatConversion DefineSingleTemplateParameters(URealBitsNumber)& source) = default;
+};
+
+DefineDoubleTraitsTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
+class DefineBuiltDoubleTraits : public Numerics::DefineBuiltDoubleTraits
+      DefineMantissaExponentTemplateParameters(USizeMantissa, USizeExponent) {
+  private:
+   typedef Numerics::DefineBuiltDoubleTraits
+      DefineMantissaExponentTemplateParameters(USizeMantissa, USizeExponent) inherited;
+
+  public:
+   typedef DAffine::DefineFloatConversion DefineSingleTemplateParameters(URealBitsNumber) FloatConversion;
+
+   typedef typename inherited::Exponent Exponent;
+   // overriden to avoid race conditions with global variables
+   static Exponent getZeroExponent(const Exponent&) { return Exponent(typename Exponent::Zero()); }
+   static Exponent getOneExponent(const Exponent&) { return Exponent(typename Exponent::One()); }
+   static Exponent getMinusOneExponent(const Exponent&) { return Exponent(typename Exponent::MinusOne()); }
+   static Exponent getInftyExponent(const Exponent&) { return Exponent(typename Exponent::Max()); }
+   static Exponent getMaxExponent(const Exponent&) { return Exponent(typename Exponent::Zero()); }
+};
+
+DefineSingleTemplateHeader(URealBitsNumber)
+class DefineBuiltReal
+   :  public Numerics::DefineReadDouble<
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) >,
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber+5, 15) > > {
+  public:
+   typedef Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+      DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) > BaseDouble;
+
+  private:
+   typedef Numerics::DefineReadDouble<
+      Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) >,
+      Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber+5, 15) > > inherited;
+   typedef DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber) thisType;
+
+  public:
+   typedef typename inherited::ReadParameters ReadParameters;
+
+   DefineBuiltReal() {}
+   DefineBuiltReal(DefineBaseTypeConstReference value) : inherited(value) {}
+   DefineBuiltReal(const typename inherited::IntConversion& value, ReadParameters& params) : inherited(value, params) {}
+   DefineBuiltReal(const typename inherited::FloatConversion& value, ReadParameters& params) : inherited(value, params) {}
+   DefineBuiltReal(const thisType& source) = default;
+   DefineBuiltReal(const Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) >& source)
+      :  inherited(source) {}
+
+   thisType& opposite() { return (thisType&) inherited::opposite(); }
+   void sqrtAssign(BaseDouble& errorMin, BaseDouble& errorMax, ReadParameters& params);
+   void expAssign(BaseDouble& errorMin, BaseDouble& errorMax, ReadParameters& params);
+   void logAssign(BaseDouble& errorMin, BaseDouble& errorMax, ReadParameters& params);
+
+   static const int BitSizeMantissa = inherited::BitSizeMantissa;
+   static const int BitSizeExponent = inherited::BitSizeExponent;
+
+   bool isOne() const
+      {  return inherited::getMantissa().isZero()
+               && inherited::getBasicExponent() == inherited::getZeroExponent()
+               && !inherited::isNegative();
+      }
+   bool isTwoPower() const { return inherited::getMantissa().isZero(); }
+   bool isFourPower() const
+      {  return inherited::getMantissa().isZero()
+            && (inherited::getBasicExponent() - inherited::getZeroExponent()).cbitArray(0);
+      }
+};
+
+inline bool
+DefineIsBigEndian() {
+#if defined(__GNUC__) && !defined(__MINGW32__)
+#if BYTE_ORDER == BIG_ENDIAN
+   return true;
+#else
+   return false;
+#endif
+#else
+   int dummy = 0x1234;
+   unsigned char dummy[4];
+   memcpy((unsigned char*) dummy, &dummy, 4);
+   return *dummy == 0x12;
+#endif
+}
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline void
+DefineFillContent(TypeBuiltDouble& builtDouble, const TypeImplementation& source) {
+#ifdef DefineGeneric
+   typedef typename TypeBuiltDouble::BuiltDouble::BaseStoreTraits BaseStoreTraits;
+#endif
+   static const int sourceSizeInSizeofUnsigned
+#ifndef DefineGeneric
+      = (sizeof(source) + sizeof(unsigned) - 1)/sizeof(unsigned);
+#else
+      = (sizeof(source)*8 + BaseStoreTraits::USizeBaseInBits - 1)
+            / BaseStoreTraits::USizeBaseInBits;
+#endif
+   DefineBaseType doubleContent[sourceSizeInSizeofUnsigned];
+   doubleContent[sourceSizeInSizeofUnsigned-1] = 0;
+   memcpy(&doubleContent[0], &source, sizeof(source));
+
+   {  DefineBaseType* mask = (DefineBaseType*) doubleContent;
+      if (DefineIsBigEndian())
+         mask += sourceSizeInSizeofUnsigned-1;
+      int lastCellIndex = (builtDouble.bitSizeMantissa() - 1)/(DefineSizeofBaseTypeInBits);
+      for (int mantissaIndex = 0; mantissaIndex < lastCellIndex; ++mantissaIndex) {
+         builtDouble.getSMantissa()[mantissaIndex] = *mask;
+         if (DefineIsBigEndian())
+            --mask;
+         else
+            ++mask;
+      };
+      int shift = builtDouble.bitSizeMantissa() % DefineSizeofBaseTypeInBits;
+      builtDouble.getSMantissa()[lastCellIndex] = (shift == 0) ? *mask
+#ifndef DefineGeneric
+         : ((*mask) & ~((~0U) << shift));
+#else
+         : BaseStoreTraits::getLowPart(*mask, shift);
+#endif
+   }
+   {  unsigned char* mask = (unsigned char*) doubleContent;
+      unsigned char* signedMask = mask;
+      if (!DefineIsBigEndian()) {
+         signedMask += sizeof(source)-1;
+         mask = signedMask;
+      };
+      builtDouble.setNegative((*signedMask) & 0x80);
+
+      DefineBaseType result = 0x0;
+      int shift = builtDouble.bitSizeExponent()-7;
+#ifdef DefineGeneric
+      if (shift >= 0)
+#endif
+      {  
+#ifndef DefineGeneric
+         result |= (*mask & 0x7f) << shift;
+#else
+         result |= BaseStoreTraits::getStoreHighPart(*mask & 0x7f, shift);
+#endif
+         while ((shift -= 8) >= 0) {
+            if (!DefineIsBigEndian())
+               --mask;
+            else
+               ++mask;
+#ifndef DefineGeneric
+            result |= *mask << shift;
+#else
+            result |= BaseStoreTraits::getStoreHighPart(*mask, shift);
+#endif
+         };
+         if (!DefineIsBigEndian())
+            --mask;
+         else
+            ++mask;
+         if (shift > -8)
+#ifndef DefineGeneric
+            result |= *mask >> (-shift);
+#else
+            result |= BaseStoreTraits::getHighPart(*mask, -shift);
+#endif
+      }
+#ifdef DefineGeneric
+      else
+         result |= BaseStoreTraits::getHighPart(*mask & 0x7f, -shift);
+#endif
+      builtDouble.getSBasicExponent()[0] = result;
+   }
+}
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline void
+DefineSetContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble) {
+#ifndef DefineGeneric
+   DefineBaseType doubleContent[(sizeof(result) + sizeof(unsigned) - 1)/sizeof(unsigned)];
+   memset(doubleContent, 0, sizeof(unsigned)*((sizeof(result) + sizeof(unsigned) - 1)/sizeof(unsigned)));
+#else
+   typedef typename TypeBuiltDouble::BuiltDouble::BaseStoreTraits BaseStoreTraits;
+   DefineBaseType doubleContent[(sizeof(result)*8 + BaseStoreTraits::USizeBaseInBits - 1)/BaseStoreTraits::USizeBaseInBits];
+   memset(doubleContent, 0, sizeof(typename BaseStoreTraits::BaseType)
+         *((8*sizeof(result) + BaseStoreTraits::USizeBaseInBits - 1)/BaseStoreTraits::USizeBaseInBits));
+#endif
+   {  unsigned char* mask = (unsigned char*) doubleContent;
+      if (!DefineIsBigEndian())
+         mask += sizeof(result)-1;
+      if (builtDouble.isNegative())
+         *mask |= 0x80;
+      int shift = builtDouble.bitSizeExponent()-7;
+
+      DefineBaseType exponent = builtDouble.getBasicExponent()[0];
+#if defined(__GNUC__) && !defined(__clang__)
+      int shiftAssert = builtDouble.bitSizeExponent();
+      AssumeCondition((shiftAssert >= (int) DefineSizeofBaseTypeInBits)
+#ifndef DefineGeneric
+            || (((~0U << shiftAssert) & exponent) == 0)
+#else
+            || BaseStoreTraits::isZeroValue(BaseStoreTraits::getHighPart(exponent, shiftAssert))
+#endif
+         )
+#else
+#if defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshift-count-overflow"
+#endif
+
+      AssumeCondition((builtDouble.bitSizeExponent() >= DefineSizeofBaseTypeInBits)
+#ifndef DefineGeneric
+            || (((~0U << builtDouble.bitSizeExponent()) & exponent) == 0)
+#else
+            || BaseStoreTraits::isZeroValue(BaseStoreTraits::getHighPart(exponent, builtDouble.bitSizeExponent()))
+#endif
+         )
+      // AssumeCondition((TypeBuiltDouble::BitSizeExponent == DefineSizeofBaseTypeInBits)
+      //    #ifndef DefineGeneric
+      //       || (((~1U << (TypeBuiltDouble::BitSizeExponent-1)) & exponent) == 0)
+      //    #else
+      //       || BaseStoreTraits::isZeroValue(BaseStoreTraits::getHighPart(exponent, builtDouble.bitSizeExponent()))
+      //    #endif
+      //    )
+#if defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+#endif
+
+#ifndef DefineGeneric
+      *mask |= exponent >> shift;
+#else
+      *mask |= BaseStoreTraits::getHighPart(exponent, shift);
+#endif
+      while ((shift -= 8) >= 0) {
+         if (!DefineIsBigEndian())
+            --mask;
+         else
+            ++mask;
+#ifndef DefineGeneric
+         *mask |= exponent >> shift;
+#else
+         *mask |= BaseStoreTraits::getHighPart(exponent, shift);
+#endif
+      };
+      if (!DefineIsBigEndian())
+         --mask;
+      else
+         ++mask;
+      if (shift > -8)
+#ifndef DefineGeneric
+         *mask |= exponent << (-shift);
+#else
+         *mask |= BaseStoreTraits::getStoreHighPart(exponent, -shift);
+#endif
+   }
+
+   {  DefineBaseType* mask = (DefineBaseType*) doubleContent;
+      if (DefineIsBigEndian())
+         mask += ((8*sizeof(result)-1)/DefineSizeofBaseTypeInBits);
+      int lastCellIndex = builtDouble.getMantissa().lastCellIndex();
+      for (int mantissaIndex = 0; mantissaIndex < lastCellIndex; ++mantissaIndex) {
+         *mask = builtDouble.getMantissa()[mantissaIndex];
+         if (DefineIsBigEndian())
+            --mask;
+         else
+            ++mask;
+      };
+      int shift = builtDouble.bitSizeMantissa() % DefineSizeofBaseTypeInBits;
+      if (shift == 0)
+         *mask = builtDouble.getMantissa()[lastCellIndex];
+      else
+#ifndef DefineGeneric
+         *mask |= (builtDouble.getMantissa()[lastCellIndex] & ~((~0U) << shift));
+#else
+         *mask |= BaseStoreTraits::getLowPart(builtDouble.getMantissa()[lastCellIndex], shift);
+#endif
+   }
+   memcpy(&result, doubleContent, sizeof(result));
+}
+
+/*******************************************************************/
+/* Contract for the first template argument of TCompareFloatAffine */
+/*******************************************************************/
+
+DefineEquationTemplateHeader(URealBitsNumber)
+class DefineEquation;
+DefineEquationTemplateHeader(URealBitsNumber)
+class DefineConstraint;
+DefineEquationTemplateHeader(URealBitsNumber)
+class DefineConstraintsSet;
+
+DefineEquationTemplateHeader(URealBitsNumber)
+class DefineEquationServices : public TypeBaseFloatAffine {
+  public:
+   typedef DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber) BuiltReal;
+   void adjustComputation(const BuiltReal& computationResult, BuiltReal& highLevelError) const;
+   static bool isNegligeable(const BuiltReal& coefficient, BuiltReal& referenceForAbsorption)
+      {  bool result;
+         if (coefficient.isNegative()) {
+            referenceForAbsorption.setNegative();
+            result = coefficient > referenceForAbsorption;
+            referenceForAbsorption.setPositive();
+         }
+         else
+            result = coefficient < referenceForAbsorption;
+         return result;
+      }
+};
+
+DefineEquationTemplateHeader(URealBitsNumber)
+class DefineDefinedSymbol;
+
+DefineSEquationTemplateHeader(URealBitsNumber)
+class DefineEquation
+   :  public PNT::TSharedCollection<Symbol, HandlerCast<Symbol, PNT::SharedCollection::Element> >,
+      public STG::IOObject,
+      public DefineEquationServices DefineSEquationTemplateParameters(URealBitsNumber) {
+  public:
+   typedef DefineBuiltReal DefineSSingleTemplateParameters(URealBitsNumber) BuiltReal;
+   static int basicOperationCounter;
+   typedef typename BuiltReal::WriteParameters FormatParamters;
+   typedef typename BuiltReal::ReadParameters RealReadParameters;
+   friend class DefineConstraint DefineSEquationTemplateParameters(URealBitsNumber);
+   friend class DefineConstraintsSet DefineSEquationTemplateParameters(URealBitsNumber);
+
+   struct TemplateTraits {
+#ifdef DefineGeneric
+      typedef TBaseStoreTraits BaseStoreTraits;
+#endif
+      static const int RealBitsNumber = URealBitsNumber;
+      typedef TypeBaseFloatAffine BaseFloatAffine;
+      typedef DefineEquation DefineSEquationTemplateParameters(URealBitsNumber) Equation;
+      typedef DefineDefinedSymbol DefineSEquationTemplateParameters(URealBitsNumber) DefinedSymbol;
+   };
+
+  public:
+   class AdditionalParameters : public ExtendedParameters {};
+   class ReadParameters : public BuiltReal::ReadParameters, protected AdditionalParameters {
+     private:
+      const SymbolsManager& smSymbolsManager;
+      const SymbolsManager::MergeTable* pmtMergeTable;
+
+     protected:
+      TemplateDefineExtendedParameters(3, AdditionalParameters)
+      DefineSubExtendedParameters(Interval, 1, INHERITED)
+      DefineSubExtendedParameters(ReadDefinition, 1, Interval)
+      DefineSubExtendedParameters(ReadExternal, 1, ReadDefinition)
+
+     public:
+      ReadParameters(const SymbolsManager& symbolsManager) : smSymbolsManager(symbolsManager), pmtMergeTable(nullptr) {}
+      ReadParameters(const SymbolsManager& symbolsManager, const SymbolsManager::MergeTable& mergeTable)
+         :  smSymbolsManager(symbolsManager), pmtMergeTable(&mergeTable) {}
+      const SymbolsManager& symbolsManager() const { return smSymbolsManager; }
+      SymbolsManager& ssymbolsManager() const { return const_cast<SymbolsManager&>(smSymbolsManager); }
+
+      ReadParameters& setInterval() { mergeIntervalField(1); return *this; }
+      ReadParameters& setReadDefinition() { mergeReadDefinitionField(1); return *this; }
+      ReadParameters& setReadExternal() { mergeReadExternalField(1); return *this; }
+      bool isInterval() const { return hasIntervalField(); }
+      bool doesReadDefinition() const { return hasReadDefinitionField(); }
+      bool doesReadExternal() const { return hasReadExternalField(); }
+      bool hasMergeTable() const { return pmtMergeTable; }
+      const SymbolsManager::MergeTable& mergeTable() const { AssumeCondition(pmtMergeTable) return *pmtMergeTable; }
+   };
+
+   class WriteParameters : public BuiltReal::WriteParameters {
+     private:
+      typedef typename BuiltReal::WriteParameters inherited;
+
+     protected:
+      TemplateDefineExtendedParameters(3, BuiltReal::WriteParameters)
+      DefineSubExtendedParameters(Interval, 1, INHERITED)
+      DefineSubExtendedParameters(WriteDefinition, 1, Interval)
+      DefineSubExtendedParameters(WriteExternal, 1, WriteDefinition)
+      DefineSubExtendedParameters(WriteSymbolPrefix, 1, WriteExternal)
+
+     public:
+      WriteParameters() { inherited::setDecimal(); }
+
+      WriteParameters& setInterval() { mergeIntervalField(1); return *this; }
+      WriteParameters& setWriteDefinition() { mergeWriteDefinitionField(1); return *this; }
+      WriteParameters& setWriteExternal() { mergeWriteExternalField(1); return *this; }
+      WriteParameters& setWriteSymbolPrefix() { mergeWriteSymbolPrefixField(1); return *this; }
+      bool isInterval() const { return hasIntervalField(); }
+      bool doesWriteDefinition() const { return hasWriteDefinitionField(); }
+      bool doesWriteExternal() const { return hasWriteExternalField(); }
+      bool doesWriteSymbolPrefix() const { return hasWriteSymbolPrefixField(); }
+   };
+   class Coefficient : public PNT::DSharedCollection::GlobalElement {
+     public:
+      typedef DefineEquation DefineSEquationTemplateParameters(URealBitsNumber) Equation;
+
+     private:
+      typedef PNT::DSharedCollection::GlobalElement inherited;
+      BuiltReal dReal;
+
+     protected:
+      virtual ComparisonResult _compare(const EnhancedObject& asource) const override
+         {  ComparisonResult result = inherited::_compare(asource);
+            if (result == CREqual)
+               result = dReal.compare(((const Coefficient&) castFromCopyHandler(asource)).dReal);
+            return result;
+         }
+
+     public:
+      Coefficient() {}
+      Coefficient(PNT::DSharedCollection::LocalElement* element, Init init)
+         :  inherited(element, init) {}
+      Coefficient(const Coefficient& source) = default;
+      Coefficient& operator=(const Coefficient& source) = default;
+      DefineCopy(Coefficient)
+      DDefineAssign(Coefficient)
+      DCompare(Coefficient)
+      virtual void assignGlobal(const PNT::DSharedCollection::GlobalElement& source) override
+         {  inherited::assignGlobal(source);
+            AssumeCondition(dynamic_cast<const Coefficient*>(&source))
+            dReal = ((const Coefficient&) source).dReal;
+         }
+
+      // should be overriden by inherited coefficient = 1 times (see addMaxAbsAssignToCoefficient)
+      virtual bool isExternal() const { return false; }
+      virtual void assume(STG::IOObject::ISBase& in, const ReadParameters& params) const
+         {  BuiltReal value;
+            value.read(in, const_cast<ReadParameters&>(params));
+            const_cast<ReadParameters&>(params).clear();
+            if (dReal != value)
+               throw STG::EReadError();
+         }
+      virtual void write(STG::IOObject::OSBase& out, const WriteParameters& params) const
+         {  dReal.write(out, (const typename BuiltReal::WriteParameters&) params); }
+      virtual void retrieveBound(BuiltReal& min, BuiltReal& max) const
+         {  min = max = dReal; }
+      virtual void addToBound(BuiltReal& min, BuiltReal& max,
+            RealReadParameters& minParams, RealReadParameters& maxParams) const
+         {  if (dReal.isPositive()) {
+               min.minusAssign(dReal, minParams);
+               minParams.clear();
+               max.plusAssign(dReal, maxParams);
+               maxParams.clear();
+            }
+            else {
+               min.plusAssign(dReal, minParams);
+               minParams.clear();
+               max.minusAssign(dReal, maxParams);
+               maxParams.clear();
+            };
+         }
+      virtual void addAbsToValue(BuiltReal& max, BuiltReal& highLevelError,
+            RealReadParameters& nearestParams, const Equation& equation) const
+         {  if (dReal.isPositive())
+               max.plusAssign(dReal, nearestParams);
+            else
+               max.minusAssign(dReal, nearestParams);
+            equation.adjustComputation(max, highLevelError);
+         }
+      virtual void addAbsToValue(BuiltReal& max, RealReadParameters& maxParams,
+            const Equation& equation) const
+         {  if (dReal.isPositive())
+               max.plusAssign(dReal, maxParams);
+            else
+               max.minusAssign(dReal, maxParams);
+            maxParams.clear();
+         }
+      virtual void addAbsSignToValue(BuiltReal& max, bool isNegative, RealReadParameters& params,
+            const Equation& equation) const
+         {  if (dReal.isPositive() == isNegative)
+               max.minusAssign(dReal, params);
+            else
+               max.plusAssign(dReal, params);
+            params.clear();
+         }
+      virtual void setAbsToValue(BuiltReal& max) const
+         {  max = dReal;
+            if (!max.isPositive())
+               max.opposite();
+         }
+      virtual void plusAssign(const Coefficient& source, BuiltReal& highLevelError,
+            RealReadParameters& nearestParams, SymbolsManager& manager, const Equation& equation)
+         {  dReal.plusAssign(source.dReal, nearestParams);
+            equation.adjustComputation(dReal, highLevelError);
+         }
+      virtual void plusAssignValue(const BuiltReal& source, BuiltReal& highLevelError,
+            RealReadParameters& nearestParams, const Equation& equation)
+         {  dReal.plusAssign(source, nearestParams);
+            equation.adjustComputation(dReal, highLevelError);
+         }
+      virtual void minusAssign(const Coefficient& source, BuiltReal& highLevelError,
+            RealReadParameters& nearestParams, SymbolsManager& manager, const Equation& equation)
+         {  dReal.minusAssign(source.dReal, nearestParams);
+            equation.adjustComputation(dReal, highLevelError);
+         }
+      virtual void minusAssignValue(const BuiltReal& source, BuiltReal& highLevelError,
+            RealReadParameters& nearestParams, const Equation& equation)
+         {  dReal.minusAssign(source, nearestParams);
+            equation.adjustComputation(dReal, highLevelError);
+         }
+      virtual void plusAbsAssign(const Coefficient& source, BuiltReal& highLevelError,
+            RealReadParameters& nearestParams, SymbolsManager& manager, const Equation& equation)
+         {  if (dReal.isPositive() == source.dReal.isPositive())
+               dReal.plusAssign(source.dReal, nearestParams);
+            else
+               dReal.minusAssign(source.dReal, nearestParams);
+            equation.adjustComputation(dReal, highLevelError);
+         }
+      virtual void plusAbsAssignValue(const BuiltReal& source, BuiltReal& highLevelError,
+            RealReadParameters& nearestParams, const Equation& equation)
+         {  if (dReal.isPositive() == source.isPositive())
+               dReal.plusAssign(source, nearestParams);
+            else
+               dReal.minusAssign(source, nearestParams);
+            equation.adjustComputation(dReal, highLevelError);
+         }
+      virtual void plusCoabsAssign(const Coefficient& source, BuiltReal& highLevelError,
+            RealReadParameters& nearestParams, const Equation& equation)
+         {  if (dReal.isPositive() == source.dReal.isPositive())
+               dReal.plusAssign(source.dReal, nearestParams);
+            else {
+               dReal.opposite();
+               dReal.plusAssign(source.dReal, nearestParams);
+            };
+            equation.adjustComputation(dReal, highLevelError);
+         }
+      virtual void plusCoabsAssignValue(const BuiltReal& source, BuiltReal& highLevelError,
+            RealReadParameters& nearestParams, const Equation& equation)
+         {  if (dReal.isPositive() == source.isPositive())
+               dReal.plusAssign(source, nearestParams);
+            else {
+               dReal.opposite();
+               dReal.plusAssign(source, nearestParams);
+            };
+            equation.adjustComputation(dReal, highLevelError);
+         }
+
+      virtual void plusMaxAbsAssign(const Coefficient& source, RealReadParameters& minParams,
+            RealReadParameters& maxParams, SymbolsManager& manager, const Equation& equation)
+         {  if (dReal.isPositive() == source.dReal.isPositive())
+               dReal.plusAssign(source.dReal, dReal.isPositive() ? maxParams : minParams);
+            else
+               dReal.minusAssign(source.dReal, dReal.isPositive() ? maxParams : minParams);
+            (dReal.isPositive() ? maxParams : minParams).clear();
+         }
+      virtual void plusMaxAbsAssignValue(const BuiltReal& source, RealReadParameters& minParams,
+            RealReadParameters& maxParams, const Equation& equation)
+         {  if (dReal.isPositive() == source.isPositive())
+               dReal.plusAssign(source, dReal.isPositive() ? maxParams : minParams);
+            else
+               dReal.minusAssign(source, dReal.isPositive() ? maxParams : minParams);
+            (dReal.isPositive() ? maxParams : minParams).clear();
+         }
+      virtual void plusMaxCoabsAssign(const Coefficient& source, RealReadParameters& minParams,
+            RealReadParameters& maxParams, const Equation& equation)
+         {  if (dReal.isPositive() == source.dReal.isPositive())
+               dReal.plusAssign(source.dReal, dReal.isPositive() ? maxParams : minParams);
+            else {
+               dReal.opposite();
+               dReal.plusAssign(source.dReal, dReal.isPositive() ? maxParams : minParams);
+            };
+            (dReal.isPositive() ? maxParams : minParams).clear();
+         }
+      // virtual void plusMaxCoabsAssignValue(const BuiltReal& source, RealReadParameters& minParams,
+      //       RealReadParameters& maxParams, const Equation& equation)
+      //    {  if (dReal.isPositive() == source.isPositive())
+      //          dReal.plusAssign(source, dReal.isPositive() ? maxParams : minParams);
+      //       else {
+      //          dReal.opposite();
+      //          dReal.plusAssign(source, dReal.isPositive() ? maxParams : minParams);
+      //       };
+      //       (dReal.isPositive() ? maxParams : minParams).clear();
+      //    }
+      virtual void oppositeAssign() { dReal.opposite(); }
+      virtual void multAssign(const Coefficient& source, BuiltReal& highLevelError,
+            RealReadParameters& nearestParams, RealReadParameters& maxParams,
+            SymbolsManager& manager, const Equation& equation)
+         {  dReal.multAssign(source.dReal, nearestParams);
+            equation.adjustComputation(dReal, highLevelError);
+         }
+      virtual void multAssignValue(const BuiltReal& value, BuiltReal& highLevelError,
+            RealReadParameters& nearestParams, SymbolsManager& manager, const Equation& equation)
+         {  dReal.multAssign(value, nearestParams);
+            equation.adjustComputation(dReal, highLevelError);
+         }
+      virtual void divAssign(const Coefficient& source, BuiltReal& highLevelError,
+            RealReadParameters& nearestParams, SymbolsManager& manager, const Equation& equation)
+         {  dReal.divAssign(source.dReal, nearestParams);
+            equation.adjustComputation(dReal, highLevelError);
+         }
+      virtual void divAssignValue(const BuiltReal& value, BuiltReal& highLevelError,
+            RealReadParameters& nearestParams, SymbolsManager& manager, const Equation& equation)
+         {  dReal.divAssign(value, nearestParams);
+            equation.adjustComputation(dReal, highLevelError);
+         }
+      virtual void divAssignValue(unsigned value, BuiltReal& highLevelError,
+            RealReadParameters& nearestParams, SymbolsManager& manager, const Equation& equation)
+         {  dReal.divAssign(value, nearestParams);
+            equation.adjustComputation(dReal, highLevelError);
+         }
+      virtual void sqrtAssign(typename BuiltReal::BaseDouble& errorMinCentral,
+            typename BuiltReal::BaseDouble& errorMaxCentral, RealReadParameters& nearestParams,
+            SymbolsManager& manager)
+         {  dReal.sqrtAssign(errorMinCentral, errorMaxCentral, nearestParams);
+            nearestParams.clear();
+         }
+      virtual void expAssign(typename BuiltReal::BaseDouble& errorMinCentral,
+            typename BuiltReal::BaseDouble& errorMaxCentral, RealReadParameters& nearestParams,
+            SymbolsManager& manager)
+         {  dReal.expAssign(errorMinCentral, errorMaxCentral, nearestParams);
+            nearestParams.clear();
+         }
+      virtual void logAssign(typename BuiltReal::BaseDouble& errorMinCentral,
+            typename BuiltReal::BaseDouble& errorMaxCentral, RealReadParameters& nearestParams,
+            SymbolsManager& manager)
+         {  dReal.logAssign(errorMinCentral, errorMaxCentral, nearestParams);
+            nearestParams.clear();
+         }
+
+      virtual void setToZero() { dReal.setZero(); }
+      virtual void setToValue(const BuiltReal& value) { dReal = value; }
+      virtual bool isZero() const { return dReal.isZero(); }
+
+      const BuiltReal& getValue() const { return dReal; }
+      BuiltReal& getSValue() { return dReal; }
+      void setValue(const BuiltReal& value) { dReal = value; }
+   };
+
+  private:
+   typedef PNT::TSharedCollection<Symbol, HandlerCast<Symbol, PNT::SharedCollection::Element> > inherited;
+   typedef DefineEquation DefineSEquationTemplateParameters(URealBitsNumber) thisType;
+   BuiltReal dCentral;
+   PNT::AutoPointer<Coefficient> apcCentralAdditions;
+
+   class GuardXValue {
+     private:
+      DefineEquation DefineSEquationTemplateParameters(URealBitsNumber)* peSource;
+      SymbolsManager& smManager;
+
+     public:
+      GuardXValue(DefineEquation DefineSEquationTemplateParameters(URealBitsNumber)& source,
+            bool doesGuard, SymbolsManager& manager)
+         :  peSource(doesGuard ? &source : nullptr), smManager(manager) {}
+      ~GuardXValue() { if (peSource) peSource->clear(&smManager); }
+   };
+
+   static void computeReference(BuiltReal& reference, const BuiltReal& source,
+         const PNT::AutoPointer<Coefficient>& sourceAdditions);
+   void computeReferenceForAbsorption(BuiltReal& reference) const;
+   void clearHighLevelSymbols(COL::TVector<Symbol*>& symbolsToFree);
+   void clearHighLevelSymbols(SymbolsManager& manager);
+   void oppositeAssignCoefficient(Coefficient& thisCoeff, BuiltReal& thisCoeffValue,
+         bool hasExternalCoefficient) const
+      {  if (!hasExternalCoefficient)
+            thisCoeffValue.opposite();
+         else
+            thisCoeff.oppositeAssign();
+      }
+   void addAssignToCoefficient(Coefficient*& thisCoeff, BuiltReal& thisCoeffValue,
+         const Coefficient& sourceCoeff, const BuiltReal& sourceCoeffValue,
+         BuiltReal& highLevelError, Cursor& thisCursor, RealReadParameters& nearestParams,
+         SymbolsManager& manager, bool hasExternalCoefficient);
+   void subAssignToCoefficient(Coefficient*& thisCoeff, BuiltReal& thisCoeffValue,
+         const Coefficient& sourceCoeff, const BuiltReal& sourceCoeffValue,
+         BuiltReal& highLevelError, Cursor& thisCursor, RealReadParameters& nearestParams,
+         SymbolsManager& manager, bool hasExternalCoefficient);
+   void addAssignOptionCentral(BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisCoeff,
+         const BuiltReal& sourceValue, const PNT::AutoPointer<Coefficient>& sourceCoeff,
+         BuiltReal& highLevelError, RealReadParameters& nearestParams, SymbolsManager& manager,
+         bool hasExternalCoefficient) const;
+   void subAssignOptionCentral(BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisCoeff,
+         const BuiltReal& sourceValue, const PNT::AutoPointer<Coefficient>& sourceCoeff,
+         BuiltReal& highLevelError, RealReadParameters& nearestParams,
+         SymbolsManager& manager, bool hasExternalCoefficient) const;
+   void addAssignOptionCoefficient(BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisCoeff,
+         BuiltReal& sourceValue, PNT::AutoPointer<Coefficient>& sourceCoeff,
+         BuiltReal& highLevelError, RealReadParameters& nearestParams, SymbolsManager& manager,
+         bool hasExternalCoefficient) const;
+
+  public:
+   void addAssignOptionCoefficient(BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisCoeff,
+         BuiltReal& sourceValue, PNT::AutoPointer<Coefficient>& sourceCoeff,
+         RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient) const;
+
+  private:
+   void addAbsAssignToCoefficient(Coefficient*& thisCoeff, BuiltReal& thisCoeffValue,
+         const Coefficient& sourceCoeff, const BuiltReal& sourceCoeffValue,
+         BuiltReal& highLevelError, Cursor& thisCursor, RealReadParameters& nearestParams,
+         SymbolsManager& manager, bool hasExternalCoefficient);
+   void addMaxAbsAssignToCoefficient(Coefficient*& thisCoeff, BuiltReal& thisCoeffValue,
+         const BuiltReal& sourceCoeffValue, const PNT::AutoPointer<Coefficient>& sourceCoeff,
+         Cursor& thisCursor, RealReadParameters& minParams, RealReadParameters& maxParams,
+         SymbolsManager& manager, bool hasExternalCoefficient);
+   void addAbsAssignToCoefficient(Coefficient*& thisCoeff, BuiltReal*& thisCoeffValue,
+         const Coefficient& sourceCoeff, const BuiltReal& sourceCoeffValue,
+         BuiltReal& highLevelError, RealReadParameters& nearestParams, SymbolsManager& manager,
+         bool hasExternalCoefficient);
+   void addAbsAssignToValue(BuiltReal& value, const Coefficient& coeff,
+         const BuiltReal& coeffValue, BuiltReal& highLevelError,
+         RealReadParameters& nearestParams, bool hasExternalCoefficient) const;
+   void addAbsAssignToValue(BuiltReal& value, const Coefficient& coeff,
+         const BuiltReal& coeffValue, RealReadParameters& maxParams, bool hasExternalCoefficient) const;
+   void addAbsSignAssignToValue(BuiltReal& value, const Coefficient& coeff,
+         const BuiltReal& coeffValue, bool isNegative, RealReadParameters& params,
+         bool hasExternalCoefficient) const;
+   void setAbsAssignToValue(BuiltReal& value, const Coefficient& coeff,
+         const BuiltReal& coeffValue, bool hasExternalCoefficient) const;
+   void multAssignToCoefficient(Coefficient& thisCoeff, BuiltReal& thisCoeffValue,
+         const BuiltReal& value, BuiltReal& highLevelError, RealReadParameters& nearestParams,
+         SymbolsManager& manager, bool hasExternalCoefficient) const;
+   void multAssignOptionCentral(BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisAdditions,
+         const BuiltReal& sourceValue, const PNT::AutoPointer<Coefficient>& sourceAdditions,
+         BuiltReal& highLevelError, RealReadParameters& nearestParams,
+         RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient) const;
+   void multAssignOptionCoefficient(Coefficient*& thisCoeff, BuiltReal& thisCoeffValue,
+         const BuiltReal& value, const PNT::AutoPointer<Coefficient>& valueAdditions,
+         BuiltReal& highLevelError, Cursor& thisCursor, RealReadParameters& nearestParams,
+         RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient);
+   void multAssignOptionCoefficient(PNT::AutoPointer<Coefficient>& thisCoeff, BuiltReal& thisCoeffValue,
+         const BuiltReal& value, const PNT::AutoPointer<Coefficient>& valueAdditions,
+         BuiltReal& highLevelError, RealReadParameters& nearestParams,
+         RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient) const;
+   // void multAssignDoubleToCoefficient(Coefficient*& thisCoeff, BuiltReal& thisCoeffValue,
+   //       const BuiltReal& value, const Coefficient& sourceCoeff, const BuiltReal& sourceCoeffValue,
+   //       const BuiltReal& sourceValue, BuiltReal& highLevelError, bool isSub, Cursor& thisCursor,
+   //       RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient);
+   //       /* this <- this * value +/- source * sourceValue */
+   void multAssignDoubleToCoefficient(Coefficient*& thisCoeff, BuiltReal& thisCoeffValue,
+         const BuiltReal& value, const PNT::AutoPointer<Coefficient>& valueAdditions,
+         const Coefficient& sourceCoeff, const BuiltReal& sourceCoeffValue,
+         const BuiltReal& sourceValue, const PNT::AutoPointer<Coefficient>& sourceValueAdditions,
+         BuiltReal& highLevelError, bool isSub, Cursor& thisCursor,
+         RealReadParameters& nearestParams, RealReadParameters& maxParams, SymbolsManager& manager,
+         bool hasExternalCoefficient); /* this <- this * value +/- source * sourceValue */
+   // void multAssignDoubleAbsToCoefficient(Coefficient*& thisCoeff, BuiltReal& thisCoeffValue,
+   //       const BuiltReal& value, const Coefficient& sourceCoeff, const BuiltReal& sourceCoeffValue,
+   //       const BuiltReal& sourceValue, BuiltReal& highLevelError, Cursor& thisCursor,
+   //       RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient);
+   //       /* this <- |this * value| + |source * sourceValue| */
+   void multAssignDoubleAbsToCoefficient(Coefficient*& thisCoeff, BuiltReal& thisCoeffValue,
+         const BuiltReal& value, const PNT::AutoPointer<Coefficient>& valueAdditions,
+         const Coefficient& sourceCoeff, const BuiltReal& sourceCoeffValue,
+         const BuiltReal& sourceValue, const PNT::AutoPointer<Coefficient>& sourceValueAdditions,
+         BuiltReal& highLevelError, Cursor& thisCursor, RealReadParameters& nearestParams,
+         RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient);
+         /* this <- |this * value| + |source * sourceValue| */
+   void divAssignToCoefficient(Coefficient& thisCoeff, BuiltReal& thisCoeffValue,
+         const BuiltReal& value, BuiltReal& highLevelError, RealReadParameters& nearestParams,
+         SymbolsManager& manager, bool hasExternalCoefficient) const;
+   void divAssignToCoefficient(Coefficient& thisCoeff, BuiltReal& thisCoeffValue,
+         unsigned value, BuiltReal& highLevelError, RealReadParameters& nearestParams,
+         SymbolsManager& manager, bool hasExternalCoefficient) const;
+   void divAssignOptionCoefficient(Coefficient*& thisCoeff, BuiltReal& thisCoeffValue,
+         const BuiltReal& value, const PNT::AutoPointer<Coefficient>& valueAdditions,
+         BuiltReal& highLevelError, Cursor& thisCursor, RealReadParameters& nearestParams,
+         SymbolsManager& manager, bool hasExternalCoefficient);
+   void divAssignOptionCoefficient(PNT::AutoPointer<Coefficient>& thisCoeff, BuiltReal& thisCoeffValue,
+         const BuiltReal& value, const PNT::AutoPointer<Coefficient>& valueAdditions,
+         BuiltReal& highLevelError, RealReadParameters& nearestParams, SymbolsManager& manager,
+         bool hasExternalCoefficient);
+   void divAssignOptionCentral(BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisCoeff,
+         const BuiltReal& sourceValue, BuiltReal& highLevelError,
+         RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) const;
+   void divAssignOptionCentral(BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisCoeff,
+         unsigned sourceValue, BuiltReal& highLevelError,
+         RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) const;
+   void divAssignOptionCentral(BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisAdditions,
+         const BuiltReal& sourceValue, const PNT::AutoPointer<Coefficient>& sourceAdditions,
+         BuiltReal& highLevelError, RealReadParameters& nearestParams, SymbolsManager& manager,
+         bool hasExternalCoefficient) const;
+   void divAssignMaxOption(BuiltReal& thisValue, const BuiltReal& sourceValue,
+         const PNT::AutoPointer<Coefficient>& sourceAdditions,
+         RealReadParameters& maxParams, bool hasExternalCoefficient) const;
+   void sqrtAssignOptionCentral(BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisAdditions,
+         typename BuiltReal::BaseDouble& errorMinCentral, typename BuiltReal::BaseDouble& errorMaxCentral,
+         RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) const;
+   void expAssignOptionCentral(BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisAdditions,
+         typename BuiltReal::BaseDouble& errorMinCentral, typename BuiltReal::BaseDouble& errorMaxCentral,
+         RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) const;
+   void logAssignOptionCentral(BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisAdditions,
+         typename BuiltReal::BaseDouble& errorMinCentral, typename BuiltReal::BaseDouble& errorMaxCentral,
+         RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) const;
+
+   void addAssignAbsProduct(BuiltReal& resultValue, PNT::AutoPointer<Coefficient>& resultAdditions,
+         const Coefficient& firstCoeff, const BuiltReal& firstCoeffValue,
+         const Coefficient& secondCoeff, const BuiltReal& secondCoeffValue,
+         BuiltReal& highLevelError, RealReadParameters& nearestParams,
+         RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient) const;
+         /* new <- new + |first * second| */
+   void addAssignDoubleAbsProduct(BuiltReal& resultValue, PNT::AutoPointer<Coefficient>& resultAdditions,
+         const Coefficient& firstCoeff, const BuiltReal& firstCoeffValue,
+         const Coefficient& secondCoeff, const BuiltReal& secondCoeffValue,
+         const Coefficient& thirdCoeff, const BuiltReal& thirdCoeffValue,
+         const Coefficient& fourthCoeff, const BuiltReal& fourthCoeffValue,
+         BuiltReal& highLevelError, RealReadParameters& nearestParams,
+         RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient) const;
+         /* result <- result + |first*second+third*fourth| */
+   void addAssignSemiProductToValue(BuiltReal& resultValue,
+         PNT::AutoPointer<Coefficient>& resultAdditions, const Coefficient& firstCoeff,
+         const BuiltReal& firstCoeffValue, const Coefficient& secondCoeff,
+         const BuiltReal& secondCoeffValue, BuiltReal& value,
+         PNT::AutoPointer<Coefficient>& valueAdditions, BuiltReal& highLevelError,
+         RealReadParameters& nearestParams, RealReadParameters& maxParams,
+         SymbolsManager& manager, bool hasExternalCoefficient) const;
+         // result <- result + |first * second|/2, value <- (first * second)/2
+   void addAssignBoundFromCoeff(BuiltReal& min, BuiltReal& max, const Coefficient& coeff,
+         const BuiltReal& coeffValue, RealReadParameters& minParams, RealReadParameters& maxParams,
+         bool hasExternalCoefficient) const;
+   void setValueFromMaxCoeff(BuiltReal& result, const BuiltReal& coeffValue,
+         const PNT::AutoPointer<Coefficient>& coeffAdditions, bool hasExternalCoefficient) const;
+   void setValueFromMaxCoeff(BuiltReal& result, const Coefficient& coeff,
+         const BuiltReal& coeffValue, bool hasExternalCoefficient) const;
+   bool isValueGreaterOrEqualMaxCoeff(const BuiltReal& value, const BuiltReal& coeffValue,
+         const PNT::AutoPointer<Coefficient>& coeff, bool hasExternalCoefficient) const;
+   bool mayValueGreaterOrEqualMaxAbsCoeff(BuiltReal& value, const BuiltReal& coeffValue,
+         const PNT::AutoPointer<Coefficient>& coeff, bool hasExternalCoefficient) const;
+   void subValueFromMaxCoeff(BuiltReal& value, const BuiltReal& coeffValue,
+         const PNT::AutoPointer<Coefficient>& coeff, RealReadParameters& maxParams,
+         bool hasExternalCoefficient);
+   void subValueFromMaxAbsCoeff(BuiltReal& value, const Coefficient& coeff,
+         const BuiltReal& coeffValue, RealReadParameters& maxParams, bool hasExternalCoefficient);
+   void setToZero(Coefficient& thisCoeff, BuiltReal& thisCoeffValue, bool hasExternalCoefficient) const
+      {  if (!hasExternalCoefficient)
+            thisCoeffValue.setZero();
+         else
+            thisCoeff.setToZero();
+      }
+   bool isZero(Coefficient& thisCoeff, BuiltReal& thisCoeffValue, bool hasExternalCoefficient) const
+      {  return (!hasExternalCoefficient) ? thisCoeffValue.isZero() : thisCoeff.isZero(); }
+
+  public:
+   void adjustComputation(const BuiltReal& computationResult, BuiltReal& highLevelError) const
+      {  DefineEquationServices DefineSEquationTemplateParameters(URealBitsNumber)
+            ::adjustComputation(computationResult, highLevelError);
+      }
+   static bool isNegligeable(const BuiltReal& coefficient, BuiltReal& referenceForAbsorption)
+      {  return DefineEquationServices DefineSEquationTemplateParameters(URealBitsNumber)
+            ::isNegligeable(coefficient, referenceForAbsorption);
+      }
+   static bool isNegligeable(const Coefficient& coefficient, const BuiltReal& coefficientValue,
+         BuiltReal& referenceForAbsorption, bool hasExternalCoefficient)
+      {  bool result;
+         if (!hasExternalCoefficient)
+            result = DefineEquationServices DefineSEquationTemplateParameters(URealBitsNumber)
+               ::isNegligeable(coefficientValue, referenceForAbsorption);
+         else {
+            BuiltReal min, max;
+            coefficient.retrieveBound(min, max);
+            if (min.isPositive())
+               result = DefineEquationServices DefineSEquationTemplateParameters(URealBitsNumber)
+                     ::isNegligeable(max, referenceForAbsorption);
+            else if (max.isNegative())
+               result = DefineEquationServices DefineSEquationTemplateParameters(URealBitsNumber)
+                     ::isNegligeable(min, referenceForAbsorption);
+            else
+               result = DefineEquationServices DefineSEquationTemplateParameters(URealBitsNumber)
+                        ::isNegligeable(min, referenceForAbsorption)
+                     && DefineEquationServices DefineSEquationTemplateParameters(URealBitsNumber)
+                        ::isNegligeable(max, referenceForAbsorption);
+         };
+         return result;
+      }
+   enum PolicyCall { PCSourceRValue, PCSourceXValue };
+
+  protected:
+   virtual GlobalElement* createGlobal() override { return new Coefficient; }
+   virtual GlobalElement* createGlobal(PNT::SharedCollection::Element& element) override
+      {  return new Coefficient(&element, PNT::Pointer::Init()); }
+
+   virtual ComparisonResult _compare(const EnhancedObject& asource) const override
+      {  return inherited::_compare(asource); }
+   virtual void _write(OSBase& out, const STG::IOObject::FormatParameters& params) const override;
+   virtual void _read(ISBase& in, const STG::IOObject::FormatParameters& aparams) override;
+
+   void notifyUpdate(Notification& notification) const
+      {  inherited::notifyUpdate(notification); }
+   void notifyUpdate(std::function<void(DefineEquation DefineSEquationTemplateParameters(URealBitsNumber)&)> function) const
+      {  PNT::TFunctionPointerNotification<PNT::SharedCollection, DefineEquation DefineSEquationTemplateParameters(URealBitsNumber) >
+            notification(function);
+         inherited::notifyUpdate(notification);
+      }
+
+  private:
+   void plusAssignBothCoeffs(Cursor& thisCursor, const Cursor& sourceCursor, Symbol* thisSymbol,
+         Symbol* sourceSymbol, PolicyCall policyCall, SymbolsManager& manager,
+         BuiltReal& referenceForAbsorption, Coefficient*& reusableCoeff,
+         BuiltReal*& reusableCoeffValue, Symbol::Type& reusableType, BuiltReal& highLevelError,
+         bool isMinus, RealReadParameters& nearestParams, bool hasExternalCoefficient);
+   void plusAssignThisCoeff(Cursor& thisCursor, Symbol* thisSymbol, SymbolsManager& manager,
+         BuiltReal& referenceForAbsorption, Coefficient*& reusableCoeff,
+         BuiltReal*& reusableCoeffValue, Symbol::Type& reusableType, BuiltReal& highLevelError,
+         RealReadParameters& nearestParams, bool hasExternalCoefficient);
+   void plusAssignSourceCoeff(Cursor* thisCursor, const Cursor& sourceCursor,
+         Symbol* sourceSymbol, PolicyCall policyCall, BuiltReal& referenceForAbsorption,
+         Coefficient*& reusableCoeff, BuiltReal*& reusableCoeffValue, Symbol::Type& reusableType,
+         BuiltReal& highLevelError, bool isMinus, RealReadParameters& nearestParams,
+         SymbolsManager& manager, bool hasExternalCoefficient);
+   void multAssignAddCrossFromSourceCoeff(const Cursor& thisCursor, const Cursor& sourceCursor,
+         BuiltReal& newCrossCoeffValue, PNT::AutoPointer<Coefficient>& crossCoeffAdditions,
+         bool& areAllHighLevel, BuiltReal& highLevelError, RealReadParameters& nearestParams,
+         RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient);
+   void multAssignAddCrossFromThisCoeff(const Cursor& thisCursor, const Cursor& sourceCursor,
+         BuiltReal& newCrossCoeffValue, PNT::AutoPointer<Coefficient>& crossCoeffAdditions,
+         bool& areAllHighLevel, BuiltReal& highLevelError, RealReadParameters& nearestParams,
+         RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient);
+   void multAssignAddCentralSquareAndCrossFromBothCoeffs(const Cursor& thisCursor,
+         const Cursor& sourceCursor, bool areSymbolEquals, BuiltReal& newCentral,
+         PNT::AutoPointer<Coefficient>& newCentralAdditions, BuiltReal& newSquareCoeffValue,
+         PNT::AutoPointer<Coefficient>& squareCoeffAdditions, BuiltReal& newCrossCoeffValue,
+         PNT::AutoPointer<Coefficient>& crossCoeffAdditions, bool& areAllHighLevel,
+         BuiltReal& highLevelError, RealReadParameters& nearestParams,
+         RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient);
+   void multAssignBothCoeffsWithCentrals(Cursor& thisCursor, const Cursor& sourceCursor,
+         Symbol* thisSymbol, Symbol* sourceSymbol, const thisType& source, PolicyCall policyCall,
+         SymbolsManager& manager, BuiltReal& referenceForAbsorption, Coefficient*& reusableCoeff,
+         BuiltReal*& reusableCoeffValue, Symbol::Type& reusableType, BuiltReal& highLevelError,
+         RealReadParameters& nearestParams, RealReadParameters& maxParams,
+         bool hasExternalCoefficient);
+   void multAssignThisCoeffWithSourceCentral(Cursor& thisCursor, Symbol* thisSymbol,
+         const thisType& source, SymbolsManager& manager, BuiltReal& referenceForAbsorption,
+         Coefficient*& reusableCoeff, BuiltReal*& reusableCoeffValue, Symbol::Type& reusableType,
+         BuiltReal& highLevelError, RealReadParameters& nearestParams,
+         RealReadParameters& maxParams, bool hasExternalCoefficient);
+   void multAssignSourceCoeffWithThisCentral(Cursor* thisCursor, const Cursor& sourceCursor,
+         Symbol* sourceSymbol, PolicyCall policyCall, BuiltReal& referenceForAbsorption,
+         Coefficient*& reusableCoeff, BuiltReal*& reusableCoeffValue, Symbol::Type& reusableType,
+         BuiltReal& highLevelError, RealReadParameters& nearestParams,
+         RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient);
+   void inverseAssignCoeff(Cursor& thisCursor, const Symbol* thisSymbol, SymbolsManager& manager,
+         const BuiltReal& centralSquare, const BuiltReal& highLevelCentralSquare,
+         BuiltReal& referenceForAbsorption, Coefficient*& reusableCoeff,
+         BuiltReal*& reusableCoeffValue, Symbol::Type& reusableType, BuiltReal& highLevelError,
+         RealReadParameters& nearestParams, RealReadParameters& minParams,
+         RealReadParameters& maxParams, bool hasExternalCoefficient);
+   void divAssignBothCoeffsWithCentrals(Cursor& thisCursor, const Cursor& sourceCursor,
+         Symbol* thisSymbol, Symbol* sourceSymbol, const thisType& source, PolicyCall policyCall,
+         SymbolsManager& manager, BuiltReal& referenceForAbsorption, Coefficient*& reusableCoeff,
+         BuiltReal*& reusableCoeffValue, Symbol::Type& reusableType, BuiltReal& highLevelError,
+         RealReadParameters& nearestParams, RealReadParameters& maxParams, bool hasExternalCoefficient);
+   void divAssignThisCoeffWithSourceCentral(Cursor& thisCursor, Symbol* thisSymbol,
+         SymbolsManager& manager, BuiltReal& referenceForAbsorption,
+         Coefficient*& reusableCoeff, BuiltReal*& reusableCoeffValue, Symbol::Type& reusableType,
+         BuiltReal& highLevelError, RealReadParameters& nearestParams, bool hasExternalCoefficient);
+   void divAssignSourceCoeffWithThisCentral(Cursor* thisCursor, const Cursor& sourceCursor,
+         Symbol* sourceSymbol, const thisType& source, PolicyCall policyCall,
+         BuiltReal& referenceForAbsorption, Coefficient*& reusableCoeff,
+         BuiltReal*& reusableCoeffValue, Symbol::Type& reusableType, BuiltReal& highLevelError,
+         RealReadParameters& nearestParams, RealReadParameters& maxParams, SymbolsManager& manager,
+         bool hasExternalCoefficient);
+
+  protected:
+   bool inverseAssign(SymbolsManager& manager, BuiltReal& newCoeff, BuiltReal& highLevelError,
+         bool hasExternalCoefficient);
+
+  public:
+   void multAssign(const thisType& source, PolicyCall policyCall,
+         SymbolsManager& manager, BuiltReal& newCrossCoeffValue, BuiltReal& newSquareCoeffValue,
+         BuiltReal& highLevelError, PNT::AutoPointer<Coefficient>& crossCoeffAdditions,
+         PNT::AutoPointer<Coefficient>& squareCoeffAdditions, bool hasExternalCoefficient);
+   void multAssign(const BuiltReal& value, SymbolsManager& manager, BuiltReal& highLevelError,
+         bool hasExternalCoefficient);
+   void addNoise(const BuiltReal& newCoeff, PNT::AutoPointer<Coefficient>& coeffAdditions,
+         BuiltReal& highLevelError, SymbolsManager& manager, int* marked, bool hasExternalCoefficient);
+   void divAssign(const BuiltReal& value, SymbolsManager& manager, BuiltReal& highLevelError,
+         bool hasExternalCoefficient);
+   void divAssign(unsigned value, SymbolsManager& manager, BuiltReal& highLevelError,
+         bool hasExternalCoefficient);
+
+  public:
+   void plusAssign(const thisType& source, PolicyCall policyCall,
+         SymbolsManager& manager, BuiltReal& highLevelError, bool isMinus,
+         bool hasExternalCoefficient);
+   void addHighLevel(const BuiltReal& highLevelError, SymbolsManager& manager, bool hasExternalCoefficient);
+
+  public:
+   DefineEquation() {}
+   DefineEquation(const thisType& source) = default;
+   DefineEquation(thisType&& source) = default;
+   thisType& operator=(const thisType& source) = default;
+   thisType& operator=(thisType&& source) = default;
+   void assignFromGlobal(const thisType& source)
+      {  inherited::assignFromGlobal(source);
+         dCentral = source.dCentral;
+         apcCentralAdditions = source.apcCentralAdditions;
+      }
+
+#ifndef DefineGeneric
+   Template2DefineCopy(DefineEquation, URealBitsNumber, TypeBaseFloatAffine)
+#else
+   Template3DefineCopy(DefineEquation, TBaseStoreTraits, URealBitsNumber, TypeBaseFloatAffine)
+#endif
+   DDefineAssign(thisType)
+   DCompare(thisType)
+   StaticInheritConversions(thisType, inherited)
+
+   virtual bool isDefinition() const { return false; }
+   virtual bool isStoredVariable() const { return false; }
+
+   static const char* getSymbolPrefix(Symbol::Type type)
+      {  const char* result = nullptr;
+         switch (type) {
+            case Symbol::TCentral: result = "e_"; break;
+            case Symbol::TNoise: result = "u_"; break;
+            case Symbol::TMarkedNoise: result = "um_"; break;
+            case Symbol::TClosed: result = "l_"; break;
+            case Symbol::TDefined: result = "d_"; break;
+            case Symbol::THighLevel: result = "h_"; break;
+            case Symbol::TConstrained: result = "c_"; break;
+            default:
+               AssumeUncalled
+         };
+         return result;
+      }
+
+   void assume(ISBase& in, const STG::IOObject::FormatParameters& aparams) const;
+   void clear(SymbolsManager* manager=nullptr)
+      {  dCentral.setZero();
+         if (apcCentralAdditions.isValid())
+            apcCentralAdditions.release();
+         if (manager)
+            clearHighLevelSymbols(*manager);
+         inherited::removeAll();
+      }
+   void clear(COL::TVector<Symbol*>& symbolsToFree)
+      {  dCentral.setZero();
+         if (apcCentralAdditions.isValid())
+            apcCentralAdditions.release();
+         clearHighLevelSymbols(symbolsToFree);
+         inherited::removeAll();
+      }
+   void swap(thisType& source)
+      {  dCentral.swap(source.dCentral);
+         apcCentralAdditions.swap(source.apcCentralAdditions);
+         inherited::swap(source);
+      }
+   bool invariant() const;
+   bool isAtomic() const { return inherited::isEmpty(); }
+   thisType& setCentral(const BuiltReal& value)
+      {  ++basicOperationCounter;
+         dCentral = value;
+         if (apcCentralAdditions.isValid())
+            apcCentralAdditions.release();
+         return *this;
+      }
+   thisType& setCentral(const BuiltReal& value, const PNT::AutoPointer<Coefficient>& valueAdditions)
+      {  ++basicOperationCounter;
+         dCentral = value;
+         apcCentralAdditions = valueAdditions;
+         return *this;
+      }
+   thisType& setInterval(const BuiltReal& min, const BuiltReal& max, SymbolsManager& manager);
+   thisType& setIntervalWithHighLevel(const BuiltReal& min, const BuiltReal& max, SymbolsManager& manager);
+   thisType& setInputInterval(const BuiltReal& min, const BuiltReal& max, SymbolsManager& manager);
+   thisType& addCoefficient(const BuiltReal& coefficient, Symbol& symbol, Coefficient** newCoeff=nullptr)
+      {  GlobalElement* coeff = addElement(symbol);
+         AssumeCondition(dynamic_cast<const Coefficient*>(coeff))
+         ((Coefficient&) *coeff).setValue(coefficient);
+         if (newCoeff)
+            *newCoeff = (Coefficient*) coeff;
+         ++basicOperationCounter;
+         return *this;
+      }
+   thisType& insertCoefficientAsFirst(const BuiltReal& coefficient, Symbol& symbol, Coefficient** newCoeff=nullptr)
+      {  GlobalElement* coeff = addElementAfter(symbol, nullptr);
+         AssumeCondition(dynamic_cast<const Coefficient*>(coeff))
+         ((Coefficient&) *coeff).setValue(coefficient);
+         if (newCoeff)
+            *newCoeff = (Coefficient*) coeff;
+         ++basicOperationCounter;
+         return *this;
+      }
+   void retrieveBound(BuiltReal& min, BuiltReal& max, bool hasExternalCoefficient) const;
+   void retrieveMidRange(BuiltReal& midRange, bool hasExternalCoefficient) const;
+   const BuiltReal& getCentral() const { return dCentral; }
+   BuiltReal& getSCentral() { return dCentral; }
+   bool hasCentralAdditions() const { return apcCentralAdditions.isValid(); }
+   const Coefficient& getCentralAdditions() const { return *apcCentralAdditions; }
+   Coefficient& getSCentralAdditions() { return *apcCentralAdditions; }
+   void clearCentralAdditions() { apcCentralAdditions.release(); }
+   void absorbCentralAdditions(Coefficient* newCentralAdditions)
+      {  apcCentralAdditions.absorbElement(newCentralAdditions); }
+   void setPositiveCoefficients();
+   void plusAssignPositiveCoefficients(const thisType& source);
+
+   void plusAssign(const thisType& source, PolicyCall policyCall, SymbolsManager& manager,
+         bool hasExternalCoefficient=false);
+   void minusAssign(const thisType& source, PolicyCall policyCall, SymbolsManager& manager,
+         bool hasExternalCoefficient=false);
+   void oppositeAssign(bool hasExternalCoefficient=false);
+   void multAssign(const thisType& source, PolicyCall policyCall,
+         SymbolsManager& manager, bool isHighLevel=false, int* marked=nullptr,
+         bool hasExternalCoefficient=false);
+   void multAssign(const BuiltReal& value, SymbolsManager& manager,
+         bool hasExternalCoefficient=false);
+   void divAssign(const BuiltReal& value, SymbolsManager& manager,
+         bool hasExternalCoefficient=false)
+      {  BuiltReal highLevelError;
+         divAssign(value, manager, highLevelError, hasExternalCoefficient);
+         addHighLevel(highLevelError, manager, hasExternalCoefficient);
+      }
+
+
+   bool inverseAssign(SymbolsManager& manager, int* marked=nullptr,
+         bool hasExternalCoefficient=false);
+   bool divAssign(const thisType& source, PolicyCall policyCall,
+         SymbolsManager& manager, int* marked=nullptr,
+         bool hasExternalCoefficient=false);
+   bool sqrtAssign(SymbolsManager& manager, int* marked=nullptr,
+         bool hasExternalCoefficient=false);
+   bool expAssign(SymbolsManager& manager, int* marked=nullptr,
+         bool hasExternalCoefficient=false);
+   bool logAssign(SymbolsManager& manager, int* marked=nullptr,
+         bool hasExternalCoefficient=false);
+
+   BuiltReal getNormalization(bool isNegative, bool* doesConstraint=nullptr,
+         bool hasExternalCoefficient=false) const;
+
+   bool simplifyWith(const thisType& constraint, bool isNegative,
+         Symbol& definedSymbol, const BuiltReal& constraintNormalization,
+         SymbolsManager& manager, bool hasExternalCoefficient=false);
+   bool simplifyAllEquations(Symbol& symbol, bool isNegative, SymbolsManager& manager,
+         bool hasExternalCoefficient=false) const;
+   bool simplifyAllEquationsIf(Symbol& symbol, bool isNegative, SymbolsManager& manager,
+         std::function<bool(const DefineEquation DefineSEquationTemplateParameters(URealBitsNumber)&)> condition,
+         bool hasExternalCoefficient=false) const;
+   void spatialMergeWith(const thisType& source, SymbolsManager& manager, bool hasExternalCoefficient=false);
+   void temporalMergeWith(const thisType& source, SymbolsManager& manager, bool hasExternalCoefficient=false);
+};
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::computeReference(
+      BuiltReal& reference, const BuiltReal& source, const PNT::AutoPointer<Coefficient>& sourceAdditions) {
+   if (!sourceAdditions.isValid()) {
+      reference = source;
+      if (reference.isNegative())
+         reference.opposite();
+   }
+   else {
+      BuiltReal min, max;
+      sourceAdditions->retrieveBound(min, max);
+      if (min.isPositive())
+         reference = max;
+      else if (max.isNegative()) {
+         reference = min;
+         reference.opposite();
+      }
+      else {
+         reference = min;
+         reference.opposite();
+         if (max >= reference)
+            reference = max;
+      };
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::computeReferenceForAbsorption(
+      BuiltReal& reference) const {
+   if (!TypeBaseFloatAffine::doesExcludeConstantFromSymbolAbsorption()) {
+      if (inherited::isEmpty() || getFirst().getType() != Symbol::TCentral)
+         computeReference(reference, dCentral, apcCentralAdditions);
+   };
+   Cursor cursor(*this);
+   auto& maxParams = TypeBaseFloatAffine::maxParams();
+   for (bool doesContinue = cursor.setToFirst(); doesContinue; doesContinue = cursor.setToNext()) {
+      AssumeCondition(dynamic_cast<const Coefficient*>(&cursor.globalElementAt()))
+      const BuiltReal& coefficientValue = ((const Coefficient&) cursor.globalElementAt()).getValue();
+      if (coefficientValue.isPositive())
+         reference.plusAssign(coefficientValue, maxParams);
+      else
+         reference.minusAssign(coefficientValue, maxParams);
+      maxParams.clear();
+   };
+   BuiltReal multiplicand;
+   multiplicand.setOne();
+   multiplicand.getSBasicExponent().minusAssign(TypeBaseFloatAffine::getLimitStartSymbolAbsorption());
+   reference.multAssign(multiplicand, maxParams);
+   maxParams.clear();
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::clearHighLevelSymbols(
+      SymbolsManager& manager) {
+   Cursor cursor(*this);
+   if (cursor.setToLast()) {
+      bool doesContinue = true;
+      while (doesContinue && cursor.elementAt().getType() >= Symbol::THighLevel) {
+         Symbol* symbol = &cursor.elementSAt();
+         if (symbol->getType() == Symbol::THighLevel && symbol->isSingleReferenced()) {
+            Cursor removeCursor(cursor);
+            doesContinue = cursor.setToPrevious();
+            removeAt(removeCursor);
+            manager.freeHighLevelSymbol((HighLevelSymbol*) symbol);
+         }
+         else
+            doesContinue = cursor.setToPrevious();
+      };
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::clearHighLevelSymbols(
+      COL::TVector<Symbol*>& symbolsToFree) {
+   Cursor cursor(*this);
+   if (cursor.setToLast()) {
+      bool doesContinue = true;
+      while (doesContinue && cursor.elementAt().getType() >= Symbol::THighLevel) {
+         Symbol* symbol = &cursor.elementSAt();
+         if (symbol->getType() == Symbol::THighLevel && symbol->isSingleReferenced()) {
+            Cursor removeCursor(cursor);
+            doesContinue = cursor.setToPrevious();
+            removeAt(removeCursor);
+            symbolsToFree.insertAtEnd(symbol);
+         }
+         else
+            doesContinue = cursor.setToPrevious();
+      };
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addAssignToCoefficient(
+      Coefficient*& thisCoeff, BuiltReal& thisCoeffValue, const Coefficient& sourceCoeff,
+      const BuiltReal& sourceCoeffValue, BuiltReal& highLevelError, Cursor& thisCursor,
+      RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) {
+   if (!hasExternalCoefficient) {
+      thisCoeffValue.plusAssign(sourceCoeffValue, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+   }
+   else if (thisCoeff->isExternal() || !sourceCoeff.isExternal())
+      thisCoeff->plusAssign(sourceCoeff, highLevelError, nearestParams, manager, *this);
+   else {
+      PNT::AutoPointer<Coefficient> replacement(sourceCoeff.createSCopy(), PNT::Pointer::Init());
+      replacement->plusAssign(*thisCoeff, highLevelError, nearestParams, manager, *this);
+      inherited::replaceAndFreeGlobalElementAtWith(thisCursor, thisCoeff = replacement.extractElement());
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::subAssignToCoefficient(
+      Coefficient*& thisCoeff, BuiltReal& thisCoeffValue, const Coefficient& sourceCoeff,
+      const BuiltReal& sourceCoeffValue, BuiltReal& highLevelError, Cursor& thisCursor,
+      RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) {
+   if (!hasExternalCoefficient) {
+      thisCoeffValue.minusAssign(sourceCoeffValue, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+   }
+   else if (thisCoeff->isExternal() || !sourceCoeff.isExternal())
+      thisCoeff->minusAssign(sourceCoeff, highLevelError, nearestParams, manager, *this);
+   else {
+      PNT::AutoPointer<Coefficient> replacement(sourceCoeff.createSCopy(), PNT::Pointer::Init());
+      replacement->oppositeAssign();
+      replacement->plusAssign(*thisCoeff, highLevelError, nearestParams, manager, *this);
+      inherited::replaceAndFreeGlobalElementAtWith(thisCursor, thisCoeff = replacement.extractElement());
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addAssignOptionCentral(
+      BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisCoeff, const BuiltReal& sourceValue,
+      const PNT::AutoPointer<Coefficient>& sourceCoeff, BuiltReal& highLevelError,
+      RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient || (!thisCoeff.isValid() && !sourceCoeff.isValid())) {
+      thisValue.plusAssign(sourceValue, nearestParams);
+      adjustComputation(thisValue, highLevelError);
+   }
+   else if (thisCoeff.isValid()) {
+      if (sourceCoeff.isValid()) {
+         if (thisCoeff->isExternal() || !sourceCoeff->isExternal())
+            thisCoeff->plusAssign(*sourceCoeff, highLevelError, nearestParams, manager, *this);
+         else {
+            PNT::AutoPointer<Coefficient> result(sourceCoeff);
+            result->plusAssign(*thisCoeff, highLevelError, nearestParams, manager, *this);
+            result.swap(thisCoeff);
+         };
+      }
+      else
+         thisCoeff->plusAssignValue(sourceValue, highLevelError, nearestParams, *this);
+   }
+   else { // sourceCoeff.isValid()
+      thisCoeff = sourceCoeff;
+      thisCoeff->plusAssignValue(thisValue, highLevelError, nearestParams, *this);
+      thisValue.setZero();
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::subAssignOptionCentral(
+      BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisCoeff, const BuiltReal& sourceValue,
+      const PNT::AutoPointer<Coefficient>& sourceCoeff, BuiltReal& highLevelError,
+      RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient || (!thisCoeff.isValid() && !sourceCoeff.isValid())) {
+      thisValue.minusAssign(sourceValue, nearestParams);
+      adjustComputation(thisValue, highLevelError);
+   }
+   else if (thisCoeff.isValid()) {
+      if (sourceCoeff.isValid())
+         thisCoeff->minusAssign(*sourceCoeff, highLevelError, nearestParams, manager, *this);
+      else
+         thisCoeff->minusAssignValue(sourceValue, highLevelError, nearestParams, *this);
+   }
+   else { // sourceCoeff.isValid()
+      thisCoeff = sourceCoeff;
+      thisCoeff->minusAssignValue(thisValue, highLevelError, nearestParams, *this);
+      thisValue.setZero();
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addAssignOptionCoefficient(
+      BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisCoeff, BuiltReal& sourceValue,
+      PNT::AutoPointer<Coefficient>& sourceCoeff, BuiltReal& highLevelError,
+      RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient || (!thisCoeff.isValid() && !sourceCoeff.isValid())) {
+      thisValue.plusAssign(sourceValue, nearestParams);
+      adjustComputation(thisValue, highLevelError);
+      sourceValue.setZero();
+   }
+   else if (thisCoeff.isValid()) {
+      if (sourceCoeff.isValid()) {
+         if (thisCoeff->isExternal() || !sourceCoeff->isExternal())
+            thisCoeff->plusAssign(*sourceCoeff, highLevelError, nearestParams, manager, *this);
+         else {
+            sourceCoeff->plusAssign(*thisCoeff, highLevelError, nearestParams, manager, *this);
+            sourceCoeff.swap(thisCoeff);
+         };
+         sourceCoeff.release();
+      }
+      else {
+         thisCoeff->plusAssignValue(sourceValue, highLevelError, nearestParams, *this);
+         sourceValue.setZero();
+      };
+   }
+   else { // sourceCoeff.isValid()
+      sourceCoeff->plusAssignValue(thisValue, highLevelError, nearestParams, *this);
+      sourceCoeff.swap(thisCoeff);
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addAssignOptionCoefficient(
+      BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisCoeff, BuiltReal& sourceValue,
+      PNT::AutoPointer<Coefficient>& sourceCoeff, RealReadParameters& maxParams,
+      SymbolsManager& manager, bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient || (!thisCoeff.isValid() && !sourceCoeff.isValid())) {
+      thisValue.plusAssign(sourceValue, maxParams);
+      maxParams.clear();
+      sourceValue.setZero();
+   }
+   else if (thisCoeff.isValid()) {
+      if (sourceCoeff.isValid()) {
+         thisCoeff->plusMaxAbsAssign(*sourceCoeff, maxParams, maxParams, manager, *this);
+         sourceCoeff.release();
+      }
+      else {
+         thisCoeff->plusMaxAbsAssignValue(sourceValue, maxParams, maxParams, *this);
+         sourceValue.setZero();
+      };
+   }
+   else { // sourceCoeff.isValid()
+      sourceCoeff->plusMaxAbsAssignValue(thisValue, maxParams, maxParams, *this);
+      sourceCoeff.swap(thisCoeff);
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addAbsAssignToCoefficient(
+      Coefficient*& thisCoeff, BuiltReal& thisCoeffValue, const Coefficient& sourceCoeff,
+      const BuiltReal& sourceCoeffValue, BuiltReal& highLevelError, Cursor& thisCursor,
+      RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) {
+   if (!hasExternalCoefficient) {
+      if (thisCoeffValue.isPositive() == sourceCoeffValue.isPositive())
+         thisCoeffValue.plusAssign(sourceCoeffValue, nearestParams);
+      else
+         thisCoeffValue.minusAssign(sourceCoeffValue, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+   }
+   else if (thisCoeff->isExternal() || !sourceCoeff.isExternal())
+      thisCoeff->plusAbsAssign(sourceCoeff, highLevelError, nearestParams, manager, *this);
+   else {
+      PNT::AutoPointer<Coefficient> replacement(sourceCoeff.createSCopy(), PNT::Pointer::Init());
+      replacement->plusCoabsAssign(*thisCoeff, highLevelError, nearestParams, *this);
+      replaceAndFreeGlobalElementAtWith(thisCursor, thisCoeff = replacement.extractElement());
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addMaxAbsAssignToCoefficient(
+      Coefficient*& thisCoeff, BuiltReal& thisCoeffValue, const BuiltReal& sourceCoeffValue,
+      const PNT::AutoPointer<Coefficient>& sourceCoeff, Cursor& thisCursor,
+      RealReadParameters& minParams, RealReadParameters& maxParams, SymbolsManager& manager,
+      bool hasExternalCoefficient) {
+   if (!hasExternalCoefficient) {
+      if (thisCoeffValue.isPositive() == sourceCoeffValue.isPositive())
+         thisCoeffValue.plusAssign(sourceCoeffValue, thisCoeffValue.isPositive() ? maxParams : minParams);
+      else
+         thisCoeffValue.minusAssign(sourceCoeffValue, thisCoeffValue.isPositive() ? maxParams : minParams);
+      (thisCoeffValue.isPositive() ? maxParams : minParams).clear();
+   }
+   else if (!sourceCoeff.isValid())
+      thisCoeff->plusMaxAbsAssignValue(sourceCoeffValue, minParams, maxParams, *this);
+   else if (thisCoeff->isExternal())
+      thisCoeff->plusMaxAbsAssign(*sourceCoeff, minParams, maxParams, manager, *this);
+   else {
+      PNT::AutoPointer<Coefficient> replacement(sourceCoeff);
+      replacement->plusMaxCoabsAssign(*thisCoeff, minParams, maxParams, *this);
+      replaceAndFreeGlobalElementAtWith(thisCursor, thisCoeff = replacement.extractElement());
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addAbsAssignToCoefficient(
+      Coefficient*& thisCoeff, BuiltReal*& thisCoeffValue, const Coefficient& sourceCoeff,
+      const BuiltReal& sourceCoeffValue, BuiltReal& highLevelError,
+      RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) {
+   if (!hasExternalCoefficient) {
+      if (thisCoeffValue->isPositive() == sourceCoeffValue.isPositive())
+         thisCoeffValue->plusAssign(sourceCoeffValue, nearestParams);
+      else
+         thisCoeffValue->minusAssign(sourceCoeffValue, nearestParams);
+      adjustComputation(*thisCoeffValue, highLevelError);
+   }
+   else if (thisCoeff->isExternal() || !sourceCoeff.isExternal())
+      thisCoeff->plusAbsAssign(sourceCoeff, highLevelError, nearestParams, manager, *this);
+   else {
+      PNT::AutoPointer<Coefficient> replacement(sourceCoeff.createSCopy(), PNT::Pointer::Init());
+      replacement->plusCoabsAssign(*thisCoeff, highLevelError, nearestParams, *this);
+      Cursor thisCursor(*this);
+      thisCursor.setToGlobalElement(*thisCoeff);
+      Coefficient* replacementElement = replacement.extractElement();
+      replaceAndFreeGlobalElementAtWith(thisCursor, replacementElement);
+      thisCoeff = replacementElement;
+      thisCoeffValue = &replacementElement->getSValue();
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addAbsAssignToValue(
+      BuiltReal& value, const Coefficient& coeff, const BuiltReal& coeffValue,
+      BuiltReal& highLevelError, RealReadParameters& nearestParams, bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient) {
+      if (coeffValue.isPositive())
+         value.plusAssign(coeffValue, nearestParams);
+      else
+         value.minusAssign(coeffValue, nearestParams);
+      adjustComputation(value, highLevelError);
+   }
+   else
+      coeff.addAbsToValue(value, highLevelError, nearestParams, *this);
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addAbsAssignToValue(
+      BuiltReal& value, const Coefficient& coeff, const BuiltReal& coeffValue,
+      RealReadParameters& maxParams, bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient) {
+      if (coeffValue.isPositive())
+         value.plusAssign(coeffValue, maxParams);
+      else
+         value.minusAssign(coeffValue, maxParams);
+      maxParams.clear();
+   }
+   else
+      coeff.addAbsToValue(value, maxParams, *this);
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addAbsSignAssignToValue(
+      BuiltReal& value, const Coefficient& coeff, const BuiltReal& coeffValue, bool isNegative,
+      RealReadParameters& params, bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient) {
+      if (coeffValue.isPositive() == isNegative)
+         value.minusAssign(coeffValue, params);
+      else
+         value.plusAssign(coeffValue, params);
+      params.clear();
+   }
+   else
+      coeff.addAbsSignToValue(value, isNegative, params, *this);
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::setAbsAssignToValue(
+      BuiltReal& value, const Coefficient& coeff, const BuiltReal& coeffValue,
+      bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient) {
+      value = coeffValue;
+      if (!value.isPositive())
+         value.opposite();
+   }
+   else
+      coeff.setAbsToValue(value);
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignToCoefficient(
+      Coefficient& thisCoeff, BuiltReal& thisCoeffValue, const BuiltReal& value,
+      BuiltReal& highLevelError, RealReadParameters& nearestParams, SymbolsManager& manager,
+      bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient) {
+      thisCoeffValue.multAssign(value, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+   }
+   else
+      thisCoeff.multAssignValue(value, highLevelError, nearestParams, manager, *this);
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignOptionCentral(
+      BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisAdditions,
+      const BuiltReal& sourceValue, const PNT::AutoPointer<Coefficient>& sourceAdditions,
+      BuiltReal& highLevelError, RealReadParameters& nearestParams,
+      RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient || (!thisAdditions.isValid() && !sourceAdditions.isValid())) {
+      thisValue.multAssign(sourceValue, nearestParams);
+      adjustComputation(thisValue, highLevelError);
+   }
+   else {
+      if (thisAdditions.isValid() && (thisAdditions->isExternal()
+            || !sourceAdditions.isValid() || !sourceAdditions->isExternal())) {
+         if (!sourceAdditions.isValid())
+            thisAdditions->multAssignValue(sourceValue, highLevelError, nearestParams, manager, *this);
+         else
+            thisAdditions->multAssign(*sourceAdditions, highLevelError, nearestParams, maxParams,
+                  manager, *this);
+      }
+      else {
+         PNT::AutoPointer<Coefficient> newCoeff(sourceAdditions);
+         if (!thisAdditions.isValid())
+            newCoeff->multAssignValue(thisValue, highLevelError, nearestParams, manager, *this);
+         else
+            newCoeff->multAssign(*thisAdditions, highLevelError, nearestParams, maxParams,
+                  manager, *this);
+         thisAdditions.swap(newCoeff);
+         if (!newCoeff.isValid())
+            thisValue.setZero();
+      };
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignOptionCoefficient(
+      Coefficient*& thisCoeff, BuiltReal& thisCoeffValue, const BuiltReal& value,
+      const PNT::AutoPointer<Coefficient>& valueAdditions, BuiltReal& highLevelError,
+      Cursor& thisCursor, RealReadParameters& nearestParams, RealReadParameters& maxParams,
+      SymbolsManager& manager, bool hasExternalCoefficient) {
+   if (!hasExternalCoefficient) {
+      thisCoeffValue.multAssign(value, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+   }
+   else if (thisCoeff->isExternal() || !valueAdditions.isValid() || !valueAdditions->isExternal()) {
+      if (!valueAdditions.isValid())
+         thisCoeff->multAssignValue(value, highLevelError, nearestParams, manager, *this);
+      else
+         thisCoeff->multAssign(*valueAdditions, highLevelError, nearestParams, maxParams, manager,
+               *this);
+   }
+   else {
+      PNT::AutoPointer<Coefficient> replacement(valueAdditions);
+      replacement->multAssign(*thisCoeff, highLevelError, nearestParams, maxParams, manager, *this);
+      replaceAndFreeGlobalElementAtWith(thisCursor, thisCoeff = replacement.extractElement());
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignOptionCoefficient(
+      PNT::AutoPointer<Coefficient>& thisCoeff, BuiltReal& thisCoeffValue, const BuiltReal& value,
+      const PNT::AutoPointer<Coefficient>& valueAdditions, BuiltReal& highLevelError,
+      RealReadParameters& nearestParams, RealReadParameters& maxParams, SymbolsManager& manager,
+      bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient) {
+      thisCoeffValue.multAssign(value, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+   }
+   else if (thisCoeff->isExternal() || !valueAdditions.isValid() || !valueAdditions->isExternal()) {
+      if (!valueAdditions.isValid())
+         thisCoeff->multAssignValue(value, highLevelError, nearestParams, manager, *this);
+      else
+         thisCoeff->multAssign(*valueAdditions, highLevelError, nearestParams, maxParams, manager,
+               *this);
+   }
+   else {
+      PNT::AutoPointer<Coefficient> replacement(valueAdditions);
+      replacement->multAssign(*thisCoeff, highLevelError, nearestParams, maxParams, manager, *this);
+      thisCoeff.swap(replacement);
+   };
+}
+
+#if 0
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignDoubleToCoefficient(
+      Coefficient*& thisCoeff, BuiltReal& thisCoeffValue, const BuiltReal& value,
+      const Coefficient& sourceCoeff, const BuiltReal& sourceCoeffValue,
+      const BuiltReal& sourceValue, BuiltReal& highLevelError, bool isSub, Cursor& thisCursor,
+      RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) {
+   /* this <- this * value +/- source * sourceValue */
+   if (!hasExternalCoefficient || (!thisCoeff->isExternal() && !sourceCoeff.isExternal())) {
+      thisCoeffValue.multAssign(value, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+      BuiltReal add = sourceCoeffValue;
+      add.multAssign(sourceValue, nearestParams);
+      adjustComputation(add, highLevelError);
+      if (!isSub)
+         thisCoeffValue.plusAssign(add, nearestParams);
+      else
+         thisCoeffValue.minusAssign(add, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+   }
+   else {
+      thisCoeff->multAssignValue(value, highLevelError, nearestParams, manager, *this);
+      PNT::AutoPointer<Coefficient> add(sourceCoeff);
+      add->multAssignValue(sourceValue, highLevelError, nearestParams, manager, *this);
+      if (thisCoeff->isExternal() || !add->isExternal()) {
+         if (!isSub)
+            thisCoeff->plusAssign(*add, highLevelError, nearestParams, manager, *this);
+         else
+            thisCoeff->minusAssign(*add, highLevelError, nearestParams, manager, *this);
+      }
+      else {
+         if (!isSub)
+            add->plusAssign(*thisCoeff, highLevelError, nearestParams, manager, *this);
+         else {
+            add->minusAssign(*thisCoeff, highLevelError, nearestParams, manager, *this);
+            add->oppositeAssign();
+         };
+         inherited::replaceAndFreeGlobalElementAtWith(thisCursor, thisCoeff = add.extractElement());
+      };
+   };
+}
+#endif
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignDoubleToCoefficient(
+      Coefficient*& thisCoeff, BuiltReal& thisCoeffValue, const BuiltReal& value,
+      const PNT::AutoPointer<Coefficient>& valueAdditions, const Coefficient& sourceCoeff,
+      const BuiltReal& sourceCoeffValue, const BuiltReal& sourceValue,
+      const PNT::AutoPointer<Coefficient>& sourceValueAdditions, BuiltReal& highLevelError,
+      bool isSub, Cursor& thisCursor, RealReadParameters& nearestParams,
+      RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient) {
+   /* this <- this * value +/- source * sourceValue */
+   if (!hasExternalCoefficient) {
+      thisCoeffValue.multAssign(value, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+      BuiltReal add = sourceCoeffValue;
+      add.multAssign(sourceValue, nearestParams);
+      adjustComputation(add, highLevelError);
+      if (!isSub)
+         thisCoeffValue.plusAssign(add, nearestParams);
+      else
+         thisCoeffValue.minusAssign(add, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+   }
+   else {
+      PNT::AutoPointer<Coefficient> thisCopy;
+      if (!valueAdditions.isValid())
+         thisCoeff->multAssignValue(value, highLevelError, nearestParams, manager, *this);
+      else {
+         if (thisCoeff->isExternal() || !valueAdditions->isExternal())
+            thisCoeff->multAssign(*valueAdditions, highLevelError, nearestParams, maxParams,
+                  manager, *this);
+         else {
+            thisCopy.setElement(*valueAdditions);
+            thisCopy->multAssign(*thisCoeff, highLevelError, nearestParams, maxParams, manager, *this);
+         };
+      };
+   
+      PNT::AutoPointer<Coefficient> add;
+      if (sourceCoeff.isExternal() || !sourceValueAdditions.isValid()
+            || !sourceValueAdditions->isExternal()) {
+         add.setElement(sourceCoeff);
+         if (!sourceValueAdditions.isValid())
+            add->multAssignValue(sourceValue, highLevelError, nearestParams, manager, *this);
+         else
+            add->multAssign(*sourceValueAdditions, highLevelError, nearestParams, maxParams,
+                  manager, *this);
+      }
+      else {
+         add = sourceValueAdditions;
+         add->multAssign(sourceCoeff, highLevelError, nearestParams, maxParams, manager, *this);
+      };
+      Coefficient& currentCoeff = thisCopy.isValid() ? *thisCopy : *thisCoeff;
+      if (currentCoeff.isExternal() || !add->isExternal()) {
+         if (!isSub)
+            currentCoeff.plusAssign(*add, highLevelError, nearestParams, manager, *this);
+         else
+            currentCoeff.minusAssign(*add, highLevelError, nearestParams, manager, *this);
+         if (thisCopy.isValid())
+            inherited::replaceAndFreeGlobalElementAtWith(thisCursor, thisCopy.extractElement());
+      }
+      else {
+         if (!isSub)
+            add->plusAssign(currentCoeff, highLevelError, nearestParams, manager, *this);
+         else {
+            add->minusAssign(currentCoeff, highLevelError, nearestParams, manager, *this);
+            add->oppositeAssign();
+         };
+         inherited::replaceAndFreeGlobalElementAtWith(thisCursor, thisCoeff = add.extractElement());
+      };
+   };
+}
+
+#if 0
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignDoubleAbsToCoefficient(
+      Coefficient*& thisCoeff, BuiltReal& thisCoeffValue, const BuiltReal& value,
+      const Coefficient& sourceCoeff, const BuiltReal& sourceCoeffValue,
+      const BuiltReal& sourceValue, BuiltReal& highLevelError, Cursor& thisCursor,
+      RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) {
+      /* this <- |this * value| + |source * sourceValue| */
+   if (!hasExternalCoefficient || (!thisCoeff->isExternal() && !sourceCoeff.isExternal())) {
+      thisCoeffValue.multAssign(value, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+      BuiltReal add = sourceCoeffValue;
+      add.multAssign(sourceValue, nearestParams);
+      adjustComputation(add, highLevelError);
+      if (thisCoeffValue.isPositive() == add.isPositive())
+         thisCoeffValue.plusAssign(add, nearestParams);
+      else
+         thisCoeffValue.minusAssign(add, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+   }
+   else {
+      thisCoeff->multAssignValue(value, highLevelError, nearestParams, manager, *this);
+      PNT::AutoPointer<Coefficient> add(sourceCoeff);
+      add->multAssignValue(sourceValue, highLevelError, nearestParams, manager, *this);
+      if (thisCoeff->isExternal() || !add->isExternal())
+         thisCoeff->plusAbsAssign(*add, highLevelError, nearestParams, manager, *this);
+      else {
+         add->plusCoabsAssign(*thisCoeff, highLevelError, nearestParams, *this);
+         inherited::replaceAndFreeGlobalElementAtWith(thisCursor, thisCoeff = add.extractElement());
+      };
+   };
+}
+#endif
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignDoubleAbsToCoefficient(
+      Coefficient*& thisCoeff, BuiltReal& thisCoeffValue, const BuiltReal& value,
+      const PNT::AutoPointer<Coefficient>& valueAdditions, const Coefficient& sourceCoeff,
+      const BuiltReal& sourceCoeffValue, const BuiltReal& sourceValue,
+      const PNT::AutoPointer<Coefficient>& sourceValueAdditions, BuiltReal& highLevelError,
+      Cursor& thisCursor, RealReadParameters& nearestParams, RealReadParameters& maxParams,
+      SymbolsManager& manager, bool hasExternalCoefficient) {
+   /* this <- |this * value| + |source * sourceValue| */
+   if (!hasExternalCoefficient) {
+      thisCoeffValue.multAssign(value, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+      BuiltReal add = sourceCoeffValue;
+      add.multAssign(sourceValue, nearestParams);
+      adjustComputation(add, highLevelError);
+      if (thisCoeffValue.isPositive() == add.isPositive())
+         thisCoeffValue.plusAssign(add, nearestParams);
+      else
+         thisCoeffValue.minusAssign(add, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+   }
+   else {
+      PNT::AutoPointer<Coefficient> thisCopy;
+      if (!valueAdditions.isValid())
+         thisCoeff->multAssignValue(value, highLevelError, nearestParams, manager, *this);
+      else {
+         if (thisCoeff->isExternal() || !valueAdditions->isExternal())
+            thisCoeff->multAssign(*valueAdditions, highLevelError, nearestParams, maxParams,
+                  manager, *this);
+         else {
+            thisCopy.setElement(*valueAdditions);
+            thisCopy->multAssign(*thisCoeff, highLevelError, nearestParams, maxParams, manager, *this);
+         };
+      };
+   
+      PNT::AutoPointer<Coefficient> add;
+      if (sourceCoeff.isExternal() || !sourceValueAdditions.isValid()
+            || !sourceValueAdditions->isExternal()) {
+         add.setElement(sourceCoeff);
+         if (!sourceValueAdditions.isValid())
+            add->multAssignValue(sourceValue, highLevelError, nearestParams, manager, *this);
+         else
+            add->multAssign(*sourceValueAdditions, highLevelError, nearestParams, maxParams,
+                  manager, *this);
+      }
+      else {
+         add = sourceValueAdditions;
+         add->multAssign(sourceCoeff, highLevelError, nearestParams, maxParams, manager, *this);
+      };
+      Coefficient& currentCoeff = thisCopy.isValid() ? *thisCopy : *thisCoeff;
+      if (currentCoeff.isExternal() || !add->isExternal()) {
+         currentCoeff.plusAbsAssign(*add, highLevelError, nearestParams, manager, *this);
+         if (thisCopy.isValid())
+            inherited::replaceAndFreeGlobalElementAtWith(thisCursor, thisCopy.extractElement());
+      }
+      else {
+         add->plusCoabsAssign(currentCoeff, highLevelError, nearestParams, *this);
+         inherited::replaceAndFreeGlobalElementAtWith(thisCursor, thisCoeff = add.extractElement());
+      };
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::divAssignToCoefficient(
+      Coefficient& thisCoeff, BuiltReal& thisCoeffValue, const BuiltReal& value,
+      BuiltReal& highLevelError, RealReadParameters& nearestParams, SymbolsManager& manager,
+      bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient) {
+      thisCoeffValue.divAssign(value, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+   }
+   else
+      thisCoeff.divAssignValue(value, highLevelError, nearestParams, manager, *this);
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::divAssignToCoefficient(
+      Coefficient& thisCoeff, BuiltReal& thisCoeffValue, unsigned value, BuiltReal& highLevelError,
+      RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient) {
+      thisCoeffValue.divAssign(value, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+   }
+   else
+      thisCoeff.divAssignValue(value, highLevelError, nearestParams, manager, *this);
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::divAssignOptionCoefficient(
+      Coefficient*& thisCoeff, BuiltReal& thisCoeffValue, const BuiltReal& value,
+      const PNT::AutoPointer<Coefficient>& valueAdditions, BuiltReal& highLevelError,
+      Cursor& thisCursor, RealReadParameters& nearestParams, SymbolsManager& manager,
+      bool hasExternalCoefficient) {
+   if (!hasExternalCoefficient) {
+      thisCoeffValue.divAssign(value, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+   }
+   else if (thisCoeff->isExternal() || !valueAdditions.isValid() || !valueAdditions->isExternal()) {
+      if (!valueAdditions.isValid())
+         thisCoeff->divAssignValue(value, highLevelError, nearestParams, manager, *this);
+      else
+         thisCoeff->divAssign(*valueAdditions, highLevelError, nearestParams, manager, *this);
+   }
+   else {
+      PNT::AutoPointer<Coefficient> newCoeff(valueAdditions);
+      newCoeff->assignGlobal(*thisCoeff);
+      newCoeff->divAssign(*valueAdditions, highLevelError, nearestParams, manager, *this);
+      replaceAndFreeGlobalElementAtWith(thisCursor, thisCoeff = newCoeff.extractElement());
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::divAssignOptionCoefficient(
+      PNT::AutoPointer<Coefficient>& thisCoeff, BuiltReal& thisCoeffValue, const BuiltReal& value,
+      const PNT::AutoPointer<Coefficient>& valueAdditions, BuiltReal& highLevelError,
+      RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) {
+   if (!hasExternalCoefficient) {
+      thisCoeffValue.divAssign(value, nearestParams);
+      adjustComputation(thisCoeffValue, highLevelError);
+   }
+   else if (thisCoeff->isExternal() || !valueAdditions.isValid() || !valueAdditions->isExternal()) {
+      if (!valueAdditions.isValid())
+         thisCoeff->divAssignValue(value, highLevelError, nearestParams, manager, *this);
+      else
+         thisCoeff->divAssign(*valueAdditions, highLevelError, nearestParams, manager, *this);
+   }
+   else {
+      PNT::AutoPointer<Coefficient> newCoeff(valueAdditions);
+      newCoeff->assignGlobal(*thisCoeff);
+      newCoeff->divAssign(*valueAdditions, highLevelError, nearestParams, manager, *this);
+      newCoeff.swap(thisCoeff);
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::divAssignOptionCentral(
+      BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisCoeff, const BuiltReal& sourceValue,
+      BuiltReal& highLevelError, RealReadParameters& nearestParams, SymbolsManager& manager,
+      bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient || !thisCoeff.isValid()) {
+      thisValue.divAssign(sourceValue, nearestParams);
+      adjustComputation(thisValue, highLevelError);
+   }
+   else
+      thisCoeff->divAssignValue(sourceValue, highLevelError, nearestParams, manager, *this);
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::divAssignOptionCentral(
+      BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisCoeff, unsigned sourceValue,
+      BuiltReal& highLevelError, RealReadParameters& nearestParams, SymbolsManager& manager,
+      bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient || !thisCoeff.isValid()) {
+      thisValue.divAssign(sourceValue, nearestParams);
+      adjustComputation(thisValue, highLevelError);
+   }
+   else
+      thisCoeff->divAssignValue(sourceValue, highLevelError, nearestParams, manager, *this);
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::divAssignOptionCentral(
+      BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisAdditions,
+      const BuiltReal& sourceValue, const PNT::AutoPointer<Coefficient>& sourceAdditions,
+      BuiltReal& highLevelError, RealReadParameters& nearestParams, SymbolsManager& manager,
+      bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient || (!thisAdditions.isValid() && !sourceAdditions.isValid())) {
+      thisValue.divAssign(sourceValue, nearestParams);
+      adjustComputation(thisValue, highLevelError);
+   }
+   else {
+      if (thisAdditions.isValid() && (thisAdditions->isExternal()
+            || !sourceAdditions.isValid() || !sourceAdditions->isExternal())) {
+         if (!sourceAdditions.isValid())
+            thisAdditions->divAssignValue(sourceValue, highLevelError, nearestParams, manager, *this);
+         else
+            thisAdditions->divAssign(*sourceAdditions, highLevelError, nearestParams, manager, *this);
+      }
+      else {
+         PNT::AutoPointer<Coefficient> newCoeff(sourceAdditions);
+         if (thisAdditions.isValid())
+            newCoeff->assignGlobal(*thisAdditions);
+         else
+            newCoeff->setToValue(thisValue);
+         newCoeff->divAssign(*sourceAdditions, highLevelError, nearestParams, manager, *this);
+         thisAdditions.swap(newCoeff);
+         if (!newCoeff.isValid())
+            thisValue.setZero();
+      };
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::divAssignMaxOption(
+      BuiltReal& thisValue, const BuiltReal& sourceValue,
+      const PNT::AutoPointer<Coefficient>& sourceAdditions,
+      RealReadParameters& maxParams, bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient || !sourceAdditions.isValid()) {
+      thisValue.divAssign(sourceValue, maxParams);
+      maxParams.clear();
+   }
+   else {
+      BuiltReal min, max;
+      sourceAdditions->retrieveBound(min, max);
+      if (min.isPositive())
+         thisValue.divAssign(min, maxParams);
+      else if (max.isNegative()) {
+         max.opposite();
+         thisValue.divAssign(max, maxParams);
+      }
+      else {
+         min.opposite();
+         if (min <= max)
+            thisValue.divAssign(min, maxParams);
+         else
+            thisValue.divAssign(max, maxParams);
+      };
+      maxParams.clear();
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::sqrtAssignOptionCentral(
+      BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisAdditions,
+      typename BuiltReal::BaseDouble& errorMinCentral, typename BuiltReal::BaseDouble& errorMaxCentral,
+      RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient || !thisAdditions.isValid()) {
+      thisValue.sqrtAssign(errorMinCentral, errorMaxCentral, nearestParams);
+      nearestParams.clear();
+   }
+   else
+      thisAdditions->sqrtAssign(errorMinCentral, errorMaxCentral, nearestParams, manager);
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::expAssignOptionCentral(
+      BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisAdditions,
+      typename BuiltReal::BaseDouble& errorMinCentral, typename BuiltReal::BaseDouble& errorMaxCentral,
+      RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient || !thisAdditions.isValid()) {
+      thisValue.expAssign(errorMinCentral, errorMaxCentral, nearestParams);
+      nearestParams.clear();
+   }
+   else
+      thisAdditions->expAssign(errorMinCentral, errorMaxCentral, nearestParams, manager);
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::logAssignOptionCentral(
+      BuiltReal& thisValue, PNT::AutoPointer<Coefficient>& thisAdditions,
+      typename BuiltReal::BaseDouble& errorMinCentral, typename BuiltReal::BaseDouble& errorMaxCentral,
+      RealReadParameters& nearestParams, SymbolsManager& manager, bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient || !thisAdditions.isValid()) {
+      thisValue.logAssign(errorMinCentral, errorMaxCentral, nearestParams);
+      nearestParams.clear();
+   }
+   else
+      thisAdditions->logAssign(errorMinCentral, errorMaxCentral, nearestParams, manager);
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addAssignAbsProduct(
+      BuiltReal& resultValue, PNT::AutoPointer<Coefficient>& resultAdditions,
+      const Coefficient& firstCoeff, const BuiltReal& firstCoeffValue,
+      const Coefficient& secondCoeff, const BuiltReal& secondCoeffValue,
+      BuiltReal& highLevelError, RealReadParameters& nearestParams, RealReadParameters& maxParams,
+      SymbolsManager& manager, bool hasExternalCoefficient) const { /* new <- new + |first * second| */
+   if (!hasExternalCoefficient || (!firstCoeff.isExternal() && !secondCoeff.isExternal())) {
+      BuiltReal add = firstCoeffValue;
+      add.multAssign(secondCoeffValue, nearestParams);
+      adjustComputation(add, highLevelError);
+      if (!hasExternalCoefficient || !resultAdditions.isValid()) {
+         if (add.isPositive())
+            resultValue.plusAssign(add, nearestParams);
+         else
+            resultValue.minusAssign(add, nearestParams);
+         adjustComputation(resultValue, highLevelError);
+      }
+      else // hasExternalCoefficient && resultAdditions.isValid()
+         resultAdditions->plusAbsAssignValue(add, highLevelError, nearestParams, *this);
+   }
+   else { // hasExternalCoefficient && (firstCoeff.isExternal() || secondCoeff.isExternal())
+      PNT::AutoPointer<Coefficient> add;
+      if (firstCoeff.isExternal()) {
+         add.setElement(firstCoeff);
+         add->multAssign(secondCoeff, highLevelError, nearestParams, maxParams, manager, *this);
+      }
+      else {
+         add.setElement(secondCoeff);
+         add->multAssign(firstCoeff, highLevelError, nearestParams, maxParams, manager, *this);
+      };
+      if (resultAdditions.isValid() && (resultAdditions->isExternal() || !add->isExternal()))
+         resultAdditions->plusAbsAssign(*add, highLevelError, nearestParams, manager, *this);
+      else {
+         resultAdditions.swap(add);
+         if (!add.isValid())
+            resultAdditions->plusCoabsAssignValue(resultValue, highLevelError,
+                  nearestParams, *this);
+         else
+            resultAdditions->plusCoabsAssign(*add, highLevelError,
+                  nearestParams, *this);
+      };
+   }
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addAssignDoubleAbsProduct(
+      BuiltReal& resultValue, PNT::AutoPointer<Coefficient>& resultAdditions,
+      const Coefficient& firstCoeff, const BuiltReal& firstCoeffValue,
+      const Coefficient& secondCoeff, const BuiltReal& secondCoeffValue,
+      const Coefficient& thirdCoeff, const BuiltReal& thirdCoeffValue,
+      const Coefficient& fourthCoeff, const BuiltReal& fourthCoeffValue,
+      BuiltReal& highLevelError, RealReadParameters& nearestParams, RealReadParameters& maxParams,
+      SymbolsManager& manager, bool hasExternalCoefficient) const {
+   /* result <- result + |first*second+third*fourth| */
+   if (!hasExternalCoefficient || (!firstCoeff.isExternal() && !secondCoeff.isExternal()
+         && !thirdCoeff.isExternal() && !fourthCoeff.isExternal())) {
+      BuiltReal add = firstCoeffValue;
+      add.multAssign(secondCoeffValue, nearestParams);
+      adjustComputation(add, highLevelError);
+      BuiltReal secondAdd = thirdCoeffValue;
+      secondAdd.multAssign(fourthCoeffValue, nearestParams);
+      adjustComputation(secondAdd, highLevelError);
+      add.plusAssign(secondAdd, nearestParams);
+      adjustComputation(add, highLevelError);
+
+      if (!hasExternalCoefficient || !resultAdditions.isValid()) {
+         if (add.isPositive())
+            resultValue.plusAssign(add, nearestParams);
+         else
+            resultValue.minusAssign(add, nearestParams);
+         adjustComputation(resultValue, highLevelError);
+      }
+      else // hasExternalCoefficient && resultAdditions.isValid()
+         resultAdditions->plusAbsAssignValue(add, highLevelError, nearestParams, *this);
+   }
+   else { // hasExternalCoefficient && (firstCoeff.isExternal() || secondCoeff.isExternal() || thirdCoeff.isExternal() || fourthCoeff.isExternal())
+      PNT::AutoPointer<Coefficient> add;
+      if (firstCoeff.isExternal() || !secondCoeff.isExternal()) {
+         add.setElement(firstCoeff);
+         add->multAssign(secondCoeff, highLevelError, nearestParams, maxParams, manager, *this);
+      }
+      else {
+         add.setElement(secondCoeff);
+         add->multAssign(firstCoeff, highLevelError, nearestParams, maxParams, manager, *this);
+      };
+      PNT::AutoPointer<Coefficient> secondAdd;
+      if (thirdCoeff.isExternal() || !fourthCoeff.isExternal()) {
+         secondAdd.setElement(thirdCoeff);
+         secondAdd->multAssign(fourthCoeff, highLevelError, nearestParams, maxParams, manager, *this);
+      }
+      else {
+         secondAdd.setElement(fourthCoeff);
+         secondAdd->multAssign(thirdCoeff, highLevelError, nearestParams, maxParams, manager, *this);
+      };
+      if (add->isExternal() || !secondAdd->isExternal())
+         add->plusAssign(*secondAdd, highLevelError, nearestParams, manager, *this);
+      else {
+         secondAdd->plusAssign(*add, highLevelError, nearestParams, manager, *this);
+         secondAdd.swap(add);
+      };
+      if (resultAdditions.isValid() && (resultAdditions->isExternal() || !add->isExternal()))
+         resultAdditions->plusAbsAssign(*add, highLevelError, nearestParams, manager, *this);
+      else {
+         resultAdditions.swap(add);
+         if (!add.isValid()) {
+            resultValue.setZero();
+            resultAdditions->plusCoabsAssignValue(resultValue, highLevelError,
+                  nearestParams, *this);
+         }
+         else
+            resultAdditions->plusCoabsAssign(*add, highLevelError,
+                  nearestParams, *this);
+      };
+   }
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addAssignSemiProductToValue(
+      BuiltReal& resultValue, PNT::AutoPointer<Coefficient>& resultAdditions,
+      const Coefficient& firstCoeff, const BuiltReal& firstCoeffValue,
+      const Coefficient& secondCoeff, const BuiltReal& secondCoeffValue, BuiltReal& value,
+      PNT::AutoPointer<Coefficient>& valueAdditions, BuiltReal& highLevelError,
+      RealReadParameters& nearestParams, RealReadParameters& maxParams,
+      SymbolsManager& manager, bool hasExternalCoefficient) const {
+   // result <- result + |first * second|/2, value <- (first * second)/2
+   if (!hasExternalCoefficient || (!firstCoeff.isExternal() && !secondCoeff.isExternal())) {
+      BuiltReal add = firstCoeffValue;
+      add.multAssign(secondCoeffValue, nearestParams);
+      {  BuiltReal localHighLevelError;
+         adjustComputation(add, localHighLevelError);
+         localHighLevelError.divAssign(2U, maxParams);
+         maxParams.clear();
+         highLevelError.plusAssign(localHighLevelError, maxParams);
+         maxParams.clear();
+      };
+      add.divAssign(2U, nearestParams);
+      adjustComputation(add, highLevelError);
+      if (!valueAdditions.isValid()) {
+         value.plusAssign(add, nearestParams);
+         adjustComputation(value, highLevelError);
+      }
+      else
+         valueAdditions->plusAssignValue(add, highLevelError, nearestParams, *this);
+      if (!hasExternalCoefficient || !resultAdditions.isValid()) {
+         if (add.isPositive())
+            resultValue.plusAssign(add, nearestParams);
+         else
+            resultValue.minusAssign(add, nearestParams);
+         adjustComputation(resultValue, highLevelError);
+      }
+      else // hasExternalCoefficient && resultAdditions.isValid()
+         resultAdditions->plusAbsAssignValue(add, highLevelError, nearestParams, *this);
+   }
+   else { // hasExternalCoefficient && (firstCoeff.isExternal() || secondCoeff.isExternal())
+      PNT::AutoPointer<Coefficient> add;
+      BuiltReal localHighLevelError;
+      if (firstCoeff.isExternal() || !secondCoeff.isExternal()) {
+         add.setElement(firstCoeff);
+         add->multAssign(secondCoeff, localHighLevelError, nearestParams, maxParams, manager, *this);
+      }
+      else {
+         add.setElement(secondCoeff);
+         add->multAssign(firstCoeff, localHighLevelError, nearestParams, maxParams, manager, *this);
+      };
+      localHighLevelError.divAssign(2U, maxParams);
+      maxParams.clear();
+      highLevelError.plusAssign(localHighLevelError, maxParams);
+      maxParams.clear();
+      add->divAssignValue(2U, highLevelError, nearestParams, manager, *this);
+
+      if (!valueAdditions.isValid()) {
+         valueAdditions = add;
+         valueAdditions->plusAssignValue(value, highLevelError, nearestParams, *this);
+         value.setZero();
+      }
+      else if (valueAdditions->isExternal() || !add->isExternal())
+         valueAdditions->plusAssign(*add, highLevelError, nearestParams, manager, *this);
+      else {
+         PNT::AutoPointer<Coefficient> newAdditions = add;
+         newAdditions->plusAssign(*valueAdditions, highLevelError, nearestParams, manager, *this);
+         newAdditions.swap(valueAdditions);
+      };
+      if (resultAdditions.isValid() && (resultAdditions->isExternal() || !add->isExternal()))
+         resultAdditions->plusAbsAssign(*add, highLevelError, nearestParams, manager, *this);
+      else {
+         resultAdditions.swap(add);
+         if (!add.isValid()) {
+            resultValue.setZero();
+            resultAdditions->plusCoabsAssignValue(resultValue, highLevelError,
+                  nearestParams, *this);
+         }
+         else
+            resultAdditions->plusCoabsAssign(*add, highLevelError,
+                  nearestParams, *this);
+      };
+   }
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addAssignBoundFromCoeff(
+      BuiltReal& min, BuiltReal& max, const Coefficient& coeff, const BuiltReal& coeffValue,
+      RealReadParameters& minParams, RealReadParameters& maxParams, bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient) {
+      if (coeffValue.isPositive()) {
+         min.minusAssign(coeffValue, minParams);
+         minParams.clear();
+         max.plusAssign(coeffValue, maxParams);
+         maxParams.clear();
+      }
+      else {
+         min.plusAssign(coeffValue, minParams);
+         minParams.clear();
+         max.minusAssign(coeffValue, maxParams);
+         maxParams.clear();
+      };
+   }
+   else
+      coeff.addToBound(min, max, minParams, maxParams);
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::setValueFromMaxCoeff(
+      BuiltReal& result, const BuiltReal& coeffValue,
+      const PNT::AutoPointer<Coefficient>& coeffAdditions, bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient || !coeffAdditions.isValid()) {
+      result = coeffValue;
+      if (result.isNegative())
+         result.opposite();
+   }
+   else {
+      BuiltReal min;
+      coeffAdditions->retrieveBound(min, result);
+      if (min.isNegative()) {
+         if (result.isNegative()) {
+            result = min;
+            result.opposite();
+         }
+         else {
+            min.opposite();
+            if (min > result)
+               result = min;
+         };
+      }
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::setValueFromMaxCoeff(
+      BuiltReal& result, const Coefficient& coeff, const BuiltReal& coeffValue,
+      bool hasExternalCoefficient) const {
+   if (!hasExternalCoefficient) {
+      result = coeffValue;
+      if (result.isNegative())
+         result.opposite();
+   }
+   else {
+      BuiltReal min;
+      coeff.retrieveBound(min, result);
+      if (min.isNegative()) {
+         if (result.isNegative()) {
+            result = min;
+            result.opposite();
+         }
+         else {
+            min.opposite();
+            if (min > result)
+               result = min;
+         };
+      }
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline bool
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::isValueGreaterOrEqualMaxCoeff(
+      const BuiltReal& value, const BuiltReal& coeffValue,
+      const PNT::AutoPointer<Coefficient>& coeff, bool hasExternalCoefficient) const {
+   bool result;
+   if (!hasExternalCoefficient || !coeff.isValid())
+      result = value >= coeffValue;
+   else {
+      BuiltReal min, max;
+      coeff->retrieveBound(min, max);
+      result = value >= max;
+   };
+   return result;
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline bool
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::mayValueGreaterOrEqualMaxAbsCoeff(
+      BuiltReal& value, const BuiltReal& coeffValue, const PNT::AutoPointer<Coefficient>& coeff,
+      bool hasExternalCoefficient) const {
+   bool result;
+   if (!hasExternalCoefficient || !coeff.isValid()) {
+      if (coeffValue.isPositive())
+         result = (value >= coeffValue);
+      else {
+         result = value.opposite() <= coeffValue;
+         value.opposite();
+      }
+   }
+   else {
+      BuiltReal min, max;
+      coeff->retrieveBound(min, max);
+      if (min.isPositive())
+         result = value >= min;
+      else if (max.isNegative()) {
+         max.opposite();
+         result = value >= max;
+      }
+      else {
+         min.opposite();
+         if (min <= max)
+            result = value >= min;
+         else
+            result = value >= max;
+      };
+   };
+   return result;
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::subValueFromMaxCoeff(
+      BuiltReal& value, const BuiltReal& coeffValue, const PNT::AutoPointer<Coefficient>& coeff,
+      RealReadParameters& maxParams, bool hasExternalCoefficient) {
+   if (!hasExternalCoefficient || !coeff.isValid())
+      value.minusAssign(coeffValue, maxParams);
+   else {
+      BuiltReal min, max;
+      coeff->retrieveBound(min, max);
+      value.minusAssign(max, maxParams);
+   };
+   maxParams.clear();
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+inline void
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::subValueFromMaxAbsCoeff(
+      BuiltReal& value, const Coefficient& coeff, const BuiltReal& coeffValue,
+      RealReadParameters& maxParams, bool hasExternalCoefficient) {
+   if (!hasExternalCoefficient) {
+      if (coeffValue.isPositive())
+         value.minusAssign(coeffValue, maxParams);
+      else
+         value.plusAssign(coeffValue, maxParams);
+   }
+   else {
+      BuiltReal min, max;
+      coeff.retrieveBound(min, max);
+      if (min.isPositive())
+         value.minusAssign(max, maxParams);
+      else if (max.isNegative())
+         value.plusAssign(max, maxParams);
+      else {
+         min.opposite();
+         if (min <= max)
+            value.minusAssign(max, maxParams);
+         else
+            value.minusAssign(min, maxParams);
+      };
+   };
+   maxParams.clear();
+}
+DefineEquationTemplateHeader(URealBitsNumber)
+inline DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber)
+DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::getNormalization(bool isNegative,
+      bool* doesConstraint, bool hasExternalCoefficient) const {
+   BuiltReal constraintBound;
+   BuiltReal normalization(dCentral);
+   if (doesConstraint)
+      constraintBound = normalization;
+   auto& params = isNegative ? TypeBaseFloatAffine::minParams() : TypeBaseFloatAffine::maxParams();
+   if (apcCentralAdditions.isValid()) {
+      apcCentralAdditions->addAbsSignToValue(normalization, isNegative, params, *this);
+      if (doesConstraint)
+         apcCentralAdditions->addAbsSignToValue(constraintBound, !isNegative, params, *this);
+   };
+   Cursor cursor(*this);
+   for (bool doesContinue = cursor.setToFirst(); doesContinue; doesContinue = cursor.setToNext()) {
+      AssumeCondition(dynamic_cast<const Coefficient*>(&cursor.globalElementAt()))
+      const Coefficient& coefficient = (const Coefficient&) cursor.globalElementAt();
+      const BuiltReal& coefficientValue = coefficient.getValue();
+      addAbsSignAssignToValue(normalization, coefficient, coefficientValue, isNegative,
+            params, hasExternalCoefficient);
+      if (doesConstraint)
+         addAbsSignAssignToValue(constraintBound, coefficient, coefficientValue, !isNegative,
+               params, hasExternalCoefficient);
+   };
+   if (doesConstraint) {
+      if (isNegative)
+        *doesConstraint = constraintBound.isPositive() && !constraintBound.isZero();
+      else
+        *doesConstraint = constraintBound.isNegative() && !constraintBound.isZero();
+   };
+   return normalization;
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+class DefineDefinedSymbol : public Symbol {
+  public:
+   class Definition : public DefineEquation DefineEquationTemplateParameters(URealBitsNumber) {
+     private:
+      typedef DefineEquation DefineEquationTemplateParameters(URealBitsNumber) inherited;
+
+     public:
+      Definition() {}
+      Definition(const inherited& source) : inherited(source) {}
+      Definition(inherited&& source) : inherited(source) {}
+      Definition& operator=(const inherited& source) { return (Definition&) inherited::operator=(source); }
+      Definition& operator=(inherited&& source) { return (Definition&) inherited::operator=(source); }
+      DefineCopy(Definition)
+      DDefineAssign(Definition)
+
+      virtual bool isDefinition() const override { return true; }
+   };
+  private:
+   typedef Symbol inherited;
+   Definition eDefinition;
+
+  public:
+   DefineDefinedSymbol(const DefineEquation DefineEquationTemplateParameters(URealBitsNumber)& definition)
+      :  eDefinition(definition) { setType(TDefined); }
+   DefineDefinedSymbol(const DefineDefinedSymbol DefineEquationTemplateParameters(URealBitsNumber)& source) = default;
+   DefineEquation DefineEquationTemplateParameters(URealBitsNumber)& getSDefinition() { return eDefinition; }
+   const DefineEquation DefineEquationTemplateParameters(URealBitsNumber)& getDefinition() const { return eDefinition; }
+};
+
+DefineEquationTemplateHeader(URealBitsNumber)
+class DefineConstraint : public PNT::MngElement, public STG::IOObject {
+  public:
+   typedef DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber) BuiltReal;
+   typedef DefineEquation DefineEquationTemplateParameters(URealBitsNumber) Equation;
+
+   class Pointer : public PNT::TMngPointer<DefineConstraint DefineEquationTemplateParameters(URealBitsNumber) > {
+     private:
+      typedef PNT::TMngPointer<DefineConstraint DefineEquationTemplateParameters(URealBitsNumber) > inherited;
+
+     public:
+      Pointer() {}
+      Pointer(DefineConstraint DefineEquationTemplateParameters(URealBitsNumber)* constraint,
+            typename inherited::Init init)
+         :  inherited(constraint, init) {}
+      Pointer(const Pointer& source) : inherited(source) {}
+
+      void release() { inherited::release(); }
+   };
+
+   class ValueForSymbol : public EnhancedObject {
+     private:
+      const Symbol* psSymbol;
+      bool fNegative;
+      BuiltReal dSymbolValue; // +1 if fNegative, -1 if !fNegative or other
+
+     public:
+      ValueForSymbol(const Symbol& symbol)
+         :  psSymbol(&symbol), fNegative(true), dSymbolValue(1U) {}
+      ValueForSymbol(const ValueForSymbol& source) = default;
+      ValueForSymbol& operator=(const ValueForSymbol& source) = default;
+      DefineCopy(ValueForSymbol)
+      DDefineAssign(ValueForSymbol)
+
+      bool isNegative() const { return fNegative; }
+      bool isPositive() const { return !fNegative; }
+      const Symbol& getSymbol() const { return *psSymbol; }
+      const BuiltReal& getSymbolValue() const { return dSymbolValue; }
+      BuiltReal& symbolValue() { return dSymbolValue; }
+      void changeDirection() { fNegative = !fNegative; }
+
+      class Key {
+        public:
+         typedef Symbol TypeOfKey;
+         typedef const Symbol& KeyType;
+         typedef const Symbol& ControlKeyType;
+         static const Symbol& key(const ValueForSymbol& source) { return *source.psSymbol; }
+         static ComparisonResult compare(KeyType fstKey, KeyType sndKey)
+            {  return fstKey.compare(sndKey); }
+      };
+      friend class Key;
+   };
+
+   class Vertex : public COL::TCopyCollection<COL::SortedArray<ValueForSymbol, typename ValueForSymbol::Key> > {
+     private:
+      typedef COL::TCopyCollection<COL::SortedArray<ValueForSymbol, typename ValueForSymbol::Key> > inherited;
+      COL::TVector<BuiltReal> vdConstraintResult;
+
+     public:
+      class SolverInit {};
+      Vertex() {}
+      Vertex(const Vertex& source, SolverInit) : inherited(source) {} 
+      Vertex(const Vertex& source) = default;
+      Vertex& operator=(const Vertex& source) = default;
+
+      void addSymbolsFrom(const Equation& equation);
+
+      const BuiltReal& getConstraintResult(int index) const
+         {  return vdConstraintResult.elementAt(index); }
+      BuiltReal& getSConstraintResult(int index)
+         {  return vdConstraintResult.referenceAt(index); }
+      void setConstraintResult(const BuiltReal& constraintResult)
+         {  vdConstraintResult.insertAtEnd(constraintResult); }
+      void changeConstraintResult(int index, const BuiltReal& constraintResult)
+         {  vdConstraintResult.referenceAt(index) = constraintResult; }
+      void removeConstraintResult(int index)
+         {  vdConstraintResult.removeAt(index); }
+      void addConstraintResult(int index, const BuiltReal& constraintResult)
+         {  vdConstraintResult.insertAt(index, constraintResult); }
+   };
+
+   class Solver : public DefineEquationServices DefineEquationTemplateParameters(URealBitsNumber) {
+     public:
+      class BaseTerm : public EnhancedObject { // alpha_i epsilon_i
+        private:
+         const Symbol* psSymbol;
+         BuiltReal dCoefficient;
+
+        public:
+         BaseTerm(const Symbol& symbol, const BuiltReal& coefficient)
+            :  psSymbol(&symbol), dCoefficient(coefficient) {}
+         BaseTerm(const BaseTerm& source) = default;
+         BaseTerm(BaseTerm&& source) = default;
+         BaseTerm& operator=(const BaseTerm& source) = default;
+         BaseTerm& operator=(BaseTerm&& source) = default;
+         DefineCopy(BaseTerm)
+         DDefineAssign(BaseTerm)
+
+         const Symbol& getSymbol() const { return *psSymbol; }
+         const BuiltReal& getCoefficient() const { return dCoefficient; }
+         BuiltReal& getSCoefficient() { return dCoefficient; }
+
+         class Key {
+           public:
+            typedef Symbol TypeOfKey;
+            typedef const Symbol& KeyType;
+            typedef const Symbol& ControlKeyType;
+            static const Symbol& key(const BaseTerm& source) { return *source.psSymbol; }
+            static ComparisonResult compare(KeyType fstKey, KeyType sndKey)
+               {  return fstKey.compare(sndKey); }
+         };
+         friend class Key;
+      };
+
+      class BaseEquation : public EnhancedObject, public TypeBaseFloatAffine {
+         // fNegative  => (symbol-1)*dNormalization = dConstant + sum_i alpha_i epsilon_i <= 0
+         // !fNegative => (symbol+1)*dNormalization = dConstant + sum_i alpha_i epsilon_i >= 0
+        private:
+         COL::TCopyCollection<COL::SortedArray<BaseTerm, typename BaseTerm::Key> > sabmEquation;
+         BuiltReal dConstant;
+         BuiltReal dNormalization;
+         bool fNegative;
+         const Symbol* psSymbol;
+
+        public: // add fNegative everywhere
+         BaseEquation(const Symbol& symbol, const Equation& equation, bool isNegative);
+         BaseEquation(const BaseEquation& source) = default;
+         BaseEquation& operator=(const BaseEquation& source) = default;
+         DefineCopy(BaseEquation)
+         DDefineAssign(BaseEquation)
+
+         typedef typename BuiltReal::WriteParameters WriteParameters;
+         void write(STG::IOObject::OSBase& out, const WriteParameters& params) const;
+         const Symbol& getSymbol() const { return *psSymbol; }
+         BuiltReal computeNormalization() const;
+         const BuiltReal& getNormalization() const { return dNormalization; }
+         BuiltReal& getSNormalization() { return dNormalization; }
+         void changeSymbol(const Symbol& newSymbol) { psSymbol = &newSymbol; }
+         bool isAdmissibleDirection(const Symbol& symbol, bool doesIncrementSymbol,
+               const BuiltReal& initialSymbolValue, const BuiltReal& constraintResult,
+               BuiltReal& vertexDiffSymbol, int currentIndex, int& foundIndex, 
+               const int& degeneratedIndex, bool isInitialOut) const;
+         const COL::SortedArray<BaseTerm, typename BaseTerm::Key>& getLinearPart() const { return sabmEquation; }
+         COL::SortedArray<BaseTerm, typename BaseTerm::Key>& getSLinearPart() { return sabmEquation; }
+         const BuiltReal& getConstant() const { return dConstant; }
+         BuiltReal& getSConstant() { return dConstant; }
+         bool isNegative() const { return fNegative; }
+         void changeSign() { fNegative = !fNegative; }
+
+         class Key {
+           public:
+            typedef Symbol TypeOfKey;
+            typedef const Symbol& KeyType;
+            typedef const Symbol& ControlKeyType;
+            static const Symbol& key(const BaseEquation& source) { return *source.psSymbol; }
+            static ComparisonResult compare(KeyType fstKey, KeyType sndKey)
+               {  return fstKey.compare(sndKey); }
+         };
+         friend class Key;
+      };
+      
+      class Cursor : public COL::SortedArray<BaseTerm, typename BaseTerm::Key>::Cursor {
+        private:
+         typedef typename COL::SortedArray<BaseTerm, typename BaseTerm::Key>::Cursor inherited;
+
+        public:
+         Cursor(const Solver& solver) : inherited(solver.sabmObjective) {}
+         Cursor(const inherited& source) : inherited(source) {}
+         Cursor(const Cursor& source) = default;
+         Cursor(Cursor&& source) = default;
+         Cursor& operator=(const Cursor& source) = default;
+         Cursor& operator=(Cursor&& source) = default;
+      };
+
+     private:
+      typedef DefineEquationServices DefineEquationTemplateParameters(URealBitsNumber) inherited;
+      COL::TCopyCollection<COL::SortedArray<BaseEquation, typename BaseEquation::Key> > sabeBaseEquations;
+      COL::TCopyCollection<COL::SortedArray<BaseTerm, typename BaseTerm::Key> > sabmObjective;
+      BuiltReal dObjectiveConstant;
+      COL::TCopyCollection<COL::TArray<ConstrainedSymbol> > aceConstrainedSymbols;
+
+      void updateObjectiveFromPivot(Cursor& cursor, const BuiltReal& newNormalization,
+            const BaseEquation& oldEquation, const Symbol& exitingSymbol, bool isNegativeObjective);
+      void updateBaseEquationsFromPivot(const Symbol& enteringSymbol,
+            const BuiltReal& newNormalization, const BaseEquation& oldEquation);
+
+     public:
+      Solver(const Equation& objective, bool isPositive)
+         :  dObjectiveConstant(objective.getCentral())
+         {  if (!isPositive)
+               dObjectiveConstant.opposite();
+            typename Equation::Cursor cursor(objective);
+            while (cursor.setToNext()) {
+               AssumeCondition(dynamic_cast<const typename Equation::Coefficient*>(&cursor.globalElementAt()))
+               BaseTerm* term = new BaseTerm(cursor.elementAt(),
+                     ((const typename Equation::Coefficient&) cursor.globalElementAt()).getValue());
+               sabmObjective.insertNewAtEnd(term);
+               if (!isPositive)
+                  term->getSCoefficient().opposite();
+            };
+         }
+      Solver(const Solver& source) = default;
+      Solver(Solver&& source) = default;
+
+      typedef typename BuiltReal::WriteParameters WriteParameters;
+      void write(STG::IOObject::OSBase& out, const WriteParameters& params) const
+         {  out.writesome("objective: ");
+            dObjectiveConstant.write(out, params);
+            sabmObjective.foreachDo([&out, &params](const BaseTerm& term)
+               {  out.writesome(" + ");
+                  term.getCoefficient().write(out, params);
+                  out.put('*');
+                  const Symbol& symbol = term.getSymbol();
+                  // out.writesome(Equation::getSymbolPrefix(symbol.getType()));
+                  out.writesome(symbol.getOwnPrefix());
+                  out.write(symbol.getOrder(), false /* isRaw */);
+                  return true;
+               });
+            out.writesome("\nconstraints:");
+            sabeBaseEquations.foreachDo([&out, &params](const BaseEquation& equation)
+               {  out.writesome("\n\t");
+                  equation.write(out, params);
+                  return true;
+               });
+         }
+      void updateConstraintResult(Vertex& direction, const Symbol& symbol, const BuiltReal& vertexDiffSymbol)
+         {  int constraintIndex = 0;
+            typename BuiltReal::ReadParameters& maxParams = TypeBaseFloatAffine::maxParams();
+            sabeBaseEquations.foreachDo(
+               [&direction, &constraintIndex, &symbol, &vertexDiffSymbol, &maxParams]
+               (const BaseEquation& equation)
+               {  typename COL::SortedArray<BaseTerm, typename BaseTerm::Key>::Cursor
+                        locateCursor(equation.getLinearPart());
+                  if (equation.getLinearPart().locateKey(symbol, locateCursor, COL::VirtualCollection::RPExact)) {
+                     BuiltReal add = locateCursor.elementAt().getCoefficient();
+                     add.multAssign(vertexDiffSymbol, maxParams);
+                     maxParams.clear();
+                     direction.getSConstraintResult(constraintIndex).plusAssign(add, maxParams);
+                     maxParams.clear();
+                  };
+                  ++constraintIndex;
+                  return true;
+               });
+         }
+
+      BuiltReal queryVertexResult(const Equation& equation, const Vertex& vertex, bool isNegative) const;
+      BuiltReal getResultFor(const Vertex& vertex) const;
+      void changeObjectiveSign()
+         {  dObjectiveConstant.opposite();
+            sabmObjective.foreachSDo([](BaseTerm& term)
+               {  term.getSCoefficient().opposite(); return true; });
+         }
+      void addBase(const DefineConstraint DefineEquationTemplateParameters(URealBitsNumber)&
+            constraint) // [TODO] sign to change in [-1,+1]
+         {  ConstrainedSymbol* symbol = new ConstrainedSymbol(aceConstrainedSymbols.count());
+            aceConstrainedSymbols.insertNewAtEnd(symbol);
+            // [TODO] symbol in [-1, +1]
+            BaseEquation* baseEquation = new BaseEquation(*symbol, constraint.eEquation, constraint.fNegative);
+            sabeBaseEquations.insertNewAtEnd(baseEquation);
+         }
+      int countBases() const { return sabeBaseEquations.count(); }
+
+      bool isAdmissibleDirection(const Symbol& symbol, bool doesIncrementSymbol,
+            const BuiltReal& initialSymbolValue, const Vertex& direction,
+            BuiltReal& vertexDiffSymbol, int& foundPivot, int& degeneratedIndex, bool isInitialOut) const
+         {  int parentIndex = sabeBaseEquations.count();
+            return sabeBaseEquations.foreachReverseDo(
+                  [&symbol, doesIncrementSymbol, &initialSymbolValue, &direction,
+                   &vertexDiffSymbol, &parentIndex, &foundPivot, &degeneratedIndex, isInitialOut]
+                  (const BaseEquation& constraint)
+               {  --parentIndex;
+                  return constraint.isAdmissibleDirection(symbol, doesIncrementSymbol,
+                        initialSymbolValue, direction.getConstraintResult(parentIndex),
+                        vertexDiffSymbol, parentIndex, foundPivot, degeneratedIndex, isInitialOut);
+               });
+         }
+      void performPivot(Cursor& cursor, int foundPivot, Vertex& direction,
+            bool doesDecreaseEntering, bool isNegativeObjective);
+      void transferVertex(const Vertex& origin, Vertex& result, const BuiltReal& contraintResult);
+   };
+
+  private:
+   typedef PNT::MngElement inherited;
+   typedef DefineConstraint DefineEquationTemplateParameters(URealBitsNumber) thisType;
+   Equation eEquation;
+   bool fNegative;
+   PNT::MngPointer mpParent;
+   Vertex vAdmissibleVertex;
+
+   bool invariant() const
+      {  int depth = 0;
+         auto parent = (const PNT::TMngPointer<DefineConstraint DefineEquationTemplateParameters(URealBitsNumber) >&)
+            mpParent;
+         while (parent.isValid()) {
+            ++depth;
+            parent = (const PNT::TMngPointer<DefineConstraint DefineEquationTemplateParameters(URealBitsNumber) >&)
+               parent->mpParent;
+         };
+         return vAdmissibleVertex.count() == depth+1;
+      }
+
+  public:
+   static bool isPositiveEquation(const Equation& equation, const Vertex& vertex,
+         bool isPositiveDirection, BuiltReal& equationResult);
+
+  private:
+   friend class DefineConstraintsSet DefineEquationTemplateParameters(URealBitsNumber);
+
+   class CandidatesForImprovement;
+
+   bool verifyAllPositiveEquations(const Vertex& vertex, const thisType* rootConstraint,
+         const thisType* currentConstraint) const;
+   void improveOwnResult(const Equation& equation, const Vertex& vertex,
+         bool isPositiveDirection, const BuiltReal& equationResult,
+         CandidatesForImprovement& candidatesForImprovement) const;
+   bool improveAllPositiveEquations(Vertex& vertex, CandidatesForImprovement& candidatesForImprovement,
+         const thisType* rootConstraint, const thisType* currentConstraint) const;
+   // If the solver operations were based on the backward transfer functions
+   // instead of the forward inverse one, this method would have been unuseful.
+   bool improveResult(const Equation& equation, Vertex& vertex,
+         bool isPositiveDirection, BuiltReal& equationResult, const thisType* rootConstraint,
+         const thisType* currentConstraint) const;
+
+  protected:
+   virtual ComparisonResult _compare(const EnhancedObject& asource) const override
+      {  return inherited::_compare(asource); }
+   virtual void _write(OSBase& out, const STG::IOObject::FormatParameters& params) const override
+      {  AssumeUnimplemented }
+
+  public:
+   DefineConstraint() {}
+   DefineConstraint(const thisType& source) = default;
+   DefineConstraint(thisType&& source)= default;
+   thisType& operator=(const thisType& source) = default;
+   thisType& operator=(thisType&& source) = default;
+#ifndef DefineGeneric
+   Template2DefineCopy(DefineConstraint, URealBitsNumber, TypeBaseFloatAffine)
+#else
+   Template3DefineCopy(DefineConstraint, BaseStoreTraits, URealBitsNumber, TypeBaseFloatAffine)
+#endif
+   DDefineAssign(thisType)
+   StaticInheritConversions(thisType, inherited)
+
+   void setParent(Pointer& parent) { mpParent = parent; }
+   const Pointer& getParent() const { return (const Pointer&) mpParent; }
+   const Vertex& getAdmissibleVertex() const { return vAdmissibleVertex; }
+   void changeAdmissibleVertex(const Vertex& admissibleVertex)
+      {  vAdmissibleVertex = admissibleVertex; }
+   const Equation& getEquation() const { return eEquation; }
+   Equation& getSEquation() { return eEquation; }
+   bool isNegative() const { return fNegative; }
+
+   typedef typename BuiltReal::ReadParameters RealReadParameters;
+   void swap(thisType& source)
+      {  eEquation.swap(source.eEquation);
+         bool temp = fNegative;
+         fNegative = source.fNegative;
+         source.fNegative = temp;
+         vAdmissibleVertex.swap(source.vAdmissibleVertex);
+      }
+   thisType& setLessThan(const BuiltReal& value, RealReadParameters& minParams)
+      {  eEquation.getSCentral().minusAssign(value, minParams);
+         minParams.clear();
+         fNegative = true;
+         return *this;
+      }
+   thisType& setGreaterThan(const BuiltReal& value, RealReadParameters& maxParams)
+      {  eEquation.getSCentral().minusAssign(value, maxParams);
+         maxParams.clear();
+         fNegative = false;
+         return *this;
+      }
+   thisType& addCoefficient(const BuiltReal& coefficient, Symbol& symbol)
+      {  eEquation.addCoefficient(coefficient, symbol);
+         return *this;
+      }
+   thisType& setFrom(Equation& equation, bool isNegative)
+      {  eEquation.swap(equation);
+         fNegative = isNegative;
+         return *this;
+      }
+   bool close(bool hasAdmissibleVertex = false);
+};
+
+DefineEquationTemplateHeader(URealBitsNumber)
+class DefineConstraintsSet : public BaseConstraintsSet, public TypeBaseFloatAffine {
+  public:
+   typedef DefineConstraint DefineEquationTemplateParameters(URealBitsNumber) Constraint;
+   typedef DefineEquation DefineEquationTemplateParameters(URealBitsNumber) Equation;
+   typedef DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber) BuiltReal;
+
+  private:
+   typedef DefineConstraintsSet DefineEquationTemplateParameters(URealBitsNumber) thisType;
+   typename Constraint::Pointer mpLast;
+
+  public:
+   DefineConstraintsSet() {}
+   DefineConstraintsSet(const thisType& source) = default;
+   virtual ~DefineConstraintsSet() { clear(); }
+#ifndef DefineGeneric
+   Template2DefineCopy(DefineConstraintsSet, URealBitsNumber, TypeBaseFloatAffine)
+#else
+   Template3DefineCopy(DefineConstraintsSet, BaseStoreTraits, URealBitsNumber, TypeBaseFloatAffine)
+#endif
+   DDefineAssign(thisType)
+
+   Constraint& pushConstraint()
+      {  Constraint* result = new Constraint();
+         result->setParent(mpLast);
+         mpLast = typename Constraint::Pointer(result, PNT::Pointer::Init());
+         return *result;
+      }
+   Constraint* getSLastConstraint() const { return mpLast.isValid() ? &*mpLast : nullptr; }
+   // void mergeWith(const thisType& source);
+   void retrieveBound(const Equation& equation, BuiltReal& min, BuiltReal& max) const;
+   void clear()
+      {  while (mpLast.isValid()) {
+            auto cursor = (const typename Constraint::Pointer&) mpLast->getParent();
+            mpLast.release();
+            mpLast = cursor;
+         };
+      }
+   void pop()
+      {  if (mpLast.isValid()) {
+            auto cursor = (const typename Constraint::Pointer&) mpLast->getParent();
+            mpLast.release();
+            mpLast = cursor;
+         };
+      };
+   bool updateChainFrom(Constraint& innerConstraint)
+      {  COL::TArray<Constraint> stack;
+         Constraint* current =  mpLast.isValid() ? &*mpLast : nullptr;
+         while (current && current != &innerConstraint) {
+            stack.insertAtEnd(current);
+            current = const_cast<Constraint*>(((const typename Constraint::Pointer&)
+                  current->getParent()).key());
+         }
+         int count = stack.count();
+         if (count > 0) {
+            stack[count-1].changeAdmissibleVertex(mpLast->getAdmissibleVertex());
+            stack[count-1].close(true /* hasAdmissibleVertex */);
+         };
+         for (int index = count-2; index >= 0; --index)
+            if (!stack[index].close())
+               return false;
+         return true;
+      }
+};
+
+} // end of namespace DAffine
+
+#undef DefineSingleTemplateHeader
+#undef DefineFloatConversion
+#undef DefineBuiltAccess
+#undef DefineMantissaExponentTemplateParameters
+#undef DefineSingleTemplateParameters
+#undef DefineSSingleTemplateParameters
+#undef DefineDoubleTraitsTemplateHeader
+#undef DefineBuiltDoubleTraits
+#undef DefineBuiltReal
+#undef DefineReadDouble
+#undef DefineBuiltDoubleTraits
+#undef DefineBuiltDouble
+#undef DefineRealMantissaExponentTemplateParameters
+#undef DefineBaseTypeConstReference
+#undef DefineBaseType
+#undef DefineIsBigEndian
+#undef DefineFillContent
+#undef DefineSizeofBaseTypeInBits
+#undef DefineSetContent
+#undef DefineEquationTemplateHeader
+#undef DefineSEquationTemplateHeader
+#undef DefineEquationTemplateParameters
+#undef DefineSEquationTemplateParameters
+#undef DefineEquation
+#undef DefineConstraint
+#undef DefineConstraintsSet
+#undef DefineEquationServices
+#undef DefineDefinedSymbol
+

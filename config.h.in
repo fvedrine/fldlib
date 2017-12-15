@@ -1,0 +1,174 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to used a simplified interface file */
+#undef FLOAT_ALLOW_INTERFACE
+
+/* Define to allow read exceptions */
+#undef FLOAT_ALLOW_READ_EXCEPTION
+
+/* Define to use long int for storing mantissa */
+#undef FLOAT_GENERIC_BASE_LONG
+
+/* Define to use unsigned int for storing mantissa */
+#undef FLOAT_GENERIC_BASE_UNSIGNED
+
+/* Define to write real numbers with the natural decimal writing */
+#undef FLOAT_LONG_WRITE
+
+/* Keep maximal relationships among variables to the detriment of constraints
+   */
+#undef FLOAT_PURE_ZONOTOPE
+
+/* Define the number of bits for the mantissa of real numbers */
+#undef FLOAT_REAL_BITS_NUMBER
+
+/* Replace the zonotope by the interval if the interval is xxx% better than
+   the zonotope */
+#undef FLOAT_TRIGGER_PERCENT
+
+/* Push the constraints onto a stack to apply them in an optimal but costly
+   way */
+#undef FLOAT_ZONOTOPE_ALLOW_SIMPLEX
+
+/* Enable the systematic absorption of high level symbols into standard noise
+   symbols */
+#undef FLOAT_ZONOTOPE_DOES_ABSORB_HIGH_LEVEL
+
+/* Exclude the constant part in the definition of negligeable symbols for
+   their absorption into standard noise symbols */
+#undef FLOAT_ZONOTOPE_DOES_EXCLUDE_CONSTANT_FROM_SYMBOL_ABSORPTION
+
+/* Define the limit in binary digits from which a symbol is absorbed into a
+   standard noise symbol */
+#undef FLOAT_ZONOTOPE_LIMIT_SYMBOL_ABSORPTION
+
+/* define if the compiler supports basic C++11 syntax */
+#undef HAVE_CXX11
+
+/* Whether C++ ABI functions are available */
+#undef HAVE_CXXABI
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define to 1 if you have the `fesetround' function. */
+#undef HAVE_FESETROUND
+
+/* Define to 1 if you have the <float.h> header file. */
+#undef HAVE_FLOAT_H
+
+/* Define to 1 if you have the `floor' function. */
+#undef HAVE_FLOOR
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `c' library (-lc). */
+#undef HAVE_LIBC
+
+/* Define to 1 if you have the `m' library (-lm). */
+#undef HAVE_LIBM
+
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
+
+/* Define to 1 if your system has a GNU libc compatible `malloc' function, and
+   to 0 otherwise. */
+#undef HAVE_MALLOC
+
+/* Define to 1 if you have the `memmove' function. */
+#undef HAVE_MEMMOVE
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `memset' function. */
+#undef HAVE_MEMSET
+
+/* Define to 1 if you have the `pow' function. */
+#undef HAVE_POW
+
+/* Define to 1 if your system has a GNU libc compatible `realloc' function,
+   and to 0 otherwise. */
+#undef HAVE_REALLOC
+
+/* Define to 1 if you have the `rint' function. */
+#undef HAVE_RINT
+
+/* Define to 1 if you have the `sqrt' function. */
+#undef HAVE_SQRT
+
+/* Define to 1 if you have the <stddef.h> header file. */
+#undef HAVE_STDDEF_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if the system has the type `_Bool'. */
+#undef HAVE__BOOL
+
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
+#undef LT_OBJDIR
+
+/* Define to 1 if assertions should be disabled. */
+#undef NDEBUG
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Version number of package */
+#undef VERSION
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif
+
+/* Define to rpl_malloc if the replacement function should be used. */
+#undef malloc
+
+/* Define to rpl_realloc if the replacement function should be used. */
+#undef realloc
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef size_t

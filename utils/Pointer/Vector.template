@@ -1,0 +1,310 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2013-2017                                               */
+/*    CEA (Commissariat à l'énergie atomique et aux énergies              */
+/*         alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Low level implementation
+// File      : Vector.template
+// Description :
+//   Implementation of the template TVector. The interface exposed is similar
+//   to the one of TImplArray. The stored element can have an inheritance
+//   hierarchy different from the EnhancedObject one. The implementation is
+//   duplicated for each TVector instantiation.
+//
+
+#ifndef COL_VectorTEMPLATE
+#define COL_VectorTEMPLATE
+
+#include "Pointer/Vector.h"
+#include <memory.h>
+
+namespace COL {
+
+template <typename TypeElement, class TypeElementTraits, class TypeReallocTraits>
+void
+TVector<TypeElement, TypeElementTraits, TypeReallocTraits>::realloc(int newAllocated) {
+   AssumeCondition(uCount <= newAllocated)
+   TypeElement* newArray = new TypeElement[newAllocated];
+   AssumeAllocation(newArray)
+   if (!TypeElementTraits::FInitialCleared)
+      TypeElementTraits::clearAll(newArray, newAllocated);
+   TypeElementTraits::copyAll(newArray, ateArray, uCount);
+   uAllocated = newAllocated;
+   if (ateArray) delete [] ateArray;
+   ateArray = newArray;
+}
+
+template <typename TypeElement, class TypeElementTraits, class TypeReallocTraits>
+TVector<TypeElement, TypeElementTraits, TypeReallocTraits>::TVector(const thisType& source)
+   :  ateArray(nullptr), uCount(0), uAllocated(0) {
+   if (source.uCount) {
+      realloc(source.uCount);
+      TypeElementTraits::copyAll(ateArray, source.ateArray, source.uCount);
+      uCount = source.uCount;
+   };
+}
+
+template <typename TypeElement, class TypeElementTraits, class TypeReallocTraits>
+TVector<TypeElement, TypeElementTraits, TypeReallocTraits>&
+TVector<TypeElement, TypeElementTraits, TypeReallocTraits>::assign(const thisType& source) {
+   if (&source != this) {
+      if (source.uCount > uAllocated) {
+         uCount = 0;
+         realloc(source.uCount);
+      }
+      else if (uCount > 0) {
+         TypeElementTraits::clearAll(ateArray, uCount);
+         uCount = 0;
+      };
+      if (source.uCount) {
+         TypeElementTraits::copyAll(ateArray, source.ateArray, source.uCount);
+         uCount = source.uCount;
+      };
+   };
+   return *this;
+}
+
+template <typename TypeElement, class TypeElementTraits, class TypeReallocTraits>
+void
+TVector<TypeElement, TypeElementTraits, TypeReallocTraits>::compress() {
+   if (uCount < uAllocated) {
+      if (uCount == 0) {
+         if (ateArray)
+            delete [] ateArray;
+         uAllocated = 0;
+      }
+      else
+         realloc(uCount);
+   };
+}
+
+template <typename TypeElement, class TypeElementTraits, class TypeReallocTraits>
+void
+TVector<TypeElement, TypeElementTraits, TypeReallocTraits>::addAll(const thisType& source,
+      int firstSourceIndex, int lastSourceIndex, int destinationIndex) {
+   if (firstSourceIndex < 0)
+      firstSourceIndex = 0;
+   else if (firstSourceIndex >= source.uCount)
+      return;
+   if ((lastSourceIndex < 0) || (lastSourceIndex >= source.uCount))
+      lastSourceIndex = source.uCount-1;
+   if (lastSourceIndex < firstSourceIndex)
+      return;
+
+   if ((destinationIndex < 0) || (destinationIndex > uCount))
+      destinationIndex = uCount;
+   bookPlace(1 + (lastSourceIndex-firstSourceIndex));
+
+   if (&source != this) {
+      if (destinationIndex < uCount)
+         memmove((void*) (ateArray+destinationIndex+1+(lastSourceIndex-firstSourceIndex)),
+                 (void*) (ateArray+destinationIndex), (uCount-destinationIndex)*sizeof(TypeElement));
+      TypeElementTraits::copyAll(ateArray+destinationIndex, source.ateArray+firstSourceIndex,
+             (1+(lastSourceIndex-firstSourceIndex)));
+   }
+   else {
+      if (destinationIndex < uCount) // Book some place after destinationIndex
+         memmove((void*) (ateArray+destinationIndex+1+lastSourceIndex-firstSourceIndex),
+               (void*) (ateArray+destinationIndex), (uCount-destinationIndex)*sizeof(TypeElement));
+      if (destinationIndex <= firstSourceIndex) {
+         // sources are in [1+lastSourceIndex, 1+2*lastSourceIndex-firstSourceIndex]
+         if (destinationIndex == firstSourceIndex)
+            return;
+         memmove((void*) (ateArray+destinationIndex), (void*) (ateArray+lastSourceIndex+1),
+            (1+lastSourceIndex-firstSourceIndex)*sizeof(TypeElement));
+      }
+      else if (destinationIndex > lastSourceIndex) // pas de décalage
+         memmove((void*) (ateArray+destinationIndex), (void*) (ateArray+firstSourceIndex),
+            (1+lastSourceIndex-firstSourceIndex)*sizeof(TypeElement));
+      else { // firstSourceIndex < destinationIndex <= lastSourceIndex
+         // sources are in [firstSourceIndex, destinationIndex-1]
+         // and in [destinationIndex + (lastSourceIndex-firstSourceIndex+1), 2*lastSourceIndex-firstSourceIndex+1]
+         memmove((void*) (ateArray+destinationIndex), (void*) (ateArray+firstSourceIndex),
+            (destinationIndex-firstSourceIndex)*sizeof(TypeElement));
+         memmove((void*) (ateArray+2*destinationIndex-firstSourceIndex),
+                 (void*) (ateArray+destinationIndex+(lastSourceIndex-firstSourceIndex+1)),
+                 (lastSourceIndex+1-destinationIndex)*sizeof(TypeElement));
+      };
+   };
+
+   uCount += 1 + (lastSourceIndex-firstSourceIndex);
+}
+
+template <typename TypeElement, class TypeElementTraits, class TypeReallocTraits>
+void
+TVector<TypeElement, TypeElementTraits, TypeReallocTraits>::moveAllTo(thisType& destination,
+      int firstIndex, int lastIndex, int destinationIndex) {
+   if (firstIndex < 0)
+      firstIndex = 0;
+   else if (firstIndex >= uCount)
+      return;
+   if ((lastIndex < 0) || (lastIndex >= uCount))
+      lastIndex = uCount-1;
+   if (lastIndex < firstIndex)
+      return;
+
+   if ((destinationIndex < 0) || (destinationIndex > destination.uCount))
+      destinationIndex = destination.uCount;
+
+   if (&destination != this) {
+      destination.bookPlace(1 + (lastIndex-firstIndex));
+      if (destinationIndex < destination.uCount)
+         memmove((void*) (destination.ateArray+destinationIndex+1+(lastIndex-firstIndex)),
+                 (void*) (destination.ateArray+destinationIndex),
+                 (destination.uCount-destinationIndex)*sizeof(TypeElement));
+      memcpy((void*) (destination.ateArray+destinationIndex), (void*) (ateArray+firstIndex),
+             (1+(lastIndex-firstIndex))*sizeof(TypeElement));
+      if (lastIndex < uCount-1) {
+         memmove((void*) (ateArray+firstIndex), (void*) (ateArray+lastIndex+1),
+            (uCount-lastIndex-1)*sizeof(TypeElement));
+         memset((void*) (ateArray+uCount-1-lastIndex+firstIndex), 0, (lastIndex+1-firstIndex)*sizeof(TypeElement));
+      };
+      uCount -= 1+(lastIndex-firstIndex);
+      destination.uCount += 1+(lastIndex-firstIndex);
+   }
+   else {
+      if ((firstIndex <= destinationIndex) && (destinationIndex-1 <= lastIndex))
+         return;
+      if (destinationIndex < firstIndex) {
+         TypeElement* tempArray = new TypeElement[firstIndex-destinationIndex];
+         AssumeAllocation(tempArray)
+         memcpy((void*) tempArray, (void*) (ateArray+destinationIndex),
+            (firstIndex-destinationIndex)*sizeof(TypeElement));
+         memmove((void*) (ateArray+destinationIndex), (void*) (ateArray+firstIndex),
+            (lastIndex-firstIndex+1)*sizeof(TypeElement));
+         memcpy((void*) (ateArray+destinationIndex+(lastIndex-firstIndex+1)), (void*) tempArray,
+            (firstIndex-destinationIndex)*sizeof(TypeElement));
+         if (tempArray) delete [] tempArray;
+      }
+      else { // destinationIndex > lastIndex+1
+         TypeElement* tempArray = new TypeElement[destinationIndex-1-lastIndex];
+         AssumeAllocation(tempArray)
+         memcpy((void*) tempArray, (void*) (ateArray+lastIndex+1),
+               (destinationIndex-lastIndex-1)*sizeof(TypeElement));
+         memmove((void*) (ateArray+destinationIndex+firstIndex-lastIndex-1),
+               (void*) (ateArray+firstIndex), (lastIndex-firstIndex+1)*sizeof(TypeElement));
+         memcpy((void*) (ateArray+firstIndex), (void*) tempArray,
+               (destinationIndex-lastIndex-1)*sizeof(TypeElement));
+         if (tempArray) delete [] tempArray;
+      };
+   };
+}
+
+template <typename TypeElement, class TypeElementTraits, class TypeReallocTraits>
+void
+TVector<TypeElement, TypeElementTraits, TypeReallocTraits>::insertAt(int index, const TypeElement& element) {
+   AssumeCondition((index >= 0) && (index <= uCount))
+   bookPlace();
+   if (uCount > index)
+      memmove((void*) (ateArray+index+1), (void*) (ateArray+index), (uCount-index)*sizeof(TypeElement));
+   TypeElementTraits::copy(ateArray[index], element);
+   ++uCount;
+}
+
+template <typename TypeElement, class TypeElementTraits, class TypeReallocTraits>
+void
+TVector<TypeElement, TypeElementTraits, TypeReallocTraits>::removeAt(int index) {
+   AssumeCondition((index >= 0) && (index < uCount))
+   if (uCount-1 > index) {
+      char buffer[sizeof(TypeElement)];
+      memcpy(buffer, (void*) (ateArray+index), sizeof(TypeElement));
+      memmove((void*) (ateArray+index), (void*) (ateArray+index+1),
+            (uCount-index-1)*sizeof(TypeElement));
+      memcpy((void*) (ateArray+uCount-1), buffer, sizeof(TypeElement));
+   };
+   TypeElementTraits::clear(ateArray[--uCount]);
+}
+
+template <typename TypeElement, class TypeElementTraits, class TypeReallocTraits>
+void
+TVector<TypeElement, TypeElementTraits, TypeReallocTraits>::removeAllBetween(int firstIndex, int lastIndex) {
+   AssumeCondition((firstIndex >= 0) && (firstIndex <= uCount))
+   if ((lastIndex < 0) || (lastIndex >= uCount-1)) {
+      if (firstIndex < uCount) {
+         TypeElementTraits::clearAll(ateArray+firstIndex, (uCount-firstIndex));
+         uCount = firstIndex;
+      };
+   }
+   else {
+      if (firstIndex <= lastIndex) {
+         TypeElementTraits::clearAll(ateArray+firstIndex, lastIndex-firstIndex+1);
+         memmove((void*) (ateArray+firstIndex), (void*) (ateArray+lastIndex+1),
+               (uCount-lastIndex-1)*sizeof(TypeElement));
+         int oldCount = uCount;
+         uCount -= (lastIndex-firstIndex+1);
+         memset((void*) (ateArray+uCount), 0, (oldCount-uCount)*sizeof(TypeElement));
+      };
+   };
+}
+
+template <typename TypeElement, class TypeElementTraits, class TypeReallocTraits>
+void
+TVector<TypeElement, TypeElementTraits, TypeReallocTraits>::removeAll() {
+   TypeElementTraits::clearAll(ateArray, uCount);
+   uCount = 0;
+}
+
+// Block operations
+template <typename TypeElement, class TypeElementTraits, class TypeReallocTraits>
+void
+TVector<TypeElement, TypeElementTraits, TypeReallocTraits>::addAtEnd(const thisType& source,
+      int firstSource, int lastSource) {
+   if (lastSource < firstSource)
+      return;
+   AssumeCondition((firstSource >= 0) && (lastSource < source.uCount))
+   bookPlace(lastSource-firstSource+1);
+   TypeElementTraits::copyAll(ateArray+uCount, source.ateArray+firstSource,
+      (lastSource-firstSource+1));
+   uCount += (lastSource-firstSource+1);
+}
+
+template <typename TypeElement, class TypeElementTraits, class TypeReallocTraits>
+void
+TVector<TypeElement, TypeElementTraits, TypeReallocTraits>::moveToAtEnd(thisType& destination,
+      int first, int last) {
+   if (last < first)
+      return;
+   AssumeCondition((this != &destination) && (first >= 0) && (last < uCount))
+   destination.bookPlace(last-first+1);
+   if (this != &destination) {
+      TypeElementTraits::copyAll(destination.ateArray+destination.uCount, ateArray+first, last-first+1);
+      int firstRemove = first + (uCount - last - 1);
+      TypeElementTraits::clearAll(ateArray+first, last-first+1);
+      if (uCount > last+1)
+         memmove((void*) (ateArray+first), (void*) (ateArray+last+1), (uCount-last-1)*sizeof(TypeElement));
+      memset((void*) (ateArray+firstRemove), 0, (last-first+1)*sizeof(TypeElement));
+      uCount -= (last-first+1);
+      destination.uCount += (last-first+1);
+   }
+   else if (uCount > last+1) { // this == &destination
+      memmove((void*) (ateArray+uCount), (void*) (ateArray+first), (last-first+1)*sizeof(TypeElement));
+      int firstRemove = first + (uCount - last -1);
+      memmove((void*) (ateArray+first), (void*) (ateArray+last+1), (uCount-last-1)*sizeof(TypeElement));
+      memset((void*) (ateArray+firstRemove), 0, (last-first+1)*sizeof(TypeElement));
+   };
+}
+
+} // end of namespace COL
+
+#endif // COL_VectorTEMPLATE
+

@@ -1,0 +1,141 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat à l'énergie atomique et aux énergies              */
+/*         alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Librairie   : Collection
+// Module      : Abstract collections
+// Fichier     : VirtualCollection.incc
+// Description :
+//   Implementation of the polymorph methods of the class VirtualCollection.
+//   These methods are shared with the template class TVirtualMapCollection.
+//
+
+#ifndef DefineMapCollection
+void
+VirtualCollection::paddAll(const VirtualCollection& source, const ExtendedInsertionParameters& parameters,
+      VirtualCollectionCursor* cursor, const VirtualCollectionCursor* startSource,
+      const VirtualCollectionCursor* endSource) {
+#else
+template <class TypeKeyTraits>
+void
+TVirtualMapCollection<TypeKeyTraits>::paddAll(const thisType& source, const ExtendedInsertionParameters& parameters,
+      Cursor* cursor, const Cursor* startSource, const Cursor* endSource) {
+#endif
+   VirtualCollection::_addAll(source, parameters, cursor, startSource, endSource);
+   if (!source.normalize(startSource, endSource)) {
+      if (cursor) cursor->invalidate();
+      return;
+   };
+
+   PNT::AutoPointer<ExtendedInsertionParameters> aparamsCopy(parameters);
+#ifndef DefineMapCollection
+   ExtendedInsertionParameters& paramsCopy = *aparamsCopy;
+   thisType::PPCursor sourceCursor(source.newCursor());
+#else
+   typename thisType::PPCursor sourceCursor(source.newCursor());
+#endif
+
+   bool isForward = !parameters.isRemote() ? !parameters.isBefore() : !parameters.isAfter();
+   if (isForward) {
+      if (startSource)
+         *sourceCursor = *startSource;
+      else
+         sourceCursor->setToFirst();
+   }
+   else {
+      if (endSource)
+         *sourceCursor = *endSource;
+      else
+         sourceCursor->setToLast();
+   };
+
+   if ((this == &source) && ((!isExcluded(parameters.getRelativePosition(),
+            RPExact, startSource, endSource, cursor))
+         || (parameters.getRelativePosition() == RPUndefined)))
+      // highly probable collision that can loop forever
+      throw ENotImplemented();
+
+   if (sourceCursor->isValid() && (isForward
+            ? ((endSource==nullptr) || (!sourceCursor->isEqual(*endSource)))
+            : ((startSource==nullptr) || (!sourceCursor->isEqual(*startSource))))) {
+#ifdef DefineMapCollection
+      ExtendedMapInsertionParameters paramsCopy(*aparamsCopy, sourceCursor->queryKey());
+#endif
+      _add(sourceCursor->getSElement(), paramsCopy, cursor);
+      if (cursor && parameters.isInsertion() && !parameters.isRemote())
+         paramsCopy.setRelativePosition(RPAfter);
+
+      for (sourceCursor->position(VirtualCollectionCursor::Position().setDirection(isForward ? RPAfter : RPBefore));
+           sourceCursor->isValid() && (isForward
+               ? ((endSource==nullptr) || (!sourceCursor->isEqual(*endSource)))
+               : ((startSource==nullptr) || (!sourceCursor->isEqual(*startSource))));
+           sourceCursor->position(VirtualCollectionCursor::Position()
+               .setDirection(isForward ? RPAfter : RPBefore))) {
+#ifdef DefineMapCollection
+         ExtendedMapInsertionParameters paramsCopy(*aparamsCopy, sourceCursor->queryKey());
+#endif
+         _add(sourceCursor->getSElement(), paramsCopy, cursor);
+      };
+   };
+   if ((endSource != nullptr) && (sourceCursor->isValid())) {
+#ifdef DefineMapCollection
+      ExtendedMapInsertionParameters paramsCopy(*aparamsCopy, sourceCursor->queryKey());
+#endif
+      _add(sourceCursor->getSElement(), paramsCopy, cursor);
+   };
+}
+
+#ifndef DefineMapCollection
+void
+VirtualCollection::pmoveTo(VirtualCollection& destination,
+      const ExtendedReplaceParameters& parameters, VirtualCollectionCursor* cursor,
+      VirtualCollectionCursor* destinationCursor) {
+#else
+template <class TypeKeyTraits>
+void
+TVirtualMapCollection<TypeKeyTraits>::pmoveTo(thisType& destination, const ExtendedReplaceParameters& parameters,
+      Cursor* cursor, Cursor* destinationCursor) {
+#endif
+   VirtualCollection::_moveTo(destination, parameters, cursor, destinationCursor);
+   if ((&destination != this) || (destinationCursor == nullptr)
+            || !destinationCursor->_isPositionned(parameters.getRemovePosition(), cursor)) {
+      EnhancedObject* movedObject = _getElement(
+            (const ExtendedSuppressParameters&) parameters, cursor);
+#ifdef DefineMapCollection
+      ExtendedMapInsertionParameters paramsCopy(
+         (const ExtendedInsertionParameters&) parameters, cursor->queryKey());
+      const ExtendedInsertionParameters& params = paramsCopy;
+#else
+      const ExtendedInsertionParameters& params = (const ExtendedInsertionParameters&) parameters;
+#endif
+      _remove((const ExtendedSuppressParameters&) parameters, cursor);
+      try {
+         destination._add(movedObject, params, destinationCursor);
+      }
+      catch (...) {
+         _add(movedObject, params, cursor);
+         throw;
+      };
+   };
+}
+

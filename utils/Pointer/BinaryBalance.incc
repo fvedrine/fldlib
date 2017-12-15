@@ -1,0 +1,316 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2013-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Low level implementation
+// File      : BinaryBalance.incc
+// Description :
+//   Implementation of balanced algorithms for binary trees.
+//   To avoid complexity in n*log(n)^2, the cursor should be stored in reverse order.
+//
+
+/* DefineTypeBinaryTree   : type of binary tree or ternary tree */
+/* DefineTernary          : ternary tree if defined             */
+/* DefineTypeBinaryParent : Node with parent                    */
+
+#ifndef DefineTemplate
+#define DefineTemplate 
+#define HasDefinedTemplate
+#define Typename 
+#else
+#ifdef HasDefinedTemplate
+#define Typename 
+#else
+#define Typename typename
+#endif
+#endif
+
+#ifndef DefineTypeBinaryParent
+DefineTemplate
+bool
+DefineTypeBinaryTree::balanceAfterInsertion(Cursor& cursor, CursorsNotification* notifications) {
+   for (int nodeIndex = cursor.depth()-1; nodeIndex > 0; nodeIndex--) {
+      Node* parentNode = cursor[nodeIndex-1];
+      Node* node = cursor[nodeIndex];
+#else // DefineTypeBinaryParent
+DefineTemplate
+bool
+DefineTypeBinaryTree::balanceAfterInsertion(Cursor& cursor) {
+   Node* node = nullptr;
+   Node* parentNode = cursor.getReference();
+   while (parentNode->parent() != nullptr) {
+      node = parentNode;
+      parentNode = node->parent();
+#endif // DefineTypeBinaryParent
+
+#ifdef DefineTernary
+      if (parentNode->sfollows() == node)
+         return true;
+#endif
+      if (parentNode->balance(node)) {
+         if (parentNode->left() == node) {
+            if (node->isRightBalanced()) {
+#ifndef DefineTypeBinaryParent
+               setElement(cursor, nodeIndex-1, (Node*) Node::rotateLeftRight(parentNode));
+               if (notifications) {
+                  notifications->add(CursorsNotification::
+                     AtomicNotification(cursor[nodeIndex-1]->left(), cursor[nodeIndex-1],
+                        CursorsNotification::AtomicNotification::RRotateLeft),
+                     CursorsNotification::SameLevel());
+                  notifications->add(CursorsNotification::
+                     AtomicNotification(cursor[nodeIndex-1]->right(), cursor[nodeIndex-1],
+                        CursorsNotification::AtomicNotification::RRotateRight));
+               };
+               if ((nodeIndex+1 < cursor.depth()) && (cursor[nodeIndex+1] == cursor[nodeIndex-1])) {
+                  if (nodeIndex+2 < cursor.depth()) {
+                     if (cursor[nodeIndex+2] != cursor[nodeIndex+1]->right()) {
+                        if (cursor[nodeIndex+2] != node->right())
+                           cursor[nodeIndex] = parentNode;
+                        cursor.removeAt(nodeIndex+1);
+                     }
+                     else
+                        cursor[nodeIndex] = parentNode;
+                  }
+                  else {
+                     cursor.removeAt(nodeIndex+1);
+                     cursor.removeAt(nodeIndex);
+                  };
+               };
+#else // DefineTypeBinaryParent
+               setElement(Node::rotateLeftRight(parentNode));
+#endif // DefineTypeBinaryParent
+               return false;
+            }
+            else {
+               bool doesPropagate=true;
+#ifndef DefineTypeBinaryParent
+               setElement(cursor, nodeIndex-1, (Node*) Node::rotateRight(parentNode, doesPropagate));
+               cursor[nodeIndex] = parentNode;
+               if (notifications)
+                  notifications->add(CursorsNotification::
+                     AtomicNotification(cursor[nodeIndex-1]->right(), cursor[nodeIndex-1],
+                        CursorsNotification::AtomicNotification::RRotateRight));
+               if ((nodeIndex < cursor.depth()-1) && (cursor[nodeIndex+1] == node->left()))
+                  cursor.removeAt(nodeIndex);
+#else // DefineTypeBinaryParent
+               setElement(Node::rotateRight(parentNode, doesPropagate));
+#endif // DefineTypeBinaryParent
+               if (!doesPropagate)
+                  return false;
+            };
+         }
+         else { // pnParentNode->right() == pnNode
+            if (node->isLeftBalanced()) {
+#ifndef DefineTypeBinaryParent
+               setElement(cursor, nodeIndex-1, (Node*) Node::rotateRightLeft(parentNode));
+               if (notifications) {
+                  notifications->add(CursorsNotification::
+                     AtomicNotification(cursor[nodeIndex-1]->right(), cursor[nodeIndex-1],
+                        CursorsNotification::AtomicNotification::RRotateRight),
+                     CursorsNotification::SameLevel());
+                  notifications->add(CursorsNotification::
+                     AtomicNotification(cursor[nodeIndex-1]->left(), cursor[nodeIndex-1],
+                        CursorsNotification::AtomicNotification::RRotateLeft));
+               };
+               if ((nodeIndex < cursor.depth()-1) && (cursor[nodeIndex+1] == cursor[nodeIndex-1])) {
+                  if (nodeIndex < cursor.depth()-2) {
+                     if (cursor[nodeIndex+2] != cursor[nodeIndex+1]->left()) {
+                        if (cursor[nodeIndex+2] != node->left())
+                           cursor[nodeIndex] = parentNode;
+                        cursor.removeAt(nodeIndex+1);
+                     }
+                     else
+                        cursor[nodeIndex] = parentNode;
+                  }
+                  else {
+                     cursor.removeAt(nodeIndex+1);
+                     cursor.removeAt(nodeIndex);
+                  };
+               };
+#else // DefineTypeBinaryParent
+               setElement(Node::rotateRightLeft(parentNode));
+#endif // DefineTypeBinaryParent
+               return false;
+            }
+            else {
+               bool doesPropagate = true;
+#ifndef DefineTypeBinaryParent
+               setElement(cursor, nodeIndex-1, (Node*) Node::rotateLeft(parentNode, doesPropagate));
+               if (notifications)
+                  notifications->add(CursorsNotification::
+                     AtomicNotification(cursor[nodeIndex-1]->left(), cursor[nodeIndex-1],
+                        CursorsNotification::AtomicNotification::RRotateLeft));
+               cursor[nodeIndex] = parentNode;
+               if ((nodeIndex < cursor.depth()-1) && (cursor[nodeIndex+1] == node->right()))
+                  cursor.removeAt(nodeIndex);
+#else // DefineTypeBinaryParent
+               setElement(Node::rotateLeft(parentNode, doesPropagate));
+#endif // DefineTypeBinaryParent
+               if (!doesPropagate)
+                  return false;
+            };
+         };
+      }
+      else if (parentNode->unbalance(node)) {
+         parentNode->setEqualBalance();
+         return false;
+      }
+      else {
+         parentNode->addBalance(node);
+#ifndef DefineTypeBinaryParent
+         if (notifications)
+            notifications->add(CursorsNotification::AtomicNotification(parentNode));
+#endif // DefineTypeBinaryParent
+      };
+   };
+   return true;
+}
+
+#ifndef DefineTypeBinaryParent
+DefineTemplate
+bool
+DefineTypeBinaryTree::balanceAfterSuppression(Cursor& cursor, Typename Node::Balance balance,
+      CursorsNotification* notifications) {
+   for (int nodeIndex = cursor.depth()-1; nodeIndex >= 0; nodeIndex--) {
+      Node* parentNode = cursor[nodeIndex];
+#ifdef DefineTernary
+      if ((nodeIndex < cursor.depth()-1) && (parentNode->sfollows() == cursor[nodeIndex+1]))
+         return true;
+#endif
+#else // DefineTypeBinaryParent
+DefineTemplate
+bool
+DefineTypeBinaryTree::balanceAfterSuppression(Cursor& cursor, Typename Node::Balance balance) {
+#ifdef DefineTernary
+   Node* node = nullptr;
+#endif // DefineTernary
+   for (Node* parentNode = cursor.getReference(); parentNode != nullptr; parentNode = parentNode->parent()) {
+#ifdef DefineTernary
+      if ((node != nullptr) && (parentNode->sfollows() == node))
+         return true;
+      node = parentNode;
+#endif
+#endif // DefineTypeBinaryParent
+      if (parentNode->unbalance(balance)) {
+         if (balance == COL::ImplBinaryNode::BRight) {
+            Node* otherNode = (Node*) parentNode->left();
+            if (otherNode->isRightBalanced()) {
+#ifndef DefineTypeBinaryParent
+               insertElementAt(cursor, nodeIndex, parentNode = (Node*) Node::rotateLeftRight(parentNode));
+               if (notifications) {
+                  notifications->add(CursorsNotification::
+                     AtomicNotification(cursor[nodeIndex]->left(), cursor[nodeIndex],
+                        CursorsNotification::AtomicNotification::RRotateLeft),
+                     CursorsNotification::SameLevel());
+                  notifications->add(CursorsNotification::
+                     AtomicNotification(cursor[nodeIndex]->right(), cursor[nodeIndex],
+                        CursorsNotification::AtomicNotification::RRotateRight));
+               };
+#else // DefineTypeBinaryParent
+               insertElementAt(parentNode = Node::rotateLeftRight(parentNode));
+#endif // DefineTypeBinaryParent
+            }
+            else {
+               bool doesStopPropagate = false;
+#ifndef DefineTypeBinaryParent
+               insertElementAt(cursor, nodeIndex, parentNode = (Node*) Node::rotateRight(parentNode, doesStopPropagate));
+               if (notifications)
+                  notifications->add(CursorsNotification::
+                     AtomicNotification(cursor[nodeIndex]->right(), cursor[nodeIndex],
+                        CursorsNotification::AtomicNotification::RRotateRight));
+#else // DefineTypeBinaryParent
+               insertElementAt(parentNode = Node::rotateRight(parentNode, doesStopPropagate));
+#ifdef DefineTernary
+               node = parentNode;
+#endif
+#endif // DefineTypeBinaryParent
+               if (doesStopPropagate)
+                  return false;
+            };
+         }
+         else { // bBalance == BLeft
+            Node* otherNode = (Node*) parentNode->right();
+            if (otherNode->isLeftBalanced()) {
+#ifndef DefineTypeBinaryParent
+               insertElementAt(cursor, nodeIndex, parentNode = (Node*) Node::rotateRightLeft(parentNode));
+               if (notifications) {
+                  notifications->add(CursorsNotification::
+                     AtomicNotification(cursor[nodeIndex]->right(), cursor[nodeIndex],
+                        CursorsNotification::AtomicNotification::RRotateRight),
+                     CursorsNotification::SameLevel());
+                  notifications->add(CursorsNotification::
+                     AtomicNotification(cursor[nodeIndex]->left(), cursor[nodeIndex],
+                        CursorsNotification::AtomicNotification::RRotateLeft));
+               };
+#else // DefineTypeBinaryParent
+               insertElementAt(parentNode = Node::rotateRightLeft(parentNode));
+#endif // DefineTypeBinaryParent
+            }
+            else {
+               bool doesStopPropagate = false;
+#ifndef DefineTypeBinaryParent
+               insertElementAt(cursor, nodeIndex, parentNode = (Node*) Node::rotateLeft(parentNode, doesStopPropagate));
+               if (notifications)
+                  notifications->add(CursorsNotification::
+                     AtomicNotification(cursor[nodeIndex]->left(), cursor[nodeIndex],
+                        CursorsNotification::AtomicNotification::RRotateLeft));
+#else // DefineTypeBinaryParent
+               insertElementAt(parentNode = Node::rotateLeft(parentNode, doesStopPropagate));
+#ifdef DefineTernary
+               node = parentNode;
+#endif
+#endif // DefineTypeBinaryParent
+               if (doesStopPropagate)
+                  return false;
+            };
+         };
+      }
+      else if (parentNode->balance(balance)) {
+         parentNode->setEqualBalance();
+#ifndef DefineTypeBinaryParent
+         if (notifications)
+            notifications->add(CursorsNotification::AtomicNotification(parentNode));
+#endif // DefineTypeBinaryParent
+      }
+      else {
+         parentNode->removeBalance(balance);
+         return false;
+      };
+#ifndef DefineTypeBinaryParent
+      if (nodeIndex > 0)
+         balance = (cursor[nodeIndex-1]->left() == parentNode) ? COL::ImplBinaryNode::BLeft : COL::ImplBinaryNode::BRight;
+#else // DefineTypeBinaryParent
+      if (parentNode->parent() != nullptr)
+         balance = (parentNode->parent()->left() == parentNode) ? COL::ImplBinaryNode::BLeft : COL::ImplBinaryNode::BRight;
+#endif // DefineTypeBinaryParent
+   };
+   return true;
+}
+
+#ifdef HasDefinedTemplate
+#undef DefineTemplate
+#undef HasDefinedTemplate
+#endif
+#undef Typename
+

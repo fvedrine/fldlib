@@ -1,0 +1,1312 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : ForwardNumerics
+// Unit      : Integer
+// File      : BaseInteger.inch
+// Description :
+//   Definition of a class of integers with unbound size.
+//
+
+#ifndef DefineGeneric
+
+#define DefineCellTemplateHeader(CellSize)                 \
+   template <int CellSize>
+#define DefineBasicCellIntegerTraits(CellSize)             \
+   TBasicCellIntegerTraits<CellSize>
+#define DefineCellIntegerTraits                            \
+   TCellIntegerTraits
+#define DefineCellTemplateParameters(CellSize)             \
+   <CellSize>
+#define DefineBaseType                                     \
+   unsigned int
+#define DefineBaseTypeConstReference                       \
+   unsigned int
+#define DefineSBaseType                                    \
+   unsigned int
+#define DefineSBaseTypeConstReference                      \
+   unsigned int
+#define DefineMemcpy(dest, source, size)                   \
+   std::memcpy(dest, source, size*sizeof(unsigned int))
+#define DefineSizeofBaseType                               \
+   sizeof(unsigned int)
+#define DefineSizeofBaseTypeInBits                         \
+   (sizeof(unsigned int)*8)
+#define DefineBigCellTemplateHeader                        \
+   template <class IntegerTraits>
+#define DefineBigCellSTemplateHeader                       \
+   template <class TypeIntegerTraits>
+#define DefineBigCellIntAlgo                               \
+   TBigCellInt
+#define DefineBigCellTemplateParameters(TypeIntegerTraits) \
+   <TypeIntegerTraits>
+#define DefineBigCellInt                                   \
+   TBigCellInt
+#define DefineBigIntTemplateHeader(BitSize)                \
+   template <int BitSize>
+#define DefineBigIntIntegerTraits                          \
+   TIntegerTraits
+#define DefineBigIntTemplateParameters(BitSize)            \
+   <BitSize>
+#define DefineBigInt                                       \
+   TBigInt
+
+#else // DefineGeneric
+
+#define DefineCellTemplateHeader(CellSize)                 \
+   template <class BaseStoreTraits, int CellSize>
+#define DefineBasicCellIntegerTraits(CellSize)             \
+   TGBasicCellIntegerTraits<BaseStoreTraits, CellSize>
+#define DefineCellIntegerTraits                            \
+   TGCellIntegerTraits
+#define DefineCellTemplateParameters(CellSize)             \
+   <BaseStoreTraits, CellSize>
+#define DefineBaseType                                     \
+   typename BaseStoreTraits::BaseType
+#define DefineBaseTypeConstReference                       \
+   typename BaseStoreTraits::BaseTypeConstReference
+#define DefineSBaseType                                    \
+   BaseType
+#define DefineSBaseTypeConstReference                      \
+   BaseTypeConstReference
+#define DefineMemcpy(dest, source, size)                   \
+   BaseStoreTraits::copyArray(dest, source, size)
+#define DefineSizeofBaseType                               \
+   (BaseStoreTraits::sizeBaseInBits()/8)
+#define DefineSizeofBaseTypeInBits                         \
+   BaseStoreTraits::sizeBaseInBits()
+#define DefineBigCellTemplateHeader                        \
+   template <class BaseStoreTraits, class IntegerTraits>
+#define DefineBigCellSTemplateHeader                       \
+   template <class TypeBaseStoreTraits, class TypeIntegerTraits>
+#define DefineBigCellIntAlgo                               \
+   TGBigCellIntAlgo
+#define DefineBigCellTemplateParameters(TypeIntegerTraits) \
+   <BaseStoreTraits, TypeIntegerTraits>
+#define DefineBigCellInt                                   \
+   TGBigCellInt
+#define DefineBigIntTemplateHeader(BitSize)                \
+   template <class BaseStoreTraits, int BitSize>
+#define DefineBigIntIntegerTraits                          \
+   TGIntegerTraits
+#define DefineBigIntTemplateParameters(BitSize)            \
+   <BaseStoreTraits, BitSize>
+#define DefineBigInt                                       \
+   TGBigInt
+
+#endif // DefineGeneric
+
+#ifdef DefineBigCellClass
+
+namespace DInteger {
+
+/**********************************************************************************/
+/* Definition of the template classes TGCellIntegerTraits and TGCellIntegerTraits */
+/**********************************************************************************/
+
+DefineCellTemplateHeader(UCellSize)
+class DefineCellIntegerTraits : public DefineBasicCellIntegerTraits(UCellSize) {
+  private:
+   typedef DefineBasicCellIntegerTraits(UCellSize) inherited;
+   typedef DefineCellIntegerTraits DefineCellTemplateParameters(UCellSize) thisType;
+
+  public:
+   DefineCellIntegerTraits() = default;
+   DefineCellIntegerTraits(const thisType& source) = default;
+   thisType& operator=(const thisType& source) = default;
+   thisType& operator=(DefineBaseTypeConstReference source)
+      {  return (thisType&) inherited::operator=(source); }
+
+   class MultResult : public DefineBasicCellIntegerTraits(2*UCellSize) {
+     private:
+      typedef DefineBasicCellIntegerTraits(2*UCellSize) inherited;
+     public:
+      MultResult() = default;
+      MultResult(const MultResult& source) = default;
+      MultResult(const DefineBasicCellIntegerTraits(UCellSize)& source)
+         {  DefineMemcpy(inherited::_array(), source._array(), UCellSize); }
+      friend class DefineCellIntegerTraits DefineCellTemplateParameters(UCellSize);
+   };
+   friend class MultResult;
+   thisType& operator=(const MultResult& source)
+      {  DefineMemcpy(inherited::_array(), source._array(), UCellSize); return *this; }
+
+   typedef DefineCellIntegerTraits DefineCellTemplateParameters(UCellSize) QuotientResult;
+   typedef DefineCellIntegerTraits  DefineCellTemplateParameters(UCellSize) RemainderResult;
+   typedef DefineBasicCellIntegerTraits(UCellSize+1) NormalizedRemainderResult;
+   void copyLow(const MultResult& result)
+      {  DefineMemcpy(inherited::arrayStart(), result.arrayStart(), UCellSize); }
+   typedef DefineBasicCellIntegerTraits(UCellSize+1) ExtendedInteger;
+};
+
+/*******************************************************************/
+/* Definition of the template classes TBigCellInt and TGBigCellInt */
+/*******************************************************************/
+
+#ifdef DefineGeneric
+
+DefineBigCellTemplateHeader
+class DefineBigCellInt;
+
+#endif
+
+#ifdef DefineGeneric
+
+DefineBigCellTemplateHeader
+class DefineBigCellIntAlgo : protected IntegerTraits
+
+#else
+
+DefineBigCellTemplateHeader
+class DefineBigCellIntAlgo : public DInteger::Access, protected IntegerTraits
+
+#endif
+{ public:
+#ifdef DefineGeneric
+   typedef DefineBaseType DefineSBaseType;
+   typedef DefineBaseTypeConstReference DefineSBaseTypeConstReference;
+#endif
+   typedef typename IntegerTraits::ArrayProperty ArrayProperty;
+
+  private:
+   typedef DefineBigCellIntAlgo DefineBigCellTemplateParameters(IntegerTraits) thisType;
+   typedef IntegerTraits inherited;
+
+   static DefineSBaseType add(ArrayProperty cell, DefineSBaseTypeConstReference value)
+      {  DefineSBaseType temp = cell;
+         cell += value;
+#ifndef DefineGeneric
+         return (cell < temp) ? 1U : 0U;
+#else
+         return BaseStoreTraits::detectCarryAfterAddition(cell, temp);
+#endif
+      }
+   static DefineSBaseType sub(ArrayProperty cell, DefineSBaseTypeConstReference value)
+      {  
+#ifndef DefineGeneric
+         unsigned int temp = cell;
+#else
+         BaseType result = BaseStoreTraits::detectCarryBeforeSubstraction(cell, value);
+#endif
+         cell -= value;
+#ifndef DefineGeneric
+         return (cell > temp) ? 1U : 0U;
+#else
+         return result;
+#endif
+      }
+
+#ifdef DefineGeneric
+   DefineBigCellSTemplateHeader
+   friend class DefineBigCellInt;
+#endif
+
+  public:
+   DefineBigCellIntAlgo() = default;
+   DefineBigCellIntAlgo(DefineSBaseTypeConstReference value) : inherited() { inherited::array(0) = value; }
+   DefineBigCellIntAlgo(const thisType& source) = default;
+   thisType& operator=(const thisType& source) = default;
+   thisType& operator=(DefineSBaseTypeConstReference value)
+      {  inherited::clear(); inherited::array(0) = value; return *this; }
+
+   ArrayProperty array(int index) { return inherited::array(index); }
+   DefineSBaseTypeConstReference array(int index) const { return inherited::array(index); }
+   DefineSBaseTypeConstReference carray(int index) const { return inherited::carray(index); }
+
+   class MidArray {
+     private:
+      IntegerTraits* pitArray;
+      int uIndex;
+
+     public:
+      MidArray(DefineBigCellIntAlgo DefineBigCellTemplateParameters(IntegerTraits)& source, int index)
+         : pitArray(&source), uIndex(index) {}
+      MidArray(MidArray&&) = default;
+      MidArray(const MidArray&) = delete;
+      MidArray& operator=(DefineSBaseTypeConstReference value)
+         {  
+#ifndef DefineGeneric
+            unsigned int store = pitArray->array(uIndex >> 1);
+            pitArray->array(uIndex >> 1) = (uIndex & 1U)
+               ? ((value << (4*sizeof(unsigned int)))
+                  | (store & ~(~0U << 4*sizeof(unsigned int))))
+               : ((store & (~0U << 4*sizeof(unsigned int))) | value);
+#else
+            if (uIndex & 0x1)
+               BaseStoreTraits::storeIntoMidHighPart(value, pitArray->array(uIndex >> 1));
+            else
+               BaseStoreTraits::storeIntoMidLowPart(value, pitArray->array(uIndex >> 1));
+#endif
+            return *this;
+         }
+      operator DefineSBaseType() const
+         {  
+            return (uIndex & 1U)
+#ifndef DefineGeneric
+               ? (pitArray->array(uIndex >> 1) >> 4*sizeof(unsigned int))
+               : (pitArray->array(uIndex >> 1) & ~(~0U << 4*sizeof(unsigned int)));
+#else
+               ? BaseStoreTraits::getMidHighPart(pitArray->array(uIndex >> 1))
+               : BaseStoreTraits::getMidLowPart(pitArray->array(uIndex >> 1));
+#endif
+         }
+   };
+   friend class MidArray;
+   MidArray midArray(int index) { return MidArray(*this, index); }
+   DefineSBaseType midArray(int index) const
+      {  return (index & 1U)
+#ifndef DefineGeneric
+            ? (array(index >> 1) >> 4*sizeof(unsigned int))
+            : (array(index >> 1) & ~(~0U << 4*sizeof(unsigned int)));
+#else
+            ? BaseStoreTraits::getMidHighPart(array(index >> 1))
+            : BaseStoreTraits::getMidLowPart(array(index >> 1));
+#endif
+      }
+   void setMidArray(int index, DefineSBaseTypeConstReference value)
+      {  
+#ifndef DefineGeneric
+         unsigned int store = array(index >> 1);
+         array(index >> 1) = (index & 1U)
+            ? ((value << (4*sizeof(unsigned int)))
+               | (store & ~(~0U << 4*sizeof(unsigned int))))
+            : ((store & (~0U << 4*sizeof(unsigned int))) | value);
+#else
+         if (index & 0x1)
+            BaseStoreTraits::storeIntoMidHighPart(value, array(index >> 1));
+         else
+            BaseStoreTraits::storeIntoMidLowPart(value, array(index >> 1));
+#endif
+      }
+   DefineSBaseType cmidArray(int index) const { return midArray(index); }
+
+   class BitArray {
+     private:
+      IntegerTraits* pitArray;
+      int uIndex;
+
+     public:
+      BitArray(DefineBigCellIntAlgo DefineBigCellTemplateParameters(IntegerTraits)& source, int index)
+         :  pitArray(&source), uIndex(index) {}
+      BitArray(BitArray&& source) = default;
+      BitArray(const BitArray& source) = delete;
+      // BitArray& operator=(BitArray&& source) = default;
+      BitArray& operator=(const BitArray& source) = delete;
+      BitArray& operator=(bool value)
+         {  if (value)
+#ifndef DefineGeneric
+               pitArray->array(uIndex/DefineSizeofBaseTypeInBits) 
+                  |= (1U << (uIndex%DefineSizeofBaseTypeInBits));
+#else
+               BaseStoreTraits::setTrueBit(pitArray->array(uIndex/DefineSizeofBaseTypeInBits),
+                  uIndex%DefineSizeofBaseTypeInBits);
+#endif
+            else
+#ifndef DefineGeneric
+               pitArray->array(uIndex/DefineSizeofBaseTypeInBits)
+                  &= ~(1U << (uIndex%DefineSizeofBaseTypeInBits));
+#else
+               BaseStoreTraits::setFalseBit(pitArray->array(uIndex/DefineSizeofBaseTypeInBits),
+                  uIndex%DefineSizeofBaseTypeInBits);
+#endif
+            return *this;
+         }
+      operator bool() const
+         {  
+#ifndef DefineGeneric
+            return (pitArray->array(uIndex/DefineSizeofBaseTypeInBits)
+                  & (1U << (uIndex%DefineSizeofBaseTypeInBits)))
+               ? true : false;
+#else
+            return BaseStoreTraits::getBit(pitArray->array(uIndex/DefineSizeofBaseTypeInBits),
+               uIndex%DefineSizeofBaseTypeInBits);
+#endif
+         }
+   };
+   friend class BitArray;
+   BitArray bitArray(int index) { return BitArray(*this, index); }
+   bool bitArray(int index) const
+      {  
+#ifndef DefineGeneric
+         return (array(index/DefineSizeofBaseTypeInBits) & (1U << (index%DefineSizeofBaseTypeInBits)))
+            ? true : false;
+#else
+         return BaseStoreTraits::getBit(array(index/DefineSizeofBaseTypeInBits),
+               index%DefineSizeofBaseTypeInBits);
+#endif
+      }
+   bool cbitArray(int index) const
+      {  
+#ifndef DefineGeneric
+         return (array(index/DefineSizeofBaseTypeInBits) & (1U << (index%DefineSizeofBaseTypeInBits)))
+            ? true : false;
+#else
+         return BaseStoreTraits::getBit(array(index/DefineSizeofBaseTypeInBits),
+               index%DefineSizeofBaseTypeInBits);
+#endif
+      }
+   void setBitArray(int index, bool value)
+      {  if (value)
+#ifndef DefineGeneric
+            array(index/DefineSizeofBaseTypeInBits) |= (1U << (index%DefineSizeofBaseTypeInBits));
+#else
+            BaseStoreTraits::setTrueBit(array(index/DefineSizeofBaseTypeInBits),
+               index%DefineSizeofBaseTypeInBits);
+#endif
+         else
+#ifndef DefineGeneric
+            array(index/DefineSizeofBaseTypeInBits) &= ~(1U << (index%DefineSizeofBaseTypeInBits));
+#else
+            BaseStoreTraits::setFalseBit(array(index/DefineSizeofBaseTypeInBits),
+               index%DefineSizeofBaseTypeInBits);
+#endif
+      }
+   void setTrueBitArray(int index)
+      {  
+#ifndef DefineGeneric
+         array(index/DefineSizeofBaseTypeInBits) |= (1U << (index%DefineSizeofBaseTypeInBits));
+#else
+         BaseStoreTraits::setTrueBit(array(index/DefineSizeofBaseTypeInBits),
+            index%DefineSizeofBaseTypeInBits);
+#endif
+      }
+   void setFalseBitArray(int index)
+      {  
+#ifndef DefineGeneric
+         array(index/DefineSizeofBaseTypeInBits) &= ~(1U << (index%DefineSizeofBaseTypeInBits));
+#else
+         BaseStoreTraits::setFalseBit(array(index/DefineSizeofBaseTypeInBits),
+            index%DefineSizeofBaseTypeInBits);
+#endif
+      }
+
+   ComparisonResult compare(const thisType& source) const;
+   bool operator<(const thisType& source) const
+      {  return compare(source) == CRLess; }
+   bool operator>(const thisType& source) const
+      {  return compare(source) == CRGreater; }
+   bool operator<=(const thisType& source) const
+      {  return compare(source) <= CREqual; }
+   bool operator>=(const thisType& source) const
+      {  return compare(source) >= CREqual; }
+   bool operator==(const thisType& source) const
+      {  return compare(source) == CREqual; }
+   bool operator!=(const thisType& source) const
+      {  return compare(source) != CREqual; }
+
+   class Carry {
+     private:
+      DefineSBaseType uCarry;
+
+     public:
+      Carry(DefineSBaseType carry=0) : uCarry(carry) {}
+      Carry(const Carry& source) = default;
+      Carry& operator=(const Carry& source) = default;
+
+      void setCarry(bool carry=true)
+         { 
+#ifndef DefineGeneric
+            uCarry = carry ? 1U : 0U; 
+#else
+            if (carry) uCarry = (DefineSBaseType) 0x1; else uCarry = (DefineSBaseType) 0x0;
+#endif
+         }
+      bool hasCarry() const
+         {
+#ifndef DefineGeneric
+            return uCarry != 0U;
+#else
+            return !BaseStoreTraits::isZeroValue(uCarry);
+#endif
+         }
+      void setIntCarry(DefineSBaseTypeConstReference carry) { uCarry = carry; }
+      const DefineSBaseType& carry() const { return uCarry; }
+      DefineSBaseType& carry() { return uCarry; }
+   };
+   Carry add(const thisType& source);
+   Carry sub(const thisType& source);
+   thisType& operator+=(const thisType& source) { add(source); return *this; }
+   thisType& operator-=(const thisType& source) { sub(source); return *this; }
+   Carry multAssign(DefineSBaseTypeConstReference source);
+
+   thisType& operator<<=(int shift);
+   thisType& operator>>=(int shift);
+
+#ifdef DefineGeneric
+};
+
+DefineBigCellTemplateHeader
+class DefineBigCellInt : protected DefineBigCellIntAlgo DefineBigCellTemplateParameters(IntegerTraits) {
+  public:
+   typedef DefineBaseType DefineSBaseType;
+   typedef DefineBaseTypeConstReference DefineSBaseTypeConstReference;
+#endif
+
+  public:
+#ifdef StandardClassesHPP
+   class FormatParameters : public STG::IOObject::FormatParameters {
+     private:
+      typedef STG::IOObject::FormatParameters inherited;
+      int uLength;
+      
+     protected:
+      enum Type { TInternal, TBinary, TFullBinary, TFullHexaDecimal, THexaDecimal, TIntegerCell, TDecimal };
+      DefineExtendedParameters(4, inherited)
+      DefineSubExtendedParameters(Type, 3, INHERITED)
+      DefineSubExtendedParameters(Sign, 1, Type)
+      
+     public:
+      FormatParameters() : uLength(0) {}
+      FormatParameters(const FormatParameters& source) = default;
+
+      bool isBinary() const
+         {  Type type = (Type) queryTypeField();
+            return (type == TFullBinary) || (type == TBinary);
+         }
+      bool isFullBinary() const { return queryTypeField() == TFullBinary; }
+      bool isLightBinary() const { return queryTypeField() == TBinary; }
+      bool isFullHexaDecimal() const { return queryTypeField() == TFullHexaDecimal; }
+      bool isHexaDecimal() const { return queryTypeField() == THexaDecimal; }
+      bool isInternal() const { return queryTypeField() == TInternal; }
+      bool isIntegerCell() const { return queryTypeField() == TIntegerCell; }
+      bool isDecimal() const { return queryTypeField() == TDecimal; }
+      bool isSigned() const { return hasSignField(); }
+
+      FormatParameters& setInternal() { setTypeField(TInternal); return *this; }
+      FormatParameters& setFullBinary(int length)
+         {  setTypeField(TFullBinary);
+            uLength = length;
+            return *this;
+         }
+      FormatParameters& setFullHexaDecimal(int length)
+         {  setTypeField(TFullHexaDecimal);
+            uLength = length;
+            return *this;
+         }
+      FormatParameters& setHexaDecimal() { setTypeField(THexaDecimal); return *this; }
+      FormatParameters& setBinary() { setTypeField(TBinary); return *this; }
+      FormatParameters& setIntegerCell() { setTypeField(TIntegerCell); return *this; }
+      FormatParameters& setDecimal() { setTypeField(TDecimal); return *this; }
+      FormatParameters& setSigned(int length) { mergeSignField(1); uLength = length; return *this; }
+      const int& getLength() const { return uLength; }
+   };
+#else // !StandardClassesHPP
+   class FormatParameters {
+     private:
+      int uLength;
+      
+     protected:
+      enum Type { TInternal, TBinary, TFullBinary, TFullHexaDecimal, THexaDecimal, TIntegerCell, TDecimal };
+      
+     private:
+      bool fRaw  : 1;
+      Type tType : 3;
+      bool fSign : 1;
+
+     public:
+      FormatParameters() : uLength(0), fRaw(false), tType(TInternal), fSign(false) {}
+      FormatParameters(const FormatParameters& source) = default;
+
+      bool isRaw() const { return fRaw; }
+      bool isBinary() const { return (tType == TFullBinary) || (tType == TBinary); }
+      bool isFullBinary() const { return tType == TFullBinary; }
+      bool isLightBinary() const { return tType == TBinary; }
+      bool isFullHexaDecimal() const { return tType == TFullHexaDecimal; }
+      bool isHexaDecimal() const { return tType == THexaDecimal; }
+      bool isInternal() const { return tType == TInternal; }
+      bool isIntegerCell() const { return tType == TIntegerCell; }
+      bool isDecimal() const { return tType == TDecimal; }
+      bool isSigned() const { return fSign; }
+
+      FormatParameters& setRaw() { fRaw = true; return *this; }
+      FormatParameters& setInternal() { tType = TInternal; return *this; }
+      FormatParameters& setFullBinary(int length)
+         {  tType = TFullBinary; uLength = length; return *this; }
+      FormatParameters& setFullHexaDecimal(int length)
+         {  tType = TFullHexaDecimal; uLength = length; return *this; }
+      FormatParameters& setHexaDecimal() { tType = THexaDecimal; return *this; }
+      FormatParameters& setBinary() { tType = TBinary; return *this; }
+      FormatParameters& setIntegerCell() { tType = TIntegerCell; return *this; }
+      FormatParameters& setDecimal() { tType = TDecimal; return *this; }
+      FormatParameters& setSigned(int length) { fSign = true; uLength = length; return *this; }
+      const int& getLength() const { return uLength; }
+   };
+#endif // StandardClassesHPP
+
+#ifdef DefineGeneric
+   typedef typename IntegerTraits::ArrayProperty ArrayProperty;
+#endif
+
+  private:
+#ifdef DefineGeneric
+   typedef DefineBigCellInt DefineBigCellTemplateParameters(IntegerTraits) thisType;
+   typedef DefineBigCellIntAlgo DefineBigCellTemplateParameters(IntegerTraits) inherited;
+#endif
+
+   class HexaChars {
+     public:
+      static bool accept(int val)
+         {  return (val >= '0' && val <= '9') || (val >= 'a' && val <= 'f') || (val >= 'A' && val <= 'F'); }
+      static int queryValue(char achar)
+         {  return ((achar >= '0') && (achar <= '9')) ? (achar-'0')
+               : (((achar >= 'a') && (achar <= 'f')) ? (achar-'a'+10)
+               : (((achar >= 'A') && (achar <= 'F')) ? (achar-'A'+10)
+               : -1));
+         }
+   };
+
+#ifdef DefineGeneric
+   static DefineSBaseType add(ArrayProperty cell, DefineSBaseTypeConstReference value)
+      {  return inherited::add(cell, value); }
+   static DefineSBaseType sub(ArrayProperty cell, DefineSBaseTypeConstReference value)
+      {  return inherited::sub(cell, value); }
+#endif
+
+   bool verifyAtomicity() const;
+   DefineSBaseType retrieveSignificantMidDivide(int logBase2, bool& isExact) const;
+   DefineSBaseType retrieveSignificantMidDivideNormalized(bool& isExact) const;
+
+   DefineBigCellSTemplateHeader friend class DefineBigCellInt;
+
+   void writeFullBinary(STG::IOObject::OSBase& out, const FormatParameters& params) const;
+   void writeFullHexaDecimal(STG::IOObject::OSBase& out, const FormatParameters& params) const;
+   void writeHexaDecimal(STG::IOObject::OSBase& out, const FormatParameters& params) const;
+   void writeInternal(STG::IOObject::OSBase& out, const FormatParameters& params) const;
+   void writeCells(STG::IOObject::OSBase& out, const FormatParameters& params) const;
+   void writeDecimal(STG::IOObject::OSBase& out, const FormatParameters& params) const;
+
+  protected:
+   static int log_base_2(DefineSBaseTypeConstReference value)
+      {  
+#ifndef DefineGeneric
+         return DInteger::Access::log_base_2(value);
+#else
+         return BaseStoreTraits::log_base_2(value);
+#endif
+      }
+
+  public:
+#ifdef DefineGeneric
+   typedef typename inherited::MidArray MidArray;
+   MidArray midArray(int index) { return inherited::midArray(index); }
+   DefineSBaseType midArray(int index) const { return inherited::midArray(index); }
+   void setMidArray(int index, DefineSBaseTypeConstReference value) { inherited::setMidArray(index, value); }
+   DefineSBaseType cmidArray(int index) const { return inherited::cmidArray(index); }
+   typedef typename inherited::BitArray BitArray;
+   BitArray bitArray(int index) { return inherited::bitArray(index); }
+   bool bitArray(int index) const { return inherited::bitArray(index); }
+   bool cbitArray(int index) const { return inherited::cbitArray(index); }
+   void setBitArray(int index, bool value) { inherited::setBitArray(index, value); }
+   void setTrueBitArray(int index) { inherited::setTrueBitArray(index); }
+   void setFalseBitArray(int index) { inherited::setFalseBitArray(index); }
+
+   ArrayProperty array(int index) { return inherited::array(index); }
+   DefineSBaseTypeConstReference array(int index) const { return inherited::array(index); }
+   DefineSBaseTypeConstReference carray(int index) const { return inherited::carray(index); }
+
+   DefineBigCellInt() : inherited() {}
+   DefineBigCellInt(DefineSBaseTypeConstReference value) : inherited(value) {}
+   DefineBigCellInt(const thisType& source) : inherited(source) {}
+   thisType& operator=(const thisType& source)
+      {  return (thisType&) inherited::operator=(source); }
+   thisType& operator=(BaseTypeConstReference value)
+      {  return (thisType&) inherited::operator=(value); }
+#endif
+
+   DefineSBaseTypeConstReference operator[](int index) const { return inherited::array(index); }
+   typename inherited::ArrayProperty operator[](int index) { return inherited::array(index); }
+
+#ifdef DefineGeneric
+   ComparisonResult compare(const thisType& source) const { return inherited::compare(source); }
+   bool operator<(const thisType& source) const { return inherited::operator<(source); }
+   bool operator>(const thisType& source) const { return inherited::operator>(source); }
+   bool operator<=(const thisType& source) const { return inherited::operator<=(source); }
+   bool operator>=(const thisType& source) const { return inherited::operator>=(source); }
+   bool operator==(const thisType& source) const { return inherited::operator==(source); }
+   bool operator!=(const thisType& source) const { return inherited::operator!=(source); }
+   thisType& operator<<=(int shift) { return (thisType&) inherited::operator<<=(shift); }
+   thisType& operator>>=(int shift) { return (thisType&) inherited::operator>>=(shift); }
+#endif
+   void leftShiftLocal(int index, int shift);
+   void rightShiftLocal(int index, int shift);
+   thisType& operator|=(const thisType& source);
+   thisType& operator^=(const thisType& source);
+   thisType& operator&=(const thisType& source);
+   thisType& neg();
+   thisType& neg(int shift);
+   thisType& clear(int shift);
+   thisType& clearHigh(int shift);
+   thisType& saturate(int shift);
+   bool isZero() const;
+   bool hasZero(int shift) const;
+   
+#ifndef DefineGeneric
+   Carry plusAssign(const thisType& source) { return add(source); }
+   Carry minusAssign(const thisType& source) { return sub(source); }
+#else
+   typedef typename inherited::Carry Carry;
+   Carry add(const thisType& source) { return inherited::add(source); }
+   Carry sub(const thisType& source) { return inherited::sub(source); }
+   Carry plusAssign(const thisType& source) { return inherited::add(source); }
+   Carry minusAssign(const thisType& source) { return inherited::sub(source); }
+#endif
+
+   Carry inc();
+   Carry dec();
+
+#ifdef DefineGeneric
+   thisType& operator+=(const thisType& source) { inherited::add(source); return *this; }
+#endif
+   thisType operator+(const thisType& source) const
+      {  thisType result = *this; result += source; return result; }
+#ifdef DefineGeneric
+   thisType& operator-=(const thisType& source) { inherited::sub(source); return *this; }
+#endif
+   thisType operator-(const thisType& source) const
+      {  thisType result = *this; result -= source; return result; }
+   thisType& operator--() { dec(); return *this; }
+   thisType& operator++() { inc(); return *this; }
+#ifdef DefineGeneric
+   Carry multAssign(BaseTypeConstReference source) { return inherited::multAssign(source); }
+#endif
+   typedef typename inherited::MultResult MultResult;
+   void mult(const thisType& source, MultResult& result) const;
+   thisType& operator*=(const thisType& source)
+      {  MultResult result;
+         mult(source, result);
+         inherited::copyLow(result);
+         return *this;
+      }
+   thisType& operator*=(DefineSBaseTypeConstReference source)
+      {  Carry carry = multAssign(source); AssumeCondition(!carry.hasCarry()) return *this; }
+
+   class DivisionResult;
+   class NormalizedDivisionResult;
+   class AtomicDivisionResult;
+   void div(const thisType& source, DivisionResult& result) const;
+   void divNormalized(const thisType& source, NormalizedDivisionResult& result) const;
+   AtomicDivisionResult divAssign(DefineSBaseTypeConstReference source);
+
+   typedef typename IntegerTraits::QuotientResult QuotientResult;
+   typedef typename IntegerTraits::RemainderResult RemainderResult;
+   typedef typename IntegerTraits::NormalizedRemainderResult NormalizedRemainderResult;
+   int getSize() const { return inherited::getSize(); }
+   void assertSize(int newSize) { inherited::assertSize(newSize); }
+   
+   class DivisionResult {
+     private:
+      typename IntegerTraits::QuotientResult qrQuotient;
+      typename IntegerTraits::RemainderResult rrRemainder;
+      int uComma;
+
+      friend void DefineBigCellInt DefineBigCellTemplateParameters(IntegerTraits)::div(const thisType& source,
+            DivisionResult& result) const;
+
+     public:
+      DivisionResult() : qrQuotient(), rrRemainder(), uComma(0) {}
+      DivisionResult(const DivisionResult& source) = default;
+      DivisionResult& operator=(const DivisionResult& source) = default;
+
+      const typename IntegerTraits::QuotientResult& quotient() const { return qrQuotient; }
+      typename IntegerTraits::QuotientResult& quotient() { return qrQuotient; }
+      const typename IntegerTraits::RemainderResult& remainder() const { return rrRemainder; }
+      typename IntegerTraits::RemainderResult& remainder() { return rrRemainder; }
+      const int& comma() const { return uComma; }
+      int& comma() { return uComma; }
+   };
+   class NormalizedDivisionResult {
+    private:
+      typename IntegerTraits::QuotientResult qrQuotient;
+      typename IntegerTraits::NormalizedRemainderResult rrRemainder;
+      int uComma;
+
+      friend void DefineBigCellInt DefineBigCellTemplateParameters(IntegerTraits)::divNormalized(
+            const thisType& source, NormalizedDivisionResult& result) const;
+
+     public:
+      NormalizedDivisionResult() : qrQuotient(), rrRemainder(), uComma(0) {}
+      NormalizedDivisionResult(const NormalizedDivisionResult& source) = default;
+      NormalizedDivisionResult& operator=(const NormalizedDivisionResult& source) = default;
+
+      const typename IntegerTraits::QuotientResult& quotient() const { return qrQuotient; }
+      typename IntegerTraits::QuotientResult& quotient() { return qrQuotient; }
+      const typename IntegerTraits::NormalizedRemainderResult& remainder() const { return rrRemainder; }
+      typename IntegerTraits::NormalizedRemainderResult& remainder() { return rrRemainder; }
+      const int& comma() const { return uComma; }
+      int& comma() { return uComma; } 
+   };
+
+   class AtomicDivisionResult {
+     private:
+      DefineSBaseType uRemainder;
+      
+      friend AtomicDivisionResult DefineBigCellInt DefineBigCellTemplateParameters(IntegerTraits)::divAssign(
+            DefineSBaseTypeConstReference source);
+
+     public:
+      AtomicDivisionResult(DefineSBaseType remainder=0U) : uRemainder(remainder) {}
+      AtomicDivisionResult(const AtomicDivisionResult& source) = default;
+      AtomicDivisionResult& operator=(const AtomicDivisionResult& source) = default;
+      const DefineSBaseType& modulo() const { return uRemainder; }
+      const DefineSBaseType& remainder() const { return uRemainder; }
+      DefineSBaseType& modulo() { return uRemainder; }
+      DefineSBaseType& remainder() { return uRemainder; }
+   };
+
+   thisType& operator/=(const thisType& source);
+   thisType& operator/=(DefineSBaseTypeConstReference source) { divAssign(source); return *this; }
+   typename IntegerTraits::QuotientResult operator/(const thisType& source) const;
+   DefineSBaseType operator%(DefineSBaseTypeConstReference source) const
+      {  thisType copy(*this);
+         return copy.divAssign(source).remainder();
+      }
+   thisType& operator%=(const thisType& source);
+
+   int log_base_2() const;
+   void write(STG::IOObject::OSBase& out, const FormatParameters& params) const;
+   void read(STG::IOObject::ISBase& in, const FormatParameters& params);
+   DefineSBaseTypeConstReference getValue() const
+      {  AssumeCondition(verifyAtomicity())
+         return array(0);
+      }
+   bool isAtomic() const { return verifyAtomicity(); }
+   const IntegerTraits& implementation() const { return (inherited&) *this; }
+   IntegerTraits& implementation() { return (inherited&) *this; }
+   void swap(thisType& source) { inherited::swap(source); }
+   void clear() { inherited::clear(); }
+};
+
+DefineBigCellTemplateHeader
+inline DefineBigCellInt DefineBigCellTemplateParameters(IntegerTraits)&
+DefineBigCellInt DefineBigCellTemplateParameters(IntegerTraits)::operator/=(const thisType& source) {
+   DivisionResult result;
+   result.quotient().adjustSize(getSize());
+   result.remainder().adjustSize(getSize());
+   div(source, result);
+   if (result.comma() > 0) {
+      IntegerTraits::operator=(result.quotient());
+      operator>>=(inherited::getSize()*DefineSizeofBaseTypeInBits-result.comma());
+      setTrueBitArray(result.comma());
+   }
+   else if (result.comma() == 0)
+      *this = (DefineSBaseType) 0x1;
+   else
+      *this = (DefineSBaseType) 0x0;
+   return *this;
+}
+
+DefineBigCellTemplateHeader
+inline typename IntegerTraits::QuotientResult
+DefineBigCellInt DefineBigCellTemplateParameters(IntegerTraits)::operator/(const thisType& source) const {
+   DivisionResult result;
+   result.quotient().adjustSize(getSize());
+   result.remainder().adjustSize(getSize());
+   div(source, result);
+   if (result.comma() > 0) {
+      auto& promotedResult = (DefineBigCellInt DefineBigCellTemplateParameters(typename inherited::QuotientResult)&)
+            result.quotient();
+      int shift = result.quotient().getSize()*DefineSizeofBaseTypeInBits-result.comma();
+      promotedResult >>= shift;
+      promotedResult.setTrueBitArray(result.comma());
+   }
+   else {
+      result.quotient().clear();
+      result.quotient()[0] = (result.comma() == 0) ? 0x1 : 0x0;
+   };
+   return result.quotient();
+}
+
+DefineBigCellTemplateHeader
+inline DefineBigCellInt DefineBigCellTemplateParameters(IntegerTraits)&
+DefineBigCellInt DefineBigCellTemplateParameters(IntegerTraits)::operator%=(const thisType& source) {
+   DivisionResult result;
+   result.quotient().adjustSize(getSize());
+   result.remainder().adjustSize(getSize());
+   div(source, result);
+   if (result.comma() > 0) {
+      auto& promotedResult = (DefineBigCellInt DefineBigCellTemplateParameters(typename inherited::QuotientResult)&)
+            result.quotient();
+      promotedResult >>= (inherited::getSize()*DefineSizeofBaseTypeInBits-result.comma());
+#ifndef DefineGeneric
+      result.quotient()[result.comma()/DefineSizeofBaseTypeInBits]
+            |= (1U << (result.comma() % DefineSizeofBaseTypeInBits));
+#else
+      BaseStoreTraits::setTrueBit(result.quotient()[result.comma()/DefineSizeofBaseTypeInBits],
+            result.comma() % DefineSizeofBaseTypeInBits);
+#endif
+      promotedResult *= source;
+      *this -= promotedResult;
+   }
+   else if (result.comma() == 0)
+      *this -= source;
+
+   return *this;
+}
+
+DefineBigCellTemplateHeader
+inline void
+DefineBigCellInt DefineBigCellTemplateParameters(IntegerTraits)::write(STG::IOObject::OSBase& out,
+      const FormatParameters& params) const {
+   if (params.isFullBinary())
+      writeFullBinary(out, params);
+   else if (params.isFullHexaDecimal())
+      writeFullHexaDecimal(out, params);
+   else if (params.isHexaDecimal())
+      writeHexaDecimal(out, params);
+   else if (!params.isDecimal()) {
+      if (params.isInternal())
+         writeInternal(out, params);
+      else
+         writeCells(out, params);
+   }
+   else // params.isDecimal()
+      writeDecimal(out, params);
+}
+
+} // end of namespace DInteger
+
+DefineBigCellTemplateHeader
+class DefineBigCellInt : public DInteger::DefineBigCellInt DefineBigCellTemplateParameters(IntegerTraits) {
+  private:
+   typedef DefineBigCellInt DefineBigCellTemplateParameters(IntegerTraits) thisType;
+   typedef DInteger::DefineBigCellInt DefineBigCellTemplateParameters(IntegerTraits) inherited;
+
+  public:
+   DefineBigCellInt() : inherited() {}
+   DefineBigCellInt(DefineBaseTypeConstReference value) : inherited(value) {}
+   DefineBigCellInt(const thisType& source) = default;
+};
+
+#endif // DefineBigCellClass
+
+#ifdef DefineBigIntClass
+
+/***********************************************************/
+/* Definition of the template classes TBigInt and TGBigInt */
+/***********************************************************/
+
+namespace DInteger {
+
+DefineBigIntTemplateHeader (UBitSize)
+class DefineBigIntIntegerTraits {
+  public:
+#ifdef DefineGeneric
+   typedef DefineBaseType DefineSBaseType;
+   typedef DefineBaseTypeConstReference DefineSBaseTypeConstReference;
+#endif
+
+   static const int UCellSize = (UBitSize+(8*sizeof(DefineSBaseType))-1)/(8*sizeof(DefineSBaseType));
+   typedef DefineCellIntegerTraits DefineCellTemplateParameters(UCellSize) CellTraits;
+
+  private:
+   typedef DefineBigIntIntegerTraits DefineBigIntTemplateParameters(UBitSize) thisType;
+   CellTraits ctTraits;
+
+  protected:
+   CellTraits& cellTraits() { return ctTraits; }
+   const CellTraits& cellTraits() const { return ctTraits; }
+
+  public:
+   DefineBigIntIntegerTraits() : ctTraits() {}
+   DefineBigIntIntegerTraits(const thisType&) = default;
+   thisType& operator=(const thisType&) = default;
+   thisType& operator=(DefineSBaseTypeConstReference source) { ctTraits = source; return *this; }
+
+   static int lastCellIndex() { return (UBitSize-1)/DefineSizeofBaseTypeInBits; }
+   static int lastCellSize()
+      {  return (UBitSize+DefineSizeofBaseTypeInBits-1) % DefineSizeofBaseTypeInBits+1; }
+   static bool isComplete() { return ((UBitSize % DefineSizeofBaseTypeInBits) == 0); }
+   void normalizeLastCell()
+      {  if (lastCellSize() < (int)DefineSizeofBaseTypeInBits)
+#ifndef DefineGeneric
+            ctTraits[lastCellIndex()] &= ~(~0U << lastCellSize());
+#else
+            BaseStoreTraits::clearHighValuePart(ctTraits[lastCellIndex()], lastCellSize());
+#endif
+      }
+   void normalize()
+      {  if (lastCellSize() < (int) DefineSizeofBaseTypeInBits)
+#ifndef DefineGeneric
+            ctTraits[lastCellIndex()] &= ~(~0U << lastCellSize());
+#else
+            BaseStoreTraits::clearHighValuePart(ctTraits[lastCellIndex()], lastCellSize());
+#endif
+         // for (int index = lastCellIndex()+1; index < ctTraits.getSize(); ++index)
+         //   ctTraits[index] = 0x0;
+      }
+   
+   typedef typename CellTraits::ArrayProperty ArrayProperty;
+   ArrayProperty array(int index) { return ctTraits.array(index); }
+   DefineSBaseTypeConstReference array(int index) const { return ctTraits.array(index); }
+   DefineSBaseTypeConstReference carray(int index) const { return ctTraits.carray(index); }
+   ArrayProperty operator[](int index) { return ctTraits[index]; }
+   DefineSBaseTypeConstReference operator[](int index) const { return ctTraits[index]; }
+   static int getSize() { return UBitSize; }
+   static int getCellSize() { return (UBitSize + DefineSizeofBaseTypeInBits - 1)/DefineSizeofBaseTypeInBits; }
+
+   typedef DefineBigIntIntegerTraits DefineBigIntTemplateParameters(2*UBitSize) MultResult;
+   typedef DefineBigIntIntegerTraits DefineBigIntTemplateParameters(UBitSize) QuotientResult;
+   typedef DefineBigIntIntegerTraits DefineBigIntTemplateParameters(UBitSize) RemainderResult;
+   typedef DefineBigIntIntegerTraits DefineBigIntTemplateParameters(UBitSize+1) NormalizedRemainderResult;
+   void adjustSize(int newSize) { AssumeUncalled }
+   void setSize(int exactSize) { AssumeCondition(exactSize == UBitSize) }
+   void setBitSize(int exactSize) { AssumeCondition(exactSize == UBitSize) }
+   void setCellSize(int exactSize) { AssumeCondition(exactSize == (UBitSize + DefineSizeofBaseTypeInBits-1)/DefineSizeofBaseTypeInBits); }
+   void assertSize(int newSize) { AssumeCondition(UBitSize >= newSize) }
+};
+
+} // end of namespace DInteger
+
+DefineBigCellTemplateHeader
+class DefineBigInt
+#ifndef DefineGeneric
+      : public DInteger::Access, protected IntegerTraits
+#else
+      : protected IntegerTraits
+#endif
+{ 
+#ifdef DefineGeneric
+  public:
+   typedef DefineBaseType DefineSBaseType;
+   typedef DefineBaseTypeConstReference DefineSBaseTypeConstReference;
+#endif
+
+  private:
+   typedef IntegerTraits inherited;
+   typedef DefineBigInt DefineBigCellTemplateParameters(IntegerTraits) thisType;
+   typedef DefineBigCellInt DefineBigCellTemplateParameters(typename IntegerTraits::CellTraits) ArrayCells;
+
+  protected:
+   static int log_base_2(DefineSBaseTypeConstReference value)
+      {
+#ifndef DefineGeneric
+         return DInteger::Access::log_base_2(value);
+#else
+         return BaseStoreTraits::log_base_2(value);
+#endif
+      }
+   ArrayCells& cells() { return (ArrayCells&) inherited::cellTraits(); }
+   const ArrayCells& cells() const { return (ArrayCells&) inherited::cellTraits(); }
+
+  public:
+   typedef typename ArrayCells::MidArray MidArray;
+   MidArray midArray(int index) { return cells().midArray(index); }
+   DefineSBaseType midArray(int index) const { return cells().midArray(index); }
+   DefineSBaseType cmidArray(int index) const { return midArray(index); }
+
+   typedef typename ArrayCells::BitArray BitArray;
+   BitArray bitArray(int index) { return cells().bitArray(index); }
+   bool bitArray(int index) const { return cells().bitArray(index); }
+   bool cbitArray(int index) const { return bitArray(index); }
+   void setBitArray(int index, bool value) { cells().setBitArray(index, value); }
+   void setTrueBitArray(int index) { cells().setTrueBitArray(index); }
+   void setFalseBitArray(int index) { cells().setFalseBitArray(index); }
+   void normalizeLastCell() { return IntegerTraits::normalizeLastCell(); }
+
+   DefineBigInt() {}
+   DefineBigInt(DefineSBaseTypeConstReference value) { cells() = value; }
+   DefineBigInt(const thisType& source) : inherited(source) {}
+   thisType& operator=(const inherited& source)
+      {  return (thisType&) inherited::operator=(source); }
+   thisType& operator=(const thisType& source)
+      {  return (thisType&) inherited::operator=(source); }
+   thisType& operator=(DefineSBaseTypeConstReference value)
+      {  return (thisType&) inherited::operator=(value); }
+
+   typedef typename IntegerTraits::CellTraits::ArrayProperty ArrayProperty;
+   DefineSBaseTypeConstReference operator[](int index) const { return inherited::operator[](index); }
+   ArrayProperty operator[](int index) { return inherited::operator[](index); }
+   DefineSBaseTypeConstReference array(int index) const { return inherited::array(index); }
+   DefineSBaseTypeConstReference carray(int index) const { return array(index); }
+   ArrayProperty array(int index) { return inherited::array(index); }
+   ComparisonResult compare(const thisType& source) const { return cells().compare(source.cells()); }
+   bool operator<(const thisType& source) const { return cells() < source.cells(); }
+   bool operator>(const thisType& source) const { return cells() > source.cells(); }
+   bool operator<=(const thisType& source) const { return cells() <= source.cells(); }
+   bool operator>=(const thisType& source) const { return cells() >= source.cells(); }
+   bool operator==(const thisType& source) const { return cells() == source.cells(); }
+   bool operator!=(const thisType& source) const { return cells() != source.cells(); }
+   thisType& operator<<=(int shift)
+      {  cells() <<= shift;
+         inherited::normalize();
+         return *this;
+      }
+   thisType& operator>>=(int shift) {  cells() >>= shift; return *this; }
+   void leftShiftLocal(int index, int shift) { cells().leftShiftLocal(index, shift); inherited::normalize(); }
+   void rightShiftLocal(int index, int shift) { cells().rightShiftLocal(index, shift); inherited::normalize(); }
+   thisType& operator|=(const thisType& source) { cells() |= source.cells(); return *this; }
+   thisType& operator^=(const thisType& source) { cells() ^= source.cells(); return *this; }
+   thisType& operator&=(const thisType& source) { cells() &= source.cells(); return *this; }
+   thisType& neg()
+      {  cells().neg();
+         inherited::normalize();
+         return *this;
+      }
+   thisType& neg(int shift)
+      {  AssumeCondition(shift <= inherited::getSize())
+         cells().neg(shift);
+         return *this;
+      }
+   thisType& clear(int shift)
+      {  AssumeCondition(shift <= inherited::getSize())
+         cells().clear(shift);
+         return *this;
+      }
+   thisType& clearHigh(int shift)
+      {  AssumeCondition(shift <= inherited::getSize())
+         cells().clearHigh(shift);
+         return *this;
+      }
+   thisType& saturate(int shift)
+      {  AssumeCondition(shift <= inherited::getSize())
+         cells().saturate(shift);
+         return *this;
+      }
+   thisType& leftShiftAssign(int shift) { cells() <<= shift; return *this; }
+   thisType& rightShiftAssign(int shift) { cells() >>= shift; return *this; }
+   thisType& arithmeticRightShiftAssign(int shift)
+      {  bool isNegative = cells().cbitArray(IntegerTraits::getSize()-1);
+         cells() >>= (shift);
+         if (isNegative)
+            cells() |= (thisType().setSize(getSize()).neg() <<= (IntegerTraits::getSize()-shift)).cells();
+         return *this;
+      }
+   
+   thisType operator&(const thisType& source) const { thisType result(*this); result &= source; return result; }
+   thisType operator|(const thisType& source) const { thisType result(*this); result |= source; return result; }
+   thisType operator<<(int shift) const { thisType result(*this); result <<= shift; return result; }
+   thisType operator>>(int shift) const { thisType result(*this); result >>= shift; return result; }
+   thisType operator~() const { thisType result(*this); result.neg(); return result; }
+   
+   void normalize() { inherited::normalize(); }
+   int lastCellIndex() const { return inherited::lastCellIndex(); }
+   typedef typename ArrayCells::Carry Carry;
+   Carry add(const thisType& source)
+      {  Carry result = cells().add(source.cells());
+         if (!inherited::isComplete()) {
+            result = Carry((cells().cbitArray(inherited::getSize())));
+            cells().setFalseBitArray(inherited::getSize());
+         };
+         return result;
+      }
+   Carry sub(const thisType& source)
+      {  Carry result = cells().sub(source.cells());
+         if (result.hasCarry() && !inherited::isComplete())
+            inherited::normalize();
+         return result;
+      }
+   Carry plusAssign(const thisType& source) { return add(source); }
+   Carry minusAssign(const thisType& source) { return sub(source); }
+   Carry inc()
+      {  Carry result = cells().inc();
+         if (!inherited::isComplete()) {
+            result = Carry((cells().cbitArray(inherited::getSize())));
+            cells().setFalseBitArray(inherited::getSize());
+         };
+         return result;
+      }
+   Carry dec()
+      {  Carry result = cells().dec();
+         if (result.hasCarry() && !inherited::isComplete())
+            inherited::normalize();
+         return result;
+      }
+   int getSize() const { return inherited::getSize(); }
+   int getCellSize() const { return cells().getSize(); }
+
+   thisType& operator+=(const thisType& source) { add(source); return *this; }
+   thisType operator+(const thisType& source) const
+      {  thisType result = *this; result += source; return result; }
+   thisType& operator-=(const thisType& source) { sub(source); return *this; }
+   thisType operator-(const thisType& source) const
+      {  thisType result = *this; result -= source; return result; }
+   thisType& operator--() { dec(); return *this; }
+   thisType& operator++() { inc(); return *this; }
+
+   Carry multAssign(DefineSBaseTypeConstReference source)
+      {  Carry result = cells().multAssign(source);
+         if (!inherited::isComplete()) {
+            if (inherited::lastCellIndex() < cells().getSize()-1) {
+               AssumeCondition(!result.hasCarry())
+               result.carry() = cells()[inherited::lastCellIndex()+1];
+            };
+
+            result.carry() <<= (DefineSizeofBaseTypeInBits - inherited::lastCellSize());
+            if (inherited::lastCellSize() < (int) DefineSizeofBaseTypeInBits)
+               result.carry() |= (cells()[inherited::lastCellIndex()] >> inherited::lastCellSize());
+            inherited::normalize();
+         };
+         return result;    
+      }
+   typedef typename inherited::MultResult MultResult;
+   void mult(const thisType& source, MultResult& result) const
+      {  typename IntegerTraits::CellTraits::MultResult localResult;
+         localResult.setSize(2*IntegerTraits::cellTraits().getSize());
+         cells().mult(source.cells(), localResult);
+         int last = result.lastCellIndex();
+         for (int index = 0; index <= last; ++index)
+            result[index] = (DefineSBaseType) localResult[index];
+      }
+   thisType& operator*=(const thisType& source)
+      {  cells() *= source.cells();
+         inherited::normalize();
+         return *this;
+      }
+   thisType& operator*=(DefineSBaseTypeConstReference source)
+      {  multAssign(source); return *this; }
+
+   typedef typename inherited::QuotientResult QuotientResult;
+   typedef typename inherited::RemainderResult RemainderResult;
+   class DivisionResult {
+     private:
+      typename IntegerTraits::QuotientResult qrQuotient;
+      typename IntegerTraits::RemainderResult rrRemainder;
+      int uComma;
+
+     public:
+      DivisionResult() : qrQuotient(), rrRemainder(), uComma(0) {}
+      DivisionResult(const DivisionResult&) = default;
+      DivisionResult& operator=(const DivisionResult&) = default;
+
+      const typename IntegerTraits::QuotientResult& quotient() const { return qrQuotient; }
+      typename IntegerTraits::QuotientResult& quotient() { return qrQuotient; }
+      const typename IntegerTraits::RemainderResult& remainder() const { return rrRemainder; }
+      typename IntegerTraits::RemainderResult& remainder() { return rrRemainder; }
+      const int& comma() const { return uComma; }
+      int& comma() { return uComma; }
+   };
+   typedef typename inherited::NormalizedRemainderResult NormalizedRemainderResult;
+   class NormalizedDivisionResult {
+     private:
+      typename IntegerTraits::QuotientResult qrQuotient;
+      typename IntegerTraits::NormalizedRemainderResult rrRemainder;
+      int uComma;
+
+     public:
+      NormalizedDivisionResult() : qrQuotient(), rrRemainder(), uComma(0) {}
+      NormalizedDivisionResult(const NormalizedDivisionResult&) = default;
+      NormalizedDivisionResult& operator=(const NormalizedDivisionResult&) = default;
+
+      const typename IntegerTraits::QuotientResult& quotient() const { return qrQuotient; }
+      typename IntegerTraits::QuotientResult& quotient() { return qrQuotient; }
+      const typename IntegerTraits::NormalizedRemainderResult& remainder() const { return rrRemainder; }
+      typename IntegerTraits::NormalizedRemainderResult& remainder() { return rrRemainder; }
+      const int& comma() const { return uComma; }
+      int& comma() { return uComma; }
+   };
+   typedef typename ArrayCells::AtomicDivisionResult AtomicDivisionResult;
+
+   void div(const thisType& source, DivisionResult& result) const;
+   void divNormalized(const thisType& source, NormalizedDivisionResult& result) const;
+   AtomicDivisionResult divAssign(DefineSBaseTypeConstReference source) { return cells().divAssign(source); }
+
+   thisType& operator/=(const thisType& source);
+   thisType& operator/=(DefineSBaseTypeConstReference source)
+      {  divAssign(source);
+         return *this;
+      }
+   typename inherited::QuotientResult operator/(const thisType& source) const;
+   DefineSBaseType operator%(DefineSBaseTypeConstReference source) const
+      {  return ArrayCells(cells()).divAssign(source).remainder(); }
+   thisType& operator%=(const thisType& source) { cells() %= source.cells(); return *this; }
+
+   int log_base_2() const { return cells().log_base_2(); }
+   typedef typename ArrayCells::FormatParameters FormatParameters;
+   void write(STG::IOObject::OSBase& out, const FormatParameters& params) const
+      {  cells().write(out, params); }
+   void read(STG::IOObject::ISBase& in, const FormatParameters& params)
+      {  cells().read(in, params); }
+   DefineSBaseTypeConstReference getValue() const { return cells().getValue(); }
+   bool isAtomic() const { return cells().isAtomic(); }
+   bool isZero() const { return cells().isZero(); }
+   bool hasZero(int shift) const { return cells().hasZero(shift); }
+   thisType& adjustSize(int newSize) { inherited::adjustSize(newSize); return *this; }
+   thisType& setSize(int exactSize) { inherited::setSize(exactSize); return *this; }
+   thisType& setBitSize(int exactSize) { inherited::setBitSize(exactSize); return *this; }
+   thisType& setCellSize(int exactSize) { inherited::setCellSize(exactSize); return *this; }
+   thisType& assertSize(int newSize) { inherited::assertSize(newSize); return *this; }
+   void clear() { cells().clear(); }
+   void swap(thisType& source) {  cells().swap(source.cells()); }
+};
+
+DefineBigCellTemplateHeader
+inline DefineBigInt DefineBigCellTemplateParameters(IntegerTraits)&
+DefineBigInt DefineBigCellTemplateParameters(IntegerTraits)::operator/=(const thisType& source) {
+   DivisionResult result;
+   result.quotient().setSize(getSize());
+   result.remainder().setSize(getSize());
+   div(source, result);
+   if (result.comma() > 0) {
+      inherited::operator=(result.quotient());
+      operator>>=(inherited::getSize()-result.comma());
+      setTrueBitArray(result.comma());
+   }
+   else if (result.comma() == 0)
+      *this = 1U;
+   else
+      *this = 0U;
+   return *this;
+}
+
+DefineBigCellTemplateHeader
+inline typename IntegerTraits::QuotientResult
+DefineBigInt DefineBigCellTemplateParameters(IntegerTraits)::operator/(const thisType& source) const {
+   DivisionResult result;
+   result.quotient().setSize(getSize());
+   result.remainder().setSize(getSize());
+   div(source, result);
+   if (result.comma() > 0) {
+      auto& promotedResult = (DefineBigInt DefineBigCellTemplateParameters(typename IntegerTraits::QuotientResult)&)
+            result.quotient();
+      promotedResult >>= (inherited::getSize()-result.comma());
+      promotedResult.setTrueBitArray(result.comma());
+   }
+   else if (result.comma() == 0)
+      result.quotient()[0] = 1U;
+   return result.quotient();
+}
+
+#endif // DefineBigIntClass
+
+#undef DefineCellTemplateHeader
+#undef DefineBasicCellIntegerTraits
+#undef DefineCellIntegerTraits
+#undef DefineCellTemplateParameters
+#undef DefineBaseType
+#undef DefineBaseTypeConstReference
+#undef DefineSBaseType
+#undef DefineSBaseTypeConstReference
+#undef DefineMemcpy
+#undef DefineSizeofBaseType
+#undef DefineSizeofBaseTypeInBits
+#undef DefineBigCellTemplateHeader
+#undef DefineBigCellSTemplateHeader
+#undef DefineBigCellIntAlgo
+#undef DefineBigCellTemplateParameters
+#undef DefineBigCellInt
+#undef DefineBigIntTemplateHeader
+#undef DefineBigIntIntegerTraits
+#undef DefineBigIntTemplateParameters
+#undef DefineBigInt
+

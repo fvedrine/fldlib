@@ -1,0 +1,340 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Concrete collections
+// File      : Array.inch
+// Description :
+//   Definition of concrete classes based on sorted and non-sorted arrays.
+//
+
+/***********************************************************************/
+/* The arguments to provide:                                           */
+/* DefTypeVirtualInheritedCollection:  Type of inherited collections   */
+/* DefTypeVirtualInheritedCursor:      Type of inherited cursors       */
+/* DefTypeCollection:                  Type of collections             */
+/* DefTypeCursor:                      Type of cursors                 */
+/* DefTypeSorted:                      Is the collection sorted?       */
+/* DefTypeMultiple:                    Is the colleciton multi-sorted? */
+/***********************************************************************/
+
+/*********************************************/
+/* Definition of the class DefTypeCollection */
+/*********************************************/
+
+class DefTypeCursor;
+class DefTypeCollection : public DefTypeVirtualInheritedCollection, private ImplArray {
+  private:
+   int getInsertionIndex(int index, RelativePosition position) const;
+   int getIndex(int index, RelativePosition position) const;
+   bool retrieveRemovedInterval(int& startIndex, int& endIndex, RelativePosition pos) const;
+   int queryInternCount(const ExtendedLocateParameters& parameters,
+      const DefTypeCursor* start, const DefTypeCursor* end) const;
+   
+#ifdef DefTypeSorted
+   bool sortVerification(int firstIndex, int lastIndex, bool doesFree);
+#endif // DefTypeSorted
+
+  protected:
+   class ArrayCursorNotification {
+     protected:
+      static const int& index(const DefTypeCursor& cursor);
+      static void setIndex(DefTypeCursor& cursor, int index);
+      static void decreaseIndex(DefTypeCursor& cursor);
+      static void increaseIndex(DefTypeCursor& cursor, int add=1);
+      static void invalidate(DefTypeCursor& cursor);
+   };
+
+   // Notification classes
+   class IndexNotification;
+   class BoundNotification;
+   friend class IndexNotification;
+   friend class BoundNotification;
+   class InsertIndexNotification;
+   class InsertBoundNotification;
+   class RemoveIndexNotification;
+   class RemoveBoundNotification;
+   class MoveIndexNotification;
+   class MoveBoundNotification;
+
+   // Methods to simply perform an action on an interval
+   EnhancedObject& operator[](int index) { return *ImplArray::operator[](index); }
+   const EnhancedObject& operator[](int index) const { return *ImplArray::operator[](index); }
+
+   template <class Execute, class TemplateParameters> bool foreachDo(const TemplateParameters& parameters, Execute& function,
+         int startIndex, int endIndex) const
+      {  return ImplArray::foreachDo(parameters, function, startIndex, endIndex); }
+   template <class Execute, class TemplateParameters> bool foreachReverseDo(const TemplateParameters& parameters, Execute& function,
+         int startIndex, int endIndex) const
+      { return ImplArray::foreachReverseDo(parameters, function, startIndex, endIndex); }
+
+   void realloc(int newAllocated) { ImplArray::realloc(newAllocated); }
+   virtual void _realloc(int newSize) override { ImplArray::_realloc(newSize); }
+
+  public:
+   void bookPlace(int places=1) { ImplArray::bookPlace(places); }
+   int queryPlaces() const { return ImplArray::queryPlaces(); }
+   void compress() { ImplArray::compress(); }
+
+  protected:
+   virtual ComparisonResult _compare(const EnhancedObject& asource) const override
+      {  return DefTypeVirtualInheritedCollection::_compare(asource); }
+
+   virtual void _fullAssign(const VirtualCollection& source, const ExtendedReplaceParameters& parameters) override
+      {  VirtualCollection::pfullAssign(source, parameters); }
+   void _fullAssign(const DefTypeCollection& source, const ExtendedReplaceParameters& parameters);
+
+#ifdef DefTypeSorted
+   template <class TabType, class ElementType, class Key, class Cast>
+   LocationResult tlocate(const TabType& tab, typename Key::KeyType key, const ExtendedLocateParameters& parameters,
+         DefTypeCursor* cursor=nullptr, const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr) const;
+
+#ifndef DefTypeMultiSorted
+   virtual LocationResult _locateKey(const EnhancedObject& source, const ExtendedLocateParameters& parameters,
+         VirtualSortedCollectionCursor* cursor=nullptr, const VirtualSortedCollectionCursor* start=nullptr,
+         const VirtualSortedCollectionCursor* end=nullptr) const override;
+#else
+   virtual LocationResult _locateKey(const EnhancedObject& source, const ExtendedLocateParameters& parameters,
+         VirtualMultiSortedCollectionCursor* cursor=nullptr, const VirtualMultiSortedCollectionCursor* start=nullptr,
+         const VirtualMultiSortedCollectionCursor* end=nullptr) const override;
+#endif
+
+   template <class TypeTemplate>
+   int tmerge(TypeTemplate traits, const ImplArray& source, int firstSourceIndex, int lastSourceIndex, bool doesDuplicate=false)
+      {  return ImplArray::merge(traits, source, firstSourceIndex, lastSourceIndex, doesDuplicate); }
+   virtual int _merge(const ImplArray& source, int firstSourceIndex, int lastSourceIndex, bool doesDuplicate=false);
+#endif // DefTypeSorted
+
+   // insertion methods
+   virtual void _add(EnhancedObject* anObject, const ExtendedInsertionParameters& parameters,
+         VirtualCollectionCursor* cursor) override
+      {  _add(anObject, parameters, (DefTypeCursor*) cursor); }
+   void _add(EnhancedObject* newElement, const ExtendedInsertionParameters& parameters,
+         DefTypeCursor* cursor=nullptr);
+   virtual void _addAll(const VirtualCollection& source, const ExtendedInsertionParameters& parameters,
+         VirtualCollectionCursor* cursor, const VirtualCollectionCursor* startSource,
+         const VirtualCollectionCursor* endSource) override
+      {  VirtualCollection::paddAll(source, parameters, cursor, startSource, endSource); }
+   void _addAll(const DefTypeCollection& source, const ExtendedInsertionParameters& parameters,
+         DefTypeCursor* cursor=nullptr, const DefTypeCursor* startSource=nullptr,
+         const DefTypeCursor* endSource=nullptr);
+
+   // move methods
+   virtual void _moveTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+         VirtualCollectionCursor* cursor=nullptr, VirtualCollectionCursor* destinationCursor=nullptr) override;
+   virtual void _moveAllTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+         const VirtualCollectionCursor* startCursor=nullptr, const VirtualCollectionCursor* endCursor=nullptr,
+         VirtualCollectionCursor* destinationCursor=nullptr) override;
+   void _moveAllTo(DefTypeCollection& destination, const ExtendedReplaceParameters& parameters,
+         const DefTypeCursor* startCursor=nullptr, const DefTypeCursor* endCursor=nullptr,
+         DefTypeCursor* destinationCursor=nullptr);
+   virtual void _swap(VirtualCollection& source) override;
+   void _swap(DefTypeCollection& source);
+
+   // suppression methods
+   virtual void _remove(const ExtendedSuppressParameters& parameters, VirtualCollectionCursor* cursor) override
+      {  _remove(parameters, (DefTypeCursor*) cursor); }
+   void _remove(const ExtendedSuppressParameters& parameters, DefTypeCursor* cursor=nullptr);
+   virtual void _removeAll(const ExtendedSuppressParameters& parameters,
+         const VirtualCollectionCursor* start, const VirtualCollectionCursor* end=nullptr) override
+      {  _removeAll(parameters, (DefTypeCursor*) start, (DefTypeCursor*) end); }
+   void _removeAll(const ExtendedSuppressParameters& parameters,
+         const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr);
+
+   // replacement methods
+   virtual void _replace(EnhancedObject* anObject, const ExtendedReplaceParameters& parameters,
+         VirtualCollectionCursor* cursor) override
+      {  _replace(anObject, parameters, (DefTypeCursor*) cursor); }
+   void _replace(EnhancedObject* element, const ExtendedReplaceParameters& parameters,
+         DefTypeCursor* cursor=nullptr);
+
+   // query methods
+   virtual int _queryCount(const ExtendedLocateParameters& parameters,
+         const VirtualCollectionCursor* start=nullptr, const VirtualCollectionCursor* end=nullptr) const override;
+   virtual EnhancedObject* _getElement(const ExtendedLocateParameters& parameters,
+         const VirtualCollectionCursor* cursor) const override
+      {  return _getElement(parameters, (DefTypeCursor*) cursor); }
+   EnhancedObject* _getElement(const ExtendedLocateParameters& parameters,
+         const DefTypeCursor* cursor=nullptr) const;
+
+   friend class DefTypeCursor;
+   const ImplArray& getImplementation() const { return (const ImplArray&) *this; }
+
+  public:
+   DefTypeCollection() {}
+   DefTypeCollection(const InitialValues& initialValues)
+      {  TInsertInitialValue<DefTypeCollection, EnhancedObject, SimpleCast> insertInitialValue(*this);
+         initialValues.foreachDo(insertInitialValue);
+      }
+   DefTypeCollection(const InitialNewValues& initialValues)
+      {  TInsertInitialNewValue<DefTypeCollection, EnhancedObject, SimpleCast> insertInitialValue(*this);
+         initialValues.foreachDo(insertInitialValue);
+      }
+   DefTypeCollection(const DefTypeCollection& source, AddMode dupMode=AMNoDuplicate,
+         const VirtualCast* retrieveRegistrationFromCopy=nullptr)
+      :  DefTypeVirtualInheritedCollection(source, dupMode),
+         ImplArray(source, dupMode==AMDuplicate, retrieveRegistrationFromCopy) {}
+
+   DefineCopy(DefTypeCollection)
+   DDefineAssign(DefTypeCollection)
+   DCompare(DefTypeCollection)
+   StaticInheritConversions(DefTypeCollection, DefTypeVirtualInheritedCollection)
+   DefineCollectionForAbstractCollect(DefTypeCollection, DefTypeCursor)
+   DefTypeCollection& operator=(const DefTypeCollection& source)
+      {  DefTypeCollection::_fullAssign(source, ExtendedReplaceParameters()); return *this; }
+
+   virtual bool isValid() const override
+      {  return DefTypeVirtualInheritedCollection::isValid() && ImplArray::isValid(); } 
+   template <class Execute, class TemplateParameters> bool foreachDo(TemplateParameters traits, Execute& function) const
+      {  return ImplArray::foreachDo(traits, function); }
+   template <class Execute, class TemplateParameters> bool foreachDo(TemplateParameters traits,
+      Execute& function, const ExtendedLocateParameters& parameters,
+      const DefTypeCursor* start, const DefTypeCursor* end) const;
+   template <class Execute, class TemplateParameters> bool foreachReverseDo(TemplateParameters traits, Execute& function) const
+      {  return ImplArray::foreachReverseDo(traits, function); }
+   template <class Execute, class TemplateParameters> bool foreachReverseDo(TemplateParameters traits,
+      Execute& function, const ExtendedLocateParameters& parameters,
+      const DefTypeCursor* start, const DefTypeCursor* end) const;
+
+   #define DefJustDeclare
+   #include "Collection/ELMCollection.inch"
+   #undef DefJustDeclare
+};
+
+/*****************************************/
+/* Definition of the class DefTypeCursor */
+/*****************************************/
+
+class DefTypeCursor : public DefTypeVirtualInheritedCursor {
+  private:
+   int uIndex;
+
+  protected:
+   const int& index() const { return uIndex; }
+   void setIndex(int index) { uIndex = index; }
+   void decreaseIndex() { if (uIndex >= 0) uIndex--; }
+   void increaseIndex(int add=1) { uIndex += add; }
+   friend class DefTypeCollection::ArrayCursorNotification;
+
+   virtual ComparisonResult _compare(const EnhancedObject& asource) const override
+      { ComparisonResult result = DefTypeVirtualInheritedCursor::_compare(asource);
+        if (result == CREqual)
+           result = fcompare(uIndex, ((const DefTypeCursor&) castFromCopyHandler(asource)).uIndex);
+        return result;
+      }
+   virtual bool _isPositionned(const ExtendedLocateParameters& pos,
+         const VirtualCollectionCursor* cursor=nullptr) const override;
+   virtual bool _position(const Position& pos) override;
+   virtual EnhancedObject* _getSElement() const override
+      {  return getSupport().getImplementation()[uIndex]; }
+   virtual bool _isEqual(const AbstractCursor& cursor) const override
+      {  return AbstractCursor::_isEqual(cursor)
+            && (uIndex == ((const DefTypeCursor&) cursor).uIndex);
+      }
+
+  public:
+   DefTypeCursor(const DefTypeCollection& support) : DefTypeVirtualInheritedCursor(support), uIndex(-1) {}
+   DefTypeCursor(const DefTypeCursor& source)
+      : DefTypeVirtualInheritedCursor(source), uIndex(source.uIndex) {}
+   DefineCopy(DefTypeCursor)
+   DDefineAssign(DefTypeCursor)
+   DefineCursorForAbstractCollect(DefTypeCollection, DefTypeCursor)
+   void swap(DefTypeCursor& source)
+      {  DefTypeVirtualInheritedCursor::swap(source);
+         int temp = uIndex;
+         uIndex = source.uIndex;
+         source.uIndex = temp;
+      }
+
+   virtual bool isValid() const override
+      {  return DefTypeVirtualInheritedCursor::isValid() && (uIndex >= 0); }
+
+#define DefCursor
+#define DefTypeFinal DefTypeCursor::
+   #include "Collection/ELMCollection.inch"
+#undef DefTypeFinal
+#undef DefCursor
+
+   DefTypeCursor& operator+=(int add);
+   DefTypeCursor& operator-=(int add);
+   bool setSureIndex(int index);
+   const int& getIndex() const { return uIndex; }
+};
+
+inline bool
+DefTypeCursor::setSureIndex(int index) {
+   uIndex = (index >= 0) && (index < getSupport().count()) ? index : -1;
+   return (uIndex >= 0);
+}
+
+inline DefTypeCursor&
+DefTypeCursor::operator+=(int add) {
+   uIndex += add;
+   if ((uIndex < 0) || (uIndex >= getSupport().getImplementation().count()))
+      uIndex = -1;
+   return *this;
+}
+
+inline DefTypeCursor&
+DefTypeCursor::operator-=(int add) {
+   uIndex -= add;
+   if ((uIndex < 0) || (uIndex >= getSupport().getImplementation().count()))
+      uIndex = -1;
+   return *this;
+}
+
+InlineCollectionForAbstractCollect(DefTypeCollection, DefTypeCursor)
+
+template <class Execute, class TemplateParameters>
+inline bool
+DefTypeCollection::foreachDo(TemplateParameters traits,
+      Execute& function, const ExtendedLocateParameters& parameters,
+      const DefTypeCursor* start, const DefTypeCursor* end) const {
+   int startIndex = (start != nullptr) ? (parameters.isFirstExcluded() ?
+      start->getIndex()+1 : start->getIndex()) : 0;
+   if (startIndex < 0)
+      startIndex = 0;
+   int endIndex = (end != nullptr) ? (parameters.isLastExcluded() ?
+      (end->getIndex()-1) : end->getIndex()) : 0;
+   return ((endIndex < 0) && parameters.isLastExcluded()) ? true
+      :  ImplArray::foreachDo(traits, function, startIndex, endIndex);
+}
+
+template <class Execute, class TemplateParameters>
+inline bool
+DefTypeCollection::foreachReverseDo(TemplateParameters traits,
+      Execute& function, const ExtendedLocateParameters& parameters,
+      const DefTypeCursor* start, const DefTypeCursor* end) const {
+   int startIndex = (end != nullptr) ? (parameters.isFirstExcluded() ?
+      end->getIndex()-1 : end->getIndex()) : (ImplArray::count()-1);
+   if (startIndex < 0)
+      startIndex = ImplArray::count()-1;
+   int endIndex = (start != nullptr) ? (parameters.isLastExcluded() ?
+      (start->getIndex()+1) : start->getIndex()) : 0;
+   return ((startIndex < 0) && parameters.isFirstExcluded()) ? true
+      :  ImplArray::foreachReverseDo(traits, function, startIndex, endIndex);
+}
+
+#include "Collection/ConcreteCollection/Array.inline"
+

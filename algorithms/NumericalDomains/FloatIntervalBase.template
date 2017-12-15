@@ -1,0 +1,992 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2015-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : NumericalDomains
+// Unit      : Interval
+// File      : FloatIntervalBase.template
+// Description :
+//   Implementation of a class of floating point intervals
+//
+
+#ifndef NumericalDomains_FloatIntervalBaseTemplate
+#define NumericalDomains_FloatIntervalBaseTemplate
+
+#include "NumericalDomains/FloatIntervalBase.h"
+
+namespace NumericalDomains { namespace DDoubleInterval {
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+void
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::retrieveRelativeError(TypeBuiltDouble& result) const {
+   if (bfMin.compareValue(bfMax) != CREqual) {
+      auto& minParams = inherited::minParams();
+      auto& maxParams = inherited::maxParams();
+      if (bfMin.isPositive()) {
+         result = bfMax;
+         result.minusAssign(bfMin, maxParams);
+         maxParams.clear();
+         result.divAssign(bfMax, maxParams);
+         maxParams.clear();
+      }
+      else if (bfMax.isNegative()) {
+         result = bfMin;
+         result.minusAssign(bfMax, minParams);
+         minParams.clear();
+         result.divAssign(bfMin, maxParams);
+         maxParams.clear();
+      }
+      else { // bfMin <= 0 <= bfMax
+         result = bfMin;
+         result.opposite();
+         if (result < bfMax) {
+            result.plusAssign(bfMax, maxParams);
+            maxParams.clear();
+            result.divAssign(bfMax, maxParams);
+            maxParams.clear();
+         }
+         else {
+            result.plusAssign(bfMax, maxParams);
+            maxParams.clear();
+            result.opposite();
+            result.divAssign(bfMin, maxParams);
+            maxParams.clear();
+         };
+      };
+   }
+   else
+      result.setZero();
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+bool
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::operator<(const thisType& source) const {
+   bool result;
+   ComparisonResult compareThisMaxSourceMin = bfMax.compareValue(source.bfMin);
+   if (compareThisMaxSourceMin == CRLess)
+      result = true;
+   else {
+      ComparisonResult compareThisMinSourceMax = bfMin.compareValue(source.bfMax);
+      if (compareThisMinSourceMax == CRGreater || compareThisMinSourceMax == CREqual)
+         result = false;
+      else { // bfMax >= source.bfMin && bfMin < source.bfMax
+         ComparisonResult compareThisMinSourceMin = bfMin.compareValue(source.bfMin);
+         ComparisonResult compareThisMaxSourceMax = bfMax.compareValue(source.bfMax);
+         bool doesTakeThen = inherited::getThenBranch(dValue < source.dValue);
+         if (doesTakeThen) {
+            if (compareThisMaxSourceMax == CRGreater || compareThisMaxSourceMax == CREqual) {
+               const_cast<thisType&>(*this).bfMax = source.bfMax;
+               const_cast<thisType&>(*this).bfMax.setToPrevious();
+            };
+            if (compareThisMinSourceMin == CRGreater || compareThisMinSourceMin == CREqual) {
+               const_cast<thisType&>(source).bfMin = bfMin;
+               const_cast<thisType&>(source).bfMin.setToNext();
+            };
+         }
+         else {
+            if (compareThisMaxSourceMax == CRLess)
+               const_cast<thisType&>(source).bfMax = bfMax;
+            if (compareThisMinSourceMin == CRLess)
+               const_cast<thisType&>(*this).bfMin = source.bfMin;                    
+         }
+         inherited::notifyForBranchCompare(*this);
+         inherited::notifyForBranchCompare(source);
+         result = doesTakeThen;
+      }
+   }
+   return result;
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+bool
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::operator<=(const thisType& source) const {
+   bool result;
+   ComparisonResult compareThisMaxSourceMin = bfMax.compareValue(source.bfMin);
+   if (compareThisMaxSourceMin == CRLess || compareThisMaxSourceMin == CREqual)
+      result = true;
+   else {
+      ComparisonResult compareThisMinSourceMax = bfMin.compareValue(source.bfMax);
+      if (compareThisMinSourceMax == CRGreater)
+         result = false;
+      else { // bfMax > source.bfMin && bfMin <= source.bfMax
+         bool doesTakeThen = inherited::getThenBranch(dValue <= source.dValue);
+         ComparisonResult compareThisMaxSourceMax = bfMax.compareValue(source.bfMax);
+         ComparisonResult compareThisMinSourceMin = bfMin.compareValue(source.bfMin);
+         if (doesTakeThen) {
+            if (compareThisMaxSourceMax == CRGreater)
+               const_cast<thisType&>(*this).bfMax = source.bfMax;
+            if (compareThisMinSourceMin == CRGreater)
+               const_cast<thisType&>(source).bfMin = bfMin;
+         }
+         else {
+            if (compareThisMaxSourceMax == CRLess || compareThisMaxSourceMax == CREqual) {
+               const_cast<thisType&>(source).bfMax = bfMax;
+               const_cast<thisType&>(source).bfMax.setToPrevious();
+            };
+            if (compareThisMinSourceMin == CRLess || compareThisMinSourceMin == CREqual) {
+               const_cast<thisType&>(*this).bfMin = source.bfMin;
+               const_cast<thisType&>(*this).bfMin.setToNext();
+            };
+         }
+         inherited::notifyForBranchCompare(*this);
+         inherited::notifyForBranchCompare(source);
+         result = doesTakeThen;
+      }
+   };
+   return result;
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+bool
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::operator==(const thisType& source) const {
+   bool result;
+   ComparisonResult compareThisMaxSourceMin = bfMax.compareValue(source.bfMin);
+   if (compareThisMaxSourceMin == CRLess)
+      result = false;
+   else {
+      ComparisonResult compareThisMinSourceMax = bfMin.compareValue(source.bfMax);
+      if (compareThisMinSourceMax == CRGreater)
+         result = false;
+      else if (compareThisMinSourceMax == CREqual && compareThisMaxSourceMin == CREqual)
+         result = true;
+      else { // bfMax >= source.bfMin && bfMin <= source.bfMax
+         bool doesTakeThen = inherited::getThenBranch(dValue == source.dValue);
+         if (doesTakeThen) {
+            ComparisonResult compareThisMinSourceMin = bfMin.compareValue(source.bfMin);
+            ComparisonResult compareThisMaxSourceMax = bfMax.compareValue(source.bfMax);
+            if (compareThisMinSourceMin == CRLess)
+               const_cast<thisType&>(*this).bfMin = source.bfMin;
+            else if (compareThisMinSourceMin == CRGreater)
+               const_cast<thisType&>(source).bfMin = bfMin;
+            if (compareThisMaxSourceMax == CRGreater)
+               const_cast<thisType&>(*this).bfMax = source.bfMax;
+            else if (compareThisMaxSourceMax == CRLess)
+               const_cast<thisType&>(source).bfMax = bfMax;
+         };
+         inherited::notifyForBranchCompare(*this);
+         inherited::notifyForBranchCompare(source);
+         result = doesTakeThen;
+      }
+   };
+   return result;
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+bool
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::operator!=(const thisType& source) const {
+   bool result;
+   ComparisonResult compareThisMaxSourceMin = bfMax.compareValue(source.bfMin);
+   if (compareThisMaxSourceMin == CRLess)
+      result = true;
+   else {
+      ComparisonResult compareThisMinSourceMax = bfMin.compareValue(source.bfMax);
+      if (compareThisMinSourceMax == CRGreater)
+         result = true;
+      else if (compareThisMinSourceMax == CREqual && compareThisMaxSourceMin == CREqual)
+         result = false;
+      else { // bfMax >= source.bfMin && bfMin <= source.bfMax
+         bool doesTakeThen = inherited::getThenBranch(dValue != source.dValue);
+         if (!doesTakeThen) {
+            ComparisonResult compareThisMinSourceMin = bfMin.compareValue(source.bfMin);
+            ComparisonResult compareThisMaxSourceMax = bfMax.compareValue(source.bfMax);
+            if (compareThisMinSourceMin == CRLess)
+               const_cast<thisType&>(*this).bfMin = source.bfMin;
+            else if (compareThisMinSourceMin == CRGreater)
+               const_cast<thisType&>(source).bfMin = bfMin;
+            if (compareThisMaxSourceMax == CRGreater)
+               const_cast<thisType&>(*this).bfMax = source.bfMax;
+            else if (compareThisMaxSourceMax == CRGreater)
+               const_cast<thisType&>(source).bfMax = bfMax;
+         };
+         inherited::notifyForBranchCompare(*this);
+         inherited::notifyForBranchCompare(source);
+         result = doesTakeThen;
+      }
+   }
+   return result;
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+bool
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::operator>=(const thisType& source) const {
+   bool result;
+   ComparisonResult compareThisMaxSourceMin = bfMax.compareValue(source.bfMin);
+   if (compareThisMaxSourceMin == CRLess)
+      result = false;
+   else {
+      ComparisonResult compareThisMinSourceMax = bfMin.compareValue(source.bfMax);
+      if (compareThisMinSourceMax == CRGreater || compareThisMinSourceMax == CREqual)
+         result = true;
+      else { // bfMax >= source.bfMin && bfMin < source.bfMax
+         bool doesTakeThen = inherited::getThenBranch(dValue >= source.dValue);
+         ComparisonResult compareThisMinSourceMin = bfMin.compareValue(source.bfMin);
+         ComparisonResult compareThisMaxSourceMax = bfMax.compareValue(source.bfMax);
+         if (!doesTakeThen) {
+            if (compareThisMaxSourceMax == CRGreater || compareThisMaxSourceMax == CREqual) {
+               const_cast<thisType&>(*this).bfMax = source.bfMax;
+               const_cast<thisType&>(*this).bfMax.setToPrevious();
+            };
+            if (compareThisMinSourceMin == CRGreater || compareThisMinSourceMin == CREqual) {
+               const_cast<thisType&>(source).bfMin = bfMin;
+               const_cast<thisType&>(source).bfMin.setToNext();
+            };
+         }
+         else {
+            if (compareThisMaxSourceMax == CRLess)
+               const_cast<thisType&>(source).bfMax = bfMax;
+            if (compareThisMinSourceMin == CRLess)
+               const_cast<thisType&>(*this).bfMin = source.bfMin;
+         }
+         inherited::notifyForBranchCompare(*this);
+         inherited::notifyForBranchCompare(source);
+         result = doesTakeThen;
+      }
+   }
+   return result;
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+bool
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::operator>(const thisType& source) const {
+   bool result;
+   ComparisonResult compareThisMaxSourceMin = bfMax.compareValue(source.bfMin);
+   if (compareThisMaxSourceMin == CRLess || compareThisMaxSourceMin == CREqual)
+      result = false;
+   else {
+      ComparisonResult compareThisMinSourceMax = bfMin.compareValue(source.bfMax);
+      if (compareThisMinSourceMax == CRGreater)
+         result = true;
+      else { // bfMax > source.bfMin && bfMin <= source.bfMax
+         bool doesTakeThen = inherited::getThenBranch(dValue > source.dValue);
+         ComparisonResult compareThisMaxSourceMax = bfMax.compareValue(source.bfMax);
+         ComparisonResult compareThisMinSourceMin = bfMin.compareValue(source.bfMin);
+         if (!doesTakeThen) {
+            if (compareThisMaxSourceMax == CRGreater)
+               const_cast<thisType&>(*this).bfMax = source.bfMax;
+            if (compareThisMinSourceMin == CRGreater)
+               const_cast<thisType&>(source).bfMin = bfMin;
+         }
+         else {
+            if (compareThisMaxSourceMax == CRLess || compareThisMaxSourceMax == CREqual) {
+               const_cast<thisType&>(source).bfMax = bfMax;
+               const_cast<thisType&>(source).bfMax.setToPrevious();
+            };
+            if (compareThisMinSourceMin == CRLess || compareThisMinSourceMin == CREqual) {
+               const_cast<thisType&>(*this).bfMin = source.bfMin;
+               const_cast<thisType&>(*this).bfMin.setToNext();
+            };
+         }
+         inherited::notifyForBranchCompare(*this);
+         inherited::notifyForBranchCompare(source);
+         result = doesTakeThen;
+      }
+   };
+   return result;
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>&
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::operator*=(const thisType& source) {
+   dValue *= source.dValue;
+   auto& minParams = inherited::minParams();
+   auto& maxParams = inherited::maxParams();
+   if (bfMin.isPositive() || bfMin.isZero()) {
+      if (source.bfMin.isPositive() || source.bfMin.isZero()) {
+         bfMin.multAssign(source.bfMin, minParams);
+         minParams.clear();
+         bfMax.multAssign(source.bfMax, maxParams);
+         maxParams.clear();
+      }
+      else if (source.bfMax.isNegative() || source.bfMax.isZero()) {
+         bfMin.multAssign(source.bfMax, maxParams);
+         maxParams.clear();
+         bfMax.multAssign(source.bfMin, minParams);
+         minParams.clear();
+         bfMin.swap(bfMax);
+      }
+      else { // bfMin.isPositive() && source.bfMin.isNegative() && source.bfMax.isPositive()
+         bfMin = bfMax;
+         bfMin.multAssign(source.bfMin, minParams);
+         minParams.clear();
+         bfMax.multAssign(source.bfMax, maxParams);
+         maxParams.clear();
+      };
+   }
+   else if (bfMax.isNegative() || bfMax.isZero()) {
+      if (source.bfMin.isPositive() || source.bfMin.isZero()) {
+         bfMin.multAssign(source.bfMax, minParams);
+         minParams.clear();
+         bfMax.multAssign(source.bfMin, maxParams);
+         maxParams.clear();
+      }
+      else if (source.bfMax.isNegative() || source.bfMax.isZero()) {
+         bfMin.multAssign(source.bfMin, maxParams);
+         maxParams.clear();
+         bfMax.multAssign(source.bfMax, minParams);
+         minParams.clear();
+         bfMin.swap(bfMax);
+      }
+      else { // bfMin.isNegative() && source.bfMin.isNegative() && source.bfMax.isPositive()
+         bfMax = bfMin;
+         bfMin.multAssign(source.bfMin, maxParams);
+         maxParams.clear();
+         bfMax.multAssign(source.bfMax, minParams);
+         minParams.clear();
+         bfMin.swap(bfMax);
+      };
+   }
+   else { // bfMin.isNegative() && bfMax.isPositive()
+      if (source.bfMin.isPositive() || source.bfMin.isZero()) {
+         bfMin.multAssign(source.bfMax, minParams);
+         minParams.clear();
+         bfMax.multAssign(source.bfMax, maxParams);
+         maxParams.clear();
+      }
+      else if (source.bfMax.isNegative() || source.bfMax.isZero()) {
+         bfMin.multAssign(source.bfMin, maxParams);
+         maxParams.clear();
+         bfMax.multAssign(source.bfMin, minParams);
+         minParams.clear();
+         bfMin.swap(bfMax);
+      }
+      else { // bfMin.isNegative() && bfMax.isPositive() && source.bfMin.isNegative() && source.bfMax.isPositive()
+         TypeBuiltDouble min(bfMin), max(bfMin);
+         min.multAssign(source.bfMax, minParams);
+         minParams.clear();
+         TypeBuiltDouble min2 = bfMax;
+         min2.multAssign(source.bfMin, minParams);
+         minParams.clear();
+         if (min2 < min)
+            min = min2;
+         max.multAssign(source.bfMin, maxParams);
+         maxParams.clear();
+         TypeBuiltDouble max2 = bfMax;
+         max2.multAssign(source.bfMax, maxParams);
+         maxParams.clear();
+         if (max2 > max)
+            max = max2;
+         bfMin = min;
+         bfMax = max;
+      };
+   }
+   inherited::notifyForCompare(*this);
+   return *this;
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>&
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::operator/=(const thisType& source) {
+   dValue /= source.dValue;
+   bool isDivisionByZero = false;
+   auto& minParams = inherited::minParams();
+   auto& maxParams = inherited::maxParams();
+   if (bfMin.isPositive() || bfMin.isZero()) {
+      if (source.bfMin.isPositive() || source.bfMin.isZero()) {
+         if (source.bfMin.isZero())
+            isDivisionByZero = true;
+         bfMin.divAssign(source.bfMax, minParams);
+         minParams.clear();
+         bfMax.divAssign(source.bfMin, maxParams);
+         maxParams.clear();
+      }
+      else if (source.bfMax.isNegative() || source.bfMax.isZero()) {
+         if (source.bfMax.isZero())
+            isDivisionByZero = true;
+         bfMin.divAssign(source.bfMin, maxParams);
+         maxParams.clear();
+         bfMax.divAssign(source.bfMax, minParams);
+         minParams.clear();
+         bfMin.swap(bfMax);
+      }
+      else { // bfMin.isPositive() && source.bfMin.isNegative() && source.bfMax.isPositive()
+         isDivisionByZero = true;
+         bfMin.setInfty();
+         bfMin.setNegative();
+         bfMax.setInfty();
+      };
+   }
+   else if (bfMax.isNegative() || bfMax.isZero()) {
+      if (source.bfMin.isPositive() || source.bfMin.isZero()) {
+         if (source.bfMin.isZero())
+            isDivisionByZero = true;
+         bfMin.divAssign(source.bfMin, minParams);
+         minParams.clear();
+         bfMax.divAssign(source.bfMax, maxParams);
+         maxParams.clear();
+      }
+      else if (source.bfMax.isNegative() || source.bfMax.isZero()) {
+         if (source.bfMax.isZero())
+            isDivisionByZero = true;
+         bfMin.divAssign(source.bfMax, maxParams);
+         maxParams.clear();
+         bfMax.divAssign(source.bfMin, minParams);
+         minParams.clear();
+         bfMin.swap(bfMax);
+      }
+      else { // bfMin.isNegative() && source.bfMin.isNegative() && source.bfMax.isPositive()
+         isDivisionByZero = true;
+         bfMin.setInfty();
+         bfMin.setNegative();
+         bfMax.setInfty();
+      };
+   }
+   else { // bfMin.isNegative() && bfMax.isPositive()
+      if (source.bfMin.isPositive() || source.bfMin.isZero()) {
+         if (source.bfMin.isZero())
+            isDivisionByZero = true;
+         bfMin.divAssign(source.bfMin, minParams);
+         minParams.clear();
+         bfMax.divAssign(source.bfMin, maxParams);
+         maxParams.clear();
+      }
+      else if (source.bfMax.isNegative() || source.bfMax.isZero()) {
+         if (source.bfMax.isZero())
+            isDivisionByZero = true;
+         bfMin.divAssign(source.bfMax, maxParams);
+         maxParams.clear();
+         bfMax.divAssign(source.bfMax, minParams);
+         minParams.clear();
+         bfMin.swap(bfMax);
+      }
+      else { // bfMin.isNegative() && bfMax.isPositive() && source.bfMin.isNegative() && source.bfMax.isPositive()
+         isDivisionByZero = true;
+         bfMin.setInfty();
+         bfMin.setNegative();
+         bfMax.setInfty();
+      };
+   }
+   if (isDivisionByZero)
+      inherited::notifyForDivisionByZero(*this);
+   inherited::notifyForCompare(*this);
+   return *this;
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+int
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::asInt() const {
+   int resultMin, resultMax;
+   auto& minParams = inherited::minParams();
+   Numerics::DDouble::Access::ReadParameters nearestParams(minParams);
+   nearestParams.setNearestRound().setRoundToEven();
+
+   {  typename TypeBuiltDouble::IntConversion conversion;
+      bfMin.retrieveInteger(conversion.setSigned(), nearestParams);
+      nearestParams.clear();
+      resultMin = conversion.asInt();
+   };
+   {  typename TypeBuiltDouble::IntConversion conversion;
+      bfMax.retrieveInteger(conversion.setSigned(), nearestParams);
+      nearestParams.clear();
+      resultMax = conversion.asInt();
+   };
+
+   if (resultMin == resultMax)
+      return resultMin;
+
+   if ((resultMax - resultMin <= 0) || (resultMax - resultMin >= (1 << 12)))
+      return (int) dValue;
+
+   int result = resultMin + inherited::getConversionBranch(resultMax-resultMin, (int) dValue - resultMin);
+   if (result < resultMax) {
+      auto& maxParams = inherited::maxParams();
+      typename TypeBuiltDouble::IntConversion conversion;
+      conversion.setSigned();
+      conversion.assign(result);
+      const_cast<thisType&>(*this).bfMax.setInteger(conversion, maxParams);
+      maxParams.clear();
+      if (bfMax.isPositive()) {
+         TypeBuiltDouble one;
+         one.setOne();
+         const_cast<thisType&>(*this).bfMax.plusAssign(one, maxParams);
+         maxParams.clear();
+         const_cast<thisType&>(*this).bfMax.setToPrevious();
+      }
+      else
+         const_cast<thisType&>(*this).bfMax.setToNext();
+   };
+   if (result > resultMin) {
+      typename TypeBuiltDouble::IntConversion conversion;
+      conversion.setSigned();
+      conversion.assign(result);
+      const_cast<thisType&>(*this).bfMin.setInteger(conversion, minParams);
+      minParams.clear();
+      if (bfMin.isPositive())
+         const_cast<thisType&>(*this).bfMin.setToPrevious();
+      else {
+         TypeBuiltDouble one;
+         one.setOne();
+         const_cast<thisType&>(*this).bfMax.minusAssign(one, minParams);
+         minParams.clear();
+         const_cast<thisType&>(*this).bfMax.setToNext();
+      };
+   };
+   inherited::notifyForBranchCompare(*this);
+   return result;
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+unsigned
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::asUnsigned() const {
+   auto& minParams = inherited::minParams();
+   Numerics::DDouble::Access::ReadParameters nearestParams(minParams);
+   nearestParams.setNearestRound().setRoundToEven();
+
+   unsigned resultMin, resultMax;
+   {  typename TypeBuiltDouble::IntConversion conversion;
+      bfMin.retrieveInteger(conversion.setUnsigned(), nearestParams);
+      nearestParams.clear();
+      resultMin = conversion.asUnsignedInt();
+   };
+   {  typename TypeBuiltDouble::IntConversion conversion;
+      bfMax.retrieveInteger(conversion.setUnsigned(), nearestParams);
+      nearestParams.clear();
+      resultMax = conversion.asUnsignedInt();
+   };
+
+   if (resultMin == resultMax)
+      return resultMin;
+
+   if ((resultMax - resultMin <= 0) || (resultMax - resultMin >= (1 << 12)))
+      return (unsigned) dValue;
+
+   unsigned result = resultMin + inherited::getConversionBranch(resultMax-resultMin, (unsigned) dValue - resultMin);
+   if (result < resultMax) {
+      auto& maxParams = inherited::maxParams();
+      typename TypeBuiltDouble::IntConversion conversion;
+      conversion.setUnsigned();
+      conversion.assign(result);
+      const_cast<thisType&>(*this).bfMax.setInteger(conversion, maxParams);
+      maxParams.clear();
+      TypeBuiltDouble one;
+      one.setOne();
+      const_cast<thisType&>(*this).bfMax.plusAssign(one, maxParams);
+      maxParams.clear();
+      const_cast<thisType&>(*this).bfMax.setToPrevious();
+   };
+   if (result > resultMin) {
+      typename TypeBuiltDouble::IntConversion conversion;
+      conversion.setUnsigned();
+      conversion.assign(result);
+      const_cast<thisType&>(*this).bfMin.setInteger(conversion, minParams);
+      minParams.clear();
+      const_cast<thisType&>(*this).bfMin.setToPrevious();
+   };
+   inherited::notifyForBranchCompare(*this);
+   return result;
+}
+
+static const double PI = 3.141592653589793238;
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+void
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::sinAssign() {
+   dValue = ::sin(dValue);
+   TypeImplementation min, max;
+   DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
+   DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+
+   if (max - min >= 2*PI) {
+      DDoubleInterval::fillContent(bfMin, -1.0);
+      DDoubleInterval::fillContent(bfMax, 1.0);
+   }
+   else if (min >= -PI/2 && max <= PI/2) {
+      min = ::sin(min);
+      max = ::sin(max);
+
+      DDoubleInterval::fillContent(bfMin, min);
+      DDoubleInterval::fillContent(bfMax, max);
+      adjustMin(min);
+      adjustMax(max);
+   }
+   else {
+      int kmin = min / (2*PI);
+      int kmax = max / (2*PI);
+      AssumeCondition(kmax - kmin <= 1)
+      TypeImplementation sinmin = ::sin(min);
+      TypeImplementation sinmax = ::sin(max);
+      min -= PI * kmin * 2;
+      max -= PI * kmin * 2;
+      if (min <= PI/2) {
+         if (max <= PI/2) {
+            DDoubleInterval::fillContent(bfMin, sinmin);
+            DDoubleInterval::fillContent(bfMax, sinmax);
+            adjustMin(sinmin);
+            adjustMax(sinmax);
+         }
+         else if (max <= 3*PI/2) {
+            if (sinmin <= sinmax) {
+               DDoubleInterval::fillContent(bfMin, sinmin);
+               DDoubleInterval::fillContent(bfMax, 1);
+               adjustMin(sinmin);
+            }
+            else {
+               DDoubleInterval::fillContent(bfMin, sinmax);
+               DDoubleInterval::fillContent(bfMax, 1);
+               adjustMin(sinmax);
+            };
+         }
+         else {
+            DDoubleInterval::fillContent(bfMin, -1.0);
+            DDoubleInterval::fillContent(bfMax, 1.0);
+         };
+      }
+      else if (min <= 3*PI/2) {
+         if (max <= 3*PI/2) {
+            DDoubleInterval::fillContent(bfMin, sinmax);
+            DDoubleInterval::fillContent(bfMax, sinmin);
+            adjustMin(sinmax);
+            adjustMax(sinmin);
+         }
+         else if (max <= 5*PI/2) {
+            if (sinmin <= sinmax) {
+               DDoubleInterval::fillContent(bfMin, -1);
+               DDoubleInterval::fillContent(bfMax, sinmax);
+               adjustMax(sinmax);
+            }
+            else {
+               DDoubleInterval::fillContent(bfMin, -1);
+               DDoubleInterval::fillContent(bfMax, sinmin);
+               adjustMax(sinmin);
+            };
+         }
+         else {
+            DDoubleInterval::fillContent(bfMin, -1.0);
+            DDoubleInterval::fillContent(bfMax, 1.0);
+         };
+      }
+      else { // 3*PI/2 < min <= 2*PI
+         if (max <= 5*PI/2) {
+            DDoubleInterval::fillContent(bfMin, sinmin);
+            DDoubleInterval::fillContent(bfMax, sinmax);
+            adjustMin(sinmin);
+            adjustMax(sinmax);
+         }
+         else if (max <= 7*PI/2) {
+            if (sinmin <= sinmax) {
+               DDoubleInterval::fillContent(bfMin, sinmin);
+               DDoubleInterval::fillContent(bfMax, 1);
+               adjustMin(sinmin);
+            }
+            else {
+               DDoubleInterval::fillContent(bfMin, sinmax);
+               DDoubleInterval::fillContent(bfMax, 1);
+               adjustMin(sinmax);
+            };
+         }
+         else {
+            DDoubleInterval::fillContent(bfMin, -1.0);
+            DDoubleInterval::fillContent(bfMax, 1.0);
+         };
+      };
+   };
+
+   inherited::notifyForCompare(*this);
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+void
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::cosAssign() {
+   dValue = ::cos(dValue);
+   TypeImplementation min, max;
+   DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
+   DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+
+   if (max - min >= 2*PI) {
+      DDoubleInterval::fillContent(bfMin, -1.0);
+      DDoubleInterval::fillContent(bfMax, 1.0);
+   }
+   else if (min >= 0 && max <= PI) {
+      min = ::cos(min);
+      max = ::cos(max);
+
+      DDoubleInterval::fillContent(bfMin, max);
+      DDoubleInterval::fillContent(bfMax, min);
+      adjustMin(max);
+      adjustMax(min);
+   }
+   else {
+      int kmin = min / (2*PI);
+      int kmax = max / (2*PI);
+      AssumeCondition(kmax - kmin <= 1)
+      TypeImplementation cosmin = ::cos(min);
+      TypeImplementation cosmax = ::cos(max);
+      min -= PI * kmin * 2;
+      max -= PI * kmin * 2;
+      if (min <= PI) {
+         if (max <= PI) {
+            DDoubleInterval::fillContent(bfMin, cosmax);
+            DDoubleInterval::fillContent(bfMax, cosmin);
+            adjustMin(cosmax);
+            adjustMax(cosmin);
+         }
+         else if (max <= 2*PI) {
+            if (cosmin <= cosmax) {
+               DDoubleInterval::fillContent(bfMin, -1);
+               DDoubleInterval::fillContent(bfMax, cosmax);
+               adjustMax(cosmax);
+            }
+            else {
+               DDoubleInterval::fillContent(bfMin, -1);
+               DDoubleInterval::fillContent(bfMax, cosmin);
+               adjustMax(cosmin);
+            };
+         }
+         else {
+            DDoubleInterval::fillContent(bfMin, -1.0);
+            DDoubleInterval::fillContent(bfMax, 1.0);
+         };
+      }
+      else { // PI < min <= 2*PI
+         if (max <= 2*PI) {
+            DDoubleInterval::fillContent(bfMin, cosmin);
+            DDoubleInterval::fillContent(bfMax, cosmax);
+            adjustMin(cosmin);
+            adjustMax(cosmax);
+         }
+         else if (max <= 3*PI) {
+            if (cosmin <= cosmax) {
+               DDoubleInterval::fillContent(bfMin, cosmin);
+               DDoubleInterval::fillContent(bfMax, 1);
+               adjustMin(cosmin);
+            }
+            else {
+               DDoubleInterval::fillContent(bfMin, cosmax);
+               DDoubleInterval::fillContent(bfMax, 1);
+               adjustMin(cosmax);
+            };
+         }
+         else {
+            DDoubleInterval::fillContent(bfMin, -1.0);
+            DDoubleInterval::fillContent(bfMax, 1.0);
+         };
+      };
+   };
+
+   inherited::notifyForCompare(*this);
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+void
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::asinAssign() {
+   dValue = ::asin(dValue);
+   TypeImplementation min, max;
+   NumericalDomains::DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
+   NumericalDomains::DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+   min = ::asin(min);
+   max = ::asin(max);
+
+   DDoubleInterval::fillContent(bfMin, min);
+   DDoubleInterval::fillContent(bfMax, max);
+   adjustMin(min);
+   adjustMax(max);
+
+   inherited::notifyForCompare(*this);
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+void
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::acosAssign() {
+   dValue = ::acos(dValue);
+   TypeImplementation min, max;
+   DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
+   DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+   min = ::acos(min);
+   max = ::acos(max);
+
+   DDoubleInterval::fillContent(bfMin, max);
+   DDoubleInterval::fillContent(bfMax, min);
+   adjustMin(max);
+   adjustMax(min);
+
+   inherited::notifyForCompare(*this);
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+void
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::tanAssign() {
+   thisType cosCopy(*this);
+   sinAssign();
+   cosCopy.cosAssign();
+   operator/=(cosCopy);
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+void
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::atanAssign() {
+   dValue = ::atan(dValue);
+   TypeImplementation min, max;
+   DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
+   DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+   min = ::atan(min);
+   max = ::atan(max);
+
+   DDoubleInterval::fillContent(bfMin, min);
+   DDoubleInterval::fillContent(bfMax, max);
+   adjustMin(min);
+   adjustMax(max);
+
+   inherited::notifyForCompare(*this);
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+void
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::expAssign() {
+   dValue = ::exp(dValue);
+   TypeImplementation min, max;
+   DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
+   DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+   min = ::exp(min);
+   max = ::exp(max);
+
+   DDoubleInterval::fillContent(bfMin, min);
+   DDoubleInterval::fillContent(bfMax, max);
+   adjustMin(min);
+   adjustMax(max);
+
+   inherited::notifyForCompare(*this);
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+void
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::logAssign() {
+   bool isNegativeOrNulLog = false;
+   if (bfMin.isNegative() || bfMin.isZero()) {
+      isNegativeOrNulLog = true;
+      bfMin = 0;
+      if (bfMax.isNegative() || bfMax.isZero())
+         bfMax = 0;
+   };
+
+   dValue = ::log(dValue);
+   TypeImplementation min, max;
+   DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
+   DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+   min = ::log(min);
+   max = ::log(max);
+
+   DDoubleInterval::fillContent(bfMin, min);
+   DDoubleInterval::fillContent(bfMax, max);
+   adjustMin(min);
+   adjustMax(max);
+
+   if (isNegativeOrNulLog)
+      inherited::notifyForNegativeOrNulLog(*this);
+   inherited::notifyForCompare(*this);
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+void
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::log10Assign() {
+   bool isNegativeOrNulLog = false;
+   if (bfMin.isNegative() || bfMin.isZero()) {
+      isNegativeOrNulLog = true;
+      bfMin = 0;
+      if (bfMax.isNegative() || bfMax.isZero())
+         bfMax = 0;
+   };
+
+   dValue = ::log10(dValue);
+   TypeImplementation min, max;
+   DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
+   DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+   min = ::log10(min);
+   max = ::log10(max);
+
+   DDoubleInterval::fillContent(bfMin, min);
+   DDoubleInterval::fillContent(bfMax, max);
+   adjustMin(min);
+   adjustMax(max);
+
+   if (isNegativeOrNulLog)
+      inherited::notifyForNegativeOrNulLog(*this);
+   inherited::notifyForCompare(*this);
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+void
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
+      ::powAssign(const thisType& value) {
+   bool isNegativePow = false;
+   if (bfMin.isNegative() && !bfMin.isZero()) {
+      isNegativePow = true;
+      bfMin = 0;
+      if (bfMax.isNegative() || bfMax.isZero())
+         bfMax = 0;
+   };
+
+   dValue = ::pow(dValue, value.dValue);
+   TypeImplementation thisMin, thisMax;
+   TypeImplementation powMin, powMax;
+   DDoubleInterval::setContent(thisMin, bfMin, false /* isUpper */);
+   DDoubleInterval::setContent(thisMax, bfMax, true /* isUpper */);
+   DDoubleInterval::setContent(powMin, value.bfMin, false /* isUpper */);
+   DDoubleInterval::setContent(powMax, value.bfMax, true /* isUpper */);
+
+   TypeImplementation min, max;
+   if (thisMin < 1 && thisMax <= 1) {
+      min = ::pow(thisMin, powMax);
+      max = ::pow(thisMax, powMin);
+   }
+   else if (thisMin < 1) { // thisMax >= 1
+      min = ::pow(thisMin, powMax);
+      max = ::pow(thisMax, powMax);
+   }
+   else { // thisMax >= thisMin >= 1
+      min = ::pow(thisMin, powMin);
+      max = ::pow(thisMax, powMax);
+   }
+
+   DDoubleInterval::fillContent(bfMin, min);
+   DDoubleInterval::fillContent(bfMax, max);
+   adjustMin(min);
+   adjustMax(max);
+
+   if (isNegativePow)
+      inherited::notifyForNegativePow(*this);
+   inherited::notifyForCompare(*this);
+}
+
+}} // end of namespace NumericalDomains::DDoubleInterval
+
+#endif // NumericalDomains_FloatIntervalBaseTemplate
+

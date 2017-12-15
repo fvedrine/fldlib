@@ -1,0 +1,1638 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : ForwardNumerics
+// Unit      : Integer
+// File      : BaseInteger.inctemplate
+// Description :
+//   Implementation of a class of integers with unbound size.
+//
+
+#ifndef DefineGeneric
+
+#define DefineBigCellTemplateHeader                        \
+   template <class BaseIntegerTraits>
+#define DefineBigCellIntAlgo                               \
+   TBigCellInt
+#define DefineBigCellTemplateParameters(TypeIntegerTraits) \
+   <TypeIntegerTraits>
+#define DefineBaseType                                     \
+   unsigned int
+#define DefineSBaseType                                    \
+   unsigned int
+#define DefineBaseTypeConstReference                       \
+   unsigned int
+#define DefineSizeofBaseTypeInBits                         \
+   (sizeof(unsigned int)*8)
+#define DefineBigCellInt                                   \
+   TBigCellInt
+#define DefineBigInt                                       \
+   TBigInt
+
+#else // DefineGeneric
+
+#define DefineBigCellTemplateHeader                        \
+   template <class BaseStoreTraits, class BaseIntegerTraits>
+#define DefineBigCellIntAlgo                               \
+   TGBigCellIntAlgo
+#define DefineBigCellTemplateParameters(TypeIntegerTraits) \
+   <BaseStoreTraits, TypeIntegerTraits>
+#define DefineBaseType                                     \
+   BaseType
+#define DefineSBaseType                                    \
+   typename BaseStoreTraits::BaseType
+#define DefineBaseTypeConstReference                       \
+   BaseTypeConstReference
+#define DefineSizeofBaseTypeInBits                         \
+   BaseStoreTraits::sizeBaseInBits()
+#define DefineBigCellInt                                   \
+   TGBigCellInt
+#define DefineBigInt                                       \
+   TGBigInt
+
+#endif // DefineGeneric
+
+#ifdef DefineBigCellClass
+
+/***********************************************************************/
+/* Implementation of the template classes TBigCellInt and TGBigCellInt */
+/***********************************************************************/
+
+namespace DInteger {
+
+DefineBigCellTemplateHeader
+ComparisonResult
+DefineBigCellIntAlgo DefineBigCellTemplateParameters(BaseIntegerTraits)::compare(const thisType& source) const {
+   ComparisonResult result = CREqual;
+   int index = inherited::getSize();
+   if (index < source.inherited::getSize())
+      index = source.inherited::getSize();
+      
+   while ((--index >= 0) && (result == CREqual)) {
+      if (inherited::array(index) < source.array(index))
+         result = CRLess;
+      else if (inherited::array(index) > source.array(index))
+         result = CRGreater;
+   };
+   return result;
+}
+
+DefineBigCellTemplateHeader
+typename DefineBigCellIntAlgo DefineBigCellTemplateParameters(BaseIntegerTraits)::Carry
+DefineBigCellIntAlgo DefineBigCellTemplateParameters(BaseIntegerTraits)::add(const thisType& source) {
+   Carry carry;
+   if (inherited::getSize() < source.inherited::getSize())
+      inherited::adjustSize(source.inherited::getSize());
+   for (int index = 0; index < inherited::getSize(); ++index) {
+      DefineBaseType oldCell = inherited::carray(index);
+      inherited::array(index) += source.carray(index);
+      if (carry.hasCarry()) {
+         ++inherited::array(index);
+         carry.setCarry(inherited::carray(index) <= oldCell);
+      }
+      else
+         carry.setCarry(inherited::carray(index) < oldCell);
+   };
+   return carry;
+}
+
+DefineBigCellTemplateHeader
+typename DefineBigCellIntAlgo DefineBigCellTemplateParameters(BaseIntegerTraits)::Carry
+DefineBigCellIntAlgo DefineBigCellTemplateParameters(BaseIntegerTraits)::sub(const thisType& source) {
+   Carry carry;
+   if (inherited::getSize() < source.inherited::getSize())
+      inherited::adjustSize(source.inherited::getSize());
+   int size = inherited::getSize();
+   for (int index = 0; index < size; ++index) {
+      DefineBaseType oldCell = inherited::carray(index);
+      inherited::array(index) -= source.carray(index);
+      if (carry.hasCarry()) {
+         --inherited::array(index);
+         carry.setCarry(inherited::carray(index) >= oldCell);
+      }
+      else
+         carry.setCarry(inherited::carray(index) > oldCell);
+   };
+   return carry;
+}
+
+DefineBigCellTemplateHeader
+typename DefineBigCellIntAlgo DefineBigCellTemplateParameters(BaseIntegerTraits)::Carry
+DefineBigCellIntAlgo DefineBigCellTemplateParameters(BaseIntegerTraits)::multAssign(DefineBaseTypeConstReference source) {
+   DefineBaseType carry, thisLow, thisHigh, sourceLow, sourceHigh;
+   carry = 0;
+#ifndef DefineGeneric
+   sourceHigh = source >> (sizeof(unsigned int)*4);
+   sourceLow = source & ~(~0U << (sizeof(unsigned int)*4));
+#else
+   sourceHigh = BaseStoreTraits::getMidHighPart(source);
+   sourceLow = BaseStoreTraits::getMidLowPart(source);
+#endif
+   int size = inherited::getSize();
+   for (int thisIndex = 0; thisIndex < size; ++thisIndex) {
+#ifndef DefineGeneric
+      thisHigh = carray(thisIndex) >> (sizeof(unsigned int)*4);
+      thisLow = carray(thisIndex) & ~(~0U << (sizeof(unsigned int)*4));
+#else
+      thisHigh = BaseStoreTraits::getMidHighPart(carray(thisIndex));
+      thisLow = BaseStoreTraits::getMidLowPart(carray(thisIndex));
+#endif
+      array(thisIndex) = carry;
+      carry = 0x0;
+#ifndef DefineGeneric
+      unsigned int firstLowPart = thisLow*sourceHigh << (sizeof(unsigned int)*4);
+      unsigned int secondLowPart = thisHigh*sourceLow << (sizeof(unsigned int)*4);
+#else
+      DefineBaseType first = thisLow*sourceHigh,
+               second = thisHigh*sourceLow;
+      DefineBaseType firstLowPart = BaseStoreTraits::getStoreMidHighPart(
+            BaseStoreTraits::getMidLowPart(first), 0x0);
+      DefineBaseType secondLowPart = BaseStoreTraits::getStoreMidHighPart(
+            BaseStoreTraits::getMidLowPart(second), 0x0);
+#endif
+      carry += add(array(thisIndex), thisLow*sourceLow);
+      carry += add(array(thisIndex), firstLowPart);
+      carry += add(array(thisIndex), secondLowPart);
+#ifndef DefineGeneric
+      carry += ((thisLow*sourceHigh) >> (sizeof(unsigned int)*4));
+      carry += ((thisHigh*sourceLow) >> (sizeof(unsigned int)*4));
+#else
+      carry += BaseStoreTraits::getMidHighPart(first);
+      carry += BaseStoreTraits::getMidHighPart(second);
+#endif
+      carry += thisHigh*sourceHigh;
+   };
+   return Carry(carry);
+}
+
+DefineBigCellTemplateHeader
+DefineBigCellIntAlgo DefineBigCellTemplateParameters(BaseIntegerTraits)&
+DefineBigCellIntAlgo DefineBigCellTemplateParameters(BaseIntegerTraits)::operator<<=(int shift) {
+   AssumeCondition(shift >= 0)
+   int shiftIndex = shift / DefineSizeofBaseTypeInBits;
+   int localShift = shift % DefineSizeofBaseTypeInBits;
+   int writeIndex = inherited::getSize();
+   while (--writeIndex >= shiftIndex) {
+      DefineBaseType temp = inherited::carray(writeIndex-shiftIndex);
+      inherited::array(writeIndex) = temp << localShift;
+      if ((localShift > 0) && (writeIndex > shiftIndex))
+         inherited::array(writeIndex) |= (inherited::carray(writeIndex-shiftIndex-1)
+               >> (DefineSizeofBaseTypeInBits-localShift));
+   };
+   ++writeIndex;
+   while (--writeIndex >= 0)
+      inherited::array(writeIndex) = 0x0;
+   return *this;
+}
+
+DefineBigCellTemplateHeader
+DefineBigCellIntAlgo DefineBigCellTemplateParameters(BaseIntegerTraits)&
+DefineBigCellIntAlgo DefineBigCellTemplateParameters(BaseIntegerTraits)::operator>>=(int shift) {
+   AssumeCondition(shift >= 0)
+   int shiftIndex = shift / DefineSizeofBaseTypeInBits;
+   int localShift = shift % DefineSizeofBaseTypeInBits;
+   int writeIndex;
+   
+   int size = inherited::getSize();
+   for (writeIndex = 0; writeIndex < size-shiftIndex; ++writeIndex) {
+      DefineBaseType temp = inherited::carray(writeIndex+shiftIndex);
+      inherited::array(writeIndex) = temp >> localShift;
+      if ((localShift > 0) && (writeIndex + shiftIndex < size-1))
+         inherited::array(writeIndex) |= (inherited::carray(writeIndex+shiftIndex+1)
+               << (DefineSizeofBaseTypeInBits-localShift));
+   };
+   --writeIndex;
+   while (++writeIndex < size)
+      inherited::array(writeIndex) = 0x0;
+   return *this;
+}
+
+DefineBigCellTemplateHeader
+bool
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::isZero() const {
+   bool result = true;
+   for (int index = inherited::getSize(); result && (--index >= 0); )
+      result = array(index) == 0;
+   return result;
+}
+
+DefineBigCellTemplateHeader
+bool
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::hasZero(int shift) const {
+   bool result = true;
+   if (shift > 0) {
+      int sizeBaseInBits = DefineSizeofBaseTypeInBits;
+      for (int index = shift/sizeBaseInBits; result && (--index >= 0); )
+         result = carray(index) == 0;
+      if (result && (shift % sizeBaseInBits != 0))
+         result = ((carray(shift/sizeBaseInBits)
+                     << (sizeBaseInBits - (shift % sizeBaseInBits))) == 0);
+   };
+   return result;
+}
+
+DefineBigCellTemplateHeader
+bool
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::verifyAtomicity() const {
+   int size = inherited::getSize();
+   for (int index = 1; index < size; ++index)
+#ifndef DefineGeneric
+      if (carray(index) != 0U)
+#else
+      if (!BaseStoreTraits::isZeroValue(carray(index)))
+#endif
+         return false;
+   return true;
+}
+
+DefineBigCellTemplateHeader
+typename DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::Carry
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::dec() {
+   Carry carry;
+   carry.setCarry();
+   int size = inherited::getSize();
+   for (int index = 0; (index < size) && carry.hasCarry(); ++index) {
+#ifndef DefineGeneric
+      bool hasCarry = carray(index) == 0U;
+#else
+      bool hasCarry = BaseStoreTraits::isZeroValue(carray(index));
+#endif
+      --array(index);
+      carry.setCarry(hasCarry);
+   };
+   return carry;
+}
+
+DefineBigCellTemplateHeader
+typename DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::Carry
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::inc() {
+   Carry carry;
+   carry.setCarry();
+   int size = inherited::getSize();
+   for (int index = 0; (index < size) && carry.hasCarry(); ++index)
+#ifndef DefineGeneric
+      carry.setCarry(++array(index) == 0U);
+#else
+      carry.setCarry(BaseStoreTraits::isZeroValue(++array(index)));
+#endif
+   return carry;
+}
+
+DefineBigCellTemplateHeader
+void
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::mult(const thisType& source, MultResult& result) const {
+   DefineBaseType carry, thisLow, thisHigh, sourceLow, sourceHigh;
+   int sourceSize = source.inherited::getSize();
+   int size = inherited::getSize();
+#ifndef DefineGeneric
+   typedef TBigCellInt<MultResult> MultResultAsBigCellInt;
+#else
+   typedef TGBigCellIntAlgo<BaseStoreTraits, MultResult> MultResultAsBigCellInt;
+#endif
+   for (int sourceIndex = 0; sourceIndex < sourceSize; ++sourceIndex) {
+      carry = 0x0;
+#ifndef DefineGeneric
+      sourceHigh = source.carray(sourceIndex) >> (sizeof(unsigned int)*4);
+      sourceLow = source.carray(sourceIndex) & ~(~0U << (sizeof(unsigned int)*4));
+#else
+      sourceHigh = BaseStoreTraits::getMidHighPart(source.carray(sourceIndex));
+      sourceLow = BaseStoreTraits::getMidLowPart(source.carray(sourceIndex));
+#endif
+      for (int thisIndex = 0; thisIndex < size; ++thisIndex) {
+#ifndef DefineGeneric
+         thisHigh = carray(thisIndex) >> (sizeof(unsigned int)*4);
+         thisLow = carray(thisIndex) & ~(~0U << (sizeof(unsigned int)*4));
+         DefineBaseType firstLowPart = thisLow*sourceHigh << (sizeof(unsigned int)*4);
+         DefineBaseType secondLowPart = thisHigh*sourceLow << (sizeof(unsigned int)*4);
+#define cell result[thisIndex + sourceIndex]
+#else
+         thisHigh = BaseStoreTraits::getMidHighPart(carray(thisIndex));
+         thisLow = BaseStoreTraits::getMidLowPart(carray(thisIndex));
+         DefineBaseType first = thisLow*sourceHigh,
+                        second = thisHigh*sourceLow;
+         DefineBaseType firstLowPart = BaseStoreTraits::getStoreMidHighPart(
+               BaseStoreTraits::getMidLowPart(first), 0x0);
+         DefineBaseType secondLowPart = BaseStoreTraits::getStoreMidHighPart(
+               BaseStoreTraits::getMidLowPart(second), 0x0);
+         typename MultResultAsBigCellInt::ArrayProperty cell = result[thisIndex + sourceIndex];
+#endif
+         carry =  MultResultAsBigCellInt::add(cell, carry);
+         carry += MultResultAsBigCellInt::add(cell, thisLow*sourceLow);
+         carry += MultResultAsBigCellInt::add(cell, firstLowPart);
+         carry += MultResultAsBigCellInt::add(cell, secondLowPart);
+#ifndef DefineGeneric
+#undef cell
+         carry += ((thisLow*sourceHigh) >> (sizeof(unsigned int)*4));
+         carry += ((thisHigh*sourceLow) >> (sizeof(unsigned int)*4));
+#else
+         carry += BaseStoreTraits::getMidHighPart(first);
+         carry += BaseStoreTraits::getMidHighPart(second);
+#endif
+         carry += thisHigh*sourceHigh;
+      };
+      result[size + sourceIndex] = carry;
+   };
+}
+
+DefineBigCellTemplateHeader
+void
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::leftShiftLocal(int index, int shift) {
+   int size = inherited::getSize();
+   AssumeCondition(shift >= 0 && index >= 0 && index <= (int) (size*DefineSizeofBaseTypeInBits))
+   int shiftIndex = shift / DefineSizeofBaseTypeInBits;
+   int localShift = shift % DefineSizeofBaseTypeInBits;
+   int writeIndex = size;
+   int endIndex = (shift + index) / DefineSizeofBaseTypeInBits;
+   int firstIndex = index / DefineSizeofBaseTypeInBits;
+   while (--writeIndex > endIndex) {
+      DefineBaseType temp = carray(writeIndex-shiftIndex);
+      array(writeIndex) = temp << localShift;
+      if (localShift > 0)
+         array(writeIndex) |= (carray(writeIndex-shiftIndex-1)
+               >> (DefineSizeofBaseTypeInBits-localShift));
+   };
+   if (writeIndex == endIndex) {
+      DefineBaseType temp = carray(writeIndex-shiftIndex);
+#ifndef DefineGeneric
+      temp <<= localShift;
+      temp &= ~0U << ((shift + index) % (sizeof(unsigned int)*8));
+#else
+      BaseStoreTraits::leftShiftAndClearLow(temp, localShift,
+            (shift + index) % DefineSizeofBaseTypeInBits);
+#endif
+      if (endIndex == firstIndex)
+#ifndef DefineGeneric
+         temp |= carray(writeIndex-shiftIndex) & ~(~0U << (index % (sizeof(unsigned int)*8)));
+#else
+         temp |= BaseStoreTraits::getLowPart(carray(writeIndex-shiftIndex),
+               index % DefineSizeofBaseTypeInBits);
+#endif
+      array(writeIndex) = temp;
+   };
+   while (--writeIndex > firstIndex)
+      array(writeIndex) = 0x0;
+   if (writeIndex == firstIndex)
+#ifndef DefineGeneric
+      array(writeIndex) &= ~(~0U << (index % (sizeof(unsigned int)*8)));
+#else
+      BaseStoreTraits::clearHighValuePart(array(writeIndex), index % DefineSizeofBaseTypeInBits);
+#endif
+}
+
+DefineBigCellTemplateHeader
+void
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::rightShiftLocal(int index, int shift) {
+   AssumeCondition(shift >= 0 && index >= shift)
+   int shiftIndex = shift / DefineSizeofBaseTypeInBits;
+   int localShift = shift % DefineSizeofBaseTypeInBits;
+   int size = inherited::getSize();
+   int endIndex = size-shiftIndex;
+   int firstIndex = index / DefineSizeofBaseTypeInBits;
+   int writeIndex;
+   for (writeIndex = firstIndex; writeIndex < endIndex; ++writeIndex) {
+      DefineBaseType temp = carray(writeIndex+shiftIndex);
+#ifndef DefineGeneric
+      temp >>= localShift;
+#else
+      BaseStoreTraits::rightShift(temp, localShift);
+#endif
+      if ((localShift > 0) && (writeIndex + shiftIndex < size-1))
+#ifndef DefineGeneric
+         temp |= (carray(writeIndex+shiftIndex+1) << (sizeof(unsigned int)*8-localShift));
+#else
+         BaseStoreTraits::storeIntoHighPart(carray(writeIndex+shiftIndex+1),
+               (DefineSizeofBaseTypeInBits-localShift), temp);
+#endif
+      if (writeIndex == firstIndex)
+#ifndef DefineGeneric
+      {  temp &= ~0U << (index % (sizeof(unsigned int)*8));
+         temp |= carray(writeIndex) & ~(~0U << (index % (sizeof(unsigned int)*8)));
+      }
+#else
+         BaseStoreTraits::storeIntoLowPart(carray(writeIndex),
+               index % (DefineSizeofBaseTypeInBits), temp);
+#endif
+      array(writeIndex) = temp;
+   };
+
+   --writeIndex;
+   while (++writeIndex < size)
+      array(writeIndex) = 0x0;
+}
+
+DefineBigCellTemplateHeader
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)&
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::operator|=(const thisType& source) {
+   int size = inherited::getSize();
+   int sourceSize = source.inherited::getSize();
+   if (size < sourceSize)
+      inherited::adjustSize(sourceSize);
+   for (int index = 0; index < size; ++index)
+      array(index) |= source.carray(index);
+   return *this;
+}
+
+DefineBigCellTemplateHeader
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)&
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::operator^=(const thisType& source) {
+   int size = inherited::getSize();
+   int sourceSize = source.inherited::getSize();
+   if (size < sourceSize)
+      inherited::adjustSize(sourceSize);
+   for (int index = 0; index < size; ++index)
+      array(index) ^= source.carray(index);
+   return *this;
+}
+
+DefineBigCellTemplateHeader
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)&
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::operator&=(const thisType& source) {
+   int size = inherited::getSize();
+   for (int index = 0; index < size; ++index)
+      array(index) &= source.carray(index);
+   return *this;
+}
+
+DefineBigCellTemplateHeader
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)&
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::neg() {
+   int size = inherited::getSize();
+   for (int index = 0; index < size; ++index)
+      array(index) = ~carray(index);
+   return *this;
+}
+
+DefineBigCellTemplateHeader
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)&
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::neg(int shift) {
+   if (shift >= 0) {
+      int size = shift/DefineSizeofBaseTypeInBits;
+      for (int index = 0; index < size; ++index)
+         array(index) = ~carray(index);
+      if (shift % DefineSizeofBaseTypeInBits != 0) {
+         int neg = shift - DefineSizeofBaseTypeInBits*size;
+#ifndef DefineGeneric
+         array(size) = (carray(size) & (~0U << neg)) | (~carray(size) & ~(~0U << neg));
+#else
+         BaseStoreTraits::negLowValuePart(array(size), neg);
+#endif
+      };
+   };
+   return *this;
+}
+
+DefineBigCellTemplateHeader
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)&
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::clear(int shift) {
+   if (shift >= 0) {
+      int size = shift/(DefineSizeofBaseTypeInBits);
+      for (int index = 0; index < size; ++index)
+         array(index) = 0x0;
+      if (shift % (DefineSizeofBaseTypeInBits) != 0) {
+         int neg = shift - DefineSizeofBaseTypeInBits*size;
+#ifndef DefineGeneric
+         array(size) = (carray(size) & (~0U << neg));
+#else
+         BaseStoreTraits::clearLowValuePart(array(size), neg);
+#endif
+      };
+   };
+   return *this;
+}
+
+DefineBigCellTemplateHeader
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)&
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::clearHigh(int shift) {
+   int size = inherited::getSize();
+   if (shift < (int) (size*DefineSizeofBaseTypeInBits)) {
+      for (
+#ifndef DefineGeneric
+            int index = (shift + 8*sizeof(unsigned int)-1)/(8*sizeof(unsigned int));
+#else
+            int index = BaseStoreTraits::minCellsCountToStoreBits(shift);
+#endif
+            index < size; ++index)
+         array(index) = 0x0;
+      if (shift % DefineSizeofBaseTypeInBits != 0) {
+         int index = shift/DefineSizeofBaseTypeInBits;
+         int neg = shift - DefineSizeofBaseTypeInBits*index;
+#ifndef DefineGeneric
+         array(index) = (carray(index) & ~(~0U << neg));
+#else
+         BaseStoreTraits::clearHighValuePart(array(index), neg);
+#endif
+      };
+   };
+   return *this;
+}
+
+DefineBigCellTemplateHeader
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)&
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::saturate(int shift) {
+   if (shift >= 0) {
+      int size = shift/(DefineSizeofBaseTypeInBits);
+      for (int index = 0; index < size; ++index)
+#ifndef DefineGeneric
+         array(index) = ~0U;
+#else
+         array(index) = BaseStoreTraits::getSaturation();
+#endif
+      if (shift % (DefineSizeofBaseTypeInBits) != 0) {
+         int neg = shift - DefineSizeofBaseTypeInBits*size;
+#ifndef DefineGeneric
+         array(size) = (carray(size) | ~(~0U << neg));
+#else
+         BaseStoreTraits::saturateLowValuePart(array(size), neg);
+#endif
+      };
+   };
+   return *this;
+}
+
+DefineBigCellTemplateHeader
+int
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::log_base_2() const {
+   int index = inherited::getSize();
+   while ((index > 0)
+#ifndef DefineGeneric
+         && (carray(--index) == 0U)
+#else
+         && BaseStoreTraits::isZeroValue(carray(--index))
+#endif
+      );
+#ifndef DefineGeneric
+   if (carray(index) == 0U)
+#else
+   if (BaseStoreTraits::isZeroValue(carray(index)))
+#endif
+      return 1;
+#ifndef DefineGeneric
+   return DInteger::Access::log_base_2(carray(index)) + index*DefineSizeofBaseTypeInBits;
+#else
+   return BaseStoreTraits::log_base_2(carray(index)) + index*DefineSizeofBaseTypeInBits;
+#endif
+}
+
+DefineBigCellTemplateHeader
+DefineSBaseType
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)
+      ::retrieveSignificantMidDivide(int logBase2, bool& isExact) const {
+   AssumeCondition(logBase2 > 0)
+   int index = (logBase2-1) / DefineSizeofBaseTypeInBits;
+#ifndef DefineGeneric
+   AssumeCondition(carray(index) != 0U)
+#else
+   AssumeCondition(!BaseStoreTraits::isZeroValue(carray(index)))
+#endif
+   
+   int bitIndex = ((logBase2-1) % DefineSizeofBaseTypeInBits)+1;
+   DefineBaseType result = 0x0;
+   if (bitIndex >= (int) (DefineSizeofBaseTypeInBits / 2)) {
+#ifndef DefineGeneric
+      result = carray(index) >> (bitIndex - sizeof(unsigned int)*4);
+      isExact = (~(~0U << (bitIndex-sizeof(unsigned int)*4)) & carray(index)) == 0U;
+#else
+      result = BaseStoreTraits::getHighPart(carray(index), bitIndex - DefineSizeofBaseTypeInBits/2);
+      isExact = BaseStoreTraits::isZeroValue(BaseStoreTraits::getLowPart(
+            carray(index), bitIndex - DefineSizeofBaseTypeInBits/2));
+#endif
+   }
+   else {
+      if (index > 0) {
+#ifndef DefineGeneric
+         result = carray(index) << (sizeof(unsigned int)*4 - bitIndex);
+         result |= (carray(--index) >> (sizeof(unsigned int)*4+bitIndex));
+         isExact = (~(~0U << (bitIndex+sizeof(unsigned int)*4)) & carray(index)) == 0U;
+#else
+         BaseStoreTraits::storeIntoHighPart(carray(index),
+               DefineSizeofBaseTypeInBits/2 - bitIndex, result);
+         BaseStoreTraits::storeIntoLowPart(
+               BaseStoreTraits::getHighPart(carray(--index),
+                  DefineSizeofBaseTypeInBits/2+bitIndex),
+               DefineSizeofBaseTypeInBits/2 - bitIndex, result);
+         isExact = BaseStoreTraits::isZeroValue(BaseStoreTraits::getLowPart(
+               carray(index), bitIndex+DefineSizeofBaseTypeInBits/2));
+#endif
+      }
+      else {
+         result = carray(index);
+         isExact = true;
+      };
+   };
+   while (isExact && (--index >= 0))
+#ifndef DefineGeneric
+      isExact = (carray(index) == 0U);
+#else
+      isExact = BaseStoreTraits::isZeroValue(carray(index));
+#endif
+   return result;
+}
+
+DefineBigCellTemplateHeader
+DefineSBaseType
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)
+      ::retrieveSignificantMidDivideNormalized(bool& isExact) const {
+   int size = inherited::getSize();
+#ifndef DefineGeneric
+   unsigned int result = (carray(size-1) >> (sizeof(unsigned int)*4+1))
+      | (1U << (sizeof(unsigned int)*4-1));
+   isExact = (~(~0U << (sizeof(unsigned int)*4+1)) & carray(size-1)) == 0U;
+#else
+   DefineBaseType result = BaseStoreTraits::getHighPart(carray(size-1),
+         DefineSizeofBaseTypeInBits/2+1);
+   BaseStoreTraits::setTrueBit(result, DefineSizeofBaseTypeInBits/2-1);
+   isExact = BaseStoreTraits::isZeroValue(BaseStoreTraits::getLowPart(
+         carray(size-1), DefineSizeofBaseTypeInBits/2+1));
+#endif
+   for (int index = size-1; isExact && (--index >= 0); )
+#ifndef DefineGeneric
+      isExact = (carray(index) == 0U);
+#else
+      isExact = BaseStoreTraits::isZeroValue(carray(index));
+#endif
+   return result;
+}
+
+DefineBigCellTemplateHeader
+typename DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::AtomicDivisionResult
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)
+      ::divAssign(DefineBaseTypeConstReference divide) {
+#ifndef DefineGeneric
+   AssumeCondition((divide > 0) && (divide < (1U << (sizeof(unsigned int)*4))))
+#else
+   AssumeCondition((divide > 0) && BaseStoreTraits::isZeroValue(
+         BaseStoreTraits::getHighPart(divide, DefineSizeofBaseTypeInBits/2)))
+#endif
+   DefineBaseType remainder = 0x0;
+
+   int index = inherited::getSize();
+   while ((index > 0)
+#ifndef DefineGeneric
+         && (carray(--index) == 0U)
+#else
+         && (BaseStoreTraits::isZeroValue(carray(--index)))
+#endif
+      );
+#ifndef DefineGeneric
+   if (carray(index) == 0U)
+#else
+   if (BaseStoreTraits::isZeroValue(carray(index)))
+#endif
+      return AtomicDivisionResult();
+
+   index = index*2+1;
+#ifndef DefineGeneric
+   if (cmidArray(index) == 0)
+#else
+   if (BaseStoreTraits::isZeroValue(cmidArray(index)))
+#endif
+      --index;
+
+   if (cmidArray(index) >= divide)
+      ++index;
+   else {
+      remainder = cmidArray(index);
+      setMidArray(index, 0x0);
+   };
+
+   while (--index >= 0) {
+#ifndef DefineGeneric
+      remainder <<= sizeof(unsigned int)*4;
+#else
+      BaseStoreTraits::leftShift(remainder, DefineSizeofBaseTypeInBits/2);
+#endif
+      remainder += cmidArray(index);
+
+      setMidArray(index, remainder / divide);
+      remainder %= divide;
+   };
+   return AtomicDivisionResult(remainder);
+}
+
+DefineBigCellTemplateHeader
+void
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::div(
+      const thisType& source, DivisionResult& result) const {
+   int shiftNumerator = log_base_2(), shiftDenominator = source.log_base_2();
+   bool isExact = false;
+   DefineBaseType midDivide = source.retrieveSignificantMidDivide(shiftDenominator, isExact);
+
+   if (isExact) {
+      int resultSize = result.quotient().getSize();
+      result.quotient() = *this;
+      result.comma() = shiftNumerator;
+      if (shiftDenominator > (int) (DefineSizeofBaseTypeInBits/2))
+         result.comma() -= (shiftDenominator-DefineSizeofBaseTypeInBits/2);
+      auto& promotedQuotientResult = (DefineBigCellInt DefineBigCellTemplateParameters(QuotientResult)&)
+            result.quotient();
+      AssumeCondition((int) ((resultSize+1)*DefineSizeofBaseTypeInBits) >= shiftNumerator)
+      if ((int) (resultSize*DefineSizeofBaseTypeInBits) > shiftNumerator)
+         promotedQuotientResult <<= (resultSize*DefineSizeofBaseTypeInBits - shiftNumerator);
+      else
+         result.comma() -= (shiftNumerator - resultSize*DefineSizeofBaseTypeInBits);
+      AtomicDivisionResult atomicResult = promotedQuotientResult.divAssign(midDivide);
+      AssumeCondition(((int) (resultSize*DefineSizeofBaseTypeInBits) >= shiftNumerator)
+#ifndef DefineGeneric
+            || (result.quotient()[resultSize] == 0U)
+#else
+            || BaseStoreTraits::isZeroValue(result.quotient()[resultSize])
+#endif
+         )
+      int shift = DefineSizeofBaseTypeInBits
+         - log_base_2(result.quotient()[resultSize-1]) + 1;
+      promotedQuotientResult <<= shift;
+      promotedQuotientResult.setSize(resultSize);
+      result.comma() -= shift;
+      if (shift <= (int) (DefineSizeofBaseTypeInBits/2)) {
+         atomicResult.remainder() <<= shift;
+         promotedQuotientResult += (atomicResult.remainder() / midDivide);
+         result.remainder()[0] = (atomicResult.remainder() % midDivide);
+      }
+      else {
+         AssumeCondition(shift <= (int) DefineSizeofBaseTypeInBits)
+         atomicResult.remainder() <<= DefineSizeofBaseTypeInBits/2;
+         DefineBaseType add = atomicResult.remainder() / midDivide;
+         atomicResult.remainder() = (atomicResult.remainder() % midDivide);
+         atomicResult.remainder() <<= (shift - DefineSizeofBaseTypeInBits/2);
+         add <<= (shift - DefineSizeofBaseTypeInBits/2);
+         add += atomicResult.remainder() / midDivide;
+         result.remainder()[0] = (atomicResult.remainder() % midDivide);
+         promotedQuotientResult += add;
+      };
+      if (shiftDenominator > (int) (DefineSizeofBaseTypeInBits/2))
+         ((DefineBigCellInt DefineBigCellTemplateParameters(typename BaseIntegerTraits::RemainderResult)&)
+               result.remainder())
+            <<= (shiftDenominator-DefineSizeofBaseTypeInBits/2);
+      return;
+   };
+
+   DefineBigCellIntAlgo DefineBigCellTemplateParameters(typename BaseIntegerTraits::ExtendedInteger)
+      denominator, numerator;
+   int size = inherited::getSize();
+   int sourceSize = source.inherited::getSize();
+   int maxSize = (size < sourceSize) ? (sourceSize+1) : (size+1);
+
+   denominator.assertSize(maxSize);
+   numerator.assertSize(maxSize);
+   for (int numeratorIndex = 0; numeratorIndex < size; ++numeratorIndex)
+      numerator[numeratorIndex] = carray(numeratorIndex);
+   for (int denominatorIndex = 0; denominatorIndex < sourceSize; ++denominatorIndex)
+      denominator[denominatorIndex] = source[denominatorIndex];
+
+   int sizeQuotient = 2*result.quotient().getSize();
+   int remainderShift = 0;
+
+   result.comma() = shiftNumerator-shiftDenominator;
+   if (shiftDenominator < shiftNumerator) {
+      remainderShift -= shiftNumerator-shiftDenominator;
+      denominator <<= (shiftNumerator-shiftDenominator);
+      if (numerator < denominator) {
+         denominator >>= 1;
+         ++remainderShift;
+         --result.comma();
+      };
+   }
+   else if (shiftDenominator == shiftNumerator) {
+      if (numerator < denominator) {
+         numerator <<= 1;
+         --result.comma();
+      };
+   }
+   else {
+      numerator <<= (shiftDenominator-shiftNumerator);
+      if (numerator < denominator) {
+         numerator <<= 1;
+         --result.comma();
+      };
+   };
+   numerator -= denominator;
+#ifndef DefineGeneric
+   if ((shiftDenominator-remainderShift) % (4*sizeof(unsigned int)) != 0)
+#else
+   if (!BaseStoreTraits::isZeroValue(
+         (shiftDenominator-remainderShift) % (DefineSizeofBaseTypeInBits/2)))
+#endif
+   {
+      int localShift = DefineSizeofBaseTypeInBits/2-(shiftDenominator-remainderShift)
+            % (DefineSizeofBaseTypeInBits/2);
+      remainderShift -= localShift;
+      denominator <<= localShift;
+      numerator <<= localShift;
+   };
+
+   int indexNumerator = (shiftDenominator-remainderShift-1) / (DefineSizeofBaseTypeInBits/2);
+
+   while (sizeQuotient > 0) {
+#ifndef DefineGeneric
+      if (denominator.cmidArray(0) == 0U)
+#else
+      if (BaseStoreTraits::isZeroValue(denominator.cmidArray(0)))
+#endif
+      {
+         denominator >>= DefineSizeofBaseTypeInBits/2;
+         remainderShift += DefineSizeofBaseTypeInBits/2;
+      }
+      else {
+         numerator <<= DefineSizeofBaseTypeInBits/2;
+         ++indexNumerator;
+      };
+#ifndef DefineGeneric
+      unsigned int quotient
+         = ((numerator.cmidArray(indexNumerator) << (4*sizeof(unsigned int)))
+               | numerator.cmidArray(indexNumerator-1)) / midDivide;
+#else
+      DefineBaseType quotient = BaseStoreTraits::getStoreHighPart(
+            numerator.cmidArray(indexNumerator), DefineSizeofBaseTypeInBits/2,
+            numerator.cmidArray(indexNumerator-1)) / midDivide;
+#endif
+      DefineBigCellIntAlgo DefineBigCellTemplateParameters(typename BaseIntegerTraits::ExtendedInteger)
+         mult(denominator);
+      mult.multAssign(quotient);
+      if (mult > numerator) {
+         mult -= denominator;
+         --quotient;
+         if (mult > numerator) {
+            mult -= denominator;
+            --quotient;
+         };
+         numerator -= mult;
+      }
+      else {
+         numerator -= mult;
+         if (numerator > denominator) {
+            ++quotient;
+            numerator -= denominator;
+         };
+      };
+      AssumeCondition(numerator < denominator)
+      ((DefineBigCellInt DefineBigCellTemplateParameters(QuotientResult)&) result.quotient())
+            .setMidArray(--sizeQuotient, quotient);
+      --indexNumerator;
+   };
+
+   if (remainderShift > 0)
+      numerator <<= remainderShift;
+   else
+      numerator >>= -remainderShift;
+
+   int remainderIndex = numerator.getSize();
+   while (--remainderIndex >= 0
+#ifndef DefineGeneric
+         && (numerator[remainderIndex] == 0U)
+#else
+         && (BaseStoreTraits::isZeroValue(numerator[remainderIndex]))
+#endif
+      );
+   if (remainderIndex >= 0) {
+      do {
+         result.remainder()[remainderIndex] = numerator[remainderIndex];
+      } while (--remainderIndex >= 0);
+   };
+}
+
+DefineBigCellTemplateHeader
+void
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::divNormalized(
+      const thisType& source, NormalizedDivisionResult& result) const {
+   bool isExact = false;
+   DefineBaseType midDivide = source.retrieveSignificantMidDivideNormalized(isExact);
+   result.comma() = (*this >= source) ? 0 : -1;
+
+   if (isExact) {
+#ifndef DefineGeneric
+      if (midDivide == 1U)
+#else
+      if (BaseStoreTraits::isOneValue(midDivide))
+#endif
+      {
+         result.quotient() = *this;
+         return;
+      };
+      result.quotient() = *this;
+#ifndef DefineGeneric
+      unsigned int lowBit = (result.quotient()[0] & 1U);
+#else
+      bool lowBit = BaseStoreTraits::getBit(result.quotient()[0], 0);
+#endif
+      auto& promotedQuotientResult = (DefineBigCellInt DefineBigCellTemplateParameters(typename BaseIntegerTraits::QuotientResult)&)
+            result.quotient();
+      promotedQuotientResult >>= 1;
+#ifndef DefineGeneric
+      result.quotient()[result.quotient().getSize()-1] |= (~0U << (8*sizeof(unsigned int)-1));
+#else
+      BaseStoreTraits::setTrueBit(result.quotient()[result.quotient().getSize()-1],
+            DefineSizeofBaseTypeInBits-1);
+#endif
+      AtomicDivisionResult atomicResult = promotedQuotientResult.divAssign(midDivide);
+      int shift = DefineSizeofBaseTypeInBits
+         - log_base_2(result.quotient()[result.quotient().getSize()-1]) + 1;
+      promotedQuotientResult <<= shift;
+      if (shift <= (int) (DefineSizeofBaseTypeInBits/2)) {
+         atomicResult.remainder() <<= shift;
+#ifndef DefineGeneric
+         atomicResult.remainder() |= (lowBit << (shift-1));
+#else
+         BaseStoreTraits::setBit(atomicResult.remainder(), shift-1, lowBit);
+#endif
+         promotedQuotientResult += (atomicResult.remainder() / midDivide);
+         result.remainder()[0] = (atomicResult.remainder() % midDivide);
+      }
+      else {
+         AssumeCondition(shift <= (int) DefineSizeofBaseTypeInBits)
+         atomicResult.remainder() <<= DefineSizeofBaseTypeInBits/2;
+#ifndef DefineGeneric
+         atomicResult.remainder() |= (lowBit << (sizeof(unsigned int)*4-1));
+#else
+         BaseStoreTraits::setBit(atomicResult.remainder(), DefineSizeofBaseTypeInBits/2-1,
+               lowBit);
+#endif
+         DefineBaseType add = atomicResult.remainder() / midDivide;
+         atomicResult.remainder() = (atomicResult.remainder() % midDivide);
+#ifndef DefineGeneric
+         atomicResult.remainder() <<= (shift - sizeof(unsigned int)*4);
+         add <<= (shift - sizeof(unsigned int)*4);
+#else
+         BaseStoreTraits::leftShift(atomicResult.remainder(),
+               shift - DefineSizeofBaseTypeInBits/2);
+         BaseStoreTraits::leftShift(add, shift - DefineSizeofBaseTypeInBits/2);
+#endif
+         add += atomicResult.remainder() / midDivide;
+         result.remainder()[0] = (atomicResult.remainder() % midDivide);
+         promotedQuotientResult += add;
+      };
+      ((DefineBigCellIntAlgo DefineBigCellTemplateParameters(typename BaseIntegerTraits::NormalizedRemainderResult)&)
+            result.remainder())
+         <<= (source.getSize()*DefineSizeofBaseTypeInBits+1-DefineSizeofBaseTypeInBits/2);
+      return;
+   };
+
+   DefineBigCellIntAlgo DefineBigCellTemplateParameters(typename BaseIntegerTraits::ExtendedInteger)
+      denominator, numerator;
+   int size = inherited::getSize();
+   int sourceSize = source.inherited::getSize();
+   int maxSize = (size < sourceSize) ? (sourceSize+1) : (size+1);
+      
+   denominator.assertSize(maxSize);
+   numerator.assertSize(maxSize);
+   for (int numeratorIndex = 0; numeratorIndex < size; ++numeratorIndex)
+     numerator[numeratorIndex] = carray(numeratorIndex);
+   for (int denominatorIndex = 0; denominatorIndex < sourceSize; ++denominatorIndex)
+     denominator[denominatorIndex] = source[denominatorIndex];
+
+#ifndef DefineGeneric
+   denominator[maxSize-1] |= 1U;
+   numerator[maxSize-1] |= 1U;
+   // denominator[sourceSize] |= 1U;
+   // numerator[size] |= 1U;
+#else
+   BaseStoreTraits::setTrueBit(denominator[maxSize-1], 0);
+   BaseStoreTraits::setTrueBit(numerator[maxSize-1], 0);
+#endif
+   int sizeQuotient = 2*result.quotient().getSize();
+
+   if (result.comma() < 0) // numerator < denominator
+      numerator <<= DefineSizeofBaseTypeInBits/2;
+   else
+      numerator <<= DefineSizeofBaseTypeInBits/2-1;
+   denominator <<= DefineSizeofBaseTypeInBits/2-1;
+   numerator -= denominator;
+   int remainderShift = -((int) DefineSizeofBaseTypeInBits/2)+1;
+
+   int indexNumerator = 2*maxSize-2;
+
+   while (sizeQuotient > 0) {
+#ifndef DefineGeneric
+      if (denominator.cmidArray(0) == 0U)
+#else
+      if (BaseStoreTraits::isZeroValue(denominator.cmidArray(0)))
+#endif
+      {
+         denominator >>= DefineSizeofBaseTypeInBits/2;
+         remainderShift += DefineSizeofBaseTypeInBits/2;
+      }
+      else {
+         numerator <<= DefineSizeofBaseTypeInBits/2;
+         ++indexNumerator;
+      };
+#ifndef DefineGeneric
+      unsigned int quotient
+         = (numerator.cmidArray(indexNumerator) << (4*sizeof(unsigned int)));
+#else
+      DefineBaseType quotient = numerator.cmidArray(indexNumerator);
+      BaseStoreTraits::leftShift(quotient, DefineSizeofBaseTypeInBits/2);
+#endif
+      if (indexNumerator >= 1)
+         quotient |= numerator.cmidArray(indexNumerator-1);
+      quotient /= midDivide;
+      DefineBigCellIntAlgo DefineBigCellTemplateParameters(typename BaseIntegerTraits::ExtendedInteger)
+         mult(denominator);
+      mult.multAssign(quotient);
+      if (mult > numerator) {
+         do {
+            mult -= denominator;
+            --quotient;
+         } while (mult > numerator);
+         numerator -= mult;
+      }
+      else {
+         numerator -= mult;
+         if (numerator > denominator) {
+            ++quotient;
+            numerator -= denominator;
+         };
+      };
+      AssumeCondition(numerator < denominator)
+      ((DefineBigCellInt DefineBigCellTemplateParameters(QuotientResult)&) result.quotient())
+            .setMidArray(--sizeQuotient, quotient);
+      --indexNumerator;
+   };
+
+   if (remainderShift > 0)
+      numerator <<= remainderShift;
+   else
+      numerator >>= -remainderShift;
+
+   int remainderSize = result.remainder().getSize();
+   for (int remainderIndex = 0; remainderIndex < remainderSize; ++remainderIndex)
+     result.remainder()[remainderIndex] = (DefineBaseTypeConstReference) numerator[remainderIndex];
+}
+
+DefineBigCellTemplateHeader
+void
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::writeFullBinary(
+      STG::IOObject::OSBase& out, const FormatParameters& params) const {
+   int index = ((params.getLength()-1) / (DefineSizeofBaseTypeInBits)) + 1;
+   int bitIndex = ((params.getLength()-1) % (DefineSizeofBaseTypeInBits)) + 1;
+   
+   while (--index >= 0) {
+#ifndef DefineGeneric
+      DefineBaseType value = carray(index) << (DefineSizeofBaseTypeInBits - bitIndex);
+#else
+      DefineBaseType value = carray(index);
+#endif
+      while (--bitIndex >= 0)
+#ifndef DefineGeneric
+      {  out.put(((value & (1U << (sizeof(unsigned int)*8-1))) == 0) ? '0' : '1');
+         value <<= 1;
+      };
+#else
+         out.put(BaseStoreTraits::getBit(value, bitIndex) ? '1' : '0');
+#endif
+      bitIndex = DefineSizeofBaseTypeInBits;
+   };
+}
+
+DefineBigCellTemplateHeader
+void
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::writeFullHexaDecimal(
+      STG::IOObject::OSBase& out, const FormatParameters& params) const {
+   int index = ((params.getLength()-1) / DefineSizeofBaseTypeInBits) + 1;
+   int hexaIndex = ((params.getLength()-1) % DefineSizeofBaseTypeInBits)/4 + 1;
+   
+   while (--index >= 0) {
+#ifndef DefineGeneric
+      unsigned int value = carray(index) << (4*(sizeof(unsigned int)*2 - hexaIndex));
+#else
+      DefineBaseType value = carray(index);
+#endif
+      while (--hexaIndex >= 0) {
+#ifndef DefineGeneric
+         unsigned show = (value >> (sizeof(unsigned int)*8-4)) & 15U;
+#else
+         unsigned show = BaseStoreTraits::getMiddlePart(value, hexaIndex*4, 4);
+#endif
+         out.put((show < 0xa) ? (char) (show + '0') : (char) (show-0xa + 'a'));
+#ifndef DefineGeneric
+         value <<= 4;
+#endif
+      };
+      hexaIndex = DefineSizeofBaseTypeInBits/4;
+   };
+}
+
+DefineBigCellTemplateHeader
+void
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::writeHexaDecimal(
+      STG::IOObject::OSBase& out, const FormatParameters& params) const {
+   int size = log_base_2();
+   int index = ((size-1) / DefineSizeofBaseTypeInBits) + 1;
+   int hexaIndex = ((size-1) % DefineSizeofBaseTypeInBits)/4 + 1;
+   
+   bool isFirst = true;
+   while (--index >= 0) {
+#ifndef DefineGeneric
+      unsigned int value = carray(index) << (4*(sizeof(unsigned int)*2 - hexaIndex));
+#else
+      DefineBaseType value = carray(index);
+#endif
+      while (--hexaIndex >= 0) {
+#ifndef DefineGeneric
+         unsigned show = (value >> (sizeof(unsigned int)*8-4)) & 15U;
+#else
+         unsigned show = BaseStoreTraits::getMiddlePart(value, hexaIndex*4, 4);
+#endif
+         if (!isFirst || (show > 0)) {
+            out.put((show < 0xa) ? (char) (show + '0') : (char) (show-0xa + 'a'));
+            isFirst = false;
+         };
+#ifndef DefineGeneric
+         value <<= 4;
+#endif
+      };
+      hexaIndex = DefineSizeofBaseTypeInBits/4;
+   };
+   if (isFirst)
+      out.put('0');
+}
+
+DefineBigCellTemplateHeader
+void
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::writeCells(
+      STG::IOObject::OSBase& out, const FormatParameters& params) const {
+   int index = inherited::getSize();
+   while ((index > 0)
+#ifndef DefineGeneric
+         && (carray(--index) == 0U)
+#else
+         && (BaseStoreTraits::isZeroValue(carray(--index)))
+#endif
+      );
+#ifndef DefineGeneric
+   if (carray(index) == 0U)
+#else
+   if (BaseStoreTraits::isZeroValue(carray(index)))
+#endif
+      out.put('0');
+   else {
+      if (params.isBinary()) {
+         DefineBaseType value = carray(index);
+#ifndef DefineGeneric
+         int bitIndex = 0;
+         while ((value & (1U << (sizeof(unsigned int)*8-1))) == 0) {
+            value <<= 1;
+            ++bitIndex;
+         };
+#else
+         int bitIndex = DefineSizeofBaseTypeInBits-1;
+         while (!BaseStoreTraits::getBit(value, bitIndex))
+            --bitIndex;
+#endif
+         out.put('1');
+#ifndef DefineGeneric
+         value <<= 1;
+         
+         while (++bitIndex < (int) (sizeof(unsigned int)*8)) {
+            out.put(((value & (1U << (sizeof(unsigned int)*8-1))) == 0) ? '0' : '1');
+            value <<= 1;
+         };
+#else
+         while (bitIndex >= 0) {
+            out.put(BaseStoreTraits::getBit(value, bitIndex) ? '1' : '0');
+            --bitIndex;
+         };
+#endif
+      }
+      else
+         out << carray(index);
+      while (--index >= 0) {
+         if (params.isBinary()) {
+            DefineBaseType value = carray(index);
+            int bitIndex = DefineSizeofBaseTypeInBits;
+            while (--bitIndex >= 0)
+#ifndef DefineGeneric
+            {  out.put(((value & (1U << (DefineSizeofBaseTypeInBits-1))) == 0) ? '0' : '1');
+               value <<= 1;
+            };
+#else
+               out.put(BaseStoreTraits::getBit(value, bitIndex) ? '1' : '0');
+#endif
+         }
+         else
+            out.put(' ') << carray(index);
+      };
+   };
+}
+
+DefineBigCellTemplateHeader
+void
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::writeInternal(
+      STG::IOObject::OSBase& out, const FormatParameters& params) const {
+   int size = inherited::getSize();
+   bool isRaw = params.isRaw();
+   for (int cellIndex = 0; cellIndex < size; ++cellIndex) {
+#ifndef DefineGeneric
+#ifdef StandardClassesHPP
+      out.write(array(cellIndex), isRaw);
+#else
+      out << array(cellIndex);
+#endif
+#else
+      BaseStoreTraits::writeValue(out, array(cellIndex), isRaw);
+#endif
+      if (!isRaw)
+         out.put(' ');
+   };         
+}
+
+DefineBigCellTemplateHeader
+void
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::writeDecimal(
+      STG::IOObject::OSBase& out, const FormatParameters& params) const {
+   int size = inherited::getSize();
+   unsigned* decimal = new unsigned[(size*DefineSizeofBaseTypeInBits-1)/3+1];
+   int index = -1;
+   thisType thisCopy(*this);
+   int paramsLength = params.getLength();
+   if (params.isSigned() && (paramsLength <= (int) (size*DefineSizeofBaseTypeInBits))
+         && thisCopy.cbitArray(paramsLength-1)) {
+      out.put('-');
+      thisCopy.neg(params.getLength()).inc();
+   };
+   while (!thisCopy.isZero())
+      decimal[++index] = thisCopy.divAssign(10).remainder();
+   if (index < 0)
+      out.put('0');
+   ++index;
+   while (--index >= 0)
+      out.put((char) ('0' + decimal[index]));
+   if (decimal)
+      delete [] decimal;
+}
+
+DefineBigCellTemplateHeader
+void
+DefineBigCellInt DefineBigCellTemplateParameters(BaseIntegerTraits)::read(
+      STG::IOObject::ISBase& in, const FormatParameters& params) {
+   int size = inherited::getSize();
+   for (int cellIndex = 0; cellIndex < size; ++cellIndex)
+      array(cellIndex) = 0x0;
+   int achar;
+   while (isspace(achar = in.get()));
+   if (!params.isDecimal()) {
+      if (params.isBinary() || params.isFullHexaDecimal() || params.isHexaDecimal()) {
+         while (achar == '0')
+            achar = in.get();
+         DefineBaseType value = 0x0;
+         if (params.isBinary()) {
+            if (achar == '1') {
+               while ((achar == '0') || (achar == '1')) {
+                  value = ((achar == '1') ? 0x1 : 0x0);
+                  int bitIndex = 0;
+                  bool doesAccept = true;
+                  while ((++bitIndex < (int) DefineSizeofBaseTypeInBits)
+                           && ((doesAccept = (((achar = in.get()) == '0') || (achar == '1'))) != false)) {
+#ifndef DefineGeneric
+                     value <<= 1;
+#else
+                     BaseStoreTraits::leftShift(value, 1);
+#endif
+                     if (achar == '1')
+                        value |= 0x1;
+                  };
+                  operator<<=(bitIndex);
+                  array(0) |= value;
+                  if (doesAccept)
+                     achar = in.get();
+               };
+            };
+         }
+         else { // params.isFullHexaDecimal() || params.isHexaDecimal()
+            while (HexaChars::accept(achar)) {
+               value = HexaChars::queryValue(achar);
+               int hexaIndex = 0;
+               bool doesAccept = true;
+               while ((++hexaIndex < (int) (DefineSizeofBaseTypeInBits/4))
+                        && ((doesAccept = HexaChars::accept(achar = in.get())) != false)) {
+#ifndef DefineGeneric
+                  value <<= 4;
+#else
+                  BaseStoreTraits::leftShift(value, 4);
+#endif
+                  value |= HexaChars::queryValue(achar);
+               };
+               operator<<=(hexaIndex*4);
+               array(0) |= value;
+               if (doesAccept)
+                  achar = in.get();
+            };
+         };
+      }
+      else if (params.isIntegerCell()) {
+         while ((achar == ' ') || ((achar >= '0') && (achar <= '9'))) {
+            if (achar == ' ')
+               achar = in.get();
+            if ((achar >= '0') && (achar <= '9')) {
+               DefineBaseType value = achar - '0';
+               while (((achar = in.get()) >= '0') && (achar <= '9')) {
+                  value *= 10;
+                  value += (DefineBaseType) (achar-'0');
+               };
+               operator<<=(DefineSizeofBaseTypeInBits);
+               array(0) = value;
+            };
+         };
+      }
+      else {
+         AssumeCondition(params.isInternal())
+         bool isRaw = params.isRaw();
+         for (int cellIndex = 0; cellIndex < size; ++cellIndex) {
+            DefineBaseType cellValue = 0x0;
+#ifdef StandardClassesHPP
+#ifndef DefineGeneric
+            in.read(cellValue, isRaw);
+#else
+            BaseStoreTraits::readValue(in, cellValue, isRaw);
+#endif
+            if (!isRaw)
+               in.assume(' ');
+#else
+#ifndef DefineGeneric
+            if (isRaw) {
+               in.read((char*) &cellValue, sizeof(cellValue));
+               if (!in.good()) throw std::ios_base::failure("expected integer");
+            }
+            else
+               in >> cellValue;
+#else
+            BaseStoreTraits::readValue(in, cellValue, isRaw);
+            if (isRaw)
+               {  if (!in.good()) throw std::ios_base::failure("expected integer"); }
+            else
+#endif
+            {  char cread = (char) in.get();
+               if (!in.good() || (cread != ' ')) {
+                  if (in.good())
+                     in.unget();
+                  throw std::ios_base::failure("expected ' '");
+               }
+            }
+#endif
+            array(cellIndex) = cellValue;
+         };         
+      };
+   }
+   else {
+      while ((achar >= '0') && (achar <= '9')) {
+         operator*=((DefineBaseType) 10);
+         operator+=((DefineBaseType) (achar-'0'));
+         achar = in.get();
+      };
+   };
+   if (achar != EOF)
+      in.unget();
+}
+
+} // end of namespace DInteger
+
+#endif // DefineBigCellClass
+
+#ifdef DefineBigIntClass
+
+/***************************************************************/
+/* Implementation of the template classes TBigInt and TGBigInt */
+/***************************************************************/
+
+DefineBigCellTemplateHeader
+void
+DefineBigInt DefineBigCellTemplateParameters(BaseIntegerTraits)::div(
+      const thisType& source, DivisionResult& result) const {
+   typename ArrayCells::DivisionResult atomicResult;
+   atomicResult.quotient().setSize(inherited::cellTraits().getSize());
+   atomicResult.remainder().setSize(inherited::cellTraits().getSize());
+   cells().div(source.cells(), atomicResult);
+   if (!result.quotient().isComplete()) {
+      int shift = DefineSizeofBaseTypeInBits-result.quotient().lastCellSize();
+#ifndef DefineGeneric
+      DefineBaseType divLeft = atomicResult.quotient()[0] & ~(~0U << shift);
+#else
+      DefineBaseType divLeft = BaseStoreTraits::getLowPart(atomicResult.quotient()[0], shift);
+#endif
+      ((DefineBigCellInt DefineBigCellTemplateParameters(typename ArrayCells::QuotientResult)&)
+            atomicResult.quotient()) >>= shift;
+
+      ArrayCells newRemainder(source.cells());
+      Carry carry = newRemainder.multAssign(divLeft);
+      AssumeCondition(!carry.hasCarry())
+      carry = newRemainder.add((const ArrayCells&) atomicResult.remainder());
+      AssumeCondition(!carry.hasCarry()
+#ifndef DefineGeneric
+            && ((newRemainder[0] & ~(~0U << shift)) == 0)
+#else
+            && BaseStoreTraits::isZeroValue(BaseStoreTraits::getLowPart(newRemainder[0], shift))
+#endif
+         )
+      newRemainder >>= shift;
+      for (int quotientIndex = 0; quotientIndex <= result.quotient().lastCellIndex(); ++quotientIndex)
+         result.quotient()[quotientIndex] = (DefineBaseTypeConstReference) atomicResult.quotient()[quotientIndex];
+      for (int remainderIndex = 0; remainderIndex <= result.remainder().lastCellIndex(); ++remainderIndex)
+         result.remainder()[remainderIndex] = (DefineBaseTypeConstReference) newRemainder[remainderIndex];
+      result.comma() = atomicResult.comma();
+   }
+   else {
+      for (int quotientIndex = 0; quotientIndex <= result.quotient().lastCellIndex(); ++quotientIndex)
+         result.quotient()[quotientIndex] = (DefineBaseTypeConstReference) atomicResult.quotient()[quotientIndex];
+      for (int remainderIndex = 0; remainderIndex <= result.remainder().lastCellIndex(); ++remainderIndex)
+         result.remainder()[remainderIndex] = (DefineBaseTypeConstReference) atomicResult.remainder()[remainderIndex];
+      result.comma() = atomicResult.comma();
+   };
+}
+
+DefineBigCellTemplateHeader
+void
+DefineBigInt DefineBigCellTemplateParameters(BaseIntegerTraits)::divNormalized(
+      const thisType& source, NormalizedDivisionResult& result) const {
+   if (!inherited::isComplete()) {
+      typename ArrayCells::DivisionResult atomicResult;
+      atomicResult.quotient().setSize(inherited::cellTraits().getSize());
+      atomicResult.remainder().assertSize(getSize()/DefineSizeofBaseTypeInBits+1);
+      ArrayCells thisCells, sourceCells;
+      thisCells.assertSize(getSize()/DefineSizeofBaseTypeInBits+1);
+      sourceCells.assertSize(source.getSize()/DefineSizeofBaseTypeInBits+1);
+      for (int numeratorIndex = 0; numeratorIndex <= inherited::lastCellIndex(); ++numeratorIndex)
+         thisCells[numeratorIndex] = (*this)[numeratorIndex];
+      thisCells.setTrueBitArray(getSize());
+      for (int denominatorIndex = 0; denominatorIndex <= source.inherited::lastCellIndex(); ++denominatorIndex)
+         sourceCells[denominatorIndex] = source[denominatorIndex];
+      sourceCells.setTrueBitArray(source.getSize());
+
+      thisCells.div(sourceCells, atomicResult);
+      int shift = DefineSizeofBaseTypeInBits-result.quotient().lastCellSize();
+#ifndef DefineGeneric
+      DefineBaseType divLeft = atomicResult.quotient()[0] & ~(~0U << shift);
+#else
+      DefineBaseType divLeft = BaseStoreTraits::getLowPart(atomicResult.quotient()[0], shift);
+#endif
+      ((DefineBigCellInt DefineBigCellTemplateParameters(typename ArrayCells::QuotientResult)&)
+            atomicResult.quotient()) >>= shift;
+
+      typename ArrayCells::Carry mult = sourceCells.multAssign(divLeft);
+      if (sourceCells.add((const ArrayCells&) atomicResult.remainder()).hasCarry())
+         ++mult.carry();
+      AssumeCondition(
+#ifndef DefineGeneric
+            ((sourceCells[0] & ~(~0U << shift)) == 0)
+#else
+            BaseStoreTraits::isZeroValue(BaseStoreTraits::getLowPart(sourceCells[0], shift))
+#endif
+         && (mult.carry() <= 0x1))
+      sourceCells >>= shift;
+      if (mult.hasCarry())
+         sourceCells[sourceCells.getSize()-1] |= (mult.carry() << source.lastCellSize());
+
+      int additionalShift = inherited::cellTraits().getSize() - result.quotient().getCellSize();
+      while (--additionalShift >= 0) {
+         divLeft = atomicResult.quotient()[0];
+         ((DefineBigCellInt DefineBigCellTemplateParameters(typename ArrayCells::QuotientResult)&)
+               atomicResult.quotient()) >>= DefineSizeofBaseTypeInBits;
+
+         ArrayCells newSource;
+         newSource.assertSize(source.getSize()/DefineSizeofBaseTypeInBits+1);
+         for (int denominatorIndex = 0; denominatorIndex <= source.inherited::lastCellIndex(); ++denominatorIndex)
+            newSource[denominatorIndex] = source[denominatorIndex];
+         newSource.setTrueBitArray(source.getSize());
+            
+         mult = newSource.multAssign(divLeft);
+         if (sourceCells.add(newSource).hasCarry())
+            ++mult.carry();
+         AssumeCondition(
+#ifndef DefineGeneric
+               (sourceCells[0] == 0)
+#else
+               BaseStoreTraits::isZeroValue(sourceCells[0])
+#endif
+            && (mult.carry() <= 1))
+         sourceCells >>= DefineSizeofBaseTypeInBits;
+         if (mult.hasCarry()) {
+#ifndef DefineGeneric
+            sourceCells[sourceCells.getSize()-1] |= (mult.carry() << source.lastCellSize());
+#else
+            DefineBaseType highPart = mult.carry();
+            BaseStoreTraits::leftShift(highPart, source.lastCellSize());
+            sourceCells[sourceCells.getSize()-1] |= highPart;
+#endif
+         }
+      };
+      for (int quotientIndex = 0; quotientIndex <= result.quotient().lastCellIndex(); ++quotientIndex)
+         result.quotient()[quotientIndex] = (DefineBaseTypeConstReference) atomicResult.quotient()[quotientIndex];
+      for (int remainderIndex = 0; remainderIndex <= result.remainder().lastCellIndex(); ++remainderIndex)
+         result.remainder()[remainderIndex] = (DefineBaseTypeConstReference) sourceCells[remainderIndex];
+      result.comma() = atomicResult.comma();
+   }
+   else {
+      AssumeCondition(source.inherited::isComplete())
+      typename ArrayCells::NormalizedDivisionResult atomicResult;
+      atomicResult.quotient().setSize(inherited::cellTraits().getSize());
+      atomicResult.remainder().setSize(inherited::cellTraits().getSize()+1);
+      cells().divNormalized(source.cells(), atomicResult);
+      for (int quotientIndex = 0; quotientIndex <= result.quotient().lastCellIndex(); ++quotientIndex)
+         result.quotient()[quotientIndex] = (DefineBaseTypeConstReference) atomicResult.quotient()[quotientIndex];
+      for (int remainderIndex = 0; remainderIndex <= result.remainder().lastCellIndex(); ++remainderIndex)
+         result.remainder()[remainderIndex] = (DefineBaseTypeConstReference) atomicResult.remainder()[remainderIndex];
+      result.comma() = atomicResult.comma();
+   };
+}
+
+/*
+DefineBigCellTemplateHeader
+typename DefineBigInt DefineBigCellTemplateParameters(BaseIntegerTraits)::AtomicDivisionResult
+DefineBigInt DefineBigCellTemplateParameters(BaseIntegerTraits)::divAssign(
+      DefineBaseTypeConstReference source) {
+   AtomicDivisionResult atomicResult = cells().divAssign(source);
+   if (!inherited::isComplete()) {
+#ifndef DefineGeneric
+      unsigned int divLeft = source.cells()[0]
+         & ~(~0U << (8*sizeof(unsigned int)-sizeLastCell));
+      unsigned int
+         lowSource = source & ~(~0U << 4*sizeof(unsigned int)),
+         highSource = source >> (4*sizeof(unsigned int)),
+         lowDivLeft = divLeft & ~(~0U << 4*sizeof(unsigned int)),
+         highDivLeft = divLeft >> (4*sizeof(unsigned int));
+#else
+      DefineBaseType divLeft = BaseStoreTraits::getLowPart(source.cells()[0],
+            DefineSizeofBaseTypeInBits-sizeLastCell);
+      DefineBaseType
+         lowSource = BaseStoreTraits::getMidLowPart(source),
+         highSource = BaseStoreTraits::getMidHighPart(source),
+         lowDivLeft = BaseStoreTraits::getMidLowPart(divLeft),
+         highDivLeft = BaseStoreTraits::getMidHighPart(divLeft);
+#endif
+      source = lowSource * lowDivLeft;
+#ifndef DefineGeneric
+      DefineBaseType carry = 0;
+      carry = add(source, (highSource*lowDivLeft) << (4*sizeof(unsigned int)));
+      carry += add(source, (lowSource*highDivLeft) << (4*sizeof(unsigned int)));
+#else
+      DefineBaseType zero = 0x0;
+      DefineBaseType carry = add(source,
+            BaseStoreTraits::getStoreMidHighPart(highSource*lowDivLeft, zero));
+      carry += add(source,
+            BaseStoreTraits::getStoreMidHighPart(lowSource*highDivLeft, zero));
+#endif
+      carry += add(source, atomicResult.remainder());
+#ifndef DefineGeneric
+      carry += (highSource*lowDivLeft) >> (4*sizeof(unsigned int));
+      carry += (lowSource*highDivLeft) >> (4*sizeof(unsigned int));
+#else
+      carry += BaseStoreTraits::getMidHighPart(highSource*lowDivLeft);
+      carry += BaseStoreTraits::getMidHighPart(lowSource*highDivLeft);
+#endif
+      carry += highSource * highDivLeft;
+
+      AssumeCondition(
+#ifndef DefineGeneric
+            (source & ~(~0U << (8*sizeof(unsigned int)-inherited::lastCellSize())) == 0)
+            && (carry & (~0U << (8*sizeof(unsigned int)-inherited::lastCellSize())) == 0)
+#else
+            BaseStoreTraits::isZeroValue(BaseStoreTraits
+               ::getLowPart(source, DefineSizeofBaseTypeInBits-inherited::lastCellSize()))
+            && BaseStoreTraits::isZeroValue(BaseStoreTraits
+               ::getHighPart(carry, DefineSizeofBaseTypeInBits-inherited::lastCellSize()))
+#endif
+         )
+#ifndef DefineGeneric
+      source >>= (8*sizeof(unsigned int)-inherited::lastCellSize());
+      source |= carry << (8*sizeof(unsigned int)-inherited::lastCellSize());
+#else
+      BaseStoreTraits::rightShift(source, DefineSizeofBaseTypeInBits-inherited::lastCellSize());
+      BaseStoreTraits::leftShift(carry, DefineSizeofBaseTypeInBits-inherited::lastCellSize());
+      source |= carry;
+#endif
+      atomicResult.remainder() = source;
+   };
+   return atomicResult;
+}
+*/
+
+#endif // DefineBigIntClass
+
+#undef DefineBigCellTemplateHeader
+#undef DefineBigCellIntAlgo
+#undef DefineBigCellTemplateParameters
+#undef DefineBaseType
+#undef DefineSBaseType
+#undef DefineBaseTypeConstReference
+#undef DefineSizeofBaseTypeInBits
+#undef DefineBigCellInt
+#undef DefineBigInt
+

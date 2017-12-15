@@ -1,0 +1,103 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2011-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : NumericalDomains
+// Unit      : Affine relationships
+// File      : FloatAffine.cpp
+// Description :
+//   Implementation of a class of affine relations.
+//
+
+#include "FloatInstrumentation/FloatAffine.h"
+
+#include "NumericalAnalysis/FloatAffineExecutionPath.template"
+
+#include <fstream>
+#include <sstream>
+
+#include "Pointer/Vector.template"
+
+#include "FloatInstrumentation/FloatAffine.incc"
+
+namespace NumericalDomains { namespace DAffine {
+
+template class TInstrumentedFloatZonotope<23, 8, float>;
+template class TInstrumentedFloatZonotope<52, 11, double>;
+template class TInstrumentedFloatZonotope<80, 15, long double>;
+template class TBaseFloatAffine<ExecutionPath>;
+
+template void TBaseFloatAffine<ExecutionPath>::writeCompare<TInstrumentedFloatZonotope<23, 8, float> >(TInstrumentedFloatZonotope<23, 8, float> const&, bool) const;
+template void TBaseFloatAffine<ExecutionPath>::writeCompare<TInstrumentedFloatZonotope<52, 11, double> >(TInstrumentedFloatZonotope<52, 11, double> const&, bool) const;
+template void TBaseFloatAffine<ExecutionPath>::writeCompare<TInstrumentedFloatZonotope<80, 15, long double> >(TInstrumentedFloatZonotope<80, 15, long double> const&, bool) const;
+
+template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TInstrumentedFloatZonotope<23, 8, float> >(TInstrumentedFloatZonotope<23, 8, float> const&, bool) const;
+template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TInstrumentedFloatZonotope<52, 11, double> >(TInstrumentedFloatZonotope<52, 11, double> const&, bool) const;
+template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TInstrumentedFloatZonotope<80, 15, long double> >(TInstrumentedFloatZonotope<80, 15, long double> const&, bool) const;
+
+
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+template class TEquation<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> >;
+template class TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float>;
+template class TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double>;
+template class TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double>;
+#elif defined(FLOAT_GENERIC_BASE_LONG)
+template class TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> >;
+template class TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float>;
+template class TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double>;
+template class TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double>;
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+template class TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> >;
+template class TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float>;
+template class TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double>;
+template class TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double>;
+#endif
+template class TFloatZonotope<ExecutionPath, 23, 8, float>;
+template class TFloatZonotope<ExecutionPath, 52, 11, double>;
+template class TFloatZonotope<ExecutionPath, 80, 15, long double>;
+
+template class TMergeBranches<ExecutionPath>;
+
+} // end of namespace DAffine
+
+template DAffine::TMergeBranches<DAffine::ExecutionPath>&
+DAffine::TMergeBranches<DAffine::ExecutionPath>::operator<<(DAffine::TFloatZonotope<ExecutionPath, 23, 8, float>&);
+
+template DAffine::TMergeBranches<DAffine::ExecutionPath>&
+DAffine::TMergeBranches<DAffine::ExecutionPath>::operator<<(DAffine::TFloatZonotope<ExecutionPath, 52, 11, double>&);
+
+template DAffine::TMergeBranches<DAffine::ExecutionPath>&
+DAffine::TMergeBranches<DAffine::ExecutionPath>::operator<<(DAffine::TFloatZonotope<ExecutionPath, 80, 15, long double>&);
+
+} // end of namespace NumericalDomains
+
+template class COL::TVector<NumericalDomains::DAffine::TMergeBranches<NumericalDomains::DAffine::ExecutionPath>::HighLevelUpdate, COL::DVector::TElementTraits<NumericalDomains::DAffine::TMergeBranches<NumericalDomains::DAffine::ExecutionPath>::HighLevelUpdate>, COL::DVector::ReallocTraits>;
+
+template class COL::TVector<NumericalDomains::FloatZonotope>;
+template class COL::TVector<NumericalDomains::DoubleZonotope>;
+template class COL::TVector<NumericalDomains::LongDoubleZonotope>;
+
+template class COL::TVector<NumericalDomains::DAffine::Equation>;
+template class COL::TVector<NumericalDomains::FloatZonotope::BuiltDouble>;
+template class COL::TVector<NumericalDomains::DoubleZonotope::BuiltDouble>;
+template class COL::TVector<NumericalDomains::LongDoubleZonotope::BuiltDouble>;

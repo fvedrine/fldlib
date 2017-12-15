@@ -1,0 +1,725 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2013-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Standard classes
+// Unit      : Basic object
+// File      : StandardClasses.macro
+// Description :
+//   Definition of the macros in connection with the EnhancedObject class.
+//
+
+#define DTemplate5DefineCopy(Type, FstT, SndT, ThirdT, FourthT, FifthT)                          \
+  public:                                                                                        \
+   virtual EnhancedObject* createCopy() const override                                           \
+      {  return Type<FstT, SndT, ThirdT, FourthT, FifthT>::castToCopyHandler(new Type<FstT, SndT, ThirdT, FourthT, FifthT>(*this)); } \
+   Type<FstT, SndT, ThirdT, FourthT, FifthT>* createSCopy() const                                \
+      {  return (Type<FstT, SndT, ThirdT, FourthT, FifthT>*) Type<FstT, SndT, ThirdT, FourthT, FifthT>::castFromCopyHandler(createCopy()); }
+
+#define DTemplate5Compare(Type, FstT, SndT, ThirdT, FourthT, FifthT)                             \
+  public:                                                                                        \
+   ComparisonResult compare(const Type<FstT, SndT, ThirdT, FourthT, FifthT>& source) const       \
+      {  return _compare(Type<FstT, SndT, ThirdT, FourthT, FifthT>::castToCopyHandler(source)); }\
+   bool isComparable(const Type<FstT, SndT, ThirdT, FourthT, FifthT>& typeObject) const          \
+      {  return _compare(Type<FstT, SndT, ThirdT, FourthT, FifthT>::castToCopyHandler(typeObject)) != CRNonComparable; } \
+   bool operator==(const Type<FstT, SndT, ThirdT, FourthT, FifthT>& typeObject) const            \
+      {  return _compare(Type<FstT, SndT, ThirdT, FourthT, FifthT>::castToCopyHandler(typeObject)) == CREqual; } \
+   bool operator!=(const Type<FstT, SndT, ThirdT, FourthT, FifthT>& typeObject) const            \
+      {  ComparisonResult crResult = _compare(Type<FstT, SndT, ThirdT, FourthT, FifthT>::castToCopyHandler(typeObject)); \
+         return (crResult != CRNonComparable) && (crResult != CREqual);                          \
+      }                                                                                          \
+   bool operator<(const Type<FstT, SndT, ThirdT, FourthT, FifthT>& typeObject) const             \
+      {  return _compare(Type<FstT, SndT, ThirdT, FourthT, FifthT>::castToCopyHandler(typeObject)) == CRLess; } \
+   bool operator<=(const Type<FstT, SndT, ThirdT, FourthT, FifthT>& typeObject) const            \
+      {  ComparisonResult crResult = _compare(Type<FstT, SndT, ThirdT, FourthT, FifthT>::castToCopyHandler(typeObject)); \
+         return (crResult == CRLess) || (crResult == CREqual);                                   \
+      }                                                                                          \
+   bool operator>(const Type<FstT, SndT, ThirdT, FourthT, FifthT>& typeObject) const             \
+      {  return _compare(Type<FstT, SndT, ThirdT, FourthT, FifthT>::castToCopyHandler(typeObject)) == CRGreater; } \
+   bool operator>=(const Type<FstT, SndT, ThirdT, FourthT, FifthT>& typeObject) const            \
+      {  ComparisonResult crResult = _compare(Type<FstT, SndT, ThirdT, FourthT, FifthT>::castToCopyHandler(typeObject)); \
+         return (crResult == CRGreater) || (crResult == CREqual);                                \
+      }
+
+#define DTemplate5Assign(Type, FstT, SndT, ThirdT, FourthT, FifthT)                              \
+  public:                                                                                        \
+   void assign(const Type<FstT, SndT, ThirdT, FourthT, FifthT>& source)                          \
+      {  _assign(Type<FstT, SndT, ThirdT, FourthT, FifthT>::castToCopyHandler(source)); }
+
+#define DTemplate5DefineAssign(Type, FstT, SndT, ThirdT, FourthT, FifthT)                        \
+  protected:                                                                                     \
+   virtual void _assign(const EnhancedObject& source) override                                   \
+      {  operator=((const Type<FstT, SndT, ThirdT, FourthT, FifthT>&)                            \
+            Type<FstT, SndT, ThirdT, FourthT, FifthT>::castFromCopyHandler(source));             \
+      }                                                                                          \
+  public:                                                                                        \
+   void assign(const Type<FstT, SndT, ThirdT, FourthT, FifthT>& source)                          \
+      {  _assign(Type<FstT, SndT, ThirdT, FourthT, FifthT>::castToCopyHandler(source)); }
+
+#define DTemplate5DefineOperatorAssign(Type, FstT, SndT, ThirdT, FourthT, FifthT)                \
+  public:                                                                                        \
+   void operator=(const Type<FstT, SndT, ThirdT, FourthT, FifthT>& source)                       \
+      {  _assign(Type<FstT, SndT, ThirdT, FourthT, FifthT>::castToCopyHandler(source));          \
+         return *this;                                                                           \
+      }                                                                                          \
+   void assign(const Type<FstT, SndT, ThirdT, FourthT, FifthT>& source)                          \
+      {  _assign(Type<FstT, SndT, ThirdT, FourthT, FifthT>::castToCopyHandler(source)); }
+
+#define DTemplate4DefineCopy(Type, FstT, SndT, ThirdT, FourthT)                                  \
+  public:                                                                                        \
+   virtual EnhancedObject* createCopy() const override                                           \
+      {  return Type<FstT, SndT, ThirdT, FourthT>::castToCopyHandler(new Type<FstT, SndT, ThirdT, FourthT>(*this)); } \
+   Type<FstT, SndT, ThirdT, FourthT>* createSCopy() const                                        \
+      {  return (Type<FstT, SndT, ThirdT, FourthT>*) Type<FstT, SndT, ThirdT, FourthT>::castFromCopyHandler(createCopy()); }
+
+#define DTemplate4Compare(Type, FstT, SndT, ThirdT, FourthT)                                     \
+  public:                                                                                        \
+   ComparisonResult compare(const Type<FstT, SndT, ThirdT, FourthT>& source) const               \
+      {  return _compare(Type<FstT, SndT, ThirdT, FourthT>::castToCopyHandler(source)); }        \
+   bool isComparable(const Type<FstT, SndT, ThirdT, FourthT>& typeObject) const                  \
+      {  return _compare(Type<FstT, SndT, ThirdT, FourthT>::castToCopyHandler(typeObject)) != CRNonComparable; } \
+   bool operator==(const Type<FstT, SndT, ThirdT, FourthT>& typeObject) const                    \
+      {  return _compare(Type<FstT, SndT, ThirdT, FourthT>::castToCopyHandler(typeObject)) == CREqual; } \
+   bool operator!=(const Type<FstT, SndT, ThirdT, FourthT>& typeObject) const                    \
+      {  ComparisonResult crResult = _compare(Type<FstT, SndT, ThirdT, FourthT>::castToCopyHandler(typeObject)); \
+         return (crResult != CRNonComparable) && (crResult != CREqual);                          \
+      }                                                                                          \
+   bool operator<(const Type<FstT, SndT, ThirdT, FourthT>& typeObject) const                     \
+      {  return _compare(Type<FstT, SndT, ThirdT, FourthT>::castToCopyHandler(typeObject)) == CRLess; } \
+   bool operator<=(const Type<FstT, SndT, ThirdT, FourthT>& typeObject) const                    \
+      {  ComparisonResult crResult = _compare(Type<FstT, SndT, ThirdT, FourthT>::castToCopyHandler(typeObject)); \
+         return (crResult == CRLess) || (crResult == CREqual);                                   \
+      }                                                                                          \
+   bool operator>(const Type<FstT, SndT, ThirdT, FourthT>& typeObject) const                     \
+      {  return _compare(Type<FstT, SndT, ThirdT, FourthT>::castToCopyHandler(typeObject)) == CRGreater; } \
+   bool operator>=(const Type<FstT, SndT, ThirdT, FourthT>& typeObject) const                    \
+      {  ComparisonResult crResult = _compare(Type<FstT, SndT, ThirdT, FourthT>::castToCopyHandler(typeObject)); \
+         return (crResult == CRGreater) || (crResult == CREqual);                                \
+      }
+
+#define DTemplate4Assign(Type, FstT, SndT, ThirdT, FourthT)                                      \
+  public:                                                                                        \
+   void assign(const Type<FstT, SndT, ThirdT, FourthT>& source)                                  \
+      {  _assign(Type<FstT, SndT, ThirdT, FourthT>::castToCopyHandler(source)); }
+
+#define DTemplate4DefineAssign(Type, FstT, SndT, ThirdT, FourthT)                                \
+  protected:                                                                                     \
+   virtual void _assign(const EnhancedObject& source) override                                   \
+      {  operator=((const Type<FstT, SndT, ThirdT, FourthT>&)                                    \
+            Type<FstT, SndT, ThirdT, FourthT>::castFromCopyHandler(source));                     \
+      }                                                                                          \
+  public:                                                                                        \
+   void assign(const Type<FstT, SndT, ThirdT, FourthT>& source)                                  \
+      {  _assign(Type<FstT, SndT, ThirdT, FourthT>::castToCopyHandler(source)); }
+
+#define DTemplate4DefineOperatorAssign(Type, FstT, SndT, ThirdT, FourthT)                        \
+  public:                                                                                        \
+   void operator=(const Type<FstT, SndT, ThirdT, FourthT>& source)                               \
+      {  _assign(Type<FstT, SndT, ThirdT, FourthT>::castToCopyHandler(source));                  \
+         return *this;                                                                           \
+      }                                                                                          \
+   void assign(const Type<FstT, SndT, ThirdT, FourthT>& source)                                  \
+      {  _assign(Type<FstT, SndT, ThirdT, FourthT>::castToCopyHandler(source)); }
+
+
+#define DTemplate3DefineCopy(Type, FstT, SndT, ThirdT)                                           \
+  public:                                                                                        \
+   virtual EnhancedObject* createCopy() const override                                           \
+      {  return Type<FstT, SndT, ThirdT>::castToCopyHandler(new Type<FstT, SndT, ThirdT>(*this)); } \
+   Type<FstT, SndT, ThirdT>* createSCopy() const                                                 \
+      {  return (Type<FstT, SndT, ThirdT>*) Type<FstT, SndT, ThirdT>::castFromCopyHandler(createCopy()); }
+
+#define DTemplate3Compare(Type, FstT, SndT, ThirdT)                                              \
+  public:                                                                                        \
+   ComparisonResult compare(const Type<FstT, SndT, ThirdT>& source) const                        \
+      {  return _compare(Type<FstT, SndT, ThirdT>::castToCopyHandler(source)); }                 \
+   bool isComparable(const Type<FstT, SndT, ThirdT>& typeObject) const                           \
+      {  return _compare(Type<FstT, SndT, ThirdT>::castToCopyHandler(typeObject)) != CRNonComparable; } \
+   bool operator==(const Type<FstT, SndT, ThirdT>& typeObject) const                             \
+      {  return _compare(Type<FstT, SndT, ThirdT>::castToCopyHandler(typeObject)) == CREqual; }  \
+   bool operator!=(const Type<FstT, SndT, ThirdT>& typeObject) const                             \
+      {  ComparisonResult crResult = _compare(Type<FstT, SndT, ThirdT>::castToCopyHandler(typeObject)); \
+         return (crResult != CRNonComparable) && (crResult != CREqual);                          \
+      }                                                                                          \
+   bool operator<(const Type<FstT, SndT, ThirdT>& typeObject) const                              \
+      {  return _compare(Type<FstT, SndT, ThirdT>::castToCopyHandler(typeObject)) == CRLess; }   \
+   bool operator<=(const Type<FstT, SndT, ThirdT>& typeObject) const                             \
+      {  ComparisonResult crResult = _compare(Type<FstT, SndT, ThirdT>::castToCopyHandler(typeObject)); \
+         return (crResult == CRLess) || (crResult == CREqual);                                   \
+      }                                                                                          \
+   bool operator>(const Type<FstT, SndT, ThirdT>& typeObject) const                              \
+      {  return _compare(Type<FstT, SndT, ThirdT>::castToCopyHandler(typeObject)) == CRGreater; }\
+   bool operator>=(const Type<FstT, SndT, ThirdT>& typeObject) const                             \
+      {  ComparisonResult crResult = _compare(Type<FstT, SndT, ThirdT>::castToCopyHandler(typeObject)); \
+         return (crResult == CRGreater) || (crResult == CREqual);                                \
+      }
+
+#define DTemplate3Assign(Type, FstT, SndT, ThirdT)                                               \
+  public:                                                                                        \
+   void assign(const Type<FstT, SndT, ThirdT>& source)                                           \
+      {  _assign(Type<FstT, SndT, ThirdT>::castToCopyHandler(source)); }
+
+#define DTemplate3DefineAssign(Type, FstT, SndT, ThirdT)                                         \
+  protected:                                                                                     \
+   virtual void _assign(const EnhancedObject& source) override                                   \
+      {  operator=((const Type<FstT, SndT, ThirdT>&)                                             \
+            Type<FstT, SndT, ThirdT>::castFromCopyHandler(source));                              \
+      }                                                                                          \
+  public:                                                                                        \
+   void assign(const Type<FstT, SndT, ThirdT>& source)                                           \
+      {  _assign(Type<FstT, SndT, ThirdT>::castToCopyHandler(source)); }
+
+#define DTemplate3DefineOperatorAssign(Type, FstT, SndT, ThirdT)                                 \
+  public:                                                                                        \
+   void operator=(const Type<FstT, SndT, ThirdT>& source)                                        \
+      {  _assign(Type<FstT, SndT, ThirdT>::castToCopyHandler(source));                           \
+         return *this;                                                                           \
+      }                                                                                          \
+   void assign(const Type<FstT, SndT, ThirdT>& source)                                           \
+      {  _assign(Type<FstT, SndT, ThirdT>::castToCopyHandler(source)); }
+
+
+#define DTemplate2DefineCopy(Type, FstT, SndT)                                                   \
+  public:                                                                                        \
+   virtual EnhancedObject* createCopy() const override                                           \
+      {  return Type<FstT, SndT>::castToCopyHandler(new Type<FstT, SndT>(*this)); }              \
+   Type<FstT, SndT>* createSCopy() const                                                         \
+      {  return (Type<FstT, SndT>*) Type<FstT, SndT>::castFromCopyHandler(createCopy()); }
+
+#define DTemplate2Compare(Type, FstT, SndT)                                                      \
+  public:                                                                                        \
+   ComparisonResult compare(const Type<FstT, SndT>& source) const                                \
+      {  return _compare(Type<FstT, SndT>::castToCopyHandler(source)); }                         \
+   bool isComparable(const Type<FstT, SndT>& typeObject) const                                   \
+      {  return _compare(Type<FstT, SndT>::castToCopyHandler(typeObject)) != CRNonComparable; }  \
+   bool operator==(const Type<FstT, SndT>& typeObject) const                                     \
+      {  return _compare(Type<FstT, SndT>::castToCopyHandler(typeObject)) == CREqual; }          \
+   bool operator!=(const Type<FstT, SndT>& typeObject) const                                     \
+      {  ComparisonResult crResult = _compare(Type<FstT, SndT>::castToCopyHandler(typeObject));  \
+         return (crResult != CRNonComparable) && (crResult != CREqual);                          \
+      }                                                                                          \
+   bool operator<(const Type<FstT, SndT>& typeObject) const                                      \
+      {  return _compare(Type<FstT, SndT>::castToCopyHandler(typeObject)) == CRLess; }           \
+   bool operator<=(const Type<FstT, SndT>& typeObject) const                                     \
+      {  ComparisonResult crResult = _compare(Type<FstT, SndT>::castToCopyHandler(typeObject));  \
+         return (crResult == CRLess) || (crResult == CREqual);                                   \
+      }                                                                                          \
+   bool operator>(const Type<FstT, SndT>& typeObject) const                                      \
+      {  return _compare(Type<FstT, SndT>::castToCopyHandler(typeObject)) == CRGreater; }        \
+   bool operator>=(const Type<FstT, SndT>& typeObject) const                                     \
+      {  ComparisonResult crResult = _compare(Type<FstT, SndT>::castToCopyHandler(typeObject));  \
+         return (crResult == CRGreater) || (crResult == CREqual);                                \
+      }
+
+#define DTemplate2Assign(Type, FstT, SndT)                                                       \
+  public:                                                                                        \
+   void assign(const Type<FstT, SndT>& source)                                                   \
+      {  _assign(Type<FstT, SndT>::castToCopyHandler(source)); }
+
+#define DTemplate2DefineAssign(Type, FstT, SndT)                                                 \
+  protected:                                                                                     \
+   virtual void _assign(const EnhancedObject& source) override                                   \
+      {  operator=((const Type<FstT, SndT>&)                                                     \
+            Type<FstT, SndT>::castFromCopyHandler(source));                                      \
+      }                                                                                          \
+  public:                                                                                        \
+   void assign(const Type<FstT, SndT>& source)                                                   \
+      {  _assign(Type<FstT, SndT>::castToCopyHandler(source)); }
+
+#define DTemplate2DefineOperatorAssign(Type, FstT, SndT)                                         \
+  public:                                                                                        \
+   void operator=(const Type<FstT, SndT>& source)                                                \
+      {  _assign(Type<FstT, SndT>::castToCopyHandler(source));                                   \
+         return *this;                                                                           \
+      }                                                                                          \
+   void assign(const Type<FstT, SndT>& source)                                                   \
+      {  _assign(Type<FstT, SndT>::castToCopyHandler(source)); }
+
+
+#define DTemplateDefineCopy(Type, FstT)                                                          \
+  public:                                                                                        \
+   virtual EnhancedObject* createCopy() const override                                           \
+      {  return Type<FstT>::castToCopyHandler(new Type<FstT>(*this)); }                          \
+   Type<FstT>* createSCopy() const                                                               \
+      {  return (Type<FstT>*) Type<FstT>::castFromCopyHandler(createCopy()); }
+
+#define DTemplateCompare(Type, FstT)                                                             \
+  public:                                                                                        \
+   ComparisonResult compare(const Type<FstT>& source) const                                      \
+      {  return _compare(Type<FstT>::castToCopyHandler(source)); }                               \
+   bool isComparable(const Type<FstT>& typeObject) const                                         \
+      {  return _compare(Type<FstT>::castToCopyHandler(typeObject)) != CRNonComparable; }        \
+   bool operator==(const Type<FstT>& typeObject) const                                           \
+      {  return _compare(Type<FstT>::castToCopyHandler(typeObject)) == CREqual; }                \
+   bool operator!=(const Type<FstT>& typeObject) const                                           \
+      {  ComparisonResult crResult = _compare(Type<FstT>::castToCopyHandler(typeObject));        \
+         return (crResult != CRNonComparable) && (crResult != CREqual);                          \
+      }                                                                                          \
+   bool operator<(const Type<FstT>& typeObject) const                                            \
+      {  return _compare(Type<FstT>::castToCopyHandler(typeObject)) == CRLess; }                 \
+   bool operator<=(const Type<FstT>& typeObject) const                                           \
+      {  ComparisonResult crResult = _compare(Type<FstT>::castToCopyHandler(typeObject));        \
+         return (crResult == CRLess) || (crResult == CREqual);                                   \
+      }                                                                                          \
+   bool operator>(const Type<FstT>& typeObject) const                                            \
+      {  return _compare(Type<FstT>::castToCopyHandler(typeObject)) == CRGreater; }              \
+   bool operator>=(const Type<FstT>& typeObject) const                                           \
+      {  ComparisonResult crResult = _compare(Type<FstT>::castToCopyHandler(typeObject));        \
+         return (crResult == CRGreater) || (crResult == CREqual);                                \
+      }
+
+#define DTemplateAssign(Type, FstT)                                                              \
+  public:                                                                                        \
+   void assign(const Type<FstT>& source)                                                         \
+      {  _assign(Type<FstT>::castToCopyHandler(source)); }
+
+#define DTemplateDefineAssign(Type, FstT)                                                        \
+  protected:                                                                                     \
+   virtual void _assign(const EnhancedObject& source) override                                   \
+      {  operator=((const Type<FstT>&)                                                           \
+            Type<FstT>::castFromCopyHandler(source));                                            \
+      }                                                                                          \
+  public:                                                                                        \
+   void assign(const Type<FstT>& source)                                                         \
+      {  _assign(Type<FstT>::castToCopyHandler(source)); }
+
+#define DTemplateDefineOperatorAssign(Type, FstT)                                                \
+  public:                                                                                        \
+   void operator=(const Type<FstT>& source)                                                      \
+      {  _assign(Type<FstT>::castToCopyHandler(source));                                         \
+         return *this;                                                                           \
+      }                                                                                          \
+   void assign(const Type<FstT>& source)                                                         \
+      {  _assign(Type<FstT>::castToCopyHandler(source)); }
+
+
+#define DDefineCopy(Type)                                                                        \
+  public:                                                                                        \
+   virtual EnhancedObject* createCopy() const override                                           \
+      {  return Type::castToCopyHandler(new Type(*this)); }                                      \
+   Type* createSCopy() const                                                                     \
+      {  return (Type*) Type::castFromCopyHandler(createCopy()); }
+
+#define DCompare(Type)                                                                           \
+  public:                                                                                        \
+   ComparisonResult compare(const Type& source) const                                            \
+      {  return _compare(Type::castToCopyHandler(source)); }                                     \
+   bool isComparable(const Type& typeObject) const                                               \
+      {  return _compare(Type::castToCopyHandler(typeObject)) != CRNonComparable; }              \
+   bool operator==(const Type& typeObject) const                                                 \
+      {  return _compare(Type::castToCopyHandler(typeObject)) == CREqual; }                      \
+   bool operator!=(const Type& typeObject) const                                                 \
+      {  ComparisonResult crResult = _compare(Type::castToCopyHandler(typeObject));              \
+         return (crResult != CRNonComparable) && (crResult != CREqual);                          \
+      }                                                                                          \
+   bool operator<(const Type& typeObject) const                                                  \
+      {  return _compare(Type::castToCopyHandler(typeObject)) == CRLess; }                       \
+   bool operator<=(const Type& typeObject) const                                                 \
+      {  ComparisonResult crResult = _compare(Type::castToCopyHandler(typeObject));              \
+         return (crResult == CRLess) || (crResult == CREqual);                                   \
+      }                                                                                          \
+   bool operator>(const Type& typeObject) const                                                  \
+      {  return _compare(Type::castToCopyHandler(typeObject)) == CRGreater; }                    \
+   bool operator>=(const Type& typeObject) const                                                 \
+      {  ComparisonResult crResult = _compare(Type::castToCopyHandler(typeObject));              \
+         return (crResult == CRGreater) || (crResult == CREqual);                                \
+      }
+
+#define DAssign(Type)                                                                            \
+  public:                                                                                        \
+   void assign(const Type& source)                                                               \
+      {  _assign(Type::castToCopyHandler(source)); }
+
+#define DDefineAssign(Type)                                                                      \
+  protected:                                                                                     \
+   virtual void _assign(const EnhancedObject& source) override                                   \
+      {  operator=((const Type&)                                                                 \
+            Type::castFromCopyHandler(source));                                                  \
+      }                                                                                          \
+  public:                                                                                        \
+   void assign(const Type& source)                                                               \
+      {  _assign(Type::castToCopyHandler(source)); }
+
+#define DDefineOperatorAssign(Type)                                                              \
+  public:                                                                                        \
+   void operator=(const Type& source)                                                            \
+      {  _assign(Type::castToCopyHandler(source));                                               \
+         return *this;                                                                           \
+      }                                                                                          \
+   void assign(const Type& source)                                                               \
+      {  _assign(Type::castToCopyHandler(source)); }
+
+/* Definition of the macros to handle with multiple inheritance */
+
+#define StaticInheritConversions(Type, Base1)                                    \
+   static EnhancedObject* castToCopyHandler(Type* source)                        \
+      {  return Base1::castToCopyHandler((Base1*) (source)); }                   \
+   static const EnhancedObject* castToCopyHandler(const Type* source)            \
+      {  return Base1::castToCopyHandler((const Base1*) (source)); }             \
+   static const EnhancedObject& castToCopyHandler(const Type& source)            \
+      {  return Base1::castToCopyHandler((const Base1&) (source)); }             \
+   static EnhancedObject& castToCopyHandler(Type& source)                        \
+      {  return Base1::castToCopyHandler((Base1&) (source)); }                   \
+   static Type* castFromCopyHandler(EnhancedObject* source)                      \
+      {  return (Type*) ((Base1*) Base1::castFromCopyHandler(source)); }         \
+   static const Type* castFromCopyHandler(const EnhancedObject* source)          \
+      {  return (const Type*) ((const Base1*) Base1::castFromCopyHandler(source)); } \
+   static const Type& castFromCopyHandler(const EnhancedObject& source)          \
+      {  return (const Type&) ((const Base1&) Base1::castFromCopyHandler(source)); } \
+   static Type& castFromCopyHandler(EnhancedObject& source)                      \
+      {  return (Type&) ((Base1&) Base1::castFromCopyHandler(source)); }
+
+#define TemplateStaticInheritConversions(Type, Base1, TArg1)                     \
+   static EnhancedObject* castToCopyHandler(Type<TArg1>* source)                 \
+      {  return Base1::castToCopyHandler((Base1*) (source)); }                   \
+   static const EnhancedObject* castToCopyHandler(const Type<TArg1>* source)     \
+      {  return Base1::castToCopyHandler((const Base1*) (source)); }             \
+   static const EnhancedObject& castToCopyHandler(const Type<TArg1>& source)     \
+      {  return Base1::castToCopyHandler((const Base1&) (source)); }             \
+   static EnhancedObject& castToCopyHandler(Type<TArg1>& source)                 \
+      {  return Base1::castToCopyHandler((Base1&) (source)); }                   \
+   static Type<TArg1>* castFromCopyHandler(EnhancedObject* source)               \
+      {  return (Type<TArg1>*) ((Base1*) Base1::castFromCopyHandler(source)); }  \
+   static const Type<TArg1>* castFromCopyHandler(const EnhancedObject* source)   \
+      {  return (const Type<TArg1>*) ((const Base1*) Base1::castFromCopyHandler(source)); }\
+   static const Type<TArg1>& castFromCopyHandler(const EnhancedObject& source)   \
+      {  return (const Type<TArg1>&) ((const Base1&) Base1::castFromCopyHandler(source)); } \
+   static Type<TArg1>& castFromCopyHandler(EnhancedObject& source)               \
+      {  return (Type<TArg1>&) ((Base1&) Base1::castFromCopyHandler(source)); }
+
+#define Template2StaticInheritConversions(Type, Base1, TArg1, TArg2)             \
+   static EnhancedObject* castToCopyHandler(Type<TArg1, TArg2>* source)          \
+      {  return Base1::castToCopyHandler((Base1*) (source)); }                   \
+   static const EnhancedObject* castToCopyHandler(const Type<TArg1, TArg2>* source) \
+      {  return Base1::castToCopyHandler((const Base1*) (source)); }             \
+   static const EnhancedObject& castToCopyHandler(const Type<TArg1, TArg2>& source) \
+      {  return Base1::castToCopyHandler((const Base1&) (source)); }             \
+   static EnhancedObject& castToCopyHandler(Type<TArg1, TArg2>& source)          \
+      {  return Base1::castToCopyHandler((Base1&)(source)); }                    \
+   static Type<TArg1, TArg2>* castFromCopyHandler(EnhancedObject* source)        \
+      {  return (Type<TArg1, TArg2>*) ((Base1*) Base1::castFromCopyHandler(source)); } \
+   static const Type<TArg1, TArg2>* castFromCopyHandler(const EnhancedObject* source) \
+      {  return (const Type<TArg1, TArg2>*) ((const Base1*) Base1::castFromCopyHandler(source)); } \
+   static const Type<TArg1, TArg2>& castFromCopyHandler(const EnhancedObject& source) \
+      {  return (const Type<TArg1, TArg2>&) ((const Base1&) Base1::castFromCopyHandler(source)); } \
+   static Type<TArg1, TArg2>& castFromCopyHandler(EnhancedObject& source)        \
+      {  return (Type<TArg1, TArg2>&) ((Base1&) Base1::castFromCopyHandler(source)); }
+
+#define DynamicInheritConversions(Type)                                          \
+   static EnhancedObject* castToCopyHandler(Type* source)                        \
+      {  return dynamic_cast<EnhancedObject*>(source); }                         \
+   static const EnhancedObject* castToCopyHandler(const Type* source)            \
+      {  return dynamic_cast<const EnhancedObject*>(source); }                   \
+   static const EnhancedObject& castToCopyHandler(const Type& source)            \
+      {  return dynamic_cast<const EnhancedObject&>(source); }                   \
+   static EnhancedObject& castToCopyHandler(Type& source)                        \
+      {  return dynamic_cast<EnhancedObject&>(source); }                         \
+   static Type* castFromCopyHandler(EnhancedObject* source)                      \
+      {  return dynamic_cast<Type*>(source); }                                   \
+   static const Type* castFromCopyHandler(const EnhancedObject* source)          \
+      {  return dynamic_cast<const Type*>(source); }                             \
+   static const Type& castFromCopyHandler(const EnhancedObject& source)          \
+      {  return dynamic_cast<const Type&>(source); }                             \
+   static Type& castFromCopyHandler(EnhancedObject& source)                      \
+      {  return dynamic_cast<Type&>(source); }
+
+#define TemplateDynamicInheritConversions(Type, Arg1)                            \
+   static EnhancedObject* castToCopyHandler(Type<Arg1>* source)                  \
+      {  return dynamic_cast<EnhancedObject*>(source); }                         \
+   static const EnhancedObject* castToCopyHandler(const Type<Arg1>* source)      \
+      {  return dynamic_cast<const EnhancedObject*>(source); }                   \
+   static const EnhancedObject& castToCopyHandler(const Type<Arg1>& source)      \
+      {  return dynamic_cast<const EnhancedObject&>(source); }                   \
+   static EnhancedObject& castToCopyHandler(Type<Arg1>& source)                  \
+      {  return dynamic_cast<EnhancedObject&>(source); }                         \
+   static Type<Arg1>* castFromCopyHandler(EnhancedObject* source)                \
+      {  return dynamic_cast<Type<Arg1>*>(source); }                             \
+   static const Type<Arg1>* castFromCopyHandler(const EnhancedObject* source)    \
+      {  return dynamic_cast<const Type<Arg1>*>(source); }                       \
+   static const Type<Arg1>& castFromCopyHandler(const EnhancedObject& source)    \
+      {  return dynamic_cast<const Type<Arg1>&>(source); }                       \
+   static Type<Arg1>& castFromCopyHandler(EnhancedObject& source)                \
+      {  return dynamic_cast<Type<Arg1>&>(source); }
+
+#define Template2DynamicInheritConversions(Type, Arg1, Arg2)                     \
+   static EnhancedObject* castToCopyHandler(Type<Arg1, Arg2>* source)            \
+      {  return dynamic_cast<EnhancedObject*>(source); }                         \
+   static const EnhancedObject* castToCopyHandler(const Type<Arg1, Arg2>* source)\
+      {  return dynamic_cast<const EnhancedObject*>(source); }                   \
+   static const EnhancedObject& castToCopyHandler(const Type<Arg1, Arg2>& source)\
+      {  return dynamic_cast<const EnhancedObject&>(source); }                   \
+   static EnhancedObject& castToCopyHandler(Type<Arg1, Arg2>& source)            \
+      {  return dynamic_cast<EnhancedObject&>(source); }                         \
+   static Type<Arg1, Arg2>* castFromCopyHandler(EnhancedObject* source)          \
+      {  return dynamic_cast<Type<Arg1, Arg2>*>(source); }                       \
+   static const Type<Arg1, Arg2>* castFromCopyHandler(const EnhancedObject* source) \
+      {  return dynamic_cast<const Type<Arg1, Arg2>*>(source); }                 \
+   static const Type<Arg1, Arg2>& castFromCopyHandler(const EnhancedObject& source) \
+      {  return dynamic_cast<const Type<Arg1, Arg2>&>(source); }                 \
+   static Type<Arg1, Arg2>& castFromCopyHandler(EnhancedObject& source)          \
+      {  return dynamic_cast<Type<Arg1, Arg2>&>(source); }
+
+#define Template3DynamicInheritConversions(Type, Arg1, Arg2, Arg3)               \
+   static EnhancedObject* castToCopyHandler(Type<Arg1, Arg2, Arg3>* source)      \
+      {  return dynamic_cast<EnhancedObject*>(source); }                         \
+   static const EnhancedObject* castToCopyHandler(const Type<Arg1, Arg2, Arg3>* source) \
+      {  return dynamic_cast<const EnhancedObject*>(source); }                   \
+   static const EnhancedObject& castToCopyHandler(const Type<Arg1, Arg2, Arg3>& source) \
+      {  return dynamic_cast<const EnhancedObject&>(source); }                   \
+   static EnhancedObject& castToCopyHandler(Type<Arg1, Arg2, Arg3>& source)      \
+      {  return dynamic_cast<EnhancedObject&>(source); }                         \
+   static Type<Arg1, Arg2, Arg3>* castFromCopyHandler(EnhancedObject* source)    \
+      {  return dynamic_cast<Type<Arg1, Arg2, Arg3>*>(source); }                 \
+   static const Type<Arg1, Arg2, Arg3>* castFromCopyHandler(const EnhancedObject* source) \
+      {  return dynamic_cast<const Type<Arg1, Arg2, Arg3>*>(source); }           \
+   static const Type<Arg1, Arg2, Arg3>& castFromCopyHandler(const EnhancedObject& source) \
+      {  return dynamic_cast<const Type<Arg1, Arg2, Arg3>&>(source); }           \
+   static Type<Arg1, Arg2, Arg3>& castFromCopyHandler(EnhancedObject& source)    \
+      {  return dynamic_cast<Type<Arg1, Arg2, Arg3>&>(source); }
+
+#if DefineDebugLevel > 1
+
+#define AssumeType(Type, source, conversion)                                     \
+{  Type* conversion = dynamic_cast<Type*>(source);                               \
+   if (!conversion) throw ESPreconditionError(DefineSTD_InvalidPrecondition, __LINE__, __FILE__);\
+}
+
+#define AssumeSameType(source, conversion)                                       \
+{  if (typeid(*source) != typeid(*conversion))                                   \
+      throw ESPreconditionError(DefineSTD_InvalidPrecondition, __LINE__, __FILE__);\
+}
+
+#define AssumeValidity(source)                                                   \
+{  if (!(source).isValid())                                                      \
+      throw ESPreconditionError(DefineSTD_InvalidPrecondition, __LINE__, __FILE__);\
+}
+
+#define AssumeAllocation(source)                                                 \
+{  if ((source) == nullptr) throw EMemoryExhausted(); }
+
+#define AssumeCondition(cond)                                                    \
+{  if (!(cond))                                                                  \
+      throw ESPreconditionError(DefineSTD_InvalidPrecondition, __LINE__, __FILE__);\
+}
+
+#define AssumeUncalled                                                           \
+{  throw ESPreconditionError(DefineSTD_InvalidPrecondition, __LINE__, __FILE__); }
+
+#define AssumeImplementation(cond)                                               \
+{  if (!(cond))                                                                  \
+      throw ESPreconditionError(DefineSTD_NotImplemented, __LINE__, __FILE__);   \
+}
+
+#define AssumeUnimplemented                                                      \
+{  throw ESPreconditionError(DefineSTD_NotImplemented, __LINE__, __FILE__); }
+
+#define Template5DefineCopy(Type, FstT, SndT, ThirdT, FourthT, FifthT)           \
+   DTemplate5DefineCopy(Type, FstT, SndT, ThirdT, FourthT, FifthT)               \
+   virtual int queryDebugSize() const override                                   \
+      { return sizeof(Type<FstT, SndT, ThirdT, FourthT, FifthT>); }              \
+   virtual const char* queryDebugClassName() const override                      \
+      { return #Type "<" #FstT "," #SndT "," #ThirdT "," #FourthT "," #FifthT ">"; }
+
+#define Template4DefineCopy(Type, FstT, SndT, ThirdT, FourthT)                   \
+   DTemplate4DefineCopy(Type, FstT, SndT, ThirdT, FourthT)                       \
+   virtual int queryDebugSize() const override                                   \
+      { return sizeof(Type<FstT, SndT, ThirdT, FourthT>); }                      \
+   virtual const char* queryDebugClassName() const override                      \
+      { return #Type "<" #FstT "," #SndT "," #ThirdT "," #FourthT ">"; }
+
+#define Template3DefineCopy(Type, FstT, SndT, ThirdT)                            \
+   DTemplate3DefineCopy(Type, FstT, SndT, ThirdT)                                \
+   virtual int queryDebugSize() const override                                   \
+      { return sizeof(Type<FstT, SndT, ThirdT>); }                               \
+   virtual const char* queryDebugClassName() const override                      \
+      { return #Type "<" #FstT "," #SndT "," #ThirdT ">"; }
+
+#define Template2DefineCopy(Type, FstT, SndT)                                    \
+   DTemplate2DefineCopy(Type, FstT, SndT)                                        \
+   virtual int queryDebugSize() const override { return sizeof(Type<FstT, SndT>); }\
+   virtual const char* queryDebugClassName() const override                      \
+      { return #Type "<" #FstT "," #SndT ">"; }
+
+#define TemplateDefineCopy(Type, FstT)                                           \
+   DTemplateDefineCopy(Type, FstT)                                               \
+   virtual int queryDebugSize() const override { return sizeof(Type<FstT>); }    \
+   virtual const char* queryDebugClassName() const override { return #Type "<" #FstT ">"; }
+
+#define DefineCopy(Type) DDefineCopy(Type)                                       \
+   virtual int queryDebugSize() const override { return sizeof(Type); }          \
+   virtual const char* queryDebugClassName() const override { return #Type ; }
+
+#elif DefineDebugLevel == 1
+
+#define AssumeType(Type, source, conversion) 
+
+#define AssumeSameType(source, conversion) 
+
+#define AssumeValidity(source) 
+
+#define AssumeAllocation(source)                                                 \
+{  if ((source) == nullptr) throw EMemoryExhausted(); }
+
+#define AssumeCondition(cond) {}
+
+#define AssumeUncalled {}
+
+#define AssumeImplementation(cond)                                               \
+{  if (!(cond))                                                                  \
+      throw ESPreconditionError(DefineSTD_NotImplemented, __LINE__, __FILE__);   \
+}
+
+#define AssumeUnimplemented                                                      \
+{  throw ESPreconditionError(DefineSTD_NotImplemented, __LINE__, __FILE__); }
+
+#define Template5DefineCopy(Type, FstT, SndT, ThirdT, FourthT, FifthT) \
+   DTemplate5DefineCopy(Type, FstT, SndT, ThirdT, FourthT, FifthT)
+
+#define Template4DefineCopy(Type, FstT, SndT, ThirdT, FourthT)         \
+   DTemplate4DefineCopy(Type, FstT, SndT, ThirdT, FourthT)
+
+#define Template3DefineCopy(Type, FstT, SndT, ThirdT)                  \
+   DTemplate3DefineCopy(Type, FstT, SndT, ThirdT)
+
+#define Template2DefineCopy(Type, FstT, SndT)                          \
+   DTemplate2DefineCopy(Type, FstT, SndT)
+
+#define TemplateDefineCopy(Type, FstT)                                 \
+   DTemplateDefineCopy(Type, FstT)
+
+#define DefineCopy(Type) DDefineCopy(Type)
+
+#ifdef _MSC_VER
+#pragma warning (disable: 4101)
+#endif
+
+#else // DefineDebugLevel != 1
+
+#define AssumeType(Type, source, conversion)                                     \
+{  Type* conversion = dynamic_cast<Type*>(source);                               \
+   if (!conversion) throw ESPreconditionError(DefineSTD_InvalidPrecondition, __LINE__, __FILE__);\
+}
+
+#define AssumeSameType(source, conversion)                                       \
+{  if (typeid(*source) != typeid(*conversion))                                   \
+      throw ESPreconditionError(DefineSTD_InvalidPrecondition, __LINE__, __FILE__);\
+}
+
+#define AssumeValidity(source)                                                   \
+{  if (!(source).isValid())                                                      \
+      throw ESPreconditionError(DefineSTD_InvalidPrecondition, __LINE__, __FILE__);\
+}
+
+#define AssumeAllocation(source)                                                 \
+{  if ((source) == nullptr) throw EMemoryExhausted(); }
+
+#define AssumeCondition(cond)                                                    \
+{  if (!(cond))                                                                  \
+      throw ESPreconditionError(DefineSTD_InvalidPrecondition, __LINE__, __FILE__);\
+}
+
+#define AssumeUncalled                                                           \
+{  throw ESPreconditionError(DefineSTD_NotImplemented, __LINE__, __FILE__); }
+
+#define AssumeImplementation(cond)                                               \
+{  if (!(cond))                                                                  \
+      throw ESPreconditionError(DefineSTD_NotImplemented, __LINE__, __FILE__);   \
+}
+
+#define AssumeUnimplemented                                                      \
+{  throw ESPreconditionError(DefineSTD_NotImplemented, __LINE__, __FILE__); }
+
+#define Template5DefineCopy(Type, FstT, SndT, ThirdT, FourthT, FifthT) \
+   DTemplate5DefineCopy(Type, FstT, SndT, ThirdT, FourthT, FifthT)
+
+#define Template4DefineCopy(Type, FstT, SndT, ThirdT, FourthT)         \
+   DTemplate4DefineCopy(Type, FstT, SndT, ThirdT, FourthT)
+
+#define Template3DefineCopy(Type, FstT, SndT, ThirdT)                  \
+   DTemplate3DefineCopy(Type, FstT, SndT, ThirdT)
+
+#define Template2DefineCopy(Type, FstT, SndT)                          \
+   DTemplate2DefineCopy(Type, FstT, SndT)
+
+#define TemplateDefineCopy(Type, FstT)                                 \
+   DTemplateDefineCopy(Type, FstT)
+
+#define DefineCopy(Type) DDefineCopy(Type)
+
+#endif // DefineDebugLevel != 1
+
+#define DefineExtendedParameters(ReservedBits, Base)                                        \
+   typedef Base::ParametersContent ParametersContent;                                       \
+   ParametersContent& params() { return Base::params(); }                                   \
+   const ParametersContent& queryParams() const { return Base::queryParams(); }             \
+   static const int START_OF_MASK = Base::END_OF_MASK;                                      \
+   static const int END_INHERITED_OF_MASK = Base::END_OF_MASK;                              \
+   static const int END_OF_MASK = ReservedBits + START_OF_MASK;                             \
+   static const ParametersContent MASK = ~(~0UL << END_OF_MASK) & (~0UL << START_OF_MASK);  \
+   void clearOwnField() { params() &= ~MASK; }                                              \
+   void mergeOwnField(int field) { params() |= (MASK & (field << START_OF_MASK)); }         \
+   void intersectOwnField(int field) { params() &= (MASK & (field << START_OF_MASK)); }     \
+   void setOwnField(int field)                                                              \
+      {  Base::params() &= ~MASK; params() |= (MASK & (field << START_OF_MASK)); }          \
+   bool hasOwnField() const { return queryParams() & MASK; }                                \
+   ParametersContent queryOwnField() const { return (queryParams() & MASK) >> START_OF_MASK; }\
+   void setLocalField() { params() &= ~(~0UL << END_OF_MASK); }                             \
+   bool hasFieldExtensions() const { return (queryParams() & (~0UL << END_OF_MASK)) != 0; } \
+   ParametersContent queryFieldExtensions() const { return queryParams() >> END_OF_MASK; }
+
+#define TemplateDefineExtendedParameters(ReservedBits, Base)                                \
+   typedef typename Base::ParametersContent ParametersContent;                              \
+   ParametersContent& params() { return Base::params(); }                                   \
+   const ParametersContent& queryParams() const { return Base::queryParams(); }             \
+   static const int START_OF_MASK = Base::END_OF_MASK;                                      \
+   static const int END_INHERITED_OF_MASK = Base::END_OF_MASK;                              \
+   static const int END_OF_MASK = ReservedBits + START_OF_MASK;                             \
+   static const ParametersContent MASK = ~(~0UL << END_OF_MASK) & (~0UL << START_OF_MASK);  \
+   void clearOwnField() { params() &= ~MASK; }                                              \
+   void mergeOwnField(int field) { params() |= (MASK & (field << START_OF_MASK)); }         \
+   void intersectOwnField(int field) { params() &= (MASK & (field << START_OF_MASK)); }     \
+   void setOwnField(int field)                                                              \
+      {  Base::params() &= ~MASK; params() |= (MASK & (field << START_OF_MASK)); }          \
+   bool hasOwnField() const { return queryParams() & MASK; }                                \
+   ParametersContent queryOwnField() const { return (queryParams() & MASK) >> START_OF_MASK; }\
+   void setLocalField() { params() &= ~(~0UL << END_OF_MASK); }                             \
+   bool hasFieldExtensions() const { return (queryParams() & (~0UL << END_OF_MASK)) != 0; } \
+   ParametersContent queryFieldExtensions() const { return queryParams() >> END_OF_MASK; }
+
+#define DefineSubExtendedParameters(Name, ReservedBits, Base)                               \
+   static const int START_##Name##_OF_MASK = END_##Base##_OF_MASK;                          \
+   static const int END_##Name##_OF_MASK = ReservedBits + END_##Base##_OF_MASK;             \
+   static const ParametersContent Name##_MASK                                                        \
+      = ~(~0UL << END_##Name##_OF_MASK) & (~0UL << END_##Base##_OF_MASK);                   \
+   void clear##Name##Field() { params() &= ~Name##_MASK; }                                  \
+   void merge##Name##Field(ParametersContent field)                                         \
+      { params() |= (Name##_MASK & (field << START_##Name##_OF_MASK)); }                    \
+   void intersect##Name##Field(ParametersContent field)                                     \
+      { params() &= (~Name##_MASK | (Name##_MASK & (field << START_##Name##_OF_MASK))); }   \
+   void set##Name##Field(ParametersContent field)                                           \
+      { params() &= ~Name##_MASK;                                                           \
+        params() |= (Name##_MASK & (field << START_##Name##_OF_MASK));                      \
+      }                                                                                     \
+   bool has##Name##Field() const { return queryParams() & Name##_MASK; }                    \
+   int query##Name##Field() const { return (queryParams() & Name##_MASK) >> START_##Name##_OF_MASK; }
+

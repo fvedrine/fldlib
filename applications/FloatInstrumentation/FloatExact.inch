@@ -1,0 +1,428 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2015-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : NumericalDomains
+// Unit      : FloatExact
+// File      : FloatExact.inch
+// Description :
+//   Definition of a class of floating point comparison
+//
+
+#include "FloatInstrumentation/BackTrace.h"
+
+namespace NumericalDomains { namespace DDoubleExact {
+
+class ExecutionPath : public BaseExecutionPath {
+  protected:
+   class IFStream;
+   class OFStream;
+   class DebugStream;
+
+   static STG::IOObject::OSBase* oTraceFile; // continuous computations
+   static STG::IOObject::ISBase* iTraceFile; // continuous computations
+   static int uCurrentUnstableBranch;        // discrete decisions
+   static int uNumberOfUnstableBranches;
+
+   static bool fDoesFollow;
+   static SpecialValue svSpecial;
+   static bool fSupportAtomic;
+   static bool fSupportUnstableInLoop;
+   static bool fSupportVerbose;
+   static bool fSupportThreshold;
+   static bool fSupportFirstFollowFloat;
+   static BuiltReal brThreshold;
+   static BuiltReal brMaximalAccuracy;
+   static const char* szFile;
+   static int uLine;
+   static const char* szSynchronisationFile;
+   static int uSynchronisationLine;
+   static const char* szCurrentFile;
+   static int uCurrentLine;
+   static bool fHasNewFile, fHasNewLine;
+
+   template <class TypeReal>
+   static COL::TVector<TypeReal>& realSynchronisationVector(const TypeReal& real)
+      {  static COL::TVector<TypeReal> result;
+         return result;
+      }
+   template <class TypeImplementation>
+   static COL::TVector<TypeImplementation>& implementationSynchronisationVector(const TypeImplementation& implementation)
+      {  static COL::TVector<TypeImplementation> result;
+         return result;
+      }
+
+   static SpecialValue getMode() { return svSpecial; }
+   static void setMode(SpecialValue mode) { svSpecial = mode; }
+   static bool doesFollow() { return fDoesFollow; }
+
+  public:
+   static bool doesFollowFlow() { return fDoesFollow && (fSupportUnstableInLoop || iTraceFile != nullptr); }
+   static bool doesAssumeInput() { return !fSupportUnstableInLoop || iTraceFile != nullptr; }
+   static bool setFollowFlow(bool doesFollow=true) { fDoesFollow = doesFollow; return doesFollow; }
+   static void clearFollowFlow() { fDoesFollow = false; }
+
+  protected:
+   static bool hasOutput() { return oTraceFile; }
+   static void assumeDomain(char prefix) { if (doesAssumeInput()) iTraceFile->assume(prefix); }
+   static void assumeDomain(const char* prefix) { if (doesAssumeInput()) iTraceFile->assume(prefix); }
+   static void assumePrefixDomain(const char* prefix) { if (doesAssumeInput()) iTraceFile->assume(prefix); }
+   static void assumeDomainUntil(char delimiter)
+      {  if (doesAssumeInput()) {
+            int read = iTraceFile->get();
+            while (read != delimiter) read = iTraceFile->get();
+         };
+      }
+   template <class TypeImplementation, class TypeParameters>
+   static void readValueFromInput(TypeImplementation& result, TypeParameters& params)
+      {  if (doesAssumeInput()) {
+            result.read(*iTraceFile, params);
+            params.clear();
+         };
+      }
+   template <class TypeImplementation, class TypeParameters>
+   static void emitErrorReadValueFromInput(const char* message,
+         const TypeImplementation& readValue, const char* readPrefix,
+         const TypeImplementation& expectedValue, const char* expectedPrefix,
+         const TypeParameters& params)
+      {
+#ifdef FLOAT_ALLOW_READ_EXCEPTION
+         throw STG::EReadError(message);
+#else
+         STG::IOObject::OSStream out(std::cerr);
+         out.writesome("warning: ");
+         out.writesome(message);
+         out.writesome(":\n\t");
+         out.writesome(readPrefix);
+         out.writesome(" is ");
+         readValue.write(out, params);
+         out.writesome("\n\t");
+         out.writesome(expectedPrefix);
+         out.writesome(" is ");
+         expectedValue.write(out, params);
+         out.put('\n');
+         out.flush();
+#endif
+      }
+   static void emitErrorFromInput(const char* message)
+      {
+#ifdef FLOAT_ALLOW_READ_EXCEPTION
+         throw STG::EReadError(message);
+#else
+         STG::IOObject::OSStream out(std::cerr);
+         out.writesome("warning: ");
+         out.writesome(message);
+         out.put('\n');
+         out.flush();
+#endif
+      }
+   static void writeDomain(char prefix) { oTraceFile->put(prefix); }
+   static void writeDomain(const char* prefix) { oTraceFile->writesome(prefix); }
+   static void writePrefixDomain(const char* prefix) { oTraceFile->writesome(prefix); }
+   template <class TypeImplementation, class TypeParameters>
+   static void writeValueToOutput(const TypeImplementation& value, const TypeParameters& params)
+      {  value.write(*oTraceFile, params); }
+
+   static void assumeDivisionByZero()
+      {  if (doesAssumeInput()) iTraceFile->assume("warning: division by zero\n"); }
+   static void writeDivisionByZero()
+      {  oTraceFile->writesome("warning: division by zero\n"); }
+   static void assumeNegativeSqrt()
+      {  if (doesAssumeInput()) iTraceFile->assume("warning: negative square root\n"); }
+   static void writeNegativeSqrt()
+      {  oTraceFile->writesome("warning: negative square root\n"); }
+   static void assumeNegativePow()
+      {  if (doesAssumeInput()) iTraceFile->assume("warning: negative argument for power\n"); }
+   static void writeNegativePow()
+      {  oTraceFile->writesome("warning: negative argument for power\n"); }
+   static void assumeNegativeOrNulLog()
+      {  if (doesAssumeInput()) iTraceFile->assume("warning: negative or nul log\n"); }
+   static void writeNegativeOrNulLog()
+      {  oTraceFile->writesome("warning: negative or nul log\n"); }
+
+   static void assumeThresholdDetection(const BuiltReal& relativeError)
+      {  if (!relativeError.isZero()) {
+            if (relativeError > brThreshold)
+               if (doesAssumeInput()) iTraceFile->assume("warning: relative accuracy beyond threshold\n");
+         };
+      }
+   static void updateThresholdDetection(const BuiltReal& relativeError)
+      {  if (!relativeError.isZero()) {
+            if (relativeError > brThreshold)
+               oTraceFile->writesome("warning: relative accuracy beyond threshold\n");
+         };
+      }
+   static bool hasThreshold() { return !brThreshold.isZero(); }
+   static bool updateMaximalAccuracy(const BuiltReal& relativeError)
+      {  bool result = relativeError > brMaximalAccuracy;
+         if (result)
+            brMaximalAccuracy = relativeError;
+         return result;
+      }
+
+   static void notifyPossibleSplit(const char* file, int line)
+      {  szFile = file; uLine = line; }
+   static void notifyPossibleMerge()
+      {  szFile = nullptr; uLine = 0; }
+   static void notifySplitWithSynchronization()
+      {  szSynchronisationFile = szFile;
+         uSynchronisationLine = uLine;
+      }
+   static void followNewUnstableBranch()
+      {  if (fDoesFollow) {
+            fDoesFollow = uCurrentUnstableBranch < uNumberOfUnstableBranches;
+            if (uCurrentUnstableBranch & 0x1)
+               svSpecial = (uNumberOfUnstableBranches & 0x1) ? SVNoReal : SVNoImplementation;
+            else
+               svSpecial = (uNumberOfUnstableBranches & 0x1) ? SVNoImplementation : SVNoReal;
+         }
+         else {
+            if (szFile == nullptr) {
+               oTraceFile->writesome("the macros FLOAT_SPLIT_ALL and FLOAT_MERGE_ALL should be correctly defined!\n");
+               writeBackTrace(*oTraceFile);
+               oTraceFile->flush();
+               throw anticipated_termination();
+            }
+            svSpecial = SVNoReal;
+         };
+         szFile = nullptr;
+         uLine = 0;
+         ++uCurrentUnstableBranch;
+      }
+   static void alternateUnstableBranch()
+      {  svSpecial = (svSpecial == SVNoReal) ? SVNoImplementation : SVNoReal; }
+   static bool isSynchronizedWith(const char* file, int line)
+      {  return szSynchronisationFile == file && uSynchronisationLine == line; }
+   static bool hasSynchronization() { return szSynchronisationFile != nullptr; }
+   static bool synchronizeCurrentFlow()
+      {  if (!fSupportUnstableInLoop) {
+            if (!fDoesFollow) // nothing to synchronize
+               throw anticipated_termination();
+         }
+         else {
+            if (!fDoesFollow) {
+               svSpecial = SVNone;
+               szSynchronisationFile = nullptr;
+               uSynchronisationLine = 0;
+               szFile = nullptr;
+               uLine = 0;
+               fDoesFollow = true;
+               uNumberOfUnstableBranches += 2;
+               return false;
+            }
+            else {
+               uNumberOfUnstableBranches -= 2;
+               uCurrentUnstableBranch -= 2;
+            };
+         };
+         svSpecial = SVNone;
+         szSynchronisationFile = nullptr;
+         uSynchronisationLine = 0;
+         szFile = nullptr;
+         uLine = 0;
+         fDoesFollow = uCurrentUnstableBranch < uNumberOfUnstableBranches;
+         return true;
+      }
+   template <class TypeImplementation, class ImplReadParameters, class TypeReal, class RealReadParameters>
+   static void readSynchronizedValue(TypeImplementation& implementation, ImplReadParameters& implParams,
+         TypeReal& real, RealReadParameters& realParams, bool& hasImplementation)
+      {  if (!fSupportUnstableInLoop) {
+            int ch = iTraceFile->get();
+            bool doesContinue = true;
+            do {
+               while (ch != 'u' && ch != EOF)
+                  ch = iTraceFile->get();
+               if (ch == EOF)
+                  {  delete iTraceFile; iTraceFile = nullptr; break; }
+               ch = iTraceFile->get();
+               if (ch == EOF)
+                  {  delete iTraceFile; iTraceFile = nullptr; break; }
+               if (ch != 't')
+                  continue;
+               ch = iTraceFile->get();
+               if (ch == EOF)
+                  {  delete iTraceFile; iTraceFile = nullptr; break; }
+               if (ch != '_')
+                  continue;
+               ch = iTraceFile->get();
+               if (ch == EOF)
+                  {  delete iTraceFile; iTraceFile = nullptr; break; }
+               if (ch != 'f' && ch != 'r')
+                  continue;
+               hasImplementation = (ch == 'f');
+               ch = iTraceFile->get();
+               if (ch == EOF)
+                  {  delete iTraceFile; iTraceFile = nullptr; break; }
+               if (ch != ' ')
+                  continue;
+               if (svSpecial == SVNoImplementation && hasImplementation) {
+                  implementation.read(*iTraceFile, implParams);
+                  implParams.clear();
+               }
+               else if (svSpecial == SVNoReal && !hasImplementation) {
+                  real.read(*iTraceFile, realParams);
+                  realParams.clear();
+               }
+               iTraceFile->assume('\n');
+               // iTraceFile->assume("ut_m");
+               // ch = iTraceFile->get();
+               // if (ch != ' ' && ch != '\n')
+               //    throw STG::EReadError();
+               // if (ch == ' ') {
+               //    BuiltReal diff;
+               //    value.retrieveReal(implementation, diff);
+               //    diff.minusAssign(real, realParams);
+               //    realParams.clear();
+               //    SpecialValue temp = svSpecial;
+               //    try {
+               //       svSpecial = SVNone;
+               //       value.assumeCompare(*iTraceFile, diff);
+               //       svSpecial = temp;
+               //    }
+               //    catch (...) {
+               //       inherited::setMode(temp);
+               //       throw;
+               //    };
+               // };
+               doesContinue = false;
+            } while (doesContinue);
+         }
+         else { // fSupportUnstableInLoop
+            if (svSpecial == SVNoImplementation
+                  && implementationSynchronisationVector(implementation).count() > 0) {
+               hasImplementation = true;
+               implementation = implementationSynchronisationVector(implementation).elementAt(0);
+               implementationSynchronisationVector(implementation).removeAt(0);
+            }
+            else if (svSpecial == SVNoReal && realSynchronisationVector(real).count() > 0) {
+               hasImplementation = false;
+               real = realSynchronisationVector(real).elementAt(0);
+               realSynchronisationVector(real).removeAt(0);
+            }
+         };
+      }
+   template <class TypeImplementation, class ImplReadParameters, class TypeReal, class RealReadParameters>
+   static void writeSynchronizedValue(const TypeImplementation& implementation, const ImplReadParameters& implParams,
+         const TypeReal& real, const RealReadParameters& realParams, bool hasImplementation)
+      {  if (!fSupportUnstableInLoop) {
+            oTraceFile->writesome("ut_");
+            if (hasImplementation)
+               oTraceFile->put('f');
+            else
+               oTraceFile->put('r');
+            oTraceFile->put(' ');
+            if (hasImplementation)
+               implementation.write(*oTraceFile, implParams);
+            else
+               real.write(*oTraceFile, realParams);
+            oTraceFile->put('\n');
+            // if (fDoesFollow && iTraceFile) {
+            //    oTraceFile->writesome("ut_m ");
+            //    BuiltReal diff;
+            //    value.retrieveReal(implementation, diff);
+            //    diff.minusAssign(real, realParams);
+            //    realParams.clear();
+            //    BaseExecutionPath::SpecialValue temp = inherited::getMode();
+            //    try {
+            //       inherited::setMode(SVNone);
+            //       value.writeCompare(*oTraceFile, diff);
+            //       inherited::setMode(temp);
+            //    }
+            //    catch (...) {
+            //       inherited::setMode(temp);
+            //       throw;
+            //    };
+            // }
+            // else
+            //    oTraceFile->writesome("ut_m\n");
+         }
+         else {
+            if (hasImplementation)
+               implementationSynchronisationVector(implementation).insertAtEnd(implementation);
+            else
+               realSynchronisationVector(real).insertAtEnd(real);
+         };
+      }
+   static void assumeSourceLine()
+      {  if (fHasNewFile || fHasNewLine) {
+            if (fHasNewFile)
+               iTraceFile->assume(szCurrentFile);
+            iTraceFile->assume(':');
+            iTraceFile->read(uCurrentLine, false);
+            iTraceFile->assume('\n');
+         };
+      }
+   static void writeSourceLine()
+      {  if (fHasNewFile || fHasNewLine) {
+            if (fHasNewFile)
+               oTraceFile->writesome(szCurrentFile);
+            oTraceFile->put(':');
+            oTraceFile->write(uCurrentLine, false);
+            oTraceFile->put('\n');
+         };
+         fHasNewFile = fHasNewLine = false;
+      }
+
+  public:
+   static void flushOut() { if (oTraceFile) oTraceFile->flush(); }
+   static void writeCurrentPath(std::ostream& out) { out << uCurrentUnstableBranch; }
+   static int getCurrentUnstableBranch() { return uCurrentUnstableBranch; }
+   static void setSourceLine(const char* file, int line)
+      {  if (!fHasNewFile)
+            fHasNewFile = file != szCurrentFile;
+         if (!fHasNewLine)
+            fHasNewLine = line != uCurrentLine;
+         szCurrentFile = file;
+         uCurrentLine = line;
+      }
+
+   static void setSupportAtomic() { fSupportAtomic = true; }
+   static bool doesSupportAtomic() { return fSupportAtomic; }
+   static void setSupportUnstableInLoop() { fSupportUnstableInLoop = true; }
+   static bool doesSupportUnstableInLoop() { return fSupportUnstableInLoop; }
+   static void setSupportVerbose() { fSupportVerbose = true; }
+   static bool doesSupportVerbose() { return fSupportVerbose; }
+   static void setSupportThreshold() { fSupportThreshold = true; }
+   static void setSupportFirstFollowFloat() { fSupportFirstFollowFloat = true; }
+   static void initializeGlobals(const char* fileSuffix);
+   static void finalizeGlobals();
+   class Initialization {
+     public:
+      Initialization() {}
+      void setSupportAtomic() { ExecutionPath::setSupportAtomic(); }
+      void setSupportUnstableInLoop() { ExecutionPath::setSupportUnstableInLoop(); }
+      void setSupportVerbose() { ExecutionPath::setSupportVerbose(); }
+      void setSupportThreshold() { ExecutionPath::setSupportThreshold(); }
+      void setSupportFirstFollowFloat() { ExecutionPath::setSupportFirstFollowFloat(); }
+      void setResultFile(const char* fileSuffix) { initializeGlobals(fileSuffix); }
+      ~Initialization() { finalizeGlobals(); }
+   };
+
+   class anticipated_termination { public: anticipated_termination() {} };
+};
+
+typedef TBaseFloatExact<ExecutionPath> BaseFloatExact;
+typedef TMergeBranches<ExecutionPath> MergeBranches;
+
+}} // end of namespace NumericalDomains::DDoubleExact
+

@@ -1,0 +1,158 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2015-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : NumericalDomains
+// Unit      : FloatExact
+// File      : FloatExactBaseTypes.inctemplate
+// Description :
+//   Implementation of the floating point types for the comparison between floating points
+//
+
+#ifndef DefineGeneric
+
+#define DefineSingleTemplateHeader(RealBitsNumber)                   \
+   template <int RealBitsNumber>
+#define DefineSingleTemplateParameters(RealBitsNumber)               \
+   <RealBitsNumber>
+#define DefineBuiltReal TBuiltReal
+#define DefineTaylorDouble TTaylorDouble
+#define DefineBuiltDoubleTraits BuiltDoubleTraits
+#define DefineBuiltDouble TBuiltDouble
+#define DefineRealMantissaExponentTemplateParameters(RealBitsNumber, SizeMantissa, SizeExponent) \
+   <RealBitsNumber, SizeMantissa, SizeExponent>
+#define DefineDoubleTraitsTemplateHeader(RealBitsNumber, SizeMantissa, SizeExponent) \
+   template <int RealBitsNumber, int SizeMantissa, int SizeExponent>
+#define DefineBuiltFloat TBuiltFloat
+
+#else
+
+#define DefineSingleTemplateHeader(RealBitsNumber)                   \
+   template <class BaseStoreTraits, int RealBitsNumber>
+#define DefineSingleTemplateParameters(RealBitsNumber)               \
+   <BaseStoreTraits, RealBitsNumber>
+#define DefineBuiltReal TGBuiltReal
+#define DefineTaylorDouble TGTaylorDouble
+#define DefineBuiltDoubleTraits GBuiltDoubleTraits
+#define DefineBuiltDouble TGBuiltDouble
+#define DefineRealMantissaExponentTemplateParameters(RealBitsNumber, SizeMantissa, SizeExponent) \
+   <BaseStoreTraits, RealBitsNumber, SizeMantissa, SizeExponent>
+#define DefineDoubleTraitsTemplateHeader(RealBitsNumber, SizeMantissa, SizeExponent) \
+   template <class BaseStoreTraits, int RealBitsNumber, int SizeMantissa, int SizeExponent>
+#define DefineBuiltFloat TGBuiltFloat
+
+#endif
+
+namespace DDoubleExact {
+
+DefineSingleTemplateHeader(URealBitsNumber)
+void
+DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber)::expAssign(BaseDouble& errorMin,
+      BaseDouble& errorMax, ReadParameters& params) {
+   typedef Numerics::DefineTaylorDouble<
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) >,
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber+5, 15) >,
+         Numerics::BigInteger > TaylorDouble;
+   TaylorDouble result(std::move(*this));
+   result.expAssign(errorMin, errorMax, params);
+   inherited::operator=(std::move(result));
+}
+
+DefineSingleTemplateHeader(URealBitsNumber)
+void
+DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber)::logAssign(BaseDouble& errorMin,
+      BaseDouble& errorMax, ReadParameters& params) {
+   typedef Numerics::DefineTaylorDouble<
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) >,
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber+5, 15) >,
+         Numerics::BigInteger > TaylorDouble;
+   TaylorDouble result(std::move(*this));
+   result.logAssign(errorMin, errorMax, params);
+   inherited::operator=(std::move(result));
+}
+
+DefineDoubleTraitsTemplateHeader(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber)
+void
+DefineBuiltFloat DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber)::sqrtAssign(ReadParameters& params) {
+   typedef Numerics::TProjectionDouble<
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber) >,
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber+1, UExponentBitsNumber) > > ImprovedDouble;
+   ImprovedDouble result(std::move(*this));
+   result.sqrtAssign(params);
+   Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber) >
+      ::operator=(std::move(result));
+}
+
+DefineDoubleTraitsTemplateHeader(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber)
+void
+DefineBuiltFloat DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber)
+      ::expAssign(BaseDouble& errorMin, BaseDouble& errorMax, ReadParameters& params) {
+   typedef Numerics::DefineTaylorDouble<
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber) >,
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber+5, UExponentBitsNumber) >,
+         Numerics::BigInteger > TaylorDouble;
+   TaylorDouble result(std::move(*this));
+   result.expAssign(errorMin, errorMax, params);
+   Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber) >
+      ::operator=(std::move(result));
+}
+
+DefineDoubleTraitsTemplateHeader(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber)
+void
+DefineBuiltFloat DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber)
+      ::logAssign(BaseDouble& errorMin, BaseDouble& errorMax, ReadParameters& params) {
+   typedef Numerics::DefineTaylorDouble<
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber) >,
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber+5, UExponentBitsNumber) >,
+         Numerics::BigInteger > TaylorDouble;
+   TaylorDouble result(std::move(*this));
+   result.logAssign(errorMin, errorMax, params);
+   Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, UMantissaBitsNumber, UExponentBitsNumber) >
+      ::operator=(result);
+}
+
+} // end of namespace DDoubleExact
+
+#undef DefineSingleTemplateHeader
+#undef DefineSingleTemplateParameters
+#undef DefineBuiltReal
+#undef DefineTaylorDouble
+#undef DefineBuiltDoubleTraits
+#undef DefineBuiltDouble
+#undef DefineRealMantissaExponentTemplateParameters
+#undef DefineDoubleTraitsTemplateHeader
+#undef DefineBuiltFloat
+

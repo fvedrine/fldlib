@@ -1,0 +1,4 @@
+set print elements 0
+set print static-members off
+set print repeats 0
+

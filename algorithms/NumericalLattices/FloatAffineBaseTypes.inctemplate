@@ -1,0 +1,136 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2011-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : NumericalDomains
+// Unit      : Affine relationships
+// File      : FloatAffineBaseTypes.inctemplate
+// Description :
+//   Implementation of a class of affine relations.
+//
+
+#ifndef DefineGeneric
+
+#define DefineSingleTemplateHeader(RealBitsNumber)                   \
+   template <int RealBitsNumber>
+#define DefineBuiltReal TBuiltReal
+#define DefineSingleTemplateParameters(RealBitsNumber)               \
+   <RealBitsNumber>
+#define DefineTaylorDouble TTaylorDouble
+#define DefineBuiltDouble TBuiltDouble
+#define DefineBuiltDoubleTraits BuiltDoubleTraits
+#define DefineRealMantissaExponentTemplateParameters(RealBitsNumber, SizeMantissa, SizeExponent) \
+   <RealBitsNumber, SizeMantissa, SizeExponent>
+
+#else
+
+#define DefineSingleTemplateHeader(RealBitsNumber)                   \
+   template <class BaseStoreTraits, int RealBitsNumber>
+#define DefineBuiltReal TGBuiltReal
+#define DefineSingleTemplateParameters(RealBitsNumber)               \
+   <BaseStoreTraits, RealBitsNumber>
+#define DefineTaylorDouble TGTaylorDouble
+#define DefineBuiltDouble TGBuiltDouble
+#define DefineBuiltDoubleTraits GBuiltDoubleTraits
+#define DefineRealMantissaExponentTemplateParameters(RealBitsNumber, SizeMantissa, SizeExponent) \
+   <BaseStoreTraits, RealBitsNumber, SizeMantissa, SizeExponent>
+
+#endif
+
+namespace DAffine {
+
+DefineSingleTemplateHeader(URealBitsNumber)
+void
+DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber)::sqrtAssign(BaseDouble& errorMin,
+      BaseDouble& errorMax, ReadParameters& params) {
+   BaseDouble copy(*this);
+   inherited::sqrtAssign();
+   BaseDouble square(copy);
+   square.multAssign(square, params);
+   if (square < copy)
+      params.setDownApproximate();
+   else if (square > copy)
+      params.setUpApproximate();
+   else if (params.isUpApproximate())
+      params.setDownApproximate();
+   else if (params.isDownApproximate())
+      params.setUpApproximate();
+   if (params.isApproximate()) {
+      BaseDouble ulp;
+      ulp.setBasicExponent(inherited::getBasicExponent());
+      if (ulp.getSBasicExponent().minusAssign(inherited::BitSizeMantissa).hasCarry()) {
+         int shift = ulp.getSBasicExponent().neg()[0]+1;
+         ulp.getSMantissa() = 1U;
+         if (inherited::BitSizeMantissa-shift-1 > 0)
+            ulp.getSMantissa() <<= (inherited::BitSizeMantissa-shift-1);
+         ulp.getSBasicExponent() = 0;
+      };
+      if (params.isUpApproximate())
+         errorMax = ulp;
+      else { // params.isDownApproximate()
+         errorMin = ulp;
+         errorMin.opposite();
+      }
+   };
+}
+
+DefineSingleTemplateHeader(URealBitsNumber)
+void
+DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber)::expAssign(BaseDouble& errorMin,
+      BaseDouble& errorMax, ReadParameters& params) {
+   typedef Numerics::DefineTaylorDouble<
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) >,
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber+5, 15) >,
+         Numerics::BigInteger > TaylorDouble;
+   TaylorDouble result(std::move(*this));
+   result.expAssign(errorMin, errorMax, params);
+   thisType::operator=(std::move(result));
+}
+
+DefineSingleTemplateHeader(URealBitsNumber)
+void
+DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber)::logAssign(BaseDouble& errorMin,
+      BaseDouble& errorMax, ReadParameters& params) {
+   typedef Numerics::DefineTaylorDouble<
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) >,
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber+5, 15) >,
+         Numerics::BigInteger > TaylorDouble;
+   TaylorDouble result(std::move(*this));
+   result.logAssign(errorMin, errorMax, params);
+   thisType::operator=(std::move(result));
+}
+
+} // end of namespace DAffine
+
+#undef DefineSingleTemplateHeader
+#undef DefineBuiltReal
+#undef DefineSingleTemplateParameters
+#undef DefineTaylorDouble
+#undef DefineBuiltDouble
+#undef DefineBuiltDoubleTraits
+#undef DefineRealMantissaExponentTemplateParameters
+

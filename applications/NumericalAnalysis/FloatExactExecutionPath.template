@@ -1,0 +1,464 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2015-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : NumericalDomains
+// Unit      : FloatExact
+// File      : FloatExactExecutionPath.template
+// Description :
+//   Implementation of a class of comparison between floating points
+//
+
+#include "NumericalAnalysis/FloatExactExecutionPath.h"
+
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+#include "NumericalDomains/FloatExactBase.template"
+#else
+#include "NumericalDomains/FloatExactBaseGeneric.template"
+#endif
+
+#ifndef FLOAT_LONG_WRITE
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+#include "NumericalLattices/FloatExactBaseTypes.template"
+#else
+#include "NumericalLattices/FloatExactBaseTypesGeneric.template"
+#endif
+#endif
+
+namespace NumericalDomains { namespace DDoubleExact {
+
+template <class TypeExecutionPath>
+bool
+TBaseFloatExact<TypeExecutionPath>::getThenBranch(bool implementationResult, bool realResult) const {
+   AssumeCondition(implementationResult != realResult && inherited::getMode() == BaseExecutionPath::SVNone
+         && !inherited::hasSynchronization())
+   inherited::notifySplitWithSynchronization();
+   inherited::followNewUnstableBranch();
+   if (!inherited::fSupportFirstFollowFloat) {
+      if (!implementationResult)
+         inherited::alternateUnstableBranch();
+   };
+   return (inherited::getMode() == BaseExecutionPath::SVNoReal) ? implementationResult : realResult;
+}
+
+template <class TypeExecutionPath>
+template <class TFloatExact>
+void
+TBaseFloatExact<TypeExecutionPath>::assumeCompare(const TFloatExact& source, const BuiltReal& diff) const {
+   typedef typename TFloatExact::BuiltDouble TypeBuiltDouble;
+   BaseExecutionPath::SpecialValue mode = inherited::getMode();
+   if (mode == BaseExecutionPath::SVNone) {
+      inherited::assumeDomain("i=[");
+      {  TypeBuiltDouble implementation;
+         typename TypeBuiltDouble::ReadParameters defaultParams;
+#ifndef FLOAT_LONG_WRITE
+         defaultParams.setNative();
+         inherited::assumeDomainUntil(']');
+         inherited::assumeDomain('{');
+#endif
+         inherited::readValueFromInput(implementation, defaultParams);
+#ifndef FLOAT_LONG_WRITE
+         inherited::assumeDomainUntil('}');
+#else
+         inherited::assumeDomain(", ");
+         inherited::assumeDomainUntil(']');
+#endif
+         if (!(implementation == source.implementation())
+               && (!implementation.isNaN() || !source.implementation().isNaN())) {
+            typename TypeBuiltDouble::WriteParameters params;
+            inherited::emitErrorReadValueFromInput("float implementation is not as expected",
+               source.implementation(), "current implementation",
+               implementation, "expected implementation", params.setDecimal());
+         };
+      };
+      inherited::assumeDomain(", r=");
+      {  BuiltReal real;
+         BuiltReal::ReadParameters defaultParams;
+#ifndef FLOAT_LONG_WRITE
+         defaultParams.setNative();
+         inherited::assumeDomainUntil(']');
+         inherited::assumeDomain('{');
+#endif
+         inherited::readValueFromInput(real, defaultParams);
+#ifndef FLOAT_LONG_WRITE
+         inherited::assumeDomainUntil('}');
+#else
+         inherited::assumeDomain(", ");
+         inherited::assumeDomainUntil(']');
+#endif
+         if (!(real == source.real())
+               && (!real.isNaN() || !source.real().isNaN())) {
+            BuiltReal::WriteParameters params;
+            inherited::emitErrorReadValueFromInput("real is not as expected",
+               source.real(), "current real",
+               real, "expected real", params.setDecimal());
+         }
+         inherited::assumeDomain(", e=[");
+
+#ifndef FLOAT_LONG_WRITE
+         inherited::assumeDomainUntil(']');
+#else
+         BuiltReal diffVal;
+         inherited::readValueFromInput(diffVal, defaultParams);
+         inherited::assumeDomain(", ");
+         inherited::assumeDomainUntil(']');
+         if (!(diff == diffVal)
+               && (!diff.isNaN() || !diffVal.isNaN())) {
+            BuiltReal::WriteParameters params;
+            inherited::emitErrorReadValueFromInput("absolute error is not as expected",
+               diff, "current error",
+               diffVal, "expected error", params.setDecimal());
+         }
+#endif // FLOAT_LONG_WRITE
+      };
+      inherited::assumeDomain(", re=[");
+      inherited::assumeDomainUntil(']');
+      inherited::assumeDomain('\n');
+   }
+   else { // mode != BaseExecutionPath::SVNone
+      if (mode == BaseExecutionPath::SVNoImplementation) {
+         inherited::assumeDomain("i=xxx, r=[");
+         BuiltReal real;
+         BuiltReal::ReadParameters defaultParams;
+#ifndef FLOAT_LONG_WRITE
+         defaultParams.setNative();
+         inherited::assumeDomainUntil(']');
+         inherited::assumeDomain('{');
+#endif
+         inherited::readValueFromInput(real, defaultParams);
+#ifndef FLOAT_LONG_WRITE
+         inherited::assumeDomainUntil('}');
+#else
+         inherited::assumeDomain(", ");
+         inherited::assumeDomainUntil(']');
+#endif
+         if (!(real == source.real())
+               && (!real.isNaN() || !source.real().isNaN())) {
+            BuiltReal::WriteParameters params;
+            inherited::emitErrorReadValueFromInput("real is not as expected",
+               source.real(), "current real",
+               real, "expected real", params.setDecimal());
+         };
+         inherited::assumeDomain(", e=xxx, re=xxx");
+      }
+      else {
+         AssumeCondition(mode == BaseExecutionPath::SVNoReal)
+         inherited::assumeDomain("i=[");
+         TypeBuiltDouble implementation;
+         typename TypeBuiltDouble::ReadParameters defaultParams;
+#ifndef FLOAT_LONG_WRITE
+         defaultParams.setNative();
+         inherited::assumeDomainUntil(']');
+         inherited::assumeDomain('{');
+#endif
+         inherited::readValueFromInput(implementation, defaultParams);
+#ifndef FLOAT_LONG_WRITE
+         inherited::assumeDomainUntil('}');
+#else
+         inherited::assumeDomain(", ");
+         inherited::assumeDomainUntil(']');
+#endif
+         if (!(implementation == source.implementation())
+               && (!implementation.isNaN() || !source.implementation().isNaN())) {
+            typename TypeBuiltDouble::WriteParameters params;
+            inherited::emitErrorReadValueFromInput("float implementation is not as expected",
+               source.implementation(), "current implementation",
+               implementation, "expected implementation", params.setDecimal());
+         }
+         inherited::assumeDomain(", r=xxx, e=xxx, re=xxx");
+      };
+      inherited::assumeDomain('\n');
+   };
+}
+
+template <class TypeExecutionPath>
+template <class TFloatExact>
+void
+TBaseFloatExact<TypeExecutionPath>::writeCompare(const TFloatExact& source, const BuiltReal& diff) const {
+   typedef typename TFloatExact::BuiltDouble TypeBuiltDouble;
+   BaseExecutionPath::SpecialValue mode = inherited::getMode();
+   if (mode == BaseExecutionPath::SVNone) {
+      inherited::writeDomain("i=[");
+#ifndef FLOAT_LONG_WRITE
+      BaseExecutionPath::QuickDouble::WriteParameters quickParams;
+      quickParams.setDecimal();
+      {  BaseExecutionPath::QuickDouble simple(source.implementation());
+         inherited::writeValueToOutput(simple, quickParams);
+         inherited::writeDomain(", ");
+         inherited::writeValueToOutput(simple, quickParams);
+      };
+#else
+      typename TypeBuiltDouble::WriteParameters defaultImplParams;
+      defaultImplParams.setDecimal();
+      inherited::writeValueToOutput(source.implementation(), defaultImplParams);
+      inherited::writeDomain(", ");
+      inherited::writeValueToOutput(source.implementation(), defaultImplParams);
+#endif
+      inherited::writeDomain(']');
+#ifndef FLOAT_LONG_WRITE
+      inherited::writeDomain('{');
+      typename TypeBuiltDouble::WriteParameters nativeImplParams;
+      nativeImplParams.setNative();
+      inherited::writeValueToOutput(source.implementation(), nativeImplParams);
+      inherited::writeDomain('}');
+#endif
+      inherited::writeDomain(", r=[");
+      BuiltReal::WriteParameters defaultRealParams;
+#ifndef FLOAT_LONG_WRITE
+      {  BaseExecutionPath::QuickDouble simple(source.real());
+         inherited::writeValueToOutput(simple, quickParams);
+         inherited::writeDomain(", ");
+         inherited::writeValueToOutput(simple, quickParams);
+      }
+#else
+      defaultRealParams.setDecimal();
+      inherited::writeValueToOutput(source.real(), defaultRealParams);
+      inherited::writeDomain(", ");
+      inherited::writeValueToOutput(source.real(), defaultRealParams);
+#endif
+      inherited::writeDomain(']');
+#ifndef FLOAT_LONG_WRITE
+      inherited::writeDomain('{');
+      BuiltReal::WriteParameters nativeRealParams;
+      nativeRealParams.setNative();
+      inherited::writeValueToOutput(source.real(), nativeRealParams);
+      inherited::writeDomain('}');
+#endif
+      inherited::writeDomain(", e=[");
+#ifndef FLOAT_LONG_WRITE
+      {  BaseExecutionPath::QuickDouble simple(diff);
+         inherited::writeValueToOutput(simple, quickParams);
+         inherited::writeDomain(", ");
+         inherited::writeValueToOutput(simple, quickParams);
+      }
+#else
+      inherited::writeValueToOutput(diff, defaultRealParams);
+      inherited::writeDomain(", ");
+      inherited::writeValueToOutput(diff, defaultRealParams);
+#endif
+      inherited::writeDomain("], re=[");
+#ifndef FLOAT_LONG_WRITE
+      {  BaseExecutionPath::QuickDouble relativeError(diff), implementation(source.implementation()), real(source.real());
+         if (relativeError.isNegative()) relativeError.setPositive();
+         if (implementation.isNegative()) implementation.setPositive();
+         if (real.isNegative()) real.setPositive();
+         if (implementation >= real)
+            relativeError.divAssign(implementation, inherited::nearestParams());
+         else
+            relativeError.divAssign(real, inherited::nearestParams());
+         inherited::nearestParams().clear();
+         inherited::writeValueToOutput(relativeError, quickParams);
+         inherited::writeDomain(", ");
+         inherited::writeValueToOutput(relativeError, quickParams);
+      }
+#else
+      {  BuiltReal relativeError(diff);
+         BuiltReal implementation;
+         source.retrieveReal(source.implementation(), implementation);
+         if (implementation >= source.real())
+            relativeError.divAssign(implementation, inherited::nearestParams());
+         else
+            relativeError.divAssign(source.real(), inherited::nearestParams());
+         inherited::nearestParams().clear();
+         inherited::writeValueToOutput(relativeError, defaultRealParams);
+         inherited::writeDomain(", ");
+         inherited::writeValueToOutput(relativeError, defaultRealParams);
+      }
+#endif
+      inherited::writeDomain("]\n");
+   }
+   else {
+      if (mode == BaseExecutionPath::SVNoImplementation) {
+         inherited::writeDomain("i=xxx, r=[");
+#ifndef FLOAT_LONG_WRITE
+         BaseExecutionPath::QuickDouble::WriteParameters quickParams;
+         quickParams.setDecimal();
+         {  BaseExecutionPath::QuickDouble simple(source.real());
+            inherited::writeValueToOutput(simple, quickParams);
+            inherited::writeDomain(", ");
+            inherited::writeValueToOutput(simple, quickParams);
+         }
+#else
+         BuiltReal::WriteParameters defaultRealParams;
+         defaultRealParams.setDecimal();
+         inherited::writeValueToOutput(source.real(), defaultRealParams);
+         inherited::writeDomain(", ");
+         inherited::writeValueToOutput(source.real(), defaultRealParams);
+#endif
+         inherited::writeDomain(']');
+#ifndef FLOAT_LONG_WRITE
+         BuiltReal::WriteParameters nativeRealParams;
+         nativeRealParams.setNative();
+         inherited::writeDomain('{');
+         inherited::writeValueToOutput(source.real(), nativeRealParams);
+         inherited::writeDomain('}');
+#endif
+         inherited::writeDomain(", e=xxx, re=xxx");
+      }
+      else {
+         AssumeCondition(mode == BaseExecutionPath::SVNoReal)
+         inherited::writeDomain("i=[");
+#ifndef FLOAT_LONG_WRITE
+         {  BaseExecutionPath::QuickDouble::WriteParameters quickParams;
+            BaseExecutionPath::QuickDouble simple(source.implementation());
+            inherited::writeValueToOutput(simple, quickParams);
+            inherited::writeDomain(", ");
+            inherited::writeValueToOutput(simple, quickParams);
+         }
+#else
+         typename TypeBuiltDouble::WriteParameters defaultImplParams;
+         defaultImplParams.setDecimal();
+         inherited::writeValueToOutput(source.implementation(), defaultImplParams);
+         inherited::writeDomain(", ");
+         inherited::writeValueToOutput(source.implementation(), defaultImplParams);
+#endif
+         inherited::writeDomain(']');
+#ifndef FLOAT_LONG_WRITE
+         inherited::writeDomain('{');
+         typename TypeBuiltDouble::WriteParameters nativeImplParams;
+         nativeImplParams.setNative();
+         inherited::writeValueToOutput(source.implementation(), nativeImplParams);
+         inherited::writeDomain('}');
+#endif
+         inherited::writeDomain(", r=xxx, e=xxx, re=xxx");
+      };
+      inherited::writeDomain('\n');
+   };
+}
+
+template <class TypeExecutionPath>
+template <class TFloatExact>
+void
+TBaseFloatExact<TypeExecutionPath>::writeBranchCompare(const TFloatExact& source, const BuiltReal& diff) const {
+   typedef typename TFloatExact::BuiltDouble TypeBuiltDouble;
+   BaseExecutionPath::SpecialValue mode = inherited::getMode();
+   AssumeCondition(mode != BaseExecutionPath::SVNone)
+   inherited::writeDomain("unstable test: ");
+   if (mode == BaseExecutionPath::SVNoImplementation) {
+      inherited::writeDomain("(xxx, ");
+      BuiltReal::WriteParameters params;
+      inherited::writeValueToOutput(source.real(), params.setDecimal());
+      inherited::writeDomain(", xxx)");
+   }
+   else {
+      AssumeCondition(mode == BaseExecutionPath::SVNoReal)
+      inherited::writeDomain('(');
+      typename TypeBuiltDouble::WriteParameters params;
+      inherited::writeValueToOutput(source.implementation(), params.setDecimal());
+      inherited::writeDomain(", xxx, xxx)");
+   };
+   inherited::writeDomain('\n');
+}
+
+template <class TypeExecutionPath, class TypeBuiltDouble, typename TypeImplementation>
+const char*
+TFloatExact<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>::queryDebugValue() const {
+   static typename TypeExecutionPath::DebugStream out;
+   out.clear();
+   auto mode = inherited::getMode();
+   if (mode == BaseExecutionPath::SVNone) {
+      auto& nearestParams = inherited::nearestParams();
+      BuiltReal diff;
+      inherited::retrieveReal(inherited::bfImplementation, diff);
+      diff.minusAssign(inherited::brReal, nearestParams);
+      nearestParams.clear();
+
+      out.writesome("i=[");
+      inherited::bfImplementation.write(out, typename TypeBuiltDouble::WriteParameters().setDecimal());
+      out.writesome("], r=[");
+      BuiltReal::WriteParameters writeParameters;
+      writeParameters.setDecimal();
+      inherited::brReal.write(out, writeParameters);
+      out.writesome("], e=[");
+      diff.write(out, writeParameters);
+      out.writesome("], re=[");
+      BuiltReal relativeError(diff);
+      BuiltReal implementation;
+      inherited::retrieveReal(inherited::bfImplementation, implementation);
+      if (implementation >= inherited::brReal)
+         relativeError.divAssign(implementation, nearestParams);
+      else
+         relativeError.divAssign(inherited::brReal, nearestParams);
+      nearestParams.clear();
+      relativeError.write(out, writeParameters);
+      out.writesome("]\n");
+   }
+   else {
+      if (mode == BaseExecutionPath::SVNoImplementation) {
+         out.writesome("i=xxx, r=[");
+         inherited::brReal.write(out, BuiltReal::WriteParameters().setDecimal());
+         out.writesome("], e=xxx, re=xxx");
+      }
+      else {
+         AssumeCondition(mode == BaseExecutionPath::SVNoReal)
+         out.writesome("i=[");
+         inherited::bfImplementation.write(out, typename TypeBuiltDouble::WriteParameters().setDecimal());
+         out.writesome("], r=xxx, e=xxx, re=xxx");
+      };
+      out.put('\n');
+   };
+   return out.content();
+}
+
+template <class TypeExecutionPath, class TypeBuiltDouble, typename TypeImplementation>
+typename TFloatExact<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>::PQueryDebugValue
+TFloatExact<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>::pqueryDebugValue
+   = &TFloatExact<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>::queryDebugValue;
+
+template <class TypeExecutionPath>
+template <class TypeBuiltDouble, typename TypeImplementation>
+TMergeBranches<TypeExecutionPath>&
+TMergeBranches<TypeExecutionPath>::operator<<(TFloatExact<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>& value) {
+   if (!fActive)
+      return *this;
+   AssumeCondition(inherited::getMode() != BaseExecutionPath::SVNone)
+
+   BaseExecutionPath::SpecialValue mode = inherited::getMode();
+   if (inherited::doesFollowFlow()) {
+      bool hasImplementation = false;
+      BuiltReal::ReadParameters defaultRealParams;
+      typename TypeBuiltDouble::ReadParameters defaultImplParams;
+      inherited::readSynchronizedValue(value.bfImplementation, defaultImplParams,
+            value.brReal, defaultRealParams, hasImplementation);
+      if (mode == BaseExecutionPath::SVNoImplementation ? !hasImplementation : hasImplementation) {
+         inherited::emitErrorFromInput("synchronization problem after unstable test");
+         if (mode == BaseExecutionPath::SVNoImplementation)
+            value.retrieveImplementation(value.brReal, value.bfImplementation);
+         else
+            value.retrieveReal(value.bfImplementation, value.brReal);
+      }
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+      DDoubleExact::setContent(value.dValue, value.bfImplementation);
+#else
+      DDoubleExact::gsetContent(value.dValue, value.bfImplementation);
+#endif
+   };
+   inherited::writeSynchronizedValue(
+         value.bfImplementation, typename TypeBuiltDouble::WriteParameters().setDecimal(),
+         value.brReal, typename BuiltReal::WriteParameters().setDecimal(),
+         mode == BaseExecutionPath::SVNoReal);
+   return *this;
+}
+
+}} // end of namespace NumericalDomains::DDoubleExact
+

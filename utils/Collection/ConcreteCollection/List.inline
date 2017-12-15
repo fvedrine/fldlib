@@ -1,0 +1,235 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Concrete collections
+// File      : List.inline
+// Description :
+//   Definition of the inline methods of the list of double linked elements
+//   inheriting from VirtualCollection.
+//
+
+/***************************************************************/
+/* Definition of the class GenericList::ListCursorNotification */
+/***************************************************************/
+
+class GenericList::ListCursorNotification {
+  protected:
+   static ComparisonResult compareCursors(const ImplList& list, ImplListElement* fst, ImplListElement* snd)
+      {  return list.compareCursors(fst, snd); }
+   static void invalidate(GenericListCursor& cursor) { cursor.GenericListCursor::invalidate(); }
+   static void setElement(GenericListCursor& cursor, ImplListElement* element)
+      {  cursor.setElement(element); }
+   static const PImplListElement& element(const GenericListCursor& cursor)
+      {  return cursor.element(); }
+};
+
+/*******************************************/
+/* Inline methods of the class GenericList */
+/*******************************************/
+
+inline ImplListElement*
+GenericList::getElement(ImplListElement* element, RelativePosition position) const {
+   if (element) {
+      switch (position) {
+         case RPUndefined: return ImplList::getLast();
+         case RPExact: return element;
+         case RPBefore:
+            {  AssumeCondition(element != ImplList::getFirst());
+               return ImplList::getPrevious(element);
+            };
+         case RPAfter:
+            {  element = ImplList::getNext(element);
+               AssumeCondition(element != ImplList::getFirst());
+               return element;
+            };
+      };
+   };
+
+   AssumeCondition(position != RPExact)
+   if (position == RPAfter)
+      return ImplList::getFirst();
+   return ImplList::getLast();
+}
+
+inline void
+GenericList::retrieveBoundInsertion(const ExtendedInsertionParameters& parameters,
+      const GenericListCursor* cursor, PImplListElement& prevStart, PImplListElement& nextEnd) const {
+   prevStart = nextEnd = nullptr;
+   if (parameters.getRelativePosition() != RPBefore) { // insertion after
+      if ((parameters.getRelativePosition() != RPUndefined)
+          && cursor && ((prevStart = cursor->element()) != nullptr)
+          && (prevStart != ImplList::getLast())) // insertion before the end of the list
+         nextEnd = ImplList::getNext(prevStart);
+      else {
+         if (prevStart == nullptr) {
+            if (parameters.getRelativePosition() == RPAfter)
+               nextEnd = ImplList::getFirst();
+            else
+               prevStart = ImplList::getLast();
+         };
+      };
+   }
+   else { // insertion before
+      if (cursor && ((nextEnd = cursor->element()) != nullptr)
+         && (nextEnd != ImplList::getFirst())) // insertion after the beginning of the list
+         prevStart = ImplList::getPrevious(nextEnd);
+      else {
+         if (nextEnd == nullptr)
+            prevStart = ImplList::getLast();
+      };
+   };
+}
+
+inline bool
+GenericList::retrieveRemovedInterval(PImplListElement& start, PImplListElement& end,
+      RelativePosition pos) const {
+   if (((pos == RPUndefined) || (pos == RPAfter)) && start) {
+      start = ImplList::getNext(start);
+      if (start == ImplList::getFirst())
+         return false;
+   };
+   if (start == nullptr) {
+      start = ImplList::getFirst();
+      if (start == nullptr)
+         return false;
+   };
+
+   if (((pos == RPUndefined) || (pos == RPBefore)) && end) {
+      if (end == ImplList::getFirst())
+         return false;
+      end = ImplList::getPrevious(end);
+   };
+   if (end == nullptr)
+      end = ImplList::getLast();
+   return true;
+}
+
+inline void
+GenericList::retrieveBoundSuppression(const ExtendedSuppressParameters& parameters,
+      const GenericListCursor* startCursor, const GenericListCursor* endCursor,
+      PImplListElement& prevStart, PImplListElement& nextEnd) const {
+   prevStart = startCursor ? startCursor->element() : nullptr;
+   nextEnd = endCursor ? endCursor->element() : nullptr;
+   if (endCursor && !parameters.isLastExcluded())
+      nextEnd = (nextEnd != ImplList::getLast()) ? ImplList::getNext(nextEnd) : nullptr;
+   if (startCursor && !parameters.isFirstExcluded())
+      prevStart = (prevStart != ImplList::getFirst()) ? ImplList::getPrevious(prevStart) : nullptr;
+}
+
+/*******************************************/
+/* Intern classes to the class GenericList */
+/*******************************************/
+
+class
+GenericList::ElementNotification : public CursorNotification, protected ListCursorNotification {
+  private:
+   const ImplListElement* pileElement;
+
+  protected:
+   bool needUpdate(GenericListCursor& cursor)
+      { return (element(cursor) == pileElement); }
+
+  public:
+   ElementNotification(const ImplListElement& element) : pileElement(&element) {}
+   ElementNotification(const ElementNotification& source)
+      :  CursorNotification(source), pileElement(source.pileElement) {}
+   DefineCursorNotificationMethods(ElementNotification, GenericListCursor)
+   DDefineAssign(ElementNotification)
+};
+
+class
+GenericList::RemoveElementNotification : public ElementNotification {
+  protected:
+   void update(GenericListCursor& cursor)
+      { if (needUpdate(cursor)) invalidate(cursor); }
+
+  public:
+   RemoveElementNotification(const ImplListElement& removedElement)
+      :  ElementNotification(removedElement) {}
+   RemoveElementNotification(const RemoveElementNotification& source) = default;
+   DefineCursorNotificationMethods(RemoveElementNotification, GenericListCursor)
+};
+
+class
+GenericList::BoundNotification : public CursorNotification, protected ListCursorNotification {
+  private:
+   const ImplList* pilGenericList;
+   ImplListElement* pileStart;
+   ImplListElement* pileEnd;
+
+  protected:
+   bool needUpdate(GenericListCursor& cursor)
+      {  ComparisonResult compare = pileStart
+            ? compareCursors(*pilGenericList, pileStart, element(cursor))
+            : CRLess;
+         if (compare == CREqual)
+            return true;
+         else if (compare == CRLess)
+            return pileEnd ? compareCursors(*pilGenericList, element(cursor), pileEnd) != CRGreater
+                           : true;
+         return false;
+      }
+
+  public:
+   BoundNotification(const ImplList& genericList, ImplListElement* startSource,
+         ImplListElement* endSource)
+      :  pilGenericList(&genericList), pileStart(startSource), pileEnd(endSource) {}
+   BoundNotification(const BoundNotification& source)
+      :  CursorNotification(source), pilGenericList(source.pilGenericList),
+         pileStart(source.pileStart), pileEnd(source.pileEnd) {}
+   DefineCursorNotificationMethods(BoundNotification, GenericListCursor)
+   DDefineAssign(BoundNotification)
+};
+
+class
+GenericList::RemoveBoundNotification : public BoundNotification {
+  protected:
+   void update(GenericListCursor& cursor)
+      {  if (needUpdate(cursor)) invalidate(cursor); }
+
+  public:
+   RemoveBoundNotification(const ImplList& genericList, ImplListElement* start, ImplListElement* end)
+      :  BoundNotification(genericList, start, end) {}
+   RemoveBoundNotification(const RemoveBoundNotification& source) = default;
+   DefineCursorNotificationMethods(RemoveBoundNotification, GenericListCursor)
+};
+
+class
+GenericList::ChangeNotification : public ElementNotification {
+  private:
+   ImplListElement* pileNewElement;
+
+  protected:
+   void update(GenericListCursor& cursor)
+      { if (needUpdate(cursor)) setElement(cursor, pileNewElement); }
+
+  public:
+   ChangeNotification(const ImplListElement& oldElement, ImplListElement& newElement)
+      :  ElementNotification(oldElement), pileNewElement(&newElement) {}
+   ChangeNotification(const ChangeNotification& source) = default;
+   DefineCursorNotificationMethods(ChangeNotification, GenericListCursor)
+   DDefineAssign(ChangeNotification)
+};
+

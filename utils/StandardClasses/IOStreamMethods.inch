@@ -1,0 +1,218 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2013-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : String
+// Unit      : Persistency
+// File      : IOStreamMethods.inch
+// Description :
+//   Implementation of the inline interface methods that do the link
+//   between the streams and the classes IOObject::ISBase and IOObject::OSBase.
+//
+
+/* DefineDeclareIMethods      : Declaration of the virtual methods for a derived object      */
+/*                              of IOObject::ISBase                                          */
+/* DefineDeclareOMethods      : Declaration of the virtual methods for a derived object      */
+/*                              of IOObject::OSBase                                          */
+/* DefineInlineIStreamMethods : Implementation of the inline virtual methods for a           */
+/*                              derived object of IOObject::ISBase with a std::istream link  */
+/*    -> DefineTypeObject     : Type of the class under implementation derived from ISBase   */
+/*    -> DefineLinkStream     : link with the implementation std::istream                    */
+/* DefineInlineOStreamMethods : Implementation of the inline virtual methods for a           */
+/*                              derived object of IOObject::OSBase with a std::ostream link  */
+/*    -> DefineTypeObject     : Type of the class under implementation derived from OSBase   */
+/*    -> DefineLinkStream     : link with the implementation std::ostream                    */
+
+#ifdef DefineDeclareIMethods
+   /* overload methods */
+   virtual int gcount();
+   virtual int get();
+   virtual ISBase& get(char& ch);
+   virtual int peek();
+   virtual int readsome(const STG::VirtualStringProperty& source, int n);
+   virtual ISBase& unget();
+   virtual ISBase& ignorespaces();
+   virtual bool canread();
+   virtual bool good();
+   virtual int tellg();
+   virtual ISBase& seekg(int pos);
+   virtual ISBase& seekg(int pos, int origin);
+
+   /* high-level methods */
+   virtual ISBase& assume(char ch);
+   virtual ISBase& assume(void* chunk);
+   virtual ISBase& assume(const STG::VirtualStringProperty& text);
+   virtual ISBase& read(char& ch, bool isRaw);
+   virtual ISBase& read(int& n, bool isRaw);
+   virtual ISBase& readHexa(int& n);
+   virtual ISBase& read(unsigned int& n, bool isRaw);
+   virtual ISBase& readHexa(unsigned int& n);
+   virtual ISBase& read(long int& n, bool isRaw);
+   virtual ISBase& readHexa(long int& n);
+   virtual ISBase& read(unsigned long int& n, bool isRaw);
+   virtual ISBase& readHexa(unsigned long int& n);
+   virtual ISBase& read(double& f, bool isRaw);
+   virtual ISBase& read(bool& b, bool isRaw);
+   virtual ISBase& readchunk(void* chunk);
+   virtual ISBase& read(const STG::VirtualStringProperty& source, bool isRaw);
+   virtual ISBase& read(const STG::VirtualStringProperty& source, int n, bool isRaw);
+   virtual ISBase& readall(const STG::VirtualStringProperty& source);
+#endif // DefineDeclareIMethods
+
+#ifdef DefineDeclareOMethods
+   /* overload methods */
+   virtual OSBase& put(char c);
+   virtual int tellp();
+   virtual OSBase& seekp(int pos);
+   virtual OSBase& seekp(int pos, int origin);
+
+   /* high-level methods */
+   virtual OSBase& write(char ch, bool isRaw);
+   virtual OSBase& write(int n, bool isRaw);
+   virtual OSBase& writeHexa(int n);
+   virtual OSBase& write(unsigned int n, bool isRaw);
+   virtual OSBase& writeHexa(unsigned int n);
+   virtual OSBase& write(long int n, bool isRaw);
+   virtual OSBase& writeHexa(long int n);
+   virtual OSBase& write(unsigned long int n, bool isRaw);
+   virtual OSBase& writeHexa(unsigned long int n);
+   virtual OSBase& write(double f, bool isRaw);
+   virtual OSBase& write(bool b, bool isRaw);
+   virtual OSBase& write(const STG::VirtualStringProperty& source, bool isRaw);
+   virtual OSBase& writeall(const STG::VirtualStringProperty& source);
+   virtual OSBase& writechunk(void* chunk);
+   virtual OSBase& flush();
+#endif // DefineDeclareOMethods
+
+#ifdef DefineInlineIStreamMethods
+
+inline int
+DefineTypeObject::gcount()
+   { AssumeValidity(*this) return (int) DefineLinkStream.gcount(); }
+
+inline int
+DefineTypeObject::get()
+   { AssumeValidity(*this) return DefineLinkStream.get(); }
+
+inline int
+DefineTypeObject::peek()
+   { AssumeValidity(*this) return DefineLinkStream.peek(); }
+
+inline STG::IOObject::ISBase&
+DefineTypeObject::get(char& ch)
+   { AssumeValidity(*this) DefineLinkStream.get(ch); return *this; }
+
+inline int
+DefineTypeObject::readsome(const STG::VirtualStringProperty& source, int n)
+   { AssumeValidity(*this)
+     source.read(&DefineLinkStream, n);
+     return source.length();
+   }
+
+inline STG::IOObject::ISBase&
+DefineTypeObject::unget()
+   { AssumeValidity(*this) DefineLinkStream.unget(); return *this; }
+
+inline STG::IOObject::ISBase&
+DefineTypeObject::ignorespaces()
+   { AssumeValidity(*this)
+     while (isspace(DefineLinkStream.peek())) DefineLinkStream.get();
+     return *this;
+   }
+
+inline bool
+DefineTypeObject::canread()
+   { AssumeValidity(*this) return DefineLinkStream.peek() >= 0; }
+
+inline bool
+DefineTypeObject::good()
+   { AssumeValidity(*this) return DefineLinkStream.good(); }
+
+inline int
+DefineTypeObject::tellg()
+#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 4)))
+   { AssumeValidity(*this) return (int) (DefineLinkStream.tellg() - std::streampos()); }
+#else
+   { AssumeValidity(*this) return (int) DefineLinkStream.tellg(); }
+#endif
+
+inline STG::IOObject::ISBase&
+DefineTypeObject::seekg(int pos)
+   { AssumeValidity(*this) DefineLinkStream.seekg(pos); return *this; }
+
+#ifdef __GNUC__
+inline STG::IOObject::ISBase&
+DefineTypeObject::seekg(int pos, int origin)
+   { AssumeValidity(*this) DefineLinkStream.seekg((long int) pos, (std::ios::seekdir) origin); return *this; }
+#else
+inline STG::IOObject::ISBase&
+DefineTypeObject::seekg(int pos, int origin)
+   { AssumeValidity(*this) DefineLinkStream.seekg(pos, origin); return *this; }
+#endif
+
+inline STG::IOObject::ISBase&
+DefineTypeObject::readchunk(void* achunk)
+   { AssumeValidity(*this)
+     STG::TChunk<char>& chunk = *((STG::TChunk<char>*) achunk);
+     DefineLinkStream.read(chunk.string, chunk.length);
+     chunk.length = (int) DefineLinkStream.gcount();
+     return *this;
+   }
+
+#endif // DefineInlineIStreamMethods
+
+#ifdef DefineInlineOStreamMethods
+
+inline STG::IOObject::OSBase&
+DefineTypeObject::put(char c)
+   { AssumeValidity(*this) DefineLinkStream.put(c); return *this; }
+
+inline int
+DefineTypeObject::tellp()
+#if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 4)))
+   { AssumeValidity(*this) return (int) (DefineLinkStream.tellp() - std::streampos()); }
+#else
+   { AssumeValidity(*this) return (int) DefineLinkStream.tellp(); }
+#endif
+
+inline STG::IOObject::OSBase&
+DefineTypeObject::seekp(int pos)
+   { AssumeValidity(*this) DefineLinkStream.seekp(pos); return *this; }
+
+inline STG::IOObject::OSBase&
+DefineTypeObject::seekp(int pos, int origin)
+#ifdef __GNUC__
+   { AssumeValidity(*this) DefineLinkStream.seekp((long int) pos, (std::ios::seekdir) origin); return *this; }
+#else
+   { AssumeValidity(*this) DefineLinkStream.seekp(pos, origin); return *this; }
+#endif
+   
+inline STG::IOObject::OSBase&
+DefineTypeObject::writeall(const STG::VirtualStringProperty& source)
+   { AssumeValidity(*this) source.write(&DefineLinkStream); return *this; }
+
+inline STG::IOObject::OSBase&
+DefineTypeObject::flush()
+   { AssumeValidity(*this) DefineLinkStream.flush(); return *this; }
+
+#endif // DefineInlineOStreamMethods

@@ -1,0 +1,324 @@
+#ifndef _FLTD_STD_HEADERH
+#define _FLTD_STD_HEADERH
+
+/* FLUCTUAT */
+#if defined(_TWO_TOOL)
+
+#include "daed_builtins.h"
+#include "fluctuat_math.h"
+#include "float_diagnosis.h"
+
+#define DECLARE_RESOURCES 
+#define INIT_MAIN 
+#define END_MAIN 
+
+/* FLOAT_DIAGNOSIS */
+#elif defined(FLOAT_DIAGNOSIS)
+
+#include <errno.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <float.h>
+
+#include <math.h>
+#include "float_diagnosis.h"
+#include "feature.h"
+
+#define DECLARE_RESOURCES 
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+
+#ifdef FLOAT_THRESHOLD_DETECTION
+#define FLOAT_INIT_THRESHOLD init.setSupportThreshold();
+#else
+#define FLOAT_INIT_THRESHOLD  
+#endif
+
+#ifdef FLOAT_ATOMIC
+#define FLOAT_INIT_ATOMIC init.setSupportAtomic();
+#else
+#define FLOAT_INIT_ATOMIC  
+#endif
+
+#ifdef FLOAT_LOOP_UNSTABLE
+#define FLOAT_INIT_LOOP_UNSTABLE init.setSupportUnstableInLoop();
+#else
+#define FLOAT_INIT_LOOP_UNSTABLE  
+#endif
+
+#ifdef FLOAT_SILENT_COMPUTATIONS
+#define FLOAT_INIT_VERBOSE 
+#else
+#define FLOAT_INIT_VERBOSE init.setSupportVerbose();
+#endif
+
+#ifdef FLOAT_FIRST_FOLLOW_EXE
+#define FLOAT_INIT_FIRST_FOLLOW_EXE init.setSupportFirstFollowFloat();
+#else
+#define FLOAT_INIT_FIRST_FOLLOW_EXE 
+#endif
+
+#ifdef FLOAT_AFFINE
+#ifdef FLOAT_SCENARIO
+#define FLOAT_PROG_SUFFIX "_diag_aff_scenario"
+#else
+#define FLOAT_PROG_SUFFIX "_diag_aff"
+#endif
+
+#ifdef FLOAT_TRIGGER_PERCENT
+#define FLOAT_INIT_SIMPLIFICATION init.setSimplificationTriggerPercent(FLOAT_TRIGGER_PERCENT);
+#else
+#define FLOAT_INIT_SIMPLIFICATION 
+#endif
+
+#ifdef FLOAT_LOOP_UNSTABLE
+#define INIT_MAIN                                                                                \
+  NumericalDomains::FloatZonotope::Initialization init;                                          \
+  FLOAT_INIT_ATOMIC                                                                              \
+  FLOAT_INIT_LOOP_UNSTABLE                                                                       \
+  FLOAT_INIT_VERBOSE                                                                             \
+  FLOAT_INIT_THRESHOLD                                                                           \
+  FLOAT_INIT_FIRST_FOLLOW_EXE                                                                    \
+  FLOAT_INIT_SIMPLIFICATION                                                                      \
+  init.setResultFile(TOSTRING(PROG_NAME) FLOAT_PROG_SUFFIX);                                     \
+  std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
+  try {                                                                                          \
+     FLOAT_SPLIT_ALL(main, double::end(), double::end())
+#define END_MAIN                                                                                 \
+     FLOAT_MERGE_ALL(main, double::end(), double::end())                                         \
+  }                                                                                              \
+  catch (double::anticipated_termination&) {}                                                    \
+  catch (FLOAT_READ_ERROR& error) {                                                              \
+    if (error.getMessage())                                                                      \
+      std::cerr << "error: " << error.getMessage() << std::endl;                                 \
+    else                                                                                         \
+      std::cerr << "error while reading input file!" << std::endl;                               \
+  }                                                                                              \
+  catch (FLOAT_PRECONDITION_ERROR& error) {                                                      \
+      error.print(std::cout);                                                                    \
+  }
+
+#else // FLOAT_LOOP_UNSTABLE
+
+#define INIT_MAIN                                                                                \
+  NumericalDomains::FloatZonotope::Initialization init;                                          \
+  FLOAT_INIT_ATOMIC                                                                              \
+  FLOAT_INIT_LOOP_UNSTABLE                                                                       \
+  FLOAT_INIT_VERBOSE                                                                             \
+  FLOAT_INIT_THRESHOLD                                                                           \
+  FLOAT_INIT_FIRST_FOLLOW_EXE                                                                    \
+  FLOAT_INIT_SIMPLIFICATION                                                                      \
+  init.setResultFile(TOSTRING(PROG_NAME) FLOAT_PROG_SUFFIX);                                     \
+  std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
+  try {
+#define END_MAIN                                                                                 \
+  }                                                                                              \
+  catch (double::anticipated_termination&) {}                                                    \
+  catch (FLOAT_READ_ERROR& error) {                                                              \
+    if (error.getMessage())                                                                      \
+      std::cerr << "error: " << error.getMessage() << std::endl;                                 \
+    else                                                                                         \
+      std::cerr << "error while reading input file!" << std::endl;                               \
+  }                                                                                              \
+  catch (FLOAT_PRECONDITION_ERROR& error) {                                                      \
+      error.print(std::cout);                                                                    \
+  }
+
+#endif // FLOAT_LOOP_UNSTABLE
+
+#ifdef FLOAT_SCENARIO
+
+#undef FBETWEEN
+#undef FBETWEEN_WITH_ERROR
+#undef DBETWEEN
+#undef DBETWEEN_WITH_ERROR
+
+static inline NumericalDomains::FloatZonotope middle_of_float(old_float x, old_float y)
+   {  old_float res = x + (y-x)*((old_float) rand() / RAND_MAX);
+      old_float res_min = res - 1e-4, res_max = res + 1e-4;
+      if (res_min < x)
+         res_min = x;
+      if (res_max > y)
+         res_min = y;
+      return NumericalDomains::FloatZonotope(res_min, res_max);
+   }
+static inline NumericalDomains::FloatZonotope middle_of_float_with_error(old_float x, old_float y, old_float errmin, old_float errmax)
+   {  old_float res = x + (y-x)*((old_float) rand() / RAND_MAX);
+      old_float res_min = res - 1e-4, res_max = res + 1e-4;
+      if (res_min < x)
+         res_min = x;
+      if (res_max > y)
+         res_min = y;
+      return NumericalDomains::FloatZonotope(res_min, res_max, errmin, errmax);
+   }
+static inline NumericalDomains::DoubleZonotope middle_of_double(old_double x, old_double y)
+   {  old_double res = x + (y-x)*((old_double) rand() / RAND_MAX);
+      old_double res_min = res - 1e-8, res_max = res + 1e-8;
+      if (res_min < x)
+         res_min = x;
+      if (res_max > y)
+         res_min = y;
+      return NumericalDomains::DoubleZonotope(res_min, res_max);
+   }
+static inline NumericalDomains::DoubleZonotope middle_of_double_with_error(old_double x, old_double y, old_double errmin, old_double errmax)
+   {  old_double res = x + (y-x)*((old_double) rand() / RAND_MAX);
+      old_double res_min = res - 1e-8, res_max = res + 1e-8;
+      if (res_min < x)
+         res_min = x;
+      if (res_max > y)
+         res_min = y;
+      return NumericalDomains::DoubleZonotope(res_min, res_max, errmin, errmax);
+   }
+
+#define FBETWEEN(x,y) middle_of_float((old_float) x, (old_float) y)
+#define FBETWEEN_WITH_ERROR(x,y,errmin,errmax) middle_of_float_with_error((old_float) x, (old_float) y, (old_float) errmin, (old_float) errmax)
+#define DBETWEEN(x,y) middle_of_double((old_double) x, (old_double) y)
+#define DBETWEEN_WITH_ERROR(x,y,errmin,errmax) middle_of_double_with_error((old_double) x, (old_double) y, (old_double) errmin, (old_double) errmax)
+
+#endif // FLOAT_SCENARIO
+
+#elif defined(FLOAT_INTERVAL)
+#ifdef FLOAT_LOOP_UNSTABLE
+#define INIT_MAIN                                                                                \
+  NumericalDomains::FloatInterval::Initialization init;                                          \
+  FLOAT_INIT_ATOMIC                                                                              \
+  FLOAT_INIT_LOOP_UNSTABLE                                                                       \
+  FLOAT_INIT_VERBOSE                                                                             \
+  FLOAT_INIT_THRESHOLD                                                                           \
+  FLOAT_INIT_FIRST_FOLLOW_EXE                                                                    \
+  init.setResultFile(TOSTRING(PROG_NAME) "_diag_int");                                           \
+  std::cout << FLOAT_INIT_MESSAGE << std::endl;
+#define END_MAIN 
+#else // FLOAT_LOOP_UNSTABLE
+#define INIT_MAIN                                                                                \
+  NumericalDomains::FloatInterval::Initialization init;                                          \
+  FLOAT_INIT_ATOMIC                                                                              \
+  FLOAT_INIT_LOOP_UNSTABLE                                                                       \
+  FLOAT_INIT_VERBOSE                                                                             \
+  FLOAT_INIT_THRESHOLD                                                                           \
+  FLOAT_INIT_FIRST_FOLLOW_EXE                                                                    \
+  init.setResultFile(TOSTRING(PROG_NAME) "_diag_int");                                           \
+  std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
+  FLOAT_SPLIT_ALL(main, double::end(), double::end())
+#define END_MAIN                                                                                 \
+  FLOAT_MERGE_ALL(main, double::end(), double::endl())
+#endif // FLOAT_LOOP_UNSTABLE
+
+#else // FLOAT_EXACT
+
+#ifdef FLOAT_LOOP_UNSTABLE
+#define INIT_MAIN                                                                                \
+  NumericalDomains::FloatExact::Initialization init;                                             \
+  FLOAT_INIT_ATOMIC                                                                              \
+  FLOAT_INIT_LOOP_UNSTABLE                                                                       \
+  FLOAT_INIT_VERBOSE                                                                             \
+  FLOAT_INIT_THRESHOLD                                                                           \
+  FLOAT_INIT_FIRST_FOLLOW_EXE                                                                    \
+  init.setResultFile(TOSTRING(PROG_NAME) "_diag_exact");                                         \
+  std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
+  try {                                                                                          \
+     FLOAT_SPLIT_ALL(main, double::end(), double::end())
+
+#define END_MAIN                                                                                 \
+     FLOAT_MERGE_ALL(main, double::end(), double::end())                                         \
+  }                                                                                              \
+  catch (double::anticipated_termination&) {}                                                    \
+  catch (FLOAT_READ_ERROR& error) {                                                              \
+    if (error.getMessage())                                                                      \
+      std::cerr << "error: " << error.getMessage() << std::endl;                                 \
+    else                                                                                         \
+      std::cerr << "error while reading input file!" << std::endl;                               \
+  }                                                                                              \
+  catch (FLOAT_PRECONDITION_ERROR& error) {                                                      \
+      error.print(std::cout);                                                                    \
+  }
+#else // FLOAT_LOOP_UNSTABLE
+#define INIT_MAIN                                                                                \
+  NumericalDomains::FloatExact::Initialization init;                                             \
+  FLOAT_INIT_ATOMIC                                                                              \
+  FLOAT_INIT_LOOP_UNSTABLE                                                                       \
+  FLOAT_INIT_VERBOSE                                                                             \
+  FLOAT_INIT_THRESHOLD                                                                           \
+  FLOAT_INIT_FIRST_FOLLOW_EXE                                                                    \
+  init.setResultFile(TOSTRING(PROG_NAME) "_diag_exact");                                         \
+  std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
+  try {
+#define END_MAIN                                                                                 \
+  }                                                                                              \
+  catch (double::anticipated_termination&) {}                                                    \
+  catch (FLOAT_READ_ERROR& error) {                                                              \
+    if (error.getMessage())                                                                      \
+      std::cerr << "error: " << error.getMessage() << std::endl;                                 \
+    else                                                                                         \
+      std::cerr << "error while reading input file!" << std::endl;                               \
+  }                                                                                              \
+  catch (FLOAT_PRECONDITION_ERROR& error) {                                                      \
+      error.print(std::cout);                                                                    \
+  }
+#endif // FLOAT_LOOP_UNSTABLE
+
+#undef FBETWEEN
+#undef FBETWEEN_WITH_ERROR
+#undef DBETWEEN
+#undef DBETWEEN_WITH_ERROR
+
+static inline old_float random_float(old_float x, old_float y)
+   {  return x + (y-x)*((old_float) rand() / RAND_MAX); }
+static inline old_double random_double(old_double x, old_double y)
+   {  return x + (y-x)*((old_double) rand() / RAND_MAX); }
+
+#define FBETWEEN(x,y) NumericalDomains::FloatExact(random_float((old_float) x, (old_float) y))
+#define FBETWEEN_WITH_ERROR(x,y,errmin,errmax) NumericalDomains::FloatExact(random_float((old_float) x, (old_float) y), random_float((old_float) errmin, (old_float) errmax), NumericalDomains::FloatExact::ErrorParameter())
+#define DBETWEEN(x,y) NumericalDomains::DoubleExact(random_double((old_double) x, (old_double) y))
+#define DBETWEEN_WITH_ERROR(x,y,errmin,errmax) NumericalDomains::DoubleExact(random_double((old_double) x, (old_double) y), random_double((old_double) errmin, (old_double) errmax), NumericalDomains::DoubleExact::ErrorParameter())
+
+#endif // FLOAT_INTERVAL && FLOAT_AFFINE && FLOAT_EXACT
+
+/* standard execution */
+#else
+
+#include <math.h>
+#include <float.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include "float_diagnosis.h"
+
+static inline float rand_of_float(float x, float y)
+   {  return x + (y-x)*((float) rand() / RAND_MAX); }
+static inline double rand_of_double(double x, double y)
+   {  return x + (y-x)*((double) rand() / RAND_MAX); }
+
+#undef FBETWEEN
+#undef FBETWEEN_WITH_ERROR
+#undef DBETWEEN
+#undef DBETWEEN_WITH_ERROR
+
+// static inline float rand_of_float(float x, float y) { return (x+y)/2.0; }
+// static inline double rand_of_double(double x, double y) { return (x+y)/2.0; }
+#define FBETWEEN rand_of_float
+#define FBETWEEN_WITH_ERROR(x,y,errmin,errmax) rand_of_float(x,y)
+#define DBETWEEN rand_of_double
+#define DBETWEEN_WITH_ERROR(x,y,errmin,errmax) rand_of_double(x,y)
+
+#define FEXACT 
+#define DEXACT 
+
+/*
+#define FPRINT(x) 
+#define DPRINT(x) 
+#define IPRINT(x) 
+*/
+/*
+#define FPRINT(x) printf("%s: %e\n", #x, x)
+#define DPRINT(x) printf("%s: %e\n", #x, x)
+#define IPRINT(x) printf("%s: %d\n", #x, x)
+*/
+#define DECLARE_RESOURCES 
+#define INIT_MAIN 
+#define END_MAIN 
+
+#endif
+
+#endif

@@ -1,0 +1,303 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2015-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : NumericalDomains
+// Unit      : Interval
+// File      : FloatInterval.inch
+// Description :
+//   Definition of a class of floating point intervals
+//
+
+namespace NumericalDomains { namespace DDoubleInterval {
+
+class PathExplorer {
+  private:
+   Numerics::BigInteger biStackTrace;
+   int uCurrentStackPosition;
+   unsigned uLastResult;
+   unsigned uLastLogCases;
+   unsigned uLastZeroBit;
+   unsigned uLastIncBit;
+
+  public:
+   PathExplorer()
+      :  uCurrentStackPosition(0), uLastResult(0), uLastLogCases(0),
+         uLastZeroBit(0), uLastIncBit(0) {}
+
+   PathExplorer(const PathExplorer& source) = default;
+   PathExplorer(PathExplorer&& source) = default;
+   PathExplorer& operator=(const PathExplorer& source) = default;
+   PathExplorer& operator=(PathExplorer&& source) = default;
+
+   Numerics::BigInteger& stackTrace() { return biStackTrace; }
+   int& currentStackPosition() { return uCurrentStackPosition; }
+   unsigned& lastResult() { return uLastResult; }
+   unsigned& lastLogCases() { return uLastLogCases; }
+   unsigned& lastZeroBit() { return uLastZeroBit; }
+   unsigned& lastIncBit() { return uLastIncBit; }
+   bool isFinished();
+};
+
+class ExecutionPath : public BaseExecutionPath {
+  public:
+   class IFStream;
+   class OFStream;
+   class DebugStream;
+
+   static void setSupportAtomic() { fSupportAtomic = true; }
+   static bool doesSupportAtomic() { return fSupportAtomic; }
+   static void setSupportUnstableInLoop() { fSupportUnstableInLoop = true; }
+   static bool doesSupportUnstableInLoop() { return fSupportUnstableInLoop; }
+   static void setSupportVerbose() { fSupportVerbose = true; }
+   static bool doesSupportVerbose() { return fSupportVerbose; }
+   static void setSupportThreshold() { fSupportThreshold = true; }
+   static void setSupportFirstFollowFloat() { fSupportFirstFollowFloat = true; }
+   static void initializeGlobals(const char* fileSuffix);
+   static void finalizeGlobals();
+   class Initialization {
+     public:
+      Initialization() {}
+      void setSupportAtomic() { ExecutionPath::setSupportAtomic(); }
+      void setSupportUnstableInLoop() { ExecutionPath::setSupportUnstableInLoop(); }
+      void setSupportVerbose() { ExecutionPath::setSupportVerbose(); }
+      void setSupportThreshold() { ExecutionPath::setSupportThreshold(); }
+      void setSupportFirstFollowFloat() { ExecutionPath::setSupportFirstFollowFloat(); }
+      void setResultFile(const char* fileSuffix) { initializeGlobals(fileSuffix); }
+      ~Initialization() { finalizeGlobals(); }
+   };
+   static void flushOut() { if (oTraceFile) oTraceFile->flush(); }
+   typedef DDoubleInterval::PathExplorer PathExplorer;
+   static PathExplorer* currentPathExplorer;
+
+   static void setSourceLine(const char* file, int line)
+      {  if (!fHasNewFile)
+            fHasNewFile = file != szCurrentFile;
+         if (!fHasNewLine)
+            fHasNewLine = line != uCurrentLine;
+         szCurrentFile = file;
+         uCurrentLine = line;
+      }
+   static void writeCurrentPath(std::ostream& out)
+      {  currentPathExplorer->stackTrace().write(out,
+            Numerics::BigInteger::FormatParameters().setBinary());
+      }
+   static PathExplorer* getCurrentPathExplorer() { return currentPathExplorer; }
+   static void setCurrentPathExplorer(PathExplorer* pathExplorer) { currentPathExplorer = pathExplorer; }
+
+  protected:
+   static STG::IOObject::OSBase* oTraceFile;       // continuous computations
+   static STG::IOObject::ISBase* iTraceFile;       // continuous computations
+   static PathExplorer pPathExplorer;              // discrete computations
+   static const char* szCurrentFile;
+   static int uCurrentLine;
+   static bool fHasNewFile, fHasNewLine;
+
+   // static Numerics::BigInteger biStackTrace;       // discrete computations
+   // static int uCurrentStackPosition;
+   // static unsigned uLastResult;
+   // static unsigned uLastLogCases;
+   // static unsigned uLastZeroBit;
+   // static unsigned uLastIncBit;
+   static bool fDoesFollow;
+
+   static bool fSupportAtomic;
+   static bool fSupportUnstableInLoop;
+   static bool fSupportVerbose;
+   static bool fSupportThreshold;
+   static bool fSupportFirstFollowFloat;
+   static BuiltFloat brFloatThreshold;
+   static BuiltDouble brDoubleThreshold;
+   static BuiltLongDouble brLongDoubleThreshold;
+   static BuiltFloat brFloatMaximalAccuracy;
+   static BuiltDouble brDoubleMaximalAccuracy;
+   static BuiltLongDouble brLongDoubleMaximalAccuracy;
+
+   template <class TypeInterval>
+   static COL::TVector<TypeInterval>& synchronisationVector(const TypeInterval& real)
+      {  static COL::TVector<TypeInterval> result;
+         return result;
+      }
+
+  public:
+   static bool doesFollowFlow() { return fDoesFollow && (fSupportUnstableInLoop || iTraceFile); }
+   static STG::IOObject::ISBase* inputTraceFile() { return iTraceFile; }
+   static void setFollowFlow(bool doesFollow=true, STG::IOObject::ISBase* inputTraceFile=nullptr)
+      { fDoesFollow = doesFollow; iTraceFile = inputTraceFile; }
+   static void clearFollowFlow() { fDoesFollow = false; }
+
+  protected:
+   static bool doesAssumeInput() { return !fSupportUnstableInLoop ? true : iTraceFile != nullptr; }
+   static bool hasOutput() { return oTraceFile; }
+   static void assumeDomain(char prefix) { if (doesAssumeInput()) iTraceFile->assume(prefix); }
+   static void assumeDomain(const char* prefix) { if (doesAssumeInput()) iTraceFile->assume(prefix); }
+   static void assumePrefixDomain(const char* prefix) { if (doesAssumeInput()) iTraceFile->assume(prefix); }
+   template <class TypeImplementation, class TypeParameters>
+   static void readValueFromInput(TypeImplementation& result, TypeParameters& params)
+      {  if (doesAssumeInput()) {
+            result.read(*iTraceFile, params);
+            params.clear();
+         };
+      }
+   template <class TypeImplementation, class TypeParameters>
+   void emitErrorReadValueFromInput(const char* message,
+         const TypeImplementation& readValue, const char* readPrefix,
+         const TypeImplementation& expectedValue, const char* expectedPrefix,
+         const TypeParameters& params) const
+      {
+#ifdef FLOAT_ALLOW_READ_EXCEPTION
+         throw STG::EReadError(message);
+#else
+         STG::IOObject::OSStream out(std::cerr);
+         out.writesome("warning: ");
+         out.writesome(message);
+         out.writesome(":\n\t");
+         out.writesome(readPrefix);
+         out.writesome(" is ");
+         readValue.write(out, params);
+         out.writesome("\n\t");
+         out.writesome(expectedPrefix);
+         out.writesome(" is ");
+         expectedValue.write(out, params);
+         out.put('\n');
+         out.flush();
+#endif
+      }
+
+   static void assumeSourceLine()
+      {  if (fHasNewFile || fHasNewLine) {
+            if (fHasNewFile)
+               iTraceFile->assume(szCurrentFile);
+            iTraceFile->assume(':');
+            iTraceFile->read(uCurrentLine, false);
+            iTraceFile->assume('\n');
+         };
+      }
+   static void writeSourceLine()
+      {  if (fHasNewFile || fHasNewLine) {
+            if (fHasNewFile)
+               oTraceFile->writesome(szCurrentFile);
+            oTraceFile->put(':');
+            oTraceFile->write(uCurrentLine, false);
+            oTraceFile->put('\n');
+         };
+         fHasNewFile = fHasNewLine = false;
+      }
+
+   static void writeDomain(char prefix) { oTraceFile->put(prefix); }
+   static void writeDomain(const char* prefix) { oTraceFile->writesome(prefix); }
+   static void writePrefixDomain(const char* prefix) { oTraceFile->writesome(prefix); }
+   template <class TypeImplementation, class TypeParameters>
+   static void writeValueToOutput(const TypeImplementation& value, const TypeParameters& params)
+      {  value.write(*oTraceFile, params); }
+
+   static void assumeDivisionByZero()
+      {  if (doesAssumeInput()) iTraceFile->assume("warning: division by zero\n"); }
+   static void writeDivisionByZero()
+      {  oTraceFile->writesome("warning: division by zero\n"); }
+   static void assumeNegativeSqrt()
+      {  if (doesAssumeInput()) iTraceFile->assume("warning: negative square root\n"); }
+   static void writeNegativeSqrt()
+      {  oTraceFile->writesome("warning: negative square root\n"); }
+   static void assumeNegativePow()
+      {  if (doesAssumeInput()) iTraceFile->assume("warning: negative argument for power\n"); }
+   static void writeNegativePow()
+      {  oTraceFile->writesome("warning: negative argument for power\n"); }
+   static void assumeNegativeOrNulLog()
+      {  if (doesAssumeInput()) iTraceFile->assume("warning: negative or nul log\n"); }
+   static void writeNegativeOrNulLog()
+      {  oTraceFile->writesome("warning: negative or nul log\n"); }
+
+   static BuiltFloat& threshold(const BuiltFloat& source) { return brFloatThreshold; }
+   static BuiltDouble& threshold(const BuiltDouble& source) { return brDoubleThreshold; }
+   static BuiltLongDouble& threshold(const BuiltLongDouble& source) { return brLongDoubleThreshold; }
+   static BuiltFloat& maximalAccuracy(const BuiltFloat& source) { return brFloatMaximalAccuracy; }
+   static BuiltDouble& maximalAccuracy(const BuiltDouble& source) { return brDoubleMaximalAccuracy; }
+   static BuiltLongDouble& maximalAccuracy(const BuiltLongDouble& source) { return brLongDoubleMaximalAccuracy; }
+
+   template <class TypeBuiltDouble>
+   static void assumeThresholdDetection(const TypeBuiltDouble& relativeError)
+      {  if (!relativeError.isZero()) {
+            if (relativeError > threshold(relativeError))
+               if (doesAssumeInput()) iTraceFile->assume("warning: relative accuracy beyond threshold\n");
+         };
+      }
+
+   template <class TypeBuiltDouble>
+   static void updateThresholdDetection(const TypeBuiltDouble& relativeError)
+      {  if (!relativeError.isZero()) {
+            if (relativeError > threshold(relativeError))
+               oTraceFile->writesome("warning: relative accuracy beyond threshold\n");
+         };
+      }
+
+   static bool followNewUnresolvedBranch(bool& isLastBranch);
+   static unsigned followNewConversionBranch(unsigned conversion, bool& isLastBranch);
+};
+
+inline bool
+PathExplorer::isFinished() {
+   if (!ExecutionPath::doesSupportUnstableInLoop())
+      return true;
+   if (uLastLogCases > 0) {
+      if (uLastResult == 0) { // pop from last branch/conversion
+         AssumeCondition(uLastZeroBit == 0 || uLastIncBit < uLastZeroBit)
+         biStackTrace.clearHigh(uLastZeroBit);
+         if (uLastZeroBit > 0) {
+            while (biStackTrace.cbitArray(uLastIncBit)) {
+               biStackTrace.setFalseBitArray(uLastIncBit);
+               ++uLastIncBit;
+            };
+            AssumeCondition(uLastIncBit < uLastZeroBit);
+            biStackTrace.setTrueBitArray(uLastIncBit);
+         };
+      }
+      else if (uLastLogCases == 1) { // branch
+         AssumeCondition(uLastResult <= 1)
+         biStackTrace.setBitArray(uCurrentStackPosition-1, (bool) uLastResult);
+      }
+      else { // conversion
+         AssumeCondition(uCurrentStackPosition >= (int) uLastLogCases)
+         int index = ((uCurrentStackPosition-uLastLogCases) + 8*sizeof(unsigned) - 1)/(8*sizeof(unsigned));
+         int shiftIndex = (uCurrentStackPosition-uLastLogCases) % (8*sizeof(unsigned));
+         if ((int) (8*sizeof(unsigned) - shiftIndex) < (int) uLastLogCases) {
+            biStackTrace[index] &= ~(~(~0U << uLastLogCases) << shiftIndex);
+            biStackTrace[index] |= uLastResult << shiftIndex;
+         }
+         else {
+            biStackTrace[index] &= ~(~0U << shiftIndex);
+            biStackTrace[index+1] &= ~0U << (uLastLogCases - (8*sizeof(unsigned) - shiftIndex));
+            biStackTrace[index] |= uLastResult << shiftIndex;
+            biStackTrace[index+1] |= uLastResult >> (uLastLogCases - (8*sizeof(unsigned) - shiftIndex));
+         };
+      };
+   };
+   uCurrentStackPosition = 0;
+   uLastResult = uLastLogCases = uLastZeroBit = uLastIncBit = 0;
+   return biStackTrace.isZero();
+}
+
+typedef ExecutionPath BaseFloatInterval;
+
+
+}} // end of namespace NumericalDomains::DDoubleInterval

@@ -1,0 +1,365 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2015-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : NumericalDomains
+// Unit      : FloatInterval
+// File      : FloatIntervalExecutionPath.template
+// Description :
+//   Implementation of a class of floating point intervals
+//
+
+#include "NumericalAnalysis/FloatIntervalExecutionPath.h"
+
+#include "NumericalDomains/FloatIntervalBase.template"
+
+namespace NumericalDomains { namespace DDoubleInterval {
+
+template <class TypeExecutionPath>
+template <class TFloatInterval>
+void
+TBaseFloatInterval<TypeExecutionPath>::assumeInterval(const TFloatInterval& source) const {
+   inherited::assumeDomain("i=[");
+   typename TFloatInterval::BuiltDouble::ReadParameters defaultParams;
+   typename TFloatInterval::BuiltDouble min;
+   inherited::readValueFromInput(min, defaultParams);
+   if (!(min == source.min()) && (!min.isNaN() || !source.min().isNaN())) {
+      typename TFloatInterval::BuiltDouble::WriteParameters params;
+      inherited::emitErrorReadValueFromInput("min is not as expected",
+         source.min(), "current min",
+         min, "expected min", params.setDecimal());
+   };
+   inherited::assumeDomain(", ");
+   typename TFloatInterval::BuiltDouble max;
+   inherited::readValueFromInput(max, defaultParams);
+   if (!(max == source.max()) && (!max.isNaN() || !source.max().isNaN())) {
+      typename TFloatInterval::BuiltDouble::WriteParameters params;
+      inherited::emitErrorReadValueFromInput("max is not as expected",
+         source.max(), "current max",
+         max, "expected max", params.setDecimal());
+   };
+   inherited::assumeDomain("], r=[");
+   inherited::readValueFromInput(min, defaultParams);
+   if (!(min == source.min()) && (!min.isNaN() || !source.min().isNaN())) {
+      typename TFloatInterval::BuiltDouble::WriteParameters params;
+      inherited::emitErrorReadValueFromInput("min is not as expected",
+         source.min(), "current min",
+         min, "expected min", params.setDecimal());
+   };
+   inherited::assumeDomain(", ");
+   inherited::readValueFromInput(max, defaultParams);
+   if (!(max == source.max()) && (!max.isNaN() || !source.max().isNaN())) {
+      typename TFloatInterval::BuiltDouble::WriteParameters params;
+      inherited::emitErrorReadValueFromInput("max is not as expected",
+         source.max(), "current max",
+         max, "expected max", params.setDecimal());
+   };
+   inherited::assumeDomain("], e=[");
+   typename TFloatInterval::BuiltDouble diffRead;
+   inherited::readValueFromInput(diffRead, defaultParams);
+   typename TFloatInterval::BuiltDouble diff(max);
+   diff.minusAssign(min, TypeExecutionPath::minParams());
+   TypeExecutionPath::minParams().clear();
+   diff.opposite();
+   if (!(diff == diffRead) && (!diff.isNaN() || !diffRead.isNaN())) {
+      typename TFloatInterval::BuiltDouble::WriteParameters params;
+      inherited::emitErrorReadValueFromInput("min error is not as expected",
+         diff, "current min error",
+         diffRead, "expected min error", params.setDecimal());
+   };
+   inherited::assumeDomain(", ");
+   inherited::readValueFromInput(diffRead, defaultParams);
+   diff.opposite();
+   if (!(diff == diffRead) && (!diff.isNaN() || !diffRead.isNaN())) {
+      typename TFloatInterval::BuiltDouble::WriteParameters params;
+      inherited::emitErrorReadValueFromInput("max error is not as expected",
+         diff, "current max error",
+         diffRead, "expected max error", params.setDecimal());
+   };
+   inherited::assumeDomain("], re=[");
+   diff.multAssign(0x2, maxParams());
+   maxParams().clear();
+   if (min.isPositive()) {
+      diff.divAssign(min, maxParams());
+      maxParams().clear();
+   }
+   else if (max.isNegative()) {
+      diff.divAssign(max, minParams());
+      minParams().clear();
+      diff.opposite();
+   }
+   else
+      diff.setInfty();
+   inherited::readValueFromInput(diffRead, defaultParams);   
+   diff.opposite();
+   if (!(diff == diffRead) && (!diff.isNaN() || !diffRead.isNaN())) {
+      typename TFloatInterval::BuiltDouble::WriteParameters params;
+      inherited::emitErrorReadValueFromInput("min relative error is not as expected",
+         diff, "current min relative error",
+         diffRead, "expected min relative error", params.setDecimal());
+   }
+   inherited::assumeDomain(", ");
+   inherited::readValueFromInput(diffRead, defaultParams);   
+   diff.opposite();
+   if (!(diff == diffRead) && (!diff.isNaN() || !diffRead.isNaN())) {
+      typename TFloatInterval::BuiltDouble::WriteParameters params;
+      inherited::emitErrorReadValueFromInput("max relative error is not as expected",
+         diff, "current max relative error",
+         diffRead, "expected max relative error", params.setDecimal());
+   }
+   inherited::assumeDomain("]\n");
+}
+
+template <class TypeExecutionPath>
+template <class TFloatInterval>
+void
+TBaseFloatInterval<TypeExecutionPath>::writeInterval(const TFloatInterval& source) const {
+   typename TFloatInterval::BuiltDouble::WriteParameters defaultParams;
+   defaultParams.setDecimal();
+   inherited::writeDomain("i=[");
+   inherited::writeValueToOutput(source.min(), defaultParams);
+   inherited::writeDomain(", ");
+   inherited::writeValueToOutput(source.max(), defaultParams);
+   inherited::writeDomain("], r=[");
+   inherited::writeValueToOutput(source.min(), defaultParams);
+   inherited::writeDomain(", ");
+   inherited::writeValueToOutput(source.max(), defaultParams);
+   inherited::writeDomain("], e=[");
+   typename TFloatInterval::BuiltDouble diff(source.max());
+   diff.minusAssign(source.min(), minParams());
+   minParams().clear();
+   diff.opposite();
+   inherited::writeValueToOutput(diff, defaultParams);
+   inherited::writeDomain(", ");
+   diff.opposite();
+   inherited::writeValueToOutput(diff, defaultParams);
+   inherited::writeDomain("], re=[");
+   diff.multAssign(0x2, maxParams());
+   maxParams().clear();
+   if (source.min().isPositive()) {
+      diff.divAssign(source.min(), maxParams());
+      maxParams().clear();
+   }
+   else if (source.max().isNegative()) {
+      diff.divAssign(source.max(), minParams());
+      minParams().clear();
+      diff.opposite();
+   }
+   else
+      diff.setInfty();
+   diff.opposite();
+   inherited::writeValueToOutput(diff, defaultParams);
+   inherited::writeDomain(", ");
+   diff.opposite();
+   inherited::writeValueToOutput(diff, defaultParams);
+   inherited::writeDomain("]\n");
+}
+
+template <class TypeExecutionPath>
+template <class TFloatInterval>
+void
+TBaseFloatInterval<TypeExecutionPath>::writeBranchInterval(const TFloatInterval& source) const {
+   typename TFloatInterval::BuiltDouble::WriteParameters defaultParams;
+   defaultParams.setDecimal();
+   inherited::writeDomain("i=[");
+   inherited::writeValueToOutput(source.min(), defaultParams);
+   inherited::writeDomain(", ");
+   inherited::writeValueToOutput(source.max(), defaultParams);
+   inherited::writeDomain("], r=[");
+   inherited::writeValueToOutput(source.min(), defaultParams);
+   inherited::writeDomain(", ");
+   inherited::writeValueToOutput(source.max(), defaultParams);
+   inherited::writeDomain("], e=[");
+   typename TFloatInterval::BuiltDouble diff(source.max());
+   diff.minusAssign(source.min(), minParams());
+   minParams().clear();
+   diff.opposite();
+   inherited::writeValueToOutput(diff, defaultParams);
+   inherited::writeDomain(", ");
+   diff.opposite();
+   inherited::writeValueToOutput(diff, defaultParams);
+   inherited::writeDomain("], re=[");
+   diff.multAssign(0x2, maxParams());
+   maxParams().clear();
+   if (source.min().isPositive()) {
+      diff.divAssign(source.min(), maxParams());
+      maxParams().clear();
+   }
+   else if (source.max().isNegative()) {
+      diff.divAssign(source.max(), minParams());
+      minParams().clear();
+      diff.opposite();
+   }
+   else
+      diff.setInfty();
+   diff.opposite();
+   inherited::writeValueToOutput(diff, defaultParams);
+   inherited::writeDomain(", ");
+   diff.opposite();
+   inherited::writeValueToOutput(diff, defaultParams);
+   inherited::writeDomain("]\n");
+}
+
+template <class TypeExecutionPath>
+template <class TFloatInterval>
+void
+TBaseFloatInterval<TypeExecutionPath>::assumeBranchInterval(const TFloatInterval& source) const {
+   inherited::assumeDomain("i=[");
+   typename TFloatInterval::BuiltDouble min;
+   typename TFloatInterval::BuiltDouble::ReadParameters defaultParams;
+   inherited::readValueFromInput(min, defaultParams);
+   if (!(min == source.min()) && (!min.isNaN() || !source.min().isNaN())) {
+      typename TFloatInterval::BuiltDouble::WriteParameters params;
+      inherited::emitErrorReadValueFromInput("min is not as expected",
+         source.min(), "current min",
+         min, "expected min", params.setDecimal());
+   };
+   inherited::assumeDomain(", ");
+   typename TFloatInterval::BuiltDouble max;
+   inherited::readValueFromInput(max, defaultParams);
+   if (!(max == source.max()) && (!max.isNaN() || !source.max().isNaN())) {
+      typename TFloatInterval::BuiltDouble::WriteParameters params;
+      inherited::emitErrorReadValueFromInput("max is not as expected",
+         source.max(), "current max",
+         max, "expected max", params.setDecimal());
+   }
+   inherited::assumeDomain("], r=[");
+   inherited::readValueFromInput(min, defaultParams);
+   if (!(min == source.min()) && (!min.isNaN() || !source.min().isNaN())) {
+      typename TFloatInterval::BuiltDouble::WriteParameters params;
+      inherited::emitErrorReadValueFromInput("min is not as expected",
+         source.min(), "current min",
+         min, "expected min", params.setDecimal());
+   };
+   inherited::assumeDomain(", ");
+   inherited::readValueFromInput(max, defaultParams);
+   if (!(max == source.max()) && (!max.isNaN() || !source.max().isNaN())) {
+      typename TFloatInterval::BuiltDouble::WriteParameters params;
+      inherited::emitErrorReadValueFromInput("max is not as expected",
+         source.max(), "current max",
+         max, "expected max", params.setDecimal());
+   };
+   inherited::assumeDomain("], e=[");
+   typename TFloatInterval::BuiltDouble diffRead;
+   inherited::readValueFromInput(diffRead, defaultParams);
+   typename TFloatInterval::BuiltDouble diff(max);
+   diff.minusAssign(min, minParams());
+   minParams().clear();
+   diff.opposite();
+   if (!(diff == diffRead) && (!diff.isNaN() || !diffRead.isNaN())) {
+      typename TFloatInterval::BuiltDouble::WriteParameters params;
+      inherited::emitErrorReadValueFromInput("min error is not as expected",
+         diff, "current min error",
+         diffRead, "expected min error", params.setDecimal());
+   };
+   inherited::assumeDomain(", ");
+   inherited::readValueFromInput(diffRead, defaultParams);
+   diff.opposite();
+   if (!(diff == diffRead) && (!diff.isNaN() || !diffRead.isNaN())) {
+      typename TFloatInterval::BuiltDouble::WriteParameters params;
+      inherited::emitErrorReadValueFromInput("max error is not as expected",
+         diff, "current max error",
+         diffRead, "expected max error", params.setDecimal());
+   };
+   inherited::assumeDomain("], re=[");
+   diff.multAssign(0x2, maxParams());
+   maxParams().clear();
+   if (min.isPositive()) {
+      diff.divAssign(min, maxParams());
+      maxParams().clear();
+   }
+   else if (max.isNegative()) {
+      diff.divAssign(max, minParams());
+      minParams().clear();
+      diff.opposite();
+   }
+   else
+      diff.setInfty();
+   inherited::readValueFromInput(diffRead, defaultParams);
+   diff.opposite();
+   if (!(diff == diffRead) && (!diff.isNaN() || !diffRead.isNaN())) {
+      typename TFloatInterval::BuiltDouble::WriteParameters params;
+      inherited::emitErrorReadValueFromInput("min relative error is not as expected",
+         diff, "current min relative error",
+         diffRead, "expected min relative error", params.setDecimal());
+   };
+   inherited::assumeDomain(", ");
+   inherited::readValueFromInput(diffRead, defaultParams);
+   diff.opposite();
+   if (!(diff == diffRead) && (!diff.isNaN() || !diffRead.isNaN())) {
+      typename TFloatInterval::BuiltDouble::WriteParameters params;
+      inherited::emitErrorReadValueFromInput("max relative error is not as expected",
+         diff, "current max relative error",
+         diffRead, "expected max relative error", params.setDecimal());
+   };
+   inherited::assumeDomain("]\n");
+}
+
+template <class TypeExecutionPath>
+bool
+TBaseFloatInterval<TypeExecutionPath>::getThenBranch(bool executionResult) const {
+   bool isLastBranch = false;
+   bool result = inherited::followNewUnresolvedBranch(isLastBranch);
+   if (isLastBranch) {
+      if (inherited::fSupportFirstFollowFloat)
+         result = result ? executionResult : !executionResult;
+   };
+   return result;
+}
+
+template <class TypeExecutionPath>
+unsigned
+TBaseFloatInterval<TypeExecutionPath>::getConversionBranch(unsigned diff, unsigned executionResult) const {
+   bool isLastBranch = false;
+   unsigned result = inherited::followNewConversionBranch(diff, isLastBranch);
+   if (isLastBranch) {
+      if (inherited::fSupportFirstFollowFloat) {
+         if (result == 0)
+            result = executionResult;
+         else if (result <= executionResult)
+            --result;
+      };
+   };
+   return result;
+}
+
+template <class TypeExecutionPath, class TypeBuiltDouble, typename TypeImplementation>
+const char*
+TFloatInterval<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>::queryDebugValue() const {
+   static typename TypeExecutionPath::DebugStream out;
+   out.clear();
+   out.put('[');
+   inherited::min().write(out, typename TypeBuiltDouble::WriteParameters().setDecimal());
+   out.put(',');
+   inherited::max().write(out, typename TypeBuiltDouble::WriteParameters().setDecimal());
+   out.put(']');
+   return out.content();
+}
+
+template <class TypeExecutionPath, class TypeBuiltDouble, typename TypeImplementation>
+typename TFloatInterval<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>::PQueryDebugValue
+TFloatInterval<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>::pqueryDebugValue
+   = &TFloatInterval<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>::queryDebugValue;
+
+}} // end of namespace NumericalDomains::DDoubleInterval
+

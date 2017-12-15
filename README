@@ -1,0 +1,47 @@
+CEA Saclay Nano-Innov
+CARNOT institute, CEA LIST – DILS/LSL Point Courrier n°174
+91191 Gif sur Yvette CEDEX – France
+Unisim Team
+
+To install the FLDLib library, you can follow the automatically
+generated INSTALL file.
+
+A typical way to install it in a local directory consists in
+typing the following commands
+
+  ./configure --prefix=TheInstallationDirectory
+  make
+  make install
+
+To check the library
+
+  cd tests
+  make
+
+Example of abstract instrumentation:
+  add
+    export FLOATDIAGNOSISHOME=TheInstallationDirectory
+  in your .bashrc or .profile.
+
+  executable creation
+    $FLOATDIAGNOSISHOME/bin/comp_float_diagnosis.sh -affine -optim \
+      -atomic filter.c -o file.exe
+  separate compilation
+    $FLOATDIAGNOSISHOME/bin/comp_float_diagnosis.sh -affine -optim \
+      -atomic filter.c -c -o file.o
+
+Some advanced tests requires perl and the package File::ReadBackwards.
+
+To generate an accuracy summary table, you need
+- to install python to scan the results in the current directory
+- to install ocaml with yojson and biniou to create a summary table
+
+Note: both of these commands will be invoked when building 'table.txt'
+
+  make table.txt
+
+then edit table.txt that contains a summary of the results.
+
+FLDLib has been successfully tested with:
+- g++ version 5.4.0 for sequential codes
+

@@ -1,0 +1,211 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Concrete collections
+// File      : BasicSortedAVL.incc
+// Description :
+//   Implementation of concrete sorted collections based on AVLs
+//   without any hierarchy requires on elements.
+//
+
+/*****************************************************************************/
+/* DefTypeBinaryParent                 : AVL implementation with parent edge */
+/*****************************************************************************/
+
+#ifndef DefTypeBinaryParent
+#define DefBasicGenericAVLCursor BasicGenericAVLCursor
+#define DefBasicGenericAVL BasicGenericAVL
+#define DefGenericAVL GenericAVL
+#define DefGenericAVLCursor GenericAVLCursor
+#define DefImplBinaryTree ImplBinaryTree
+#else
+#define DefBasicGenericAVLCursor BasicGenericParentAVLCursor
+#define DefBasicGenericAVL BasicGenericParentAVL
+#define DefGenericAVL GenericParentAVL
+#define DefGenericAVLCursor GenericParentAVLCursor
+#define DefImplBinaryTree ImplParentBinaryTree
+#endif
+
+/********************************************************/
+/* Implementation of the template class BasicGenericAVL */
+/********************************************************/
+
+DefBasicGenericAVL::DefBasicGenericAVL(const DefBasicGenericAVL& source, AddMode mode,
+      const VirtualCast* retrieveRegistrationFromCopy)
+   :  DefGenericAVL(source, AMDuplicate) {
+   if (mode == AMDuplicate) {
+      try {
+         std::function<bool (BasicGenericAVLElement&)> copyElementFunction =
+            [retrieveRegistrationFromCopy](BasicGenericAVLElement& node)
+               {  node.copyElement(retrieveRegistrationFromCopy); return true; };
+         DefGenericAVL::foreachDo(TemplateElementCastParameters<BasicGenericAVLElement, SimpleCast>(),
+            copyElementFunction, ExtendedLocateParameters());
+      }
+      catch (...) { // allocation errors may unfortunately require allocation like newCursor
+         PPCursor cursor(newCursor()), sourceCursor(source.newCursor());
+         for (bool doesContinue = cursor->setToFirst() && sourceCursor->setToFirst(); doesContinue;
+              doesContinue = doesContinue && cursor->setToNext() && sourceCursor->setToNext())
+            if ((doesContinue = (cursor->element() != sourceCursor->element())) != false)
+               cursor->element()->releaseElement();
+         DefGenericAVL::_removeAll(ExtendedSuppressParameters().setFree());
+         throw;
+      };
+   };
+}
+
+void
+DefBasicGenericAVL::_fullAssign(const DefBasicGenericAVL& source, const ExtendedReplaceParameters& parameters) {
+   if (this != &source) {
+      if (!parameters.isFree() && !parameters.isDuplicate()) {
+         PNT::AutoPointer<ExtendedReplaceParameters> paramsCopy(parameters);
+         paramsCopy->setFree().setDuplicate().clearCast();
+         DefGenericAVL::_fullAssign(source, *paramsCopy);
+         return;
+      };
+
+      VirtualCollection::_fullAssign(source, parameters);
+      if (parameters.isFree() && !isEmpty()) {
+         std::function<bool (BasicGenericAVLElement&)> releaseElementFunction =
+            [](BasicGenericAVLElement& node){ node.releaseElement(); return true; };
+         DefGenericAVL::foreachDo(TemplateElementCastParameters<BasicGenericAVLElement, SimpleCast>(),
+               releaseElementFunction, ExtendedLocateParameters());
+      };
+      {  PNT::AutoPointer<ExtendedReplaceParameters> paramsCopy(parameters);
+         if (parameters.isDuplicate())
+            paramsCopy->clearCast();
+         else
+            paramsCopy->setDuplicate();
+         DefGenericAVL::_fullAssign(source, *paramsCopy);
+      };
+
+      if (parameters.isDuplicate()) {
+         try {
+            std::function<bool (BasicGenericAVLElement&)> copyElementFunction =
+               [&parameters](BasicGenericAVLElement& node)
+                  {  node.copyElement(parameters.getSCast()); return true; };
+            DefGenericAVL::foreachDo(TemplateElementCastParameters<BasicGenericAVLElement, SimpleCast>(),
+               copyElementFunction, ExtendedLocateParameters());
+         }
+         catch (...) { // allocation errors may unfortunately require allocation like newCursor
+            PPCursor cursor(newCursor()), sourceCursor(source.newCursor());
+            for (bool doesContinue = cursor->setToFirst() && sourceCursor->setToFirst(); doesContinue;
+                 doesContinue = doesContinue && cursor->setToNext() && sourceCursor->setToNext())
+               if ((doesContinue = (cursor->element() != sourceCursor->element())) != false)
+                  cursor->element()->releaseElement();
+            DefGenericAVL::_removeAll(ExtendedSuppressParameters().setFree());
+            throw;
+         };
+      };
+   };
+}
+
+/* insertion methods */
+void
+DefBasicGenericAVL::_add(EnhancedObject* anObject, const ExtendedInsertionParameters& parameters,
+      DefBasicGenericAVLCursor* cursor) {
+   VirtualCollection::_add(anObject, parameters, cursor);
+   PNT::AutoPointer<ExtendedInsertionParameters> paramsCopy(parameters);
+   AddGuardian<EnhancedObject> guard(*this, anObject, parameters);
+   anObject = guard.handleDuplication();
+   paramsCopy->releaseDuplicate().setFreeOnError();
+   DefGenericAVL::_add(new BasicGenericAVLElement(*anObject), *paramsCopy, cursor);
+   guard.release();
+}
+
+void
+DefBasicGenericAVL::_addAll(const DefBasicGenericAVL& source, const ExtendedInsertionParameters& parameters,
+      DefBasicGenericAVLCursor* cursor, const DefBasicGenericAVLCursor* startSource,
+      const DefBasicGenericAVLCursor* endSource)
+   {  VirtualCollection::paddAll(source, parameters, cursor, startSource, endSource); }
+
+/* suppression methods */
+void
+DefBasicGenericAVL::_remove(const ExtendedSuppressParameters& parameters, DefBasicGenericAVLCursor* cursor) {
+   if (parameters.isFree()) {
+      BasicGenericAVLElement* node = (BasicGenericAVLElement*)
+         DefGenericAVL::_getElement(parameters, cursor);
+      DefGenericAVL::_remove(parameters, cursor);
+      if (node) {
+         node->freeElement();
+         delete node;
+      };
+   }
+   else {
+      PNT::AutoPointer<ExtendedSuppressParameters> paramsCopy(parameters);
+      paramsCopy->setFree();
+      DefGenericAVL::_remove(*paramsCopy, cursor);
+   };
+}
+
+void
+DefBasicGenericAVL::_removeAll(const ExtendedSuppressParameters& parameters,
+      const DefBasicGenericAVLCursor* start, const DefBasicGenericAVLCursor* end) {
+   if (parameters.isFree()) {
+      VirtualSortedCollection::_removeAll(parameters);
+      if (!start && !end) {
+         InvalidateNotification invalidation;
+         notifyCursorUpdate(invalidation);
+         std::function<bool (BasicGenericAVLElement&)> freeElementFunction =
+            [](BasicGenericAVLElement& node){ node.freeElement(); return true; };
+         DefGenericAVL::foreachDo(TemplateElementCastParameters<BasicGenericAVLElement, SimpleCast>(),
+            freeElementFunction, ExtendedLocateParameters());
+      }
+      else
+         VirtualSortedCollection::premoveAll(parameters, start, end);
+   }
+   else {
+      PNT::AutoPointer<ExtendedSuppressParameters> paramsCopy(parameters);
+      paramsCopy->setFree();
+      DefGenericAVL::_removeAll(*paramsCopy, start, end);
+   }
+}
+
+/* replace methods */
+void
+DefBasicGenericAVL::_replace(EnhancedObject* newObject, const ExtendedReplaceParameters& parameters,
+      DefBasicGenericAVLCursor* cursor) {
+   VirtualCollection::_replace(newObject, parameters, cursor);
+   AddGuardian<EnhancedObject> guard(*this, newObject, parameters);
+
+   BasicGenericAVLElement* locateElement = (BasicGenericAVLElement*) DefGenericAVL::_getElement(
+         (const ExtendedSuppressParameters&) parameters, cursor);
+
+   if (locateElement->element() != newObject) {
+      if (parameters.isFree())
+         locateElement->freeElement();
+      else
+         locateElement->releaseElement();
+   };
+   newObject = guard.handleDuplication();
+   locateElement->setElement(*newObject);
+   guard.release();
+}
+
+#undef DefBasicGenericAVLCursor
+#undef DefBasicGenericAVL
+#undef DefGenericAVLCursor
+#undef DefGenericAVL
+#undef DefImplBinaryTree
+

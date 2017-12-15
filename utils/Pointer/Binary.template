@@ -1,0 +1,248 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2013-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Low level implementation
+// File      : Binary.template
+// Description :
+//   Implementation of template methods of balanced binary trees.
+//
+
+#ifndef COL_BinaryTEMPLATE
+#define COL_BinaryTEMPLATE
+
+namespace COL {
+
+/*********************************/
+/* Definition of visitor methods */
+/*********************************/
+
+template <class Action, class Node, class Tree, class Cursor>
+bool
+CustomImplBinaryTree::tsetToFirst(Cursor& cursor, Action& action) const {
+   cursor.invalidate();
+   if (cursor.setToRoot((Node*) pibnRoot))
+      action.init((const Tree&) *this, (Node*) pibnRoot);
+   else
+      return false;
+   Node *node = (Node*) pibnRoot, *newNode = nullptr;
+   while (cursor.setToLeft()) {
+      action.descent(newNode = (Node*) cursor.getReference(), node);
+      node = newNode;
+   };
+   return true;
+}
+
+template <class Action, class Node, class Tree, class Cursor>
+bool
+CustomImplBinaryTree::tsetToLast(Cursor& cursor, Action& action) const {
+   cursor.invalidate();
+   if (cursor.setToRoot((Node*) pibnRoot))
+      action.init((const Tree&) *this, (Node*) pibnRoot);
+   else
+      return false;
+   Node *node = (Node*) pibnRoot, *newNode = nullptr;
+   while (cursor.setToRight()) {
+      action.descent(newNode = (Node*) cursor.getReference(), node);
+      node = newNode;
+   };
+   return true;
+}
+
+template <class Action, class Node, class Tree, class Cursor>
+bool
+CustomImplBinaryTree::tsetToNext(Cursor& cursor, Action& action) const {
+   if (cursor.isValid()) {
+      Node *node = (Node*) cursor.getReference(), *newNode=nullptr;
+      if (cursor.setToRight()) {
+         newNode = (Node*) cursor.getReference();
+         action.descent(newNode, node);
+         node = newNode;
+         while (cursor.setToLeft()) {
+            newNode = (Node*) cursor.getReference();
+            action.descent(newNode, node);
+            node = newNode;
+         };
+         return true;
+      }
+      else {
+         bool result;
+         while ((result = cursor.setToParent())
+               && (node == (Node*) (newNode = (Node*) cursor.getReference())->right())) {
+            action.ascent(newNode, node);
+            node = newNode;
+         };
+         return result;
+      };
+   }
+   else
+      return tsetToFirst<Action, Node, Tree, Cursor>(cursor, action);
+}
+
+template <class Action, class Node, class Tree, class Cursor>
+bool
+CustomImplBinaryTree::tsetToPrevious(Cursor& cursor, Action& action) const {
+   if (cursor.isValid()) {
+      Node *node = (Node*) cursor.getReference(), *newNode = nullptr;
+      if (cursor.setToLeft()) {
+         newNode = (Node*) cursor.getReference();
+         action.descent(newNode, node);
+         node = newNode;
+         while (cursor.setToRight()) {
+            newNode = (Node*) cursor.getReference();
+            action.descent(newNode, node);
+            node = newNode;
+         };
+         return true;
+      }
+      else {
+         bool result;
+         while ((result = cursor.setToParent())
+               && (node == (Node*) (newNode = (Node*) cursor.getReference())->left())) {
+            action.ascent(newNode, node);
+            node = newNode;
+         };
+         return result;
+      };
+   }
+   else
+      return tsetToLast<Action>(cursor, action);
+}
+
+template <class Action, class Node, class Tree, class Cursor>
+bool
+CustomImplBinaryTree::foreachNodeDo(Action& action) const {
+   Cursor cursor((const Tree&) *this);
+   cursor.setToRoot((const Tree&) *this);
+   if (cursor.isValid()) {
+      if (!action.init((const Tree&) *this, (Node*) pibnRoot))
+         return false;
+
+      bool doesContinue = true;
+      do {
+         Node *node = (Node*) cursor.getReference(), *newNode=nullptr;
+         if (cursor.setToLeft() || cursor.setToRight()) {
+            newNode = (Node*) cursor.getReference();
+            if (!action.descent(newNode, node))
+               return false;
+         }
+         else {
+            while ((doesContinue = cursor.setToParent()) != false) {
+               bool isLeft = ((newNode = (Node*) cursor.getReference())->ImplBinaryNode::left() == node);
+               if (!action.ascent(newNode, node))
+                  return false;
+               if (isLeft) {
+                  node = newNode;
+                  if (cursor.setToRight()) {
+                     newNode = (Node*) cursor.getReference();
+                     if (!action.descent(newNode, node))
+                        return false;
+                     break;
+                  };
+               };
+               node = newNode;
+            };
+         };
+      } while (doesContinue);
+   };
+   return action.end((const Tree&) *this);
+}
+
+template <class Action, class Node, class Tree, class Cursor>
+bool
+CustomImplBinaryTree::foreachReverseNodeDo(Action& action) const {
+   Cursor cursor((const Tree&) *this);
+   cursor.setToRoot((const Tree&) *this);
+   if (cursor.isValid()) {
+      if (!action.init((const Tree&) *this, (Node*) pibnRoot))
+         return false;
+
+      bool doesContinue = true;
+      do {
+         Node *node = (Node*) cursor.getReference(), *newNode=nullptr;
+         if (cursor.setToRight() || cursor.setToLeft()) {
+            newNode = (Node*) cursor.getReference();
+            if (!action.descent(newNode, node))
+               return false;
+         }
+         else {
+            while ((doesContinue = cursor.setToParent()) != false) {
+               bool isRight = ((newNode = (Node*) cursor.getReference())->ImplBinaryNode::right() == node);
+               if (!action.ascent(newNode, node))
+                  return false;
+               if (isRight) {
+                  node = newNode;
+                  if (cursor.setToLeft()) {
+                     newNode = (Node*) cursor.getReference();
+                     if (!action.descent(newNode, node))
+                        return false;
+                     break;
+                  };
+               };
+               node = newNode;
+            };
+         };
+      } while (doesContinue);
+   };
+   return action.end((const Tree&) *this);
+}
+
+template <class TemplateLocate>
+ImplBalancedNode::Balance
+CustomImplBinaryTree::tlocateBefore(TemplateLocate locate) const {
+   typedef typename TemplateLocate::TabType TabType;
+   typedef typename TemplateLocate::TabImplementation TabImplementation;
+   typedef typename TemplateLocate::Cast Cast;
+   typedef typename TemplateLocate::TypeNode TypeNode;
+   
+   typename TemplateLocate::TypeCursor& cursor = locate.cursor;
+   const TabType& tabType = (const TabType&) TabType::castFromImplementation(*this);
+   if (cursor.isValid() || cursor.setToRoot((const TabImplementation&) *this)) {
+      for (;;) {
+         ComparisonResult result = locate.compare(locate.key,
+            tabType.keyFromCell((const TypeNode&) Cast::castFrom(*cursor.getReference())));
+         AssumeCondition(result != CRNonComparable)
+         if (result == CREqual)
+            return ImplBalancedNode::BEqual;
+         if (result == CRLess) {
+            if (cursor.getReference()->ImplBinaryNode::left())
+               cursor.setToSon((TypeNode*) cursor.getReference()->ImplBinaryNode::left());
+            else
+               return ImplBalancedNode::BLeft;  
+         }
+         else {
+            if (cursor.getReference()->ImplBinaryNode::right())
+               cursor.setToSon((TypeNode*) cursor.getReference()->ImplBinaryNode::right());
+            else
+               return ImplBalancedNode::BRight;  
+         };
+      };
+   }
+   else
+      return ImplBalancedNode::BLeft;
+}
+
+} // end of namespace COL
+
+#endif // COLBinaryTEMPLATE

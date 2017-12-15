@@ -1,0 +1,748 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat à l'énergie atomique et aux énergies              */
+/*         alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Librairie   : Collection
+// Module      : Abstract collections
+// Fichier     : ELMMapCollection.inch
+// Description :
+//   Automatic definition of element typed methods for the map collections.
+//
+
+#include "Collection/ELMCollection.incheader"
+
+#ifndef DefCursor
+#ifdef DefJustDeclare
+   void add(DefTypeKey key, DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError = VirtualCollection::RMRemove);
+   void add(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError = VirtualCollection::RMRemove);
+   void addNew(DefTypeKey key, DefTypeElement* element);
+   void addNew(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor);
+   void addCopy(DefTypeKey key, const DefTypeElement& element);
+   void addCopy(DefTypeKey key, const DefTypeElement& element, DefTypeCursor& cursor);
+
+   bool locateOrAdd(DefTypeKey key, DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate);
+   bool locateOrAdd(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate);
+   bool locateOrAddCopy(DefTypeKey key, const DefTypeElement& element);
+   bool locateOrAddCopy(DefTypeKey key, const DefTypeElement& element, DefTypeCursor& cursor);
+
+   void addOrReplaceAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode freeMode=VirtualCollection::RMRemove, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void addCopyOrReplaceAt(DefTypeCursor& cursor, DefTypeKey key, const DefTypeElement& element,
+         RemoveMode freeMode=VirtualCollection::RMRemove);
+
+   void insertAtBegin(DefTypeKey key, DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void insertAtEnd(DefTypeKey key, DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void insertAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element, RelativePosition position=VirtualCollection::RPBefore,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void insertNewAtBegin(DefTypeKey key, DefTypeElement* element);
+   void insertNewAtEnd(DefTypeKey key, DefTypeElement* element);
+   void insertNewAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element, RelativePosition position=VirtualCollection::RPBefore);
+   void insertCopyAtBegin(DefTypeKey key, const DefTypeElement& element);
+   void insertCopyAtEnd(DefTypeKey key, const DefTypeElement& element);
+   void insertCopyAt(DefTypeCursor& cursor, DefTypeKey key, const DefTypeElement& element,
+        RelativePosition position=VirtualCollection::RPBefore);
+
+#ifndef DefExcludeElement
+   void replaceElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void replaceAndFreeElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void replaceElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element);
+   void replaceAndFreeElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element);
+#endif // DefExcludeElement
+#else // !DefJustDeclare
+#ifdef DefTypeInheritedCollection
+#ifdef DefJustInline // -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeKey key, DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::add(key, DefTypeCastToCollectHandler(element),
+            dupMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::add(key, DefTypeCastToCollectHandler(element), cursor,
+            dupMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addNew(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeInheritedCollection::addNew(key, DefTypeCastToCollectHandler(element)); }
+   DefTemplate inline void
+   DefTypeCollection::addNew(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::addNew(key, DefTypeCastToCollectHandler(element), cursor); }
+   DefTemplate inline void
+   DefTypeCollection::addCopy(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::addCopy(key, *DefTypeCCastToCollectHandler(&element)); }
+   DefTemplate inline void
+   DefTypeCollection::addCopy(DefTypeKey key, const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::addCopy(key, *DefTypeCCastToCollectHandler(&element), cursor); }
+
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAdd(DefTypeKey key, DefTypeElement* element, AddMode dupMode)
+      {  return DefTypeInheritedCollection::locateOrAdd(key,
+            DefTypeCastToCollectHandler(element), dupMode);
+      }
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAdd(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode)
+      {  return DefTypeInheritedCollection::locateOrAdd(key,
+            DefTypeCastToCollectHandler(element), cursor, dupMode);
+      }
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAddCopy(DefTypeKey key, const DefTypeElement& element)
+      {  return DefTypeInheritedCollection::locateOrAddCopy(key, *DefTypeCCastToCollectHandler(&element)); }
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAddCopy(DefTypeKey key, const DefTypeElement& element, DefTypeCursor& cursor)
+      {  return DefTypeInheritedCollection::locateOrAddCopy(key, *DefTypeCCastToCollectHandler(&element), cursor); }
+
+   DefTemplate inline void
+   DefTypeCollection::addOrReplaceAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element,
+         AddMode dupMode, RemoveMode freeMode, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::addOrReplaceAt(cursor, key,
+            DefTypeCastToCollectHandler(element), dupMode, freeMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addCopyOrReplaceAt(DefTypeCursor& cursor, DefTypeKey key, const DefTypeElement& element,
+         RemoveMode freeMode)
+      {  DefTypeInheritedCollection::addCopyOrReplaceAt(cursor, key,
+            *DefTypeCCastToCollectHandler(&element), freeMode, remModeOnError);
+      }
+
+   DefTemplate inline void
+   DefTypeCollection::insertAtBegin(DefTypeKey key, DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertAtBegin(key, DefTypeCastToCollectHandler(element),
+            dupMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAtEnd(DefTypeKey key, DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertAtEnd(key, DefTypeCastToCollectHandler(element),
+            dupMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element, RelativePosition position,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertAt(cursor, DefTypeCastToCollectHandler(element),
+            position, dupMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAtBegin(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewAtBegin(key, DefTypeCastToCollectHandler(element)); }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAtEnd(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewAtEnd(key, DefTypeCastToCollectHandler(element)); }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element, RelativePosition position)
+      {  DefTypeInheritedCollection::insertNewAt(cursor, key, DefTypeCastToCollectHandler(element),
+            position);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAtBegin(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertAtBegin(key, *DefTypeCastToCollectHandler(&element)); }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAtEnd(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertAtEnd(key, *DefTypeCastToCollectHandler(&element)); }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAt(DefTypeCursor& cursor, DefTypeKey key, const DefTypeElement& element,
+         RelativePosition position)
+      {  DefTypeInheritedCollection::insertCopyAt(cursor, key,
+            *DefTypeCCastToCollectHandler(&element), position);
+      }
+
+#ifndef DefExcludeElement
+   DefTemplate inline void
+   DefTypeCollection::replaceElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::replaceElementAtWith(cursor,
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::replaceAndFreeElementAtWith(cursor,
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceElementAtWithCopy(cursor,
+            *DefTypeCCastToCollectHandler(element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceAndFreeElementAtWithCopy(cursor,
+            *DefTypeCCastToCollectHandler(element));
+      }
+#endif // DefExcludeElement
+#else // !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   void add(DefTypeKey key, DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError = VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::add(key, DefTypeCastToCollectHandler(element),
+            dupMode, remModeOnError);
+      }
+   void add(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError = VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::add(key, DefTypeCastToCollectHandler(element), cursor,
+            dupMode, remModeOnError);
+      }
+   void addNew(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeInheritedCollection::addNew(key, DefTypeCastToCollectHandler(element)); }
+   void addNew(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::addNew(key, DefTypeCastToCollectHandler(element), cursor); }
+   void addCopy(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::addCopy(key, *DefTypeCCastToCollectHandler(&element)); }
+   void addCopy(DefTypeKey key, const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::addCopy(key, *DefTypeCCastToCollectHandler(&element), cursor); }
+
+   bool locateOrAdd(DefTypeKey key, DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  return DefTypeInheritedCollection::locateOrAdd(key,
+            DefTypeCastToCollectHandler(element), dupMode);
+      }
+   bool locateOrAdd(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  return DefTypeInheritedCollection::locateOrAdd(key,
+            DefTypeCastToCollectHandler(element), cursor, dupMode);
+      }
+   bool locateOrAddCopy(DefTypeKey key, const DefTypeElement& element)
+      {  return DefTypeInheritedCollection::locateOrAddCopy(key, *DefTypeCCastToCollectHandler(&element)); }
+   bool locateOrAddCopy(DefTypeKey key, const DefTypeElement& element, DefTypeCursor& cursor)
+      {  return DefTypeInheritedCollection::locateOrAddCopy(key, *DefTypeCCastToCollectHandler(&element), cursor); }
+
+   void addOrReplaceAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode freeMode=VirtualCollection::RMRemove, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::addOrReplaceAt(cursor, key,
+            DefTypeCastToCollectHandler(element), dupMode, freeMode, remModeOnError);
+      }
+   void addCopyOrReplaceAt(DefTypeCursor& cursor, DefTypeKey key, const DefTypeElement& element,
+         RemoveMode freeMode=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::addCopyOrReplaceAt(cursor, key,
+            *DefTypeCCastToCollectHandler(&element), freeMode);
+      }
+
+   void insertAtBegin(DefTypeKey key, DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::insertAtBegin(key, DefTypeCastToCollectHandler(element),
+            dupMode, remModeOnError);
+      }
+   void insertAtEnd(DefTypeKey key, DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::insertAtEnd(key, DefTypeCastToCollectHandler(element),
+            dupMode, remModeOnError);
+      }
+   void insertAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element, RelativePosition position=VirtualCollection::RPBefore,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::insertAt(cursor, key, DefTypeCastToCollectHandler(element),
+            position, dupMode, remModeOnError);
+      }
+   void insertNewAtBegin(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewAtBegin(key, DefTypeCastToCollectHandler(element)); }
+   void insertNewAtEnd(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewAtEnd(key, DefTypeCastToCollectHandler(element)); }
+   void insertNewAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element, RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeInheritedCollection::insertNewAt(cursor, key, DefTypeCastToCollectHandler(element),
+            position);
+      }
+   void insertCopyAtBegin(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertCopyAtBegin(key, *DefTypeCastToCollectHandler(&element)); }
+   void insertCopyAtEnd(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertCopyAtEnd(key, *DefTypeCastToCollectHandler(&element)); }
+   void insertCopyAt(DefTypeCursor& cursor, DefTypeKey key, const DefTypeElement& element,
+         RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeInheritedCollection::insertCopyAt(cursor, key,
+            *DefTypeCCastToCollectHandler(&element), position);
+      }
+
+#ifndef DefExcludeElement
+   void replaceElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::replaceElementAtWith(cursor,
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   void replaceAndFreeElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::replaceAndFreeElementAtWith(cursor,
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   void replaceElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceElementAtWithCopy(cursor,
+            *DefTypeCCastToCollectHandler(element));
+      }
+   void replaceAndFreeElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceAndFreeElementAtWithCopy(cursor,
+            *DefTypeCCastToCollectHandler(element));
+      }
+#endif // DefExcludeElement
+#endif // !DefJustInline -> DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#else // !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#ifdef DefJustInline // -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#ifdef DefImplementsNativeMethods
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeKey key, DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters().setDuplicate(dupMode).setFreeOnError(remModeOnError));
+      }
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters().setDuplicate(dupMode).setFreeOnError(remModeOnError),
+            &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addNew(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters().setFreeOnError());
+      }
+   DefTemplate inline void
+   DefTypeCollection::addNew(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters().setFreeOnError(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addCopy(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeFinal _add(key, element.createSCopy(), ExtendedInsertionParameters().setFreeOnError()); }
+   DefTemplate inline void
+   DefTypeCollection::addCopy(DefTypeKey key, const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(key, element.createSCopy(), ExtendedInsertionParameters().setFreeOnError(), &cursor); }
+
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAdd(DefTypeKey key, DefTypeElement* element, AddMode dupMode)
+      {  return locateOrAdd(key, element, *newCursor(), dupMode); }
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAdd(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode)
+      {  AssumeAllocation(element)
+         LocationResult result = DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPUndefined), &cursor);
+         if (!result)
+            DefTypeFinal _add(key, element,
+               result.queryInsertionParameters().setDuplicate(dupMode), &cursor);
+         return result;
+      }
+
+   DefTemplate inline void
+   DefTypeCollection::insertAtBegin(DefTypeKey key, DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters(dupMode, remModeOnError, VirtualCollection::RPAfter));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAtEnd(DefTypeKey key, DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters(dupMode, remModeOnError, VirtualCollection::RPBefore));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element, RelativePosition position,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters().setDuplicate(dupMode)
+               .setFreeOnError(remModeOnError).setRelativePosition(position), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAtBegin(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters().setFreeOnError().setAfter());
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAtEnd(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters().setFreeOnError().setBefore());
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element, RelativePosition position)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters().setFreeOnError().setRelativePosition(position),
+            &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAtBegin(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeFinal _add(key, element.createSCopy(),
+      	   ExtendedInsertionParameters().setFreeOnError().setAfter());
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAtEnd(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeFinal _add(key, element.createSCopy(),
+      	   ExtendedInsertionParameters().setFreeOnError().setBefore());
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAt(DefTypeCursor& cursor, DefTypeKey key, const DefTypeElement& element,
+         RelativePosition position)
+      {  DefTypeFinal _add(key, element.createSCopy(),
+            ExtendedInsertionParameters().setFreeOnError().setRelativePosition(position),
+            &cursor);
+      }
+#else // DefImplementsNativeMethods
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeKey key, DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setDuplicate(dupMode).setFreeOnError(remModeOnError));
+      }
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setDuplicate(dupMode).setFreeOnError(remModeOnError),
+            &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addNew(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setFreeOnError());
+      }
+   DefTemplate inline void
+   DefTypeCollection::addNew(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setFreeOnError(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addCopy(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeFinal _add(element.createSCopy(), ExtendedMapInsertionParameters(key).setFreeOnError()); }
+   DefTemplate inline void
+   DefTypeCollection::addCopy(DefTypeKey key, const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(element.createSCopy(), ExtendedMapInsertionParameters(key).setFreeOnError(), &cursor); }
+
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAdd(DefTypeKey key, DefTypeElement* element, AddMode dupMode)
+      {  return locateOrAdd(key, element, *newCursor(), dupMode); }
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAdd(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode)
+      {  AssumeAllocation(element)
+         LocationResult result = DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPUndefined), &cursor);
+         if (!result)
+            DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+               result.queryInsertionParameters().setDuplicate(dupMode), &cursor);
+         return result;
+      }
+
+   DefTemplate inline void
+   DefTypeCollection::insertAtBegin(DefTypeKey key, DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setDuplicate(dupMode)
+               .setFreeOnError(remModeOnError).setAfter());
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAtEnd(DefTypeKey key, DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setDuplicate(dupMode)
+               .setFreeOnError(remModeOnError).setBefore());
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element, RelativePosition position,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setDuplicate(dupMode)
+               .setFreeOnError(remModeOnError).setRelativePosition(position), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAtBegin(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setFreeOnError().setAfter());
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAtEnd(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setFreeOnError().setBefore());
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element, RelativePosition position)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setFreeOnError().setRelativePosition(position),
+            &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAtBegin(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+      	   ExtendedMapInsertionParameters(key).setFreeOnError().setAfter());
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAtEnd(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+      	   ExtendedMapInsertionParameters(key).setFreeOnError().setBefore());
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAt(DefTypeCursor& cursor, DefTypeKey key, const DefTypeElement& element,
+         RelativePosition position)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedMapInsertionParameters(key).setFreeOnError().setRelativePosition(position),
+            &cursor);
+      }
+#endif // DefImplementsNativeMethods -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAddCopy(DefTypeKey key, const DefTypeElement& element)
+      {  return locateOrAdd(key, const_cast<DefTypeElement*>(&element), *newCursor(), COL::VirtualCollection::AMDuplicate); }
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAddCopy(DefTypeKey key, const DefTypeElement& element, DefTypeCursor& cursor)
+      {  return locateOrAdd(key, const_cast<DefTypeElement*>(&element), cursor, COL::VirtualCollection::AMDuplicate); }
+
+   DefTemplate inline void
+   DefTypeCollection::addOrReplaceAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element,
+         AddMode dupMode, RemoveMode freeMode, RemoveMode remModeOnError)
+      {  if (locateOrAdd(key, element, cursor, dupMode))
+            DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+               ExtendedReplaceParameters(dupMode, freeMode, remModeOnError), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addCopyOrReplaceAt(DefTypeCursor& cursor, DefTypeKey key, const DefTypeElement& element,
+         RemoveMode freeMode)
+      {  if (locateOrAdd(key, const_cast<DefTypeElement*>(&element), cursor, COL::VirtualCollection::AMDuplicate))
+            DefTypeFinal _replace(DefTypeCastToCollectHandler(element.createSCopy()),
+               ExtendedReplaceParameters().setFree(freeMode).setFreeOnError(), &cursor);
+      }
+
+#ifndef DefExcludeElement
+   DefTemplate inline void
+   DefTypeCollection::replaceElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedReplaceParameters().setFreeOnError(remModeOnError).setRemoveExact(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedReplaceParameters().setFree().setFreeOnError(remModeOnError).setRemoveExact(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _replace(element.createSCopy(),
+            ExtendedReplaceParameters().setFreeOnError(VirtualCollection::RMFree).setRemoveExact(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _replace(element.createSCopy(),
+            ExtendedReplaceParameters().setFree().setFreeOnError(VirtualCollection::RMFree).setRemoveExact(), &cursor);
+      }
+#endif // DefExcludeElement
+#else // !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#ifdef DefImplementsNativeMethods
+   void add(DefTypeKey key, DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters().setDuplicate(dupMode).setFreeOnError(remModeOnError));
+      }
+   void add(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters().setDuplicate(dupMode).setFreeOnError(remModeOnError),
+            &cursor);
+      }
+   void addNew(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters().setFreeOnError());
+      }
+   void addNew(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters().setFreeOnError(), &cursor);
+      }
+   void addCopy(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeFinal _add(key, element.createSCopy(), ExtendedInsertionParameters().setFreeOnError()); }
+   void addCopy(DefTypeKey key, const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(key, element.createSCopy(), ExtendedInsertionParameters().setFreeOnError(), &cursor); }
+
+   bool locateOrAdd(DefTypeKey key, DefTypeElement* element, AddMode dupMode)
+      {  return locateOrAdd(key, element, *newCursor(), dupMode); }
+   bool locateOrAdd(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode)
+      {  AssumeAllocation(element)
+         LocationResult result = DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPUndefined), &cursor);
+         if (!result)
+            DefTypeFinal _add(key, element,
+               result.queryInsertionParameters().setDuplicate(dupMode), &cursor);
+         return result;
+      }
+
+   void insertAtBegin(DefTypeKey key, DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters(dupMode, remModeOnError, VirtualCollection::RPAfter));
+      }
+   void insertAtEnd(DefTypeKey key, DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters(dupMode, remModeOnError, VirtualCollection::RPBefore));
+      }
+   void insertAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element, RelativePosition position,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters().setDuplicate(dupMode)
+               .setFreeOnError(remModeOnError).setRelativePosition(position), &cursor);
+      }
+   void insertNewAtBegin(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters().setFreeOnError().setAfter());
+      }
+   void insertNewAtEnd(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters().setFreeOnError().setBefore());
+      }
+   void insertNewAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element, RelativePosition position)
+      {  DefTypeFinal _add(key, element,
+            ExtendedInsertionParameters().setFreeOnError().setRelativePosition(position),
+            &cursor);
+      }
+   void insertCopyAtBegin(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeFinal _add(key, element.createSCopy(),
+      	   ExtendedInsertionParameters().setFreeOnError().setAfter());
+      }
+   void insertCopyAtEnd(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeFinal _add(key, element.createSCopy(),
+      	   ExtendedInsertionParameters().setFreeOnError().setBefore());
+      }
+   void insertCopyAt(DefTypeCursor& cursor, DefTypeKey key, const DefTypeElement& element,
+         RelativePosition position)
+      {  DefTypeFinal _add(key, element.createSCopy(),
+            ExtendedInsertionParameters().setFreeOnError().setRelativePosition(position),
+            &cursor);
+      }
+#else
+   void add(DefTypeKey key, DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError = VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setDuplicate(dupMode).setFreeOnError(remModeOnError));
+      }
+   void add(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError = VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setDuplicate(dupMode).setFreeOnError(remModeOnError),
+            &cursor);
+      }
+   void addNew(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setFreeOnError());
+      }
+   void addNew(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setFreeOnError(), &cursor);
+      }
+   void addCopy(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeFinal _add(element.createSCopy(), ExtendedMapInsertionParameters(key).setFreeOnError()); }
+   void addCopy(DefTypeKey key, const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(element.createSCopy(), ExtendedMapInsertionParameters(key).setFreeOnError(), &cursor); }
+
+   bool locateOrAdd(DefTypeKey key, DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  return locateOrAdd(key, element, *newCursor(), dupMode); }
+   bool locateOrAdd(DefTypeKey key, DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  AssumeAllocation(element)
+         LocationResult result = DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPUndefined), &cursor);
+         if (!result)
+            DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+               result.queryInsertionParameters().setDuplicate(dupMode), &cursor);
+         return result;
+      }
+
+   void insertAtBegin(DefTypeKey key, DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setDuplicate(dupMode)
+               .setFreeOnError(remModeOnError).setAfter());
+      }
+   void insertAtEnd(DefTypeKey key, DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setDuplicate(dupMode)
+               .setFreeOnError(remModeOnError).setBefore());
+      }
+   void insertAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element, RelativePosition position=VirtualCollection::RPBefore,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setDuplicate(dupMode)
+               .setFreeOnError(remModeOnError).setRelativePosition(position), &cursor);
+      }
+   void insertNewAtBegin(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setFreeOnError().setAfter());
+      }
+   void insertNewAtEnd(DefTypeKey key, DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setFreeOnError().setBefore());
+      }
+   void insertNewAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element, RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedMapInsertionParameters(key).setFreeOnError().setRelativePosition(position),
+            &cursor);
+      }
+   void insertCopyAtBegin(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+      	   ExtendedMapInsertionParameters(key).setFreeOnError().setAfter());
+      }
+   void insertCopyAtEnd(DefTypeKey key, const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+      	   ExtendedMapInsertionParameters(key).setFreeOnError().setBefore());
+      }
+   void insertCopyAt(DefTypeCursor& cursor, DefTypeKey key, const DefTypeElement& element,
+         RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedMapInsertionParameters(key).setFreeOnError().setRelativePosition(position),
+            &cursor);
+      }
+#endif // DefImplementsNativeMethods -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   bool locateOrAddCopy(DefTypeKey key, const DefTypeElement& element)
+      {  return locateOrAdd(key, const_cast<DefTypeElement*>(&element), *newCursor(), VirtualCollection::AMDuplicate); }
+   bool locateOrAddCopy(DefTypeKey key, const DefTypeElement& element, DefTypeCursor& cursor)
+      {  return locateOrAdd(key, const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate); }
+
+   void addOrReplaceAt(DefTypeCursor& cursor, DefTypeKey key, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode freeMode=VirtualCollection::RMRemove, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  if (locateOrAdd(key, element, cursor, dupMode))
+            DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+               ExtendedReplaceParameters(dupMode, freeMode, remModeOnError), &cursor);
+      }
+   void addCopyOrReplaceAt(DefTypeCursor& cursor, DefTypeKey key, const DefTypeElement& element,
+         RemoveMode freeMode=VirtualCollection::RMRemove)
+      {  if (locateOrAdd(key, const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate))
+            DefTypeFinal _replace(DefTypeCastToCollectHandler(element.createSCopy()),
+               ExtendedReplaceParameters().setFree(freeMode).setFreeOnError(), &cursor);
+      }
+
+#ifndef DefExcludeElement
+   void replaceElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedReplaceParameters().setFreeOnError(remModeOnError).setRemoveExact(), &cursor);
+      }
+   void replaceAndFreeElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedReplaceParameters().setFree().setFreeOnError(remModeOnError).setRemoveExact(), &cursor);
+      }
+   void replaceElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _replace(element.createSCopy(),
+            ExtendedReplaceParameters().setFreeOnError(VirtualCollection::RMFree).setRemoveExact(), &cursor);
+      }
+   void replaceAndFreeElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _replace(element.createSCopy(),
+            ExtendedReplaceParameters().setFree().setFreeOnError(VirtualCollection::RMFree).setRemoveExact(), &cursor);
+      }
+#endif // DefExcludeElement
+#endif // !DefJustInline -> !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // !DefTypeInheritedCollection -> !DefJustDeclare, !DefCursor
+#endif // !DefJustDeclare
+#endif // !DefCursor
+
+#include "Collection/ELMCollection.incfoot"
+

@@ -1,0 +1,95 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2013-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Low level implementation of tree collections
+// File      : ImplCommonTree.template
+// Description :
+//   Implementation of a common implementation for all tree collections.
+//
+
+#ifndef COL_ImplCommonTreeTemplate
+#define COL_ImplCommonTreeTemplate
+
+#include "Collection/Implementation/ImplCommonTree.h"
+
+namespace COL {
+
+namespace DImplBasicTree {
+
+template <class TypeTemplateNode>
+int
+queryCNumberOfElements(TypeTemplateNode,
+	  const typename TypeTemplateNode::TypeNode::FlatCollection& sons) {
+   typedef typename TypeTemplateNode::TypeNode TypeNode;
+   typedef typename TypeNode::HandlerSonsAndSubTreeCast HandlerSonsAndSubTreeCast;
+   int count = 0;
+   sons.foreachDo([&count](decltype(sons.getFirst()) node)
+      {  count += queryNumberOfElements((const TypeNode*) HandlerSonsAndSubTreeCast::castFrom(&node));
+         return true;
+      });
+   return count;
+}
+
+} // end of namespace DImplBasicTree
+
+template <class TypeNode, class TypeCursor>
+void
+TImplTree<TypeNode, TypeCursor>::setElementCursor(TypeCursor& cursor,
+      const ExtendedTreeLocateParameters& parameters) const {
+   if (parameters.isSons())
+      cursor.setSon(parameters.isBefore() ? FlatPosition::DEnd : FlatPosition::DStart,
+         (const typename TypeCursor::Tree&) *this);
+   else if (parameters.isInnerSons()) {
+      FlatPosition pos(parameters.isBefore() ? FlatPosition::DEnd : FlatPosition::DStart);
+      bool hasSon = cursor.setSon(pos, (const typename TypeCursor::Tree&) *this);
+      AssumeCondition(hasSon)
+      while (cursor.setSon(pos, (const typename TypeCursor::Tree&) *this));
+      cursor.setFather();
+   }
+   else if (parameters.isNear() || (parameters.isUndefined() && (!cursor.isValid())))
+      cursor.setBrother(parameters.isBefore() ? FlatPosition::DBackward : FlatPosition::DForward,
+         (const typename TypeCursor::Tree&) *this);
+}
+
+template <class TypeNode, class TypeCursor>
+void
+TImplTree<TypeNode, TypeCursor>::setParentCursor(TypeCursor& cursor, PPFlatCursor& son,
+      const ExtendedTreeLocateParameters& parameters) const {
+   if (!parameters.isDescendant())
+      son = cursor.setFatherWithLastCursorExtraction();
+   else if (parameters.isInnerSons()) {
+      FlatPosition pos(parameters.isAfter() ? FlatPosition::DStart : FlatPosition::DEnd);
+      bool hasSon = cursor.setSon(pos, (const typename TypeCursor::Tree&) *this);
+      AssumeCondition(hasSon)
+      while (cursor.setSon(pos, (const typename TypeCursor::Tree&) *this));
+      cursor.setFather();
+      son = cursor.setFatherWithLastCursorExtraction();
+   };
+}
+
+} // end of namespace COL
+
+#endif // COL_ImplCommonTreeTemplate
+

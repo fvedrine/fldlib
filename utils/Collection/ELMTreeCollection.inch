@@ -1,0 +1,1756 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Abstract collections
+// File      : ELMTreeCollection.inch
+// Description :
+//   Definition of element typing in tree collections.
+//
+
+#include "Collection/ELMCollection.incheader"
+
+#ifndef DefCursor
+#ifdef DefJustDeclare
+   void add(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError = VirtualCollection::RMRemove);
+   void add(DefTypeElement* element, DefTypeCursor& cursor,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError = VirtualCollection::RMRemove);
+   void addNew(DefTypeElement* element);
+   void addNew(DefTypeElement* element, DefTypeCursor& cursor);
+   void addCopy(const DefTypeElement& element);
+   void addCopy(const DefTypeElement& element, DefTypeCursor& cursor);
+   void addAsSon(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate);
+   void addAsBrother(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate);
+   void addAsRemoteSon(DefTypeElement* element, const DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate);
+   void addAsRemoteBrother(DefTypeElement* element, const DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate);
+   void add(DefTypeElement* element, const ExtendedTreeInsertionParameters& parameters,
+         DefTypeCursor* cursor=nullptr);
+
+#ifdef DefTypeSorted
+   bool locateOrAdd(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate);
+   bool locateOrAdd(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate);
+   bool locateOrAddCopy(const DefTypeElement& element);
+   bool locateOrAddCopy(const DefTypeElement& element, DefTypeCursor& cursor);
+   bool locate(const DefTypeElement& element) const;
+   bool locate(const DefTypeElement& element, DefTypeCursor& cursor, RelativePosition pos = VirtualCollection::RPExact) const;
+#ifdef DefTypeKey
+   bool locateKey(DefTypeKey key) const;
+   bool locateKey(DefTypeKey key, DefTypeCursor& cursor, RelativePosition pos=VirtualCollection::RPExact) const;
+   DefTypeElement& findKey(DefTypeKey key);
+   const DefTypeElement& findKey(DefTypeKey key) const;
+#endif // DefTypeKey -> DefTypeSorted, DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> DefJustDeclare, !DefCursor
+   void fullAssign(const DefTypeCollection& collection);
+
+#ifdef DefTypeSorted
+   void addOrReplaceAt(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode freeMode=VirtualCollection::RMRemove, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void addCopyOrReplaceAt(DefTypeCursor& cursor, const DefTypeElement& element,
+         RemoveMode freeMode=VirtualCollection::RMRemove);
+#endif // DefTypeSorted -> DefJustDeclare, !DefCursor
+
+   void deleteAll();
+   void deleteAll(DefTypeCursor& start, DefTypeCursor& end);
+   void deleteAt(DefTypeCursor& cursor);
+   void deleteBefore(DefTypeCursor& cursor);
+   void deleteAfter(DefTypeCursor& cursor);
+   void deleteAllSons(DefTypeCursor& cursor);
+   void deleteFirstSon(DefTypeCursor& cursor);
+   void deleteLastSon(DefTypeCursor& cursor);
+   void deleteRoot();
+
+   void freeAll();
+   void freeAll(DefTypeCursor& start, DefTypeCursor& end);
+   void freeAt(DefTypeCursor& cursor);
+   void freeBefore(DefTypeCursor& cursor);
+   void freeAfter(DefTypeCursor& cursor);
+   void freeAllSons(DefTypeCursor& cursor);
+   void freeFirstSon(DefTypeCursor& cursor);
+   void freeLastSon(DefTypeCursor& cursor);
+   void freeRoot();
+   void remove(const ExtendedTreeSuppressParameters& parameters, DefTypeCursor* cursor=nullptr);
+   void removeAll(const ExtendedTreeSuppressParameters& parameters,
+      const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr);
+
+   const DefTypeElement& getElementAt(const DefTypeCursor& cursor) const;
+   const DefTypeElement& getFirstSon(const DefTypeCursor& cursor) const;
+   const DefTypeElement& getLastSon(const DefTypeCursor& cursor) const;
+   const DefTypeElement& getRoot() const;
+   DefTypeElement& getSElementAt(const DefTypeCursor& cursor) const;
+   DefTypeElement& getSFirstSon(const DefTypeCursor& cursor) const;
+   DefTypeElement& getSLastSon(const DefTypeCursor& cursor) const;
+   DefTypeElement& getSRoot() const;
+   DefTypeElement& getElement(const ExtendedTreeLocateParameters& parameters,
+         const DefTypeCursor* cursor=nullptr) const;
+
+#ifdef DefTypeSorted
+   bool gotoAny(DefTypeCursor& cursor, const DefTypeElement& element) const;
+#endif // DefTypeSorted -> DefJustDeclare, !DefCursor
+
+   void insertRoot(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void insertAsFirstSon(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void insertAsLastSon(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void insertAsNext(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void insertAsPrevious(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+
+   void insertCopyRoot(const DefTypeElement& element);
+   void insertCopyAsFirstSon(DefTypeCursor& cursor, const DefTypeElement& element);
+   void insertCopyAsLastSon(DefTypeCursor& cursor, const DefTypeElement& element);
+   void insertCopyAsNext(DefTypeCursor& cursor, const DefTypeElement& element);
+   void insertCopyAsPrevious(DefTypeCursor& cursor, const DefTypeElement& element);
+
+   void insertNewRoot(DefTypeElement* element);
+   void insertNewAsFirstSon(DefTypeCursor& cursor, DefTypeElement* element);
+   void insertNewAsLastSon(DefTypeCursor& cursor, DefTypeElement* element);
+   void insertNewAsNext(DefTypeCursor& cursor, DefTypeElement* element);
+   void insertNewAsPrevious(DefTypeCursor& cursor, DefTypeElement* element);
+
+   int count() const;
+   bool isEmpty() const;
+   bool hasSons(const DefTypeCursor& cursor) const;
+   bool canBeFather(const DefTypeCursor& cursor) const;
+   int querySonsCount(const DefTypeCursor& cursor) const;
+#ifdef DefTypeSorted
+   bool isElement(const DefTypeElement& element) const;
+   bool contain(const DefTypeElement& element) const;
+#endif // DefTypeSorted -> DefJustDeclare, !DefCursor
+
+   void replaceElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void replaceAndFreeElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void replaceElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element);
+   void replaceAndFreeElementAtWithCopy(DefTypeCursor& cursor,
+         const DefTypeElement& element);
+   void replace(DefTypeElement* element, const ExtendedTreeReplaceParameters& parameters,
+      DefTypeCursor* cursor=nullptr);
+
+   void swap(DefTypeCollection& collection);
+   void swap(DefTypeCursor& fstCursor, DefTypeCursor& sndCursor);
+   void moveAsFirstSon(DefTypeCursor& originCursor);
+   void moveAsFirstSon(DefTypeCursor& originCursor, DefTypeCollection& collection, DefTypeCursor& destinationCursor);
+   void moveAsLastSon(DefTypeCursor& originCursor);
+   void moveAsLastSon(DefTypeCursor& originCursor, DefTypeCollection& collection, DefTypeCursor& destinationCursor);
+   void moveAsNextSon(DefTypeCursor& originCursor);
+   void moveAsNextSon(DefTypeCursor& originCursor, DefTypeCollection& collection, DefTypeCursor& destinationCursor);
+   void moveAsPreviousSon(DefTypeCursor& originCursor);
+   void moveAsPreviousSon(DefTypeCursor& originCursor, DefTypeCollection& collection, DefTypeCursor& destinationCursor);
+#else // DefJustDeclare
+#ifdef DefTypeInheritedCollection
+#ifdef DefJustInline // -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::add(DefTypeCastToCollectHandler(element), dupMode, remModeOnError); }
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeElement* element, DefTypeCursor& cursor,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::add(DefTypeCastToCollectHandler(element), cursor,
+            dupMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addNew(DefTypeElement* element)
+      {  DefTypeInheritedCollection::addNew(DefTypeCCastToCollectHandler(element)); }
+   DefTemplate inline void
+   DefTypeCollection::addNew(DefTypeElement* element, DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::addNew(DefTypeCCastToCollectHandler(element), cursor); }
+   DefTemplate inline void
+   DefTypeCollection::addCopy(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::addCopy(*DefTypeCCastToCollectHandler(&element)); }
+   DefTemplate inline void
+   DefTypeCollection::addCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::addCopy(*DefTypeCCastToCollectHandler(&element), cursor); }
+   DefTemplate inline void
+   DefTypeCollection::addAsSon(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode)
+      {  DefTypeInheritedCollection::addAsSon(DefTypeCastToCollectHandler(element), cursor, dupMode); }
+   DefTemplate inline void
+   DefTypeCollection::addAsBrother(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode)
+      {  DefTypeInheritedCollection::addAsBrother(DefTypeCastToCollectHandler(element), cursor, dupMode); }
+   DefTemplate inline void
+   DefTypeCollection::addAsRemoteSon(DefTypeElement* element, const DefTypeCursor& cursor, AddMode dupMode)
+      {  DefTypeInheritedCollection::addAsRemoteSon(DefTypeCastToCollectHandler(element), cursor, dupMode); }
+   DefTemplate inline void
+   DefTypeCollection::addAsRemoteBrother(DefTypeElement* element, const DefTypeCursor& cursor, AddMode dupMode)
+      {  DefTypeInheritedCollection::addAsRemoteBrother(DefTypeCastToCollectHandler(element), cursor, dupMode); }
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeElement* element, const ExtendedTreeInsertionParameters& parameters,
+         DefTypeCursor* cursor)
+      {  DefTypeInheritedCollection::add(DefTypeCastToCollectHandler(element), parameters, cursor); }
+
+#ifdef DefTypeSorted // -> DefTypeSorted, DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAdd(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  DefTypeInheritedCollection::locateOrAdd(DefTypeCastToCollectHandler(element), dupMode); }
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAdd(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode)
+      {  DefTypeInheritedCollection::locateOrAdd(DefTypeCastToCollectHandler(element), cursor, dupMode); }
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAddCopy(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::locateOrAddCopy(*DefTypeCCastToCollectHandler(&element)); }
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAddCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::locateOrAddCopy(*DefTypeCCastToCollectHandler(&element), cursor); }
+   DefTemplate inline bool
+   DefTypeCollection::locate(const DefTypeElement& element) const
+      {  DefTypeInheritedCollection::locate(*DefTypeCCastToCollectHandler(&element)); }
+   DefTemplate inline bool
+   DefTypeCollection::locate(const DefTypeElement& element, DefTypeCursor& cursor, RelativePosition pos) const
+      {  DefTypeInheritedCollection::locate(*DefTypeCCastToCollectHandler(&element), cursor, pos); }
+#ifdef DefTypeKey // -> DefTypeKey, DefTypeSorted, DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline bool
+   DefTypeCollection::locateKey(DefTypeKey key) const
+      {  return _locateKey(key, ExtendedLocateParameters(), nullptr, nullptr, nullptr); }
+   DefTemplate inline bool
+   DefTypeCollection::locateKey(DefTypeKey key, DefTypeCursor& cursor, RelativePosition pos) const
+      {  return _locateKey(key, ExtendedLocateParameters(pos), &cursor, nullptr, nullptr); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::findKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         _locateKey(key, ExtendedLocateParameters(), cursor.key(), nullptr, nullptr);
+         return cursor->elementSAt();
+      }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::findKey(DefTypeKey key) const
+      {  PPCursor cursor = newCursor();
+         _locateKey(key, ExtendedLocateParameters(), cursor.key(), nullptr, nullptr);
+         return cursor->elementAt();
+      }
+#endif // DefTypeKey -> DefTypeSorted, DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline void
+   DefTypeCollection::fullAssign(const DefTypeCollection& collection)
+      {  DefTypeInheritedCollection::fullAssign(collection); }
+
+#ifdef DefTypeSorted
+   DefTemplate inline void
+   DefTypeCollection::addOrReplaceAt(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode, RemoveMode freeMode, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::addOrReplaceAt(cursor,
+            DefTypeCastToCollectHandler(element), dupMode, freeMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addCopyOrReplaceAt(DefTypeCursor& cursor, const DefTypeElement& element,
+         RemoveMode freeMode)
+      {  DefTypeInheritedCollection::addCopyOrReplaceAt(cursor,
+            *DefTypeCCastToCollectHandler(&element), freeMode, remModeOnError);
+      }
+#endif // DefTypeSorted -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+   DefTemplate inline void
+   DefTypeCollection::deleteAll() { DefTypeInheritedCollection::deleteAll(); }
+   DefTemplate inline void
+   DefTypeCollection::deleteAll(DefTypeCursor& start, DefTypeCursor& end)
+      {  DefTypeInheritedCollection::deleteAll(start, end); }
+   DefTemplate inline void
+   DefTypeCollection::deleteAt(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deleteAt(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::deleteBefore(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deleteBefore(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::deleteAfter(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deleteAfter(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::deleteAllSons(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deleteAllSons(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::deleteFirstSon(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deleteFirstSon(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::deleteLastSon(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deleteLastSon(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::deleteRoot() { DefTypeInheritedCollection::deleteRoot(); }
+
+   DefTemplate inline void
+   DefTypeCollection::freeAll() { DefTypeInheritedCollection::freeAll(); }
+   DefTemplate inline void
+   DefTypeCollection::freeAll(DefTypeCursor& start, DefTypeCursor& end)
+      {  DefTypeInheritedCollection::freeAll(start, end); }
+   DefTemplate inline void
+   DefTypeCollection::freeAt(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::freeAt(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::freeBefore(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::freeBefore(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::freeAfter(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::freeAfter(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::freeAllSons(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::freeAllSons(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::freeFirstSon(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::freeFirstSon(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::freeLastSon(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::freeLastSon(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::freeRoot() { DefTypeInheritedCollection::freeRoot(); }
+   DefTemplate inline void
+   DefTypeCollection::remove(const ExtendedTreeSuppressParameters& parameters, DefTypeCursor* cursor)
+      {  DefTypeInheritedCollection::remove(parameters, cursor); }
+   DefTemplate inline void
+   DefTypeCollection::removeAll(const ExtendedTreeSuppressParameters& parameters,
+         const DefTypeCursor* start, const DefTypeCursor* end)
+      {  DefTypeInheritedCollection::removeAll(parameters, start, end); }
+
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSElementAt(const DefTypeCursor& cursor) const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getSElementAt(cursor)); }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getElementAt(const DefTypeCursor& cursor) const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getElementAt(cursor)); }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getFirstSon(const DefTypeCursor& cursor) const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getFirstSon(cursor)); }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getLastSon(const DefTypeCursor& cursor) const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getLastSon(cursor)); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSFirstSon(const DefTypeCursor& cursor) const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getSFirstSon(cursor)); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSLastSon(const DefTypeCursor& cursor) const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getSLastSon(cursor)); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSRoot() const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getSRoot()); }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getRoot() const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getRoot()); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getElement(const ExtendedTreeLocateParameters& parameters,
+         const DefTypeCursor* cursor) const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getElement(parameters, cursor)); }
+
+#ifdef DefTypeSorted
+   DefTemplate inline bool
+   DefTypeCollection::gotoAny(DefTypeCursor& cursor, const DefTypeElement& element) const
+      {  return DefTypeInheritedCollection::gotoAny(cursor, *DefTypeCCastToCollectHandler(&element)); }
+#endif // DefTypeSorted -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+   DefTemplate inline void
+   DefTypeCollection::insertRoot(DefTypeElement* element, AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertRoot(DefTypeCastToCollectHandler(element),
+            dupMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAsFirstSon(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertAsFirstSon(cursor,
+            DefTypeCastToCollectHandler(element), dupMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAsLastSon(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertAsLastSon(cursor,
+            DefTypeCastToCollectHandler(element), dupMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAsNext(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertAsNext(cursor,
+            DefTypeCastToCollectHandler(element), dupMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAsPrevious(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertAsPrevious(cursor,
+            DefTypeCastToCollectHandler(element), dupMode, remModeOnError);
+      }
+
+   DefTemplate inline void
+   DefTypeCollection::insertNewRoot(DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewRoot(DefTypeCastToCollectHandler(element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAsFirstSon(DefTypeCursor& cursor, DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewAsFirstSon(cursor,
+            DefTypeCastToCollectHandler(element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAsLastSon(DefTypeCursor& cursor, DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewAsLastSon(cursor,
+            DefTypeCastToCollectHandler(element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAsNext(DefTypeCursor& cursor, DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewAsNext(cursor,
+            DefTypeCastToCollectHandler(element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAsPrevious(DefTypeCursor& cursor, DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewAsPrevious(cursor,
+            DefTypeCastToCollectHandler(element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyRoot(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertCopyRoot(*DefTypeCastToCollectHandler(&element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAsFirstSon(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertCopyAsFirstSon(cursor,
+            *DefTypeCastToCollectHandler(&element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAsLastSon(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertCopyAsLastSon(cursor,
+            *DefTypeCastToCollectHandler(&element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAsNext(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertCopyAsNext(cursor,
+            *DefTypeCastToCollectHandler(&element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAsPrevious(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertCopyAsPrevious(cursor,
+            *DefTypeCastToCollectHandler(&element));
+      }
+
+   DefTemplate inline int
+   DefTypeCollection::count() const { return DefTypeInheritedCollection::count(); }
+   DefTemplate inline bool
+   DefTypeCollection::isEmpty() const { return DefTypeInheritedCollection::isEmpty(); }
+   DefTemplate inline bool
+   DefTypeCollection::hasSons(const DefTypeCursor& cursor) const
+      {  return DefTypeInheritedCollection::hasSons(cursor); }
+   DefTemplate inline bool
+   DefTypeCollection::canBeFather(const DefTypeCursor& cursor) const
+      {  return DefTypeInheritedCollection::canBeFather(cursor); }
+   DefTemplate inline int
+   DefTypeCollection::querySonsCount(const DefTypeCursor& cursor) const
+      {  return DefTypeInheritedCollection::querySonsCount(cursor); }
+#ifdef DefTypeSorted
+   DefTemplate inline bool
+   DefTypeCollection::isElement(const DefTypeElement& element) const
+      {  return DefTypeInheritedCollection::isElement(*DefTypeCCastToCollectHandler(&element)); }
+   DefTemplate inline bool
+   DefTypeCollection::contain(const DefTypeElement& element) const
+      {  return DefTypeInheritedCollection::contain(*DefTypeCCastToCollectHandler(&element)); }
+#endif // DefTypeSorted -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+   DefTemplate inline void
+   DefTypeCollection::replaceElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::replaceElementAtWith(cursor,
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::replaceAndFreeElementAtWith(cursor,
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceElementAtWithCopy(cursor,
+            *DefTypeCCastToCollectHandler(&element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeElementAtWithCopy(DefTypeCursor& cursor,
+         const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceAndFreeElementAtWithCopy(cursor,
+            *DefTypeCCastToCollectHandler(&element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replace(DefTypeElement* element, const ExtendedTreeReplaceParameters& parameters,
+         DefTypeCursor* cursor)
+      {  DefTypeInheritedCollection::replace(DefTypeCCastToCollectHandler(element), parameters, cursor); }
+
+   DefTemplate inline void
+   DefTypeCollection::swap(DefTypeCollection& collection) {  DefTypeInheritedCollection::swap(collection); }
+   DefTemplate inline void
+   DefTypeCollection::swap(DefTypeCursor& fstCursor, DefTypeCursor& sndCursor)
+      {  DefTypeInheritedCollection::swap(fstCursor, sndCursor); }
+   DefTemplate inline void
+   DefTypeCollection::moveAsFirstSon(DefTypeCursor& originCursor)
+      {  DefTypeInheritedCollection::moveAsFirstSon(originCursor); }
+   DefTemplate inline void
+   DefTypeCollection::moveAsFirstSon(DefTypeCursor& originCursor, DefTypeCollection& collection,
+         DefTypeCursor& destinationCursor)
+      {  DefTypeInheritedCollection::moveAsFirstSon(originCursor, collection, destinationCursor); }
+   DefTemplate inline void
+   DefTypeCollection::moveAsLastSon(DefTypeCursor& originCursor)
+      {  DefTypeInheritedCollection::moveAsLastSon(originCursor); }
+   DefTemplate inline void
+   DefTypeCollection::moveAsLastSon(DefTypeCursor& originCursor, DefTypeCollection& collection,
+         DefTypeCursor& destinationCursor)
+      {  DefTypeInheritedCollection::moveAsLastSon(originCursor, collection, destinationCursor); }
+   DefTemplate inline void
+   DefTypeCollection::moveAsNextSon(DefTypeCursor& originCursor)
+      {  DefTypeInheritedCollection::moveAsNextSon(originCursor); }
+   DefTemplate inline void
+   DefTypeCollection::moveAsNextSon(DefTypeCursor& originCursor, DefTypeCollection& collection,
+         DefTypeCursor& destinationCursor)
+      {  DefTypeInheritedCollection::moveAsNextSon(originCursor, collection, destinationCursor); }
+   DefTemplate inline void
+   DefTypeCollection::moveAsPreviousSon(DefTypeCursor& originCursor)
+      {  DefTypeInheritedCollection::moveAsPreviousSon(originCursor); }
+   DefTemplate inline void
+   DefTypeCollection::moveAsPreviousSon(DefTypeCursor& originCursor, DefTypeCollection& collection,
+         DefTypeCursor& destinationCursor)
+      {  DefTypeInheritedCollection::moveAsPreviousSon(originCursor, collection, destinationCursor); }
+#else // DefJustInline -> !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   void add(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError = VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::add(DefTypeCastToCollectHandler(element), dupMode, remModeOnError); }
+   void add(DefTypeElement* element, DefTypeCursor& cursor,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError = VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::add(DefTypeCastToCollectHandler(element), cursor,
+            dupMode, remModeOnError);
+      }
+   void addNew(DefTypeElement* element)
+      {  DefTypeInheritedCollection::addNew(DefTypeCCastToCollectHandler(element)); }
+   void addNew(DefTypeElement* element, DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::addNew(DefTypeCCastToCollectHandler(element), cursor); }
+   void addCopy(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::addCopy(*DefTypeCCastToCollectHandler(&element)); }
+   void addCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::addCopy(*DefTypeCCastToCollectHandler(&element), cursor); }
+   void addAsSon(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  DefTypeInheritedCollection::addAsSon(DefTypeCastToCollectHandler(element), cursor, dupMode); }
+   void addAsBrother(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  DefTypeInheritedCollection::addAsBrother(DefTypeCastToCollectHandler(element), cursor, dupMode); }
+   void addAsRemoteSon(DefTypeElement* element, const DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  DefTypeInheritedCollection::addAsRemoteSon(DefTypeCastToCollectHandler(element), cursor, dupMode); }
+   void addAsRemoteBrother(DefTypeElement* element, const DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  DefTypeInheritedCollection::addAsRemoteBrother(DefTypeCastToCollectHandler(element), cursor, dupMode); }
+   void add(DefTypeElement* element, const ExtendedTreeInsertionParameters& parameters,
+         DefTypeCursor* cursor=nullptr)
+      {  DefTypeInheritedCollection::add(DefTypeCastToCollectHandler(element), parameters, cursor); }
+
+#ifdef DefTypeSorted // DefTypeSorted, !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   bool locateOrAdd(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  DefTypeInheritedCollection::locateOrAdd(
+            DefTypeCastToCollectHandler(element), dupMode);
+      }
+   bool locateOrAdd(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate);
+      {  DefTypeInheritedCollection::locateOrAdd(
+            DefTypeCastToCollectHandler(element), cursor, dupMode);
+      }
+   bool locateOrAddCopy(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::locateOrAddCopy(*DefTypeCCastToCollectHandler(&element)); }
+   bool locateOrAddCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::locateOrAddCopy(*DefTypeCCastToCollectHandler(&element), cursor); }
+   bool locate(const DefTypeElement& element) const
+      {  DefTypeInheritedCollection::locate(*DefTypeCCastToCollectHandler(&element)); }
+   bool locate(const DefTypeElement& element, DefTypeCursor& cursor, RelativePosition pos = VirtualCollection::RPExact) const
+      {  DefTypeInheritedCollection::locate(*DefTypeCCastToCollectHandler(&element), cursor, pos); }
+#ifdef DefTypeKey // DefTypeKey, DefTypeSorted, !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   bool locateKey(DefTypeKey key) const
+      {  return _locateKey(key, ExtendedLocateParameters(), nullptr, nullptr, nullptr); }
+   bool locateKey(DefTypeKey key, DefTypeCursor& cursor, RelativePosition pos=VirtualCollection::RPExact) const
+      {  return _locateKey(key, ExtendedLocateParameters(pos), &cursor, nullptr, nullptr); }
+   DefTypeElement& findKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         _locateKey(key, ExtendedLocateParameters(), cursor.key(), nullptr, nullptr);
+         return cursor->elementSAt();
+      }
+   const DefTypeElement& findKey(DefTypeKey key) const
+      {  PPCursor cursor = newCursor();
+         _locateKey(key, ExtendedLocateParameters(), cursor.key(), nullptr, nullptr);
+         return cursor->elementAt();
+      }
+#endif // DefTypeKey -> DefTypeSorted, !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   void fullAssign(const DefTypeCollection& collection);
+      {  DefTypeInheritedCollection::fullAssign(collection); }
+
+#ifdef DefTypeSorted
+   void addOrReplaceAt(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode freeMode=VirtualCollection::RMRemove, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::addOrReplaceAt(cursor,
+            DefTypeCastToCollectHandler(element), dupMode, freeMode, remModeOnError);
+      }
+   void addCopyOrReplaceAt(DefTypeCursor& cursor, const DefTypeElement& element,
+         RemoveMode freeMode=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::addCopyOrReplaceAt(cursor,
+            *DefTypeCCastToCollectHandler(&element), freeMode, remModeOnError);
+      }
+#endif // DefTypeSorted -> !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+   void deleteAll() { DefTypeInheritedCollection::deleteAll(); }
+   void deleteAll(DefTypeCursor& start, DefTypeCursor& end)
+      {  DefTypeInheritedCollection::deleteAll(start, end); }
+   void deleteAt(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deleteAt(cursor); }
+   void deleteBefore(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deleteBefore(cursor); }
+   void deleteAfter(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deleteAfter(cursor); }
+   void deleteAllSons(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deleteAllSons(cursor); }
+   void deleteFirstSon(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deleteFirstSon(cursor); }
+   void deleteLastSon(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deleteLastSon(cursor); }
+   void deleteRoot() { DefTypeInheritedCollection::deleteRoot(cursor); }
+
+   void freeAll() { DefTypeInheritedCollection::freeAll(); }
+   void freeAll(DefTypeCursor& start, DefTypeCursor& end)
+      {  DefTypeInheritedCollection::freeAll(start, end); }
+   void freeAt(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::freeAt(cursor); }
+   void freeBefore(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::freeBefore(cursor); }
+   void freeAfter(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::freeAfter(cursor); }
+   void freeAllSons(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::freeAllSons(cursor); }
+   void freeFirstSon(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::freeFirstSon(cursor); }
+   void freeLastSon(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::freeLastSon(cursor); }
+   void freeRoot() { DefTypeInheritedCollection::freeRoot(cursor); }
+   void remove(const ExtendedTreeSuppressParameters& parameters, DefTypeCursor* cursor=nullptr)
+      {  DefTypeInheritedCollection::remove(parameters, cursor); }
+   void removeAll(const ExtendedTreeSuppressParameters& parameters,
+         const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr)
+      {  DefTypeInheritedCollection::removeAll(parameters, start, end); }
+
+   DefTypeElement& getSElementAt(const DefTypeCursor& cursor) const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getSElementAt(cursor)); }
+   const DefTypeElement& getElementAt(const DefTypeCursor& cursor) const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getElementAt(cursor)); }
+   const DefTypeElement& getFirstSon(const DefTypeCursor& cursor) const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getFirstSon(cursor)); }
+   const DefTypeElement& getLastSon(const DefTypeCursor& cursor) const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getLastSon(cursor)); }
+   DefTypeElement& getSFirstSon(const DefTypeCursor& cursor) const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getSFirstSon(cursor)); }
+   DefTypeElement& getSLastSon(const DefTypeCursor& cursor) const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getSLastSon(cursor)); }
+   DefTypeElement& getSRoot() const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getSRoot()); }
+   const DefTypeElement& getRoot() const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getRoot()); }
+   DefTypeElement& getElement(const ExtendedTreeLocateParameters& parameters,
+         const DefTypeCursor* cursor=nullptr) const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getElement(parameters, cursor)); }
+
+#ifdef DefTypeSorted
+   bool gotoAny(DefTypeCursor& cursor, const DefTypeElement& element) const
+      {  return DefTypeInheritedCollection::gotoAny(cursor, *DefTypeCCastToCollectHandler(&element)); }
+#endif // DefTypeSorted -> !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+   void insertRoot(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::insertRoot(DefTypeCastToCollectHandler(element),
+            dupMode, remModeOnError);
+      }
+   void insertAsFirstSon(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+      {  DefTypeInheritedCollection::insertAtFirstSon(cursor,
+            DefTypeCastToCollectHandler(element), dupMode, remModeOnError);
+      }
+   void insertAsLastSon(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::insertAtLastSon(cursor,
+            DefTypeCastToCollectHandler(element), dupMode, remModeOnError);
+      }
+   void insertAsNext(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::insertAsNext(cursor,
+            DefTypeCastToCollectHandler(element), dupMode, remModeOnError);
+      }
+   void insertAsPrevious(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::insertAsPrevious(cursor,
+            DefTypeCastToCollectHandler(element), dupMode, remModeOnError);
+      }
+
+   void insertNewRoot(DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewRoot(DefTypeCastToCollectHandler(element));
+      }
+   void insertNewAsFirstSon(DefTypeCursor& cursor, DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewAsFirstSon(cursor,
+            DefTypeCastToCollectHandler(element));
+      }
+   void insertNewAsLastSon(DefTypeCursor& cursor, DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewAsLastSon(cursor,
+            DefTypeCastToCollectHandler(element));
+      }
+   void insertNewAsNext(DefTypeCursor& cursor, DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewAsNext(cursor,
+            DefTypeCastToCollectHandler(element));
+      }
+   void insertNewAsPrevious(DefTypeCursor& cursor, DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewAsPrevious(cursor,
+            DefTypeCastToCollectHandler(element));
+      }
+   void insertCopyRoot(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertCopyRoot(*DefTypeCastToCollectHandler(&element),
+            dupMode, remModeOnError);
+      }
+   void insertCopyAsFirstSon(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertCopyAsFirstSon(cursor,
+            *DefTypeCastToCollectHandler(&element), dupMode, remModeOnError);
+      }
+   void insertCopyAsLastSon(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertCopyAsLastSon(cursor,
+            *DefTypeCastToCollectHandler(&element), dupMode, remModeOnError);
+      }
+   void insertCopyAsNext(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertCopyAsNext(cursor,
+            *DefTypeCastToCollectHandler(&element), dupMode, remModeOnError);
+      }
+   void insertCopyAsPrevious(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertCopyAsPrevious(cursor,
+            *DefTypeCastToCollectHandler(&element), dupMode, remModeOnError);
+      }
+
+   int count() const { return DefTypeInheritedCollection::count(); }
+   bool isEmpty() const { return DefTypeInheritedCollection::isEmpty(); }
+   bool hasSons(const DefTypeCursor& cursor) const
+      { return DefTypeInheritedCollection::hasSons(cursor); }
+   bool canBeFather(const DefTypeCursor& cursor) const
+      { return DefTypeInheritedCollection::canBeFather(cursor); }
+   int querySonsCount(const DefTypeCursor& cursor) const
+      { return DefTypeInheritedCollection::querySonsCount(cursor); }
+#ifdef DefTypeSorted
+   bool isElement(const DefTypeElement& element) const
+      { return DefTypeInheritedCollection::isElement(*DefTypeCCastToCollectHandler(&element)); }
+   bool contain(const DefTypeElement& element) const
+      { return DefTypeInheritedCollection::contain(*DefTypeCCastToCollectHandler(&element)); }
+#endif // DefTypeSorted -> !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+   void replaceElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::replaceElementAtWith(cursor,
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   void replaceAndFreeElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::replaceAndFreeElementAtWith(cursor,
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   void replaceElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceElementAtWithCopy(cursor,
+            *DefTypeCCastToCollectHandler(element));
+      }
+   void replaceAndFreeElementAtWithCopy(DefTypeCursor& cursor,
+         const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceAndFreeElementAtWithCopy(cursor,
+            *DefTypeCCastToCollectHandler(element));
+      }
+   void replace(DefTypeElement* element, const ExtendedTreeReplaceParameters& parameters,
+         DefTypeCursor* cursor=nullptr)
+      {  DefTypeInheritedCollection::replace(DefTypeCCastToCollectHandler(element), parameters, cursor); }
+
+   void swap(DefTypeCollection& collection) {  DefTypeInheritedCollection::swap(collection); }
+   void swap(DefTypeCursor& fstCursor, DefTypeCursor& sndCursor)
+      {  DefTypeInheritedCollection::swap(fstCursor, sndCursor); }
+   void moveAsFirstSon(DefTypeCursor& originCursor)
+      {  DefTypeInheritedCollection::moveAsFirstSon(originCursor); }
+   void moveAsFirstSon(DefTypeCursor& originCursor, DefTypeCollection& collection,
+         DefTypeCursor& destinationCursor)
+      {  DefTypeInheritedCollection::moveAsFirstSon(originCursor, collection, destinationCursor); }
+   void moveAsLastSon(DefTypeCursor& originCursor)
+      {  DefTypeInheritedCollection::moveAsLastSon(originCursor); }
+   void moveAsLastSon(DefTypeCursor& originCursor, DefTypeCollection& collection,
+         DefTypeCursor& destinationCursor)
+      {  DefTypeInheritedCollection::moveAsLastSon(originCursor, collection, destinationCursor); }
+   void moveAsNextSon(DefTypeCursor& originCursor)
+      {  DefTypeInheritedCollection::moveAsNextSon(originCursor); }
+   void moveAsNextSon(DefTypeCursor& originCursor, DefTypeCollection& collection,
+         DefTypeCursor& destinationCursor)
+      {  DefTypeInheritedCollection::moveAsNextSon(originCursor, collection, destinationCursor); }
+   void moveAsPreviousSon(DefTypeCursor& originCursor)
+      {  DefTypeInheritedCollection::moveAsPreviousSon(originCursor); }
+   void moveAsPreviousSon(DefTypeCursor& originCursor, DefTypeCollection& collection,
+         DefTypeCursor& destinationCursor)
+      {  DefTypeInheritedCollection::moveAsPreviousSon(originCursor, collection, destinationCursor); }
+#endif // !DefJustInline -> DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#else // !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#ifdef DefJustInline // -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeElement* element, AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+             ExtendedTreeInsertionParameters(VirtualCollection::RPUndefined, dupMode, remModeOnError));
+      }
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeElement* element, DefTypeCursor& cursor,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+             ExtendedTreeInsertionParameters(VirtualCollection::RPUndefined, dupMode, remModeOnError), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addNew(DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+             ExtendedTreeInsertionParameters().setFreeOnError());
+      }
+   DefTemplate inline void
+   DefTypeCollection::addNew(DefTypeElement* element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+             ExtendedTreeInsertionParameters().setFreeOnError(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addCopy(const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+             ExtendedTreeInsertionParameters().setFreeOnError());
+      }
+   DefTemplate inline void
+   DefTypeCollection::addCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+             ExtendedTreeInsertionParameters().setFreeOnError(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addAsSon(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPUndefined, dupMode).setSons(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addAsBrother(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPUndefined, dupMode), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addAsRemoteSon(DefTypeElement* element, const DefTypeCursor& cursor, AddMode dupMode)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPUndefined, dupMode).setSons().setRemote(),
+            &const_cast<DefTypeCursor&>(cursor));
+      }
+   DefTemplate inline void
+   DefTypeCollection::addAsRemoteBrother(DefTypeElement* element, const DefTypeCursor& cursor, AddMode dupMode)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPUndefined, dupMode).setRemote(), &const_cast<DefTypeCursor&>(cursor));
+      }
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeElement* element, const ExtendedTreeInsertionParameters& parameters,
+         DefTypeCursor* cursor)
+      { DefTypeFinal _add(DefTypeCastToCollectHandler(element), parameters, cursor); }
+
+#ifdef DefTypeSorted // DefTypeSorted, DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAdd(DefTypeElement* element, AddMode dupMode)
+      {  return locateOrAdd(element, *newCursor(), dupMode); }
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAdd(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode)
+      {  AssumeAllocation(element)
+         bool result = DefTypeFinal _locate(*DefTypeCastToCollectHandler(element),
+            ExtendedTreeLocateParameters(VirtualCollection::RPBefore), &cursor);
+         if (!result)
+            DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+               ExtendedTreeInsertionParameters(VirtualCollection::RPAfter, dupMode, VirtualCollection::RMRemove), &cursor);
+         return result;
+      }
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAddCopy(const DefTypeElement& element)
+      {  return locateOrAdd(element, *newCursor()); }
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAddCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  bool result = DefTypeFinal _locate(DefTypeCastToCollectHandler(element),
+            ExtendedTreeLocateParameters(VirtualCollection::RPBefore), &cursor);
+         if (!result)
+            DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+               ExtendedTreeInsertionParameters.setDuplicate().setFreeOnError().setRelativePosition(VirtualCollection::RPAfter),
+               &cursor);
+         return result;
+      }
+   DefTemplate inline bool
+   DefTypeCollection::locate(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element),
+            ExtendedTreeLocateParameters(VirtualCollection::RPExact), nullptr);
+      }
+   DefTemplate inline bool
+   DefTypeCollection::locate(const DefTypeElement& element, DefTypeCursor& cursor, RelativePosition pos) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element),
+            ExtendedTreeLocateParameters(pos), &cursor);
+      }
+#ifdef DefTypeKey // DefTypeKey, DefTypeSorted, DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline bool
+   DefTypeCollection::locateKey(DefTypeKey key) const
+      {  return _locateKey(key, ExtendedTreeLocateParameters(), nullptr, nullptr, nullptr); }
+   DefTemplate inline bool
+   DefTypeCollection::locateKey(DefTypeKey key, DefTypeCursor& cursor, RelativePosition pos) const
+      {  return _locateKey(key, ExtendedTreeLocateParameters(pos), &cursor, nullptr, nullptr); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::findKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         _locateKey(key, ExtendedTreeLocateParameters(), cursor.key(), nullptr, nullptr);
+         return cursor->elementSAt();
+      }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::findKey(DefTypeKey key) const
+      {  PPCursor cursor = newCursor();
+         _locateKey(key, ExtendedTreeLocateParameters(), cursor.key(), nullptr, nullptr);
+         return cursor->elementAt();
+      }
+#endif // DefTypeKey -> DefTypeSorted, DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline void
+   DefTypeCollection::fullAssign(const DefTypeCollection& collection)
+      {  DefTypeFinal _fullAssign(collection, ExtendedTreeReplaceParameters().setDuplicate().setFree()); }
+
+#ifdef DefTypeSorted
+   DefTemplate inline void
+   DefTypeCollection::addOrReplaceAt(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode, RemoveMode freeMode=VirtualCollection::RMRemove, RemoveMode remModeOnError)
+      {  if (locateOrAdd(element, cursor, dupMode))
+            DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+               ExtendedTreeReplaceParameters().setDuplicate(dupMode).setFree(freeMode).setFreeOnError(remModeOnError),
+               &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addCopyOrReplaceAt(DefTypeCursor& cursor, const DefTypeElement& element,
+         RemoveMode freeMode)
+      {  if (locateOrAddCopy(element, cursor))
+           DefTypeFinal _replace(DefTypeCastToCollectHandler(element.createSCopy()),
+              ExtendedTreeReplaceParameters().setFree(freeMode).setFreeOnError(), &cursor);
+      }
+#endif // DefTypeSorted -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+   DefTemplate inline void
+   DefTypeCollection::deleteAll() { DefTypeFinal _removeAll(ExtendedTreeSuppressParameters()); }
+   DefTemplate inline void
+   DefTypeCollection::deleteAll(DefTypeCursor& start, DefTypeCursor& end)
+      {  DefTypeFinal _removeAll(ExtendedTreeSuppressParameters(), &start, &end); }
+   DefTemplate inline void
+   DefTypeCollection::deleteAt(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters(VirtualCollection::RPExact, VirtualCollection::RMRemove), &cursor); }
+   DefTemplate inline void
+   DefTypeCollection::deleteBefore(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters(VirtualCollection::RPBefore, VirtualCollection::RMRemove), &cursor); }
+   DefTemplate inline void
+   DefTypeCollection::deleteAfter(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters(VirtualCollection::RPAfter, VirtualCollection::RMRemove), &cursor); }
+   DefTemplate inline void
+   DefTypeCollection::deleteAllSons(DefTypeCursor& cursor)
+      {  DefTypeFinal _removeAll(ExtendedTreeSuppressParameters().setSons(), &cursor); }
+   DefTemplate inline void
+   DefTypeCollection::deleteFirstSon(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters()
+            .setRelativePosition(VirtualCollection::RPAfter).setSons(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::deleteLastSon(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters()
+            .setRelativePosition(VirtualCollection::RPBefore).setSons(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::deleteRoot()
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters(), nullptr); }
+
+   DefTemplate inline void
+   DefTypeCollection::freeAll() { DefTypeFinal _removeAll(ExtendedTreeSuppressParameters().setFree()); }
+   DefTemplate inline void
+   DefTypeCollection::freeAll(DefTypeCursor& start, DefTypeCursor& end)
+      {  DefTypeFinal _removeAll(ExtendedTreeSuppressParameters().setFree(), &start, &end); }
+   DefTemplate inline void
+   DefTypeCollection::freeAt(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters(VirtualCollection::RPExact, VirtualCollection::RMFree), &cursor); }
+   DefTemplate inline void
+   DefTypeCollection::freeBefore(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters(VirtualCollection::RPBefore, VirtualCollection::RMFree), &cursor); }
+   DefTemplate inline void
+   DefTypeCollection::freeAfter(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters(VirtualCollection::RPAfter, VirtualCollection::RMFree), &cursor); }
+   DefTemplate inline void
+   DefTypeCollection::freeAllSons(DefTypeCursor& cursor)
+      {  DefTypeFinal _removeAll(ExtendedTreeSuppressParameters().setFree().setSons(), &cursor); }
+   DefTemplate inline void
+   DefTypeCollection::freeFirstSon(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters()
+            .setRelativePosition(VirtualCollection::RPAfter).setSons().setFree(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::freeLastSon(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters()
+            .setRelativePosition(VirtualCollection::RPBefore).setSons().setFree(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::freeRoot()
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters().setFree(), nullptr); }
+   DefTemplate inline void
+   DefTypeCollection::remove(const ExtendedTreeSuppressParameters& parameters, DefTypeCursor* cursor)
+      {  DefTypeFinal _remove(parameters, cursor); }
+   DefTemplate inline void
+   DefTypeCollection::removeAll(const ExtendedTreeSuppressParameters& parameters,
+         const DefTypeCursor* start, const DefTypeCursor* end)
+      {  DefTypeFinal _removeAll(parameters, start, end); }
+
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSElementAt(const DefTypeCursor& cursor) const
+      {  EnhancedObject* result = DefTypeFinal _getElement(ExtendedTreeLocateParameters(VirtualCollection::RPExact), &cursor);
+         AssumeCondition(result)
+         return *DefTypeCastFromCollectHandler(result);
+      }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getElementAt(const DefTypeCursor& cursor) const
+      {  const EnhancedObject* result
+            = DefTypeFinal _getElement(ExtendedTreeLocateParameters(VirtualCollection::RPExact), &cursor);
+         AssumeCondition(result)
+         return *DefTypeCCastFromCollectHandler(result);
+      }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getFirstSon(const DefTypeCursor& cursor) const
+      {  const EnhancedObject* result
+            = DefTypeFinal _getElement(ExtendedTreeLocateParameters().setAfter().setSons(), &cursor);
+         AssumeCondition(result)
+         return *DefTypeCCastFromCollectHandler(result);
+      }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getLastSon(const DefTypeCursor& cursor) const
+      {  const EnhancedObject* result
+            = DefTypeFinal _getElement(ExtendedTreeLocateParameters().setBefore().setSons(), &cursor);
+         AssumeCondition(result)
+         return *DefTypeCCastFromCollectHandler(result);
+      }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSFirstSon(const DefTypeCursor& cursor) const
+      {  EnhancedObject* result
+            = DefTypeFinal _getElement(ExtendedTreeLocateParameters().setAfter().setSons(), &cursor);
+         AssumeCondition(result)
+         return *DefTypeCastFromCollectHandler(result);
+      }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSLastSon(const DefTypeCursor& cursor) const
+      {  EnhancedObject* result
+           = DefTypeFinal _getElement(ExtendedTreeLocateParameters().setBefore().setSons(), &cursor);
+         AssumeCondition(result)
+         return *DefTypeCastFromCollectHandler(result);
+      }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSRoot() const
+      {  EnhancedObject* result = DefTypeFinal _getElement(ExtendedTreeLocateParameters(), nullptr);
+         AssumeCondition(result)
+         return *DefTypeCastFromCollectHandler(result);
+      }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getRoot() const
+      {  const EnhancedObject* result = DefTypeFinal _getElement(ExtendedTreeLocateParameters(), nullptr);
+         AssumeCondition(result)
+         return *DefTypeCCastFromCollectHandler(result);
+      }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getElement(const ExtendedTreeLocateParameters& parameters,
+         const DefTypeCursor* cursor) const
+      {  EnhancedObject* result = DefTypeFinal _getElement(parameters, cursor);
+         AssumeCondition(result)
+         return *DefTypeCastFromCollectHandler(result);
+      }
+#ifdef DefTypeSorted
+   DefTemplate inline bool
+   DefTypeCollection::gotoAny(DefTypeCursor& cursor, const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element),
+             ExtendedTreeLocateParameters(VirtualCollection::RPExact), &cursor);
+      }
+#endif // DefTypeSorted -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+   DefTemplate inline void
+   DefTypeCollection::insertRoot(DefTypeElement* element, AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPAfter, dupMode, remModeOnError), nullptr);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAsFirstSon(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPAfter, dupMode, remModeOnError).setSons(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAsLastSon(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPBefore, dupMode, remModeOnError).setSons(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAsNext(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPAfter, dupMode, remModeOnError), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAsPrevious(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPBefore, dupMode, remModeOnError), &cursor);
+      }
+
+   DefTemplate inline void
+   DefTypeCollection::insertNewRoot(DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters().setFreeOnError(), nullptr);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAsFirstSon(DefTypeCursor& cursor, DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters().setFreeOnError().setRelativePosition(VirtualCollection::RPAfter).setSons(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAsLastSon(DefTypeCursor& cursor, DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters().setFreeOnError().setRelativePosition(VirtualCollection::RPBefore).setSons(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAsNext(DefTypeCursor& cursor, DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters().setFreeOnError().setRelativePosition(VirtualCollection::RPAfter), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAsPrevious(DefTypeCursor& cursor, DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters().setFreeOnError().setRelativePosition(VirtualCollection::RPBefore), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyRoot(const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedTreeInsertionParameters().setFreeOnError(), nullptr);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAsFirstSon(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedTreeInsertionParameters().setFreeOnError().setRelativePosition(VirtualCollection::RPAfter).setSons(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAsLastSon(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedTreeInsertionParameters().setFreeOnError().setRelativePosition(VirtualCollection::RPBefore).setSons(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAsNext(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedTreeInsertionParameters().setFreeOnError().setRelativePosition(VirtualCollection::RPAfter), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAsPrevious(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedTreeInsertionParameters().setFreeOnError().setRelativePosition(VirtualCollection::RPBefore), &cursor);
+      }
+
+   DefTemplate inline int
+   DefTypeCollection::count() const { return DefTypeFinal _queryCount(ExtendedTreeLocateParameters()); }
+   DefTemplate inline bool
+   DefTypeCollection::isEmpty() const { return DefTypeFinal _queryCount(ExtendedTreeLocateParameters()) == 0; }
+   DefTemplate inline bool
+   DefTypeCollection::hasSons(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _hasSons(cursor); }
+   DefTemplate inline bool
+   DefTypeCollection::canBeFather(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _canBeFather(cursor); }
+   DefTemplate inline int
+   DefTypeCollection::querySonsCount(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _querySonsCount(cursor); }
+      
+#ifdef DefTypeSorted
+   DefTemplate inline bool
+   DefTypeCollection::isElement(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element), ExtendedTreeLocateParameters()); }
+   DefTemplate inline bool
+   DefTypeCollection::contain(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element), ExtendedTreeLocateParameters()); }
+#endif // DefTypeSorted -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+   DefTemplate inline void
+   DefTypeCollection::replaceElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+           ExtendedTreeReplaceParameters().setFreeOnError(remModeOnError), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+           ExtendedTreeReplaceParameters().setFree().setFreeOnError(remModeOnError), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element.createSCopy()),
+           ExtendedTreeReplaceParameters().setFreeOnError(VirtualCollection::RMFree), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeElementAtWithCopy(DefTypeCursor& cursor,
+         const DefTypeElement& element)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element.createSCopy()),
+           ExtendedTreeReplaceParameters().setFree().setFreeOnError(VirtualCollection::RMFree), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replace(DefTypeElement* element, const ExtendedTreeReplaceParameters& parameters,
+         DefTypeCursor* cursor)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element), parameters, cursor); }
+
+   DefTemplate inline void
+   DefTypeCollection::swap(DefTypeCollection& collection)
+      {  DefTypeFinal _swap(collection); }
+   DefTemplate inline void
+   DefTypeCollection::swap(DefTypeCursor& fstCursor, DefTypeCursor& sndCursor)
+      {  EnhancedObject* temp = _getElement(ExtendedTreeLocateParameters(VirtualCollection::RPExact), &fstCursor);
+         DefTypeFinal _replace(_getElement(ExtendedTreeLocateParameters(VirtualCollection::RPExact), &sndCursor),
+               ExtendedTreeReplaceParameters(), &fstCursor);
+         try {
+            DefTypeFinal _replace(temp, ExtendedTreeReplaceParameters(), &sndCursor);
+         }
+         catch (...) {
+            DefTypeFinal _replace(temp, ExtendedTreeReplaceParameters(), &fstCursor);
+            throw;
+         }
+      }
+   DefTemplate inline void
+   DefTypeCollection::moveAsFirstSon(DefTypeCursor& originCursor)
+      {  DefTypeFinal _moveTo(*this,
+            ExtendedTreeReplaceParameters().setInsertionPosition(VirtualCollection::RPAfter).setInsertionSons()
+               .setRemovePosition(VirtualCollection::RPExact),
+            &originCursor, &originCursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::moveAsFirstSon(DefTypeCursor& originCursor, DefTypeCollection& collection, DefTypeCursor& destinationCursor)
+      {  DefTypeFinal _moveTo(collection,
+            ExtendedTreeReplaceParameters().setInsertionPosition(VirtualCollection::RPAfter).setInsertionSons()
+               .setRemovePosition(VirtualCollection::RPExact),
+            &originCursor, &destinationCursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::moveAsLastSon(DefTypeCursor& originCursor)
+      {  DefTypeFinal _moveTo(*this,
+            ExtendedTreeReplaceParameters().setInsertionPosition(VirtualCollection::RPBefore).setInsertionSons()
+               .setRemovePosition(VirtualCollection::RPExact),
+            &originCursor, &originCursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::moveAsLastSon(DefTypeCursor& originCursor, DefTypeCollection& collection, DefTypeCursor& destinationCursor)
+      {  DefTypeFinal _moveTo(collection,
+            ExtendedTreeReplaceParameters().setInsertionPosition(VirtualCollection::RPBefore).setInsertionSons()
+               .setRemovePosition(VirtualCollection::RPExact),
+            &originCursor, &destinationCursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::moveAsNextSon(DefTypeCursor& originCursor)
+      {  DefTypeFinal _moveTo(*this,
+            ExtendedTreeReplaceParameters().setInsertionPosition(VirtualCollection::RPAfter).setRemovePosition(VirtualCollection::RPExact),
+            &originCursor, &originCursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::moveAsNextSon(DefTypeCursor& originCursor, DefTypeCollection& collection, DefTypeCursor& destinationCursor)
+      {  DefTypeFinal _moveTo(collection,
+            ExtendedTreeReplaceParameters().setInsertionPosition(VirtualCollection::RPAfter).setRemovePosition(VirtualCollection::RPExact),
+            &originCursor, &destinationCursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::moveAsPreviousSon(DefTypeCursor& originCursor)
+      {  DefTypeFinal _moveTo(*this,
+            ExtendedTreeReplaceParameters().setInsertionPosition(VirtualCollection::RPBefore).setRemovePosition(VirtualCollection::RPExact),
+            &originCursor, &originCursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::moveAsPreviousSon(DefTypeCursor& originCursor, DefTypeCollection& collection, DefTypeCursor& destinationCursor)
+      {  DefTypeFinal _moveTo(collection,
+            ExtendedTreeReplaceParameters().setInsertionPosition(VirtualCollection::RPBefore).setRemovePosition(VirtualCollection::RPExact),
+            &originCursor, &destinationCursor);
+      }
+#else // DefJustInline -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   void add(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError = VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+             ExtendedTreeInsertionParameters(VirtualCollection::RPUndefined, dupMode, remModeOnError));
+      }
+   void add(DefTypeElement* element, DefTypeCursor& cursor,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError = VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+             ExtendedTreeInsertionParameters(VirtualCollection::RPUndefined, dupMode, remModeOnError), &cursor);
+      }
+   void addNew(DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+             ExtendedTreeInsertionParameters().setFreeOnError());
+      }
+   void addNew(DefTypeElement* element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+             ExtendedTreeInsertionParameters().setFreeOnError(), &cursor);
+      }
+   void addCopy(const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+             ExtendedTreeInsertionParameters().setFreeOnError());
+      }
+   void addCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+             ExtendedTreeInsertionParameters().setFreeOnError(), &cursor);
+      }
+   void addAsSon(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPUndefined, dupMode).setSons(), &cursor);
+      }
+   void addAsBrother(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPUndefined, dupMode), &cursor);
+      }
+   void addAsRemoteSon(DefTypeElement* element, const DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPUndefined, dupMode).setSons().setRemote(),
+            &const_cast<DefTypeCursor&>(cursor));
+      }
+   void addAsRemoteBrother(DefTypeElement* element, const DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPUndefined, dupMode).setRemote(), &const_cast<DefTypeCursor&>(cursor));
+      }
+   void add(DefTypeElement* element, const ExtendedTreeInsertionParameters& parameters,
+         DefTypeCursor* cursor=nullptr)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element), parameters, cursor); }
+
+#ifdef DefTypeSorted // DefTypeSorted, !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   bool locateOrAdd(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      { return locateOrAdd(element, *newCursor(), dupMode); }
+   bool locateOrAdd(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      { AssumeAllocation(element)
+        bool result = DefTypeFinal _locate(*DefTypeCastToCollectHandler(element),
+            ExtendedTreeLocateParameters(VirtualCollection::RPBefore), &cursor);
+        if (!result)
+            DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+               ExtendedTreeInsertionParameters(VirtualCollection::RPAfter, dupMode, VirtualCollection::RMRemove), &cursor);
+        return result;
+      }
+   bool locateOrAddCopy(const DefTypeElement& element)
+      {  return locateOrAdd(element, *newCursor()); }
+   bool locateOrAddCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  bool result = DefTypeFinal _locate(DefTypeCastToCollectHandler(element),
+            ExtendedTreeLocateParameters(VirtualCollection::RPBefore), &cursor);
+         if (!result)
+            DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+               ExtendedTreeInsertionParameters.setDuplicate().setFreeOnError().setRelativePosition(VirtualCollection::RPAfter),
+               &cursor);
+         return result;
+      }
+   bool locate(const DefTypeElement& element) const
+      { return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element),
+            ExtendedTreeLocateParameters(VirtualCollection::RPExact), nullptr);
+      }
+   bool locate(const DefTypeElement& element, DefTypeCursor& cursor, RelativePosition pos = VirtualCollection::RPExact) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element),
+            ExtendedTreeLocateParameters(pos), &cursor);
+      }
+#ifdef DefTypeKey // DefTypeKey, DefTypeSorted, !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   bool locateKey(DefTypeKey key) const
+      {  return _locateKey(key, ExtendedTreeLocateParameters(), nullptr, nullptr, nullptr); }
+   bool locateKey(DefTypeKey key, DefTypeCursor& cursor, RelativePosition pos=VirtualCollection::RPExact) const
+      {  return _locateKey(key, ExtendedTreeLocateParameters(pos), &cursor, nullptr, nullptr); }
+   DefTypeElement& findKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         _locateKey(key, ExtendedTreeLocateParameters(), cursor.key(), nullptr, nullptr);
+         return cursor->elementSAt();
+      }
+   const DefTypeElement& findKey(DefTypeKey key) const
+      {  PPCursor cursor = newCursor();
+         _locateKey(key, ExtendedTreeLocateParameters(), cursor.key(), nullptr, nullptr);
+         return cursor->elementAt();
+      }
+#endif // DefTypeKey -> DefTypeSorted, !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   void fullAssign(const DefTypeCollection& collection)
+      { DefTypeFinal _fullAssign(collection, ExtendedTreeReplaceParameters().setDuplicate().setFree()); }
+
+#ifdef DefTypeSorted
+   void addOrReplaceAt(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode freeMode=VirtualCollection::RMRemove, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  if (locateOrAdd(element, cursor, dupMode))
+            DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+               ExtendedTreeReplaceParameters().setDuplicate(dupMode).setFree(freeMode).setFreeOnError(remModeOnError),
+               &cursor);
+      }
+   void addCopyOrReplaceAt(DefTypeCursor& cursor, const DefTypeElement& element,
+         RemoveMode freeMode=VirtualCollection::RMRemove)
+      {  if (locateOrAddCopy(element, cursor))
+            DefTypeFinal _replace(DefTypeCastToCollectHandler(element.createSCopy()),
+               ExtendedTreeReplaceParameters().setFree(freeMode).setFreeOnError(), &cursor);
+      }
+#endif // DefTypeSorted -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+   void deleteAll() { DefTypeFinal _removeAll(ExtendedTreeSuppressParameters()); }
+   void deleteAll(DefTypeCursor& start, DefTypeCursor& end)
+      {  DefTypeFinal _removeAll(ExtendedTreeSuppressParameters(), &start, &end); }
+   void deleteAt(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters(VirtualCollection::RPExact, VirtualCollection::RMRemove), &cursor); }
+   void deleteBefore(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters(VirtualCollection::RPBefore, VirtualCollection::RMRemove), &cursor); }
+   void deleteAfter(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters(VirtualCollection::RPAfter, VirtualCollection::RMRemove), &cursor); }
+   void deleteAllSons(DefTypeCursor& cursor)
+      {  DefTypeFinal _removeAll(ExtendedTreeSuppressParameters().setSons(), &cursor); }
+   void deleteFirstSon(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters()
+            .setRelativePosition(VirtualCollection::RPAfter).setSons(), &cursor);
+      }
+   void deleteLastSon(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters()
+            .setRelativePosition(VirtualCollection::RPBefore).setSons(), &cursor);
+      }
+   void deleteRoot()
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters(), nullptr); }
+
+   void freeAll() { DefTypeFinal _removeAll(ExtendedTreeSuppressParameters().setFree()); }
+   void freeAll(DefTypeCursor& start, DefTypeCursor& end)
+      {  DefTypeFinal _removeAll(ExtendedTreeSuppressParameters().setFree(), &start, &end); }
+   void freeAt(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters(VirtualCollection::RPExact, VirtualCollection::RMFree), &cursor); }
+   void freeBefore(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters(VirtualCollection::RPBefore, VirtualCollection::RMFree), &cursor); }
+   void freeAfter(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters(VirtualCollection::RPAfter, VirtualCollection::RMFree), &cursor); }
+   void freeAllSons(DefTypeCursor& cursor)
+      {  DefTypeFinal _removeAll(ExtendedTreeSuppressParameters().setFree().setSons(), &cursor); }
+   void freeFirstSon(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters()
+            .setRelativePosition(VirtualCollection::RPAfter).setSons().setFree(), &cursor);
+      }
+   void freeLastSon(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters()
+            .setRelativePosition(VirtualCollection::RPBefore).setSons().setFree(), &cursor);
+      }
+   void freeRoot()
+      {  DefTypeFinal _remove(ExtendedTreeSuppressParameters().setFree(), nullptr); }
+   void remove(const ExtendedTreeSuppressParameters& parameters, DefTypeCursor* cursor=nullptr)
+      {  DefTypeFinal _remove(parameters, cursor); }
+   void removeAll(const ExtendedTreeSuppressParameters& parameters,
+         const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr)
+      {  DefTypeFinal _removeAll(parameters, start, end); }
+
+   DefTypeElement& getSElementAt(const DefTypeCursor& cursor) const
+      {  EnhancedObject* result = DefTypeFinal _getElement(ExtendedTreeLocateParameters(VirtualCollection::RPExact), &cursor);
+         AssumeCondition(result)
+         return *DefTypeCastFromCollectHandler(result);
+      }
+   const DefTypeElement& getElementAt(const DefTypeCursor& cursor) const
+      {  const EnhancedObject* result
+            = DefTypeFinal _getElement(ExtendedTreeLocateParameters(VirtualCollection::RPExact), &cursor);
+         AssumeCondition(result)
+         return *DefTypeCCastFromCollectHandler(result);
+      }
+   const DefTypeElement& getFirstSon(const DefTypeCursor& cursor) const
+      {  const EnhancedObject* result
+            = DefTypeFinal _getElement(ExtendedTreeLocateParameters().setAfter().setSons(), &cursor);
+         AssumeCondition(result)
+         return *DefTypeCCastFromCollectHandler(result);
+      }
+   const DefTypeElement& getLastSon(const DefTypeCursor& cursor) const
+      {  const EnhancedObject* result
+            = DefTypeFinal _getElement(ExtendedTreeLocateParameters().setBefore().setSons(), &cursor);
+         AssumeCondition(result)
+         return *DefTypeCCastFromCollectHandler(result);
+      }
+   DefTypeElement& getSFirstSon(const DefTypeCursor& cursor) const
+      {  EnhancedObject* result
+            = DefTypeFinal _getElement(ExtendedTreeLocateParameters().setAfter().setSons(), &cursor);
+         AssumeCondition(result)
+         return *DefTypeCastFromCollectHandler(result);
+      }
+   DefTypeElement& getSLastSon(const DefTypeCursor& cursor) const
+      {  EnhancedObject* result
+            = DefTypeFinal _getElement(ExtendedTreeLocateParameters().setBefore().setSons(), &cursor);
+         AssumeCondition(result)
+         return *DefTypeCastFromCollectHandler(result);
+      }
+   DefTypeElement& getSRoot() const
+      {  EnhancedObject* result = DefTypeFinal _getElement(ExtendedTreeLocateParameters(), nullptr);
+         AssumeCondition(result)
+         return *DefTypeCastFromCollectHandler(result);
+      }
+   const DefTypeElement& getRoot() const
+      {  const EnhancedObject* result = DefTypeFinal _getElement(ExtendedTreeLocateParameters(), nullptr);
+         AssumeCondition(result)
+         return *DefTypeCCastFromCollectHandler(result);
+      }
+   DefTypeElement& getElement(const ExtendedTreeLocateParameters& parameters,
+         const DefTypeCursor* cursor=nullptr) const
+      {  EnhancedObject* result = DefTypeFinal _getElement(parameters, cursor);
+         AssumeCondition(result)
+         return *DefTypeCastFromCollectHandler(result);
+      }
+#ifdef DefTypeSorted
+   bool gotoAny(DefTypeCursor& cursor, const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element),
+            ExtendedTreeLocateParameters(VirtualCollection::RPExact), &cursor);
+      }
+#endif // DefTypeSorted -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+   void insertRoot(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPAfter, dupMode, remModeOnError), nullptr);
+      }
+   void insertAsFirstSon(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPAfter, dupMode, remModeOnError).setSons(), &cursor);
+      }
+   void insertAsLastSon(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPBefore, dupMode, remModeOnError).setSons(), &cursor);
+      }
+   void insertAsNext(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPAfter, dupMode, remModeOnError), &cursor);
+      }
+   void insertAsPrevious(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters(VirtualCollection::RPBefore, dupMode, remModeOnError), &cursor);
+      }
+
+   void insertNewRoot(DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters().setFreeOnError(), nullptr);
+      }
+   void insertNewAsFirstSon(DefTypeCursor& cursor, DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters().setFreeOnError().setRelativePosition(VirtualCollection::RPAfter).setSons(), &cursor);
+      }
+   void insertNewAsLastSon(DefTypeCursor& cursor, DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters().setFreeOnError().setRelativePosition(VirtualCollection::RPBefore).setSons(), &cursor);
+      }
+   void insertNewAsNext(DefTypeCursor& cursor, DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters().setFreeOnError().setRelativePosition(VirtualCollection::RPAfter), &cursor);
+      }
+   void insertNewAsPrevious(DefTypeCursor& cursor, DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedTreeInsertionParameters().setFreeOnError().setRelativePosition(VirtualCollection::RPBefore), &cursor);
+      }
+   void insertCopyRoot(const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedTreeInsertionParameters().setFreeOnError(), nullptr);
+      }
+   void insertCopyAsFirstSon(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedTreeInsertionParameters().setFreeOnError().setRelativePosition(VirtualCollection::RPAfter).setSons(), &cursor);
+      }
+   void insertCopyAsLastSon(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedTreeInsertionParameters().setFreeOnError().setRelativePosition(VirtualCollection::RPBefore).setSons(), &cursor);
+      }
+   void insertCopyAsNextSon(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedTreeInsertionParameters().setFreeOnError().setRelativePosition(VirtualCollection::RPAfter), &cursor);
+      }
+   void insertCopyAsPreviousSon(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedTreeInsertionParameters().setFreeOnError().setRelativePosition(VirtualCollection::RPBefore), &cursor);
+      }
+
+   int count() const { return DefTypeFinal _queryCount(ExtendedTreeLocateParameters()); }
+   bool isEmpty() const { return DefTypeFinal _queryCount(ExtendedTreeLocateParameters()) == 0; }
+   bool hasSons(const DefTypeCursor& cursor) const { return DefTypeFinal _hasSons(cursor); }
+   bool canBeFather(const DefTypeCursor& cursor) const { return DefTypeFinal _canBeFather(cursor); }
+   int querySonsCount(const DefTypeCursor& cursor) const { return DefTypeFinal _querySonsCount(cursor); }
+      
+#ifdef DefTypeSorted
+   bool isElement(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element), ExtendedTreeLocateParameters()); }
+   bool contain(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element), ExtendedTreeLocateParameters()); }
+#endif // DefTypeSorted -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+   void replaceElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedTreeReplaceParameters().setFreeOnError(remModeOnError), &cursor);
+      }
+   void replaceAndFreeElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedTreeReplaceParameters().setFree().setFreeOnError(remModeOnError), &cursor);
+      }
+   void replaceElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedTreeReplaceParameters().setFreeOnError(VirtualCollection::RMFree), &cursor);
+      }
+   void replaceAndFreeElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedTreeReplaceParameters().setFree().setFreeOnError(VirtualCollection::RMFree), &cursor);
+      }
+   void replace(DefTypeElement* element, const ExtendedTreeReplaceParameters& parameters,
+         DefTypeCursor* cursor)
+      {  DefTypeFinal _replace(DefTypeCCastToCollectHandler(element), parameters, cursor); }
+
+   void swap(DefTypeCollection& collection)
+      {  DefTypeFinal _swap(collection); }
+   void swap(DefTypeCursor& fstCursor, DefTypeCursor& sndCursor)
+      {  EnhancedObject* temp = _getElement(ExtendedTreeLocateParameters(VirtualCollection::RPExact), &fstCursor);
+         DefTypeFinal _replace(_getElement(ExtendedTreeLocateParameters(VirtualCollection::RPExact), &sndCursor),
+               ExtendedTreeReplaceParameters(), &fstCursor);
+         try {
+            DefTypeFinal _replace(temp, ExtendedTreeReplaceParameters(), &sndCursor);
+         }
+         catch (...) {
+            DefTypeFinal _replace(temp, ExtendedTreeReplaceParameters(), &fstCursor);
+            throw;
+         }
+      }
+   void moveAsFirstSon(DefTypeCursor& originCursor)
+      {  DefTypeFinal _moveTo(*this,
+            ExtendedTreeReplaceParameters().setInsertionPosition(VirtualCollection::RPAfter).setInsertionSons()
+               .setRemovePosition(VirtualCollection::RPExact),
+            &originCursor, &originCursor);
+      }
+   void moveAsFirstSon(DefTypeCursor& originCursor, DefTypeCollection& collection, DefTypeCursor& destinationCursor)
+      {  DefTypeFinal _moveTo(collection,
+            ExtendedTreeReplaceParameters().setInsertionPosition(VirtualCollection::RPAfter).setInsertionSons()
+               .setRemovePosition(VirtualCollection::RPExact),
+            &originCursor, &destinationCursor);
+      }
+   void moveAsLastSon(DefTypeCursor& originCursor)
+      {  DefTypeFinal _moveTo(*this,
+            ExtendedTreeReplaceParameters().setInsertionPosition(VirtualCollection::RPBefore).setInsertionSons()
+               .setRemovePosition(VirtualCollection::RPExact),
+            &originCursor, &originCursor);
+      }
+   void moveAsLastSon(DefTypeCursor& originCursor, DefTypeCollection& collection, DefTypeCursor& destinationCursor)
+      {  DefTypeFinal _moveTo(collection,
+            ExtendedTreeReplaceParameters().setInsertionPosition(VirtualCollection::RPBefore).setInsertionSons()
+               .setRemovePosition(VirtualCollection::RPExact),
+            &originCursor, &destinationCursor);
+      }
+   void moveAsNextSon(DefTypeCursor& originCursor)
+      {  DefTypeFinal _moveTo(*this,
+            ExtendedTreeReplaceParameters().setInsertionPosition(VirtualCollection::RPAfter).setRemovePosition(VirtualCollection::RPExact),
+            &originCursor, &originCursor);
+      }
+   void moveAsNextSon(DefTypeCursor& originCursor, DefTypeCollection& collection, DefTypeCursor& destinationCursor)
+      {  DefTypeFinal _moveTo(collection,
+            ExtendedTreeReplaceParameters().setInsertionPosition(VirtualCollection::RPAfter).setRemovePosition(VirtualCollection::RPExact),
+            &originCursor, &destinationCursor);
+      }
+   void moveAsPreviousSon(DefTypeCursor& originCursor)
+      {  DefTypeFinal _moveTo(*this,
+            ExtendedTreeReplaceParameters().setInsertionPosition(VirtualCollection::RPBefore).setRemovePosition(VirtualCollection::RPExact),
+            &originCursor, &originCursor);
+      }
+   void moveAsPreviousSon(DefTypeCursor& originCursor, DefTypeCollection& collection, DefTypeCursor& destinationCursor)
+      {  DefTypeFinal _moveTo(collection,
+            ExtendedTreeReplaceParameters().setInsertionPosition(VirtualCollection::RPBefore).setRemovePosition(VirtualCollection::RPExact),
+            &originCursor, &destinationCursor);
+      }
+#endif // !DefJustInline -> !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // !DefTypeInheritedCollection -> !DefJustDeclare, !DefCursor
+#endif // !DefJustDeclare -> !DefCursor
+#else // DefCursor
+#ifdef DefTypeInheritedCollection // -> DefTypeInheritedCollection, DefCursor
+   DefTypeCursor& operator++() { setToNext(VirtualTreeCursor::RTopDown); return *this; }
+   DefTypeCursor& operator--() { setToPrevious(VirtualTreeCursor::RTopDown); return *this; }
+
+   DefTypeElement* getSElement() const
+      {  return (DefTypeElement*) DefTypeCastFromCollectHandler(DefTypeFinal _getSElement()); }
+   const DefTypeElement* getElement() const { return getSElement(); }
+   const DefTypeElement& elementAt() const { return *getSElement(); }
+   DefTypeElement& elementSAt() const { return *getSElement(); }
+#else // DefTypeInheritedCollection -> !DefTypeInheritedCollection, DefCursor
+   bool isRoot() const
+      {  return DefTypeFinal _isPositionned(VirtualTreeCursor::ExtendedTreeLocateParameters(), nullptr); }
+   bool isBrother(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _isPositionned(
+            VirtualTreeCursor::ExtendedTreeLocateParameters(VirtualCollection::RPUndefined), &cursor);
+      }
+   bool isSon(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _isPositionned(
+            VirtualTreeCursor::ExtendedTreeLocateParameters(VirtualCollection::RPUndefined).setSons(), &cursor);
+      }
+   bool isFather(const DefTypeCursor& cursor) const
+      {  return cursor.isSon(*this); }
+   bool isFirstSon() const
+      {  return DefTypeFinal _isPositionned(
+            VirtualTreeCursor::ExtendedTreeLocateParameters(VirtualCollection::RPAfter).setSons(), nullptr);
+      }
+   bool isLastSon() const
+      {  return DefTypeFinal _isPositionned(
+            VirtualTreeCursor::ExtendedTreeLocateParameters(VirtualCollection::RPBefore).setSons(), nullptr);
+      }
+   bool isFirstSon(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _isPositionned(
+            VirtualTreeCursor::ExtendedTreeLocateParameters(VirtualCollection::RPAfter).setSons(), &cursor);
+      }
+   bool isLastSon(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _isPositionned(
+            VirtualTreeCursor::ExtendedTreeLocateParameters(VirtualCollection::RPBefore).setSons(), &cursor);
+      }
+   bool isFirstDescendant() const
+      {  return DefTypeFinal _isPositionned(
+            VirtualTreeCursor::ExtendedTreeLocateParameters(VirtualCollection::RPAfter).setInnerSons(), nullptr);
+      }
+   bool isLastDescendant() const
+      {  return DefTypeFinal _isPositionned(
+            VirtualTreeCursor::ExtendedTreeLocateParameters(VirtualCollection::RPBefore).setInnerSons(), nullptr);
+      }
+   bool isFirstDescendant(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _isPositionned(
+            VirtualTreeCursor::ExtendedTreeLocateParameters(VirtualCollection::RPAfter).setInnerSons(), &cursor);
+      }
+   bool isLastDescendant(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _isPositionned(
+            VirtualTreeCursor::ExtendedTreeLocateParameters(VirtualCollection::RPBefore).setInnerSons(), &cursor);
+      }
+   bool isFirst(Route route) const
+      {  return ((route == RTopDown) ? isRoot() : isFirstDescendant()); }
+   bool isLast(Route route) const
+      {  return ((route == RTopDown) ? isLastDescendant() : isRoot()); }
+
+   bool setToRoot()
+      {  return DefTypeFinal _position(TreePosition().setRoot().setStart()); }
+   bool setToFirstSon()
+      {  return DefTypeFinal _position(TreePosition().setSon().setStart()); }
+   bool setToInvalidSon()
+      {  return DefTypeFinal _position(TreePosition().setSon().setInvalid()); }
+   bool setToLastSon()
+      {  return DefTypeFinal _position(TreePosition().setSon().setEnd()); }
+   bool setToAnySon()
+      {  return DefTypeFinal _position(TreePosition().setSon().setAny()); }
+   bool setToFather()
+      {  return DefTypeFinal _position(TreePosition().setFather().setStart()); }
+
+   bool setToFirstBrother()
+      {  return DefTypeFinal _position(TreePosition().setBrother().setStart()); }
+   bool setToLastBrother()
+      {  return DefTypeFinal _position(TreePosition().setBrother().setEnd()); }
+   bool setToNextBrother()
+      {  return DefTypeFinal _position(TreePosition().setBrother().setForward()); }
+   bool setToPreviousBrother()
+      {  return DefTypeFinal _position(TreePosition().setBrother().setBackward()); }
+   bool setToInvalidBrother()
+      {  return DefTypeFinal _position(TreePosition().setBrother().setInvalid()); }
+   bool setToAnyBrother()
+      {  return DefTypeFinal _position(TreePosition().setBrother().setAny()); }
+   bool position(const TreePosition& pos) { return DefTypeFinal _position(pos); }
+
+   DefTypeCursor& operator++() { setToNext(RTopDown); return *this; }
+   DefTypeCursor& operator--() { setToPrevious(RTopDown); return *this; }
+
+   bool isEqual(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _isEqual(cursor); }
+   void invalidate() { DefTypeFinal _position(TreePosition(TreePosition::DInvalid, TreePosition::DMRoot)); }
+   ValidityMode getMode() const { return DefTypeFinal _getMode(); }
+
+   DefTypeElement* getSElement() const
+      {  return (DefTypeElement*) DefTypeCastFromCollectHandler(DefTypeFinal _getSElement()); }
+   const DefTypeElement* getElement() const { return getSElement(); }
+   const DefTypeElement& elementAt() const { return *getSElement(); }
+   DefTypeElement& elementSAt() const { return *getSElement(); }
+   void gotoReference(const DefTypeElement& element)
+      {  DefTypeFinal _gotoReference(*DefTypeCCastToCollectHandler(&element)); }
+#endif // DefTypeInheritedCollection
+#endif // DefCursor
+
+#include "Collection/ELMCollection.incfoot"

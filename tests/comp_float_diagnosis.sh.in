@@ -1,0 +1,155 @@
+#!/bin/bash
+
+# @CXXFLAGS@
+
+if [ -z "${AUTOTEST}" ]
+then
+if [ -z "${FLOATDIAGNOSISHOME}" ]
+then
+   prefix=@prefix@
+   exec_prefix=@exec_prefix@
+   FLOATDIAGNOSIS_INCLUDE=@includedir@/@PACKAGE@
+   FLOATDIAGNOSIS_LIB=@libdir@/@PACKAGE@
+   FLOATDIAGNOSIS_TESTS_INCLUDE=${FLOATDIAGNOSIS_INCLUDE}
+   FLOATDIAGNOSIS_ICONFIG_INCLUDE=-I${FLOATDIAGNOSIS_INCLUDE}
+else
+   FLOATDIAGNOSIS_INCLUDE=${FLOATDIAGNOSISHOME}/include/@PACKAGE@
+   FLOATDIAGNOSIS_TESTS_INCLUDE=${FLOATDIAGNOSIS_INCLUDE}
+   FLOATDIAGNOSIS_ICONFIG_INCLUDE=-I${FLOATDIAGNOSIS_INCLUDE}
+   FLOATDIAGNOSIS_LIB=${FLOATDIAGNOSISHOME}/lib/@PACKAGE@
+fi
+else
+   FLOATDIAGNOSIS_INCLUDE=@top_srcdir@
+   FLOATDIAGNOSIS_TESTS_INCLUDE=@top_srcdir@/tests
+   FLOATDIAGNOSIS_ICONFIG_INCLUDE="-I@top_builddir@ -I@top_builddir@/applications -I@top_builddir@/tests"
+   FLOATDIAGNOSIS_LIB=@top_builddir@/.libs
+fi
+
+cxxflags=" -DFLOAT_DIAGNOSIS -I${FLOATDIAGNOSIS_INCLUDE} \
+   -std=c++11 @FLOAT_ALLOW_READ_EXCEPTION@ \
+   @FLOAT_GENERIC_BASE_LONG@ @FLOAT_GENERIC_BASE_UNSIGNED@ @FLOAT_LONG_WRITE@ \
+   @FLOAT_PURE_ZONOTOPE@ @FLOAT_REAL_BITS_NUMBER@ @FLOAT_TRIGGER_PERCENT@ \
+   @FLOAT_ZONOTOPE_ALLOW_SIMPLEX@ @FLOAT_ZONOTOPE_DOES_ABSORB_HIGH_LEVEL@ \
+   @FLOAT_ZONOTOPE_DOES_EXCLUDE_CONSTANT_FROM_SYMBOL_ABSORPTION@ @FLOAT_ZONOTOPE_LIMIT_SYMBOL_ABSORPTION@
+   ${FLOATDIAGNOSIS_ICONFIG_INCLUDE} -I${FLOATDIAGNOSIS_INCLUDE}/utils -I${FLOATDIAGNOSIS_INCLUDE}/algorithms \
+   -I${FLOATDIAGNOSIS_INCLUDE}/applications \
+   -include ${FLOATDIAGNOSIS_TESTS_INCLUDE}/std_header.h"
+
+opt_params_count=0
+
+loop_unstable=0
+optim=0
+verbose=0
+analysis=0
+interface=0
+
+for param in "$@"
+do
+  if [ "${param:0:1}" == "-" ]
+  then
+    ((opt_params_count++))
+    if [ "${param}" == "-interval" ]
+    then
+      analysis=2
+    elif [ "${param}" == "-exact" ]
+    then
+      analysis=0
+    elif [ "${param}" == "-affine" ]
+    then
+      analysis=1
+    elif [ "${param}" == "-optim" ]
+    then
+      optim=1
+    elif [ "$param" == "-atomic" ]
+    then
+      cxxflags+=" -DFLOAT_ATOMIC"
+    elif [ "$param" == "-keep-double" ]
+    then
+      cxxflags+=" -DFLOAT_KEEP_DOUBLE"
+    elif [ "$param" == "-threshold-detection" ]
+    then
+      cxxflags+=" -DFLOAT_THRESHOLD_DETECTION"
+    elif [ "$param" == "-loop" ]
+    then
+      cxxflags+=" -DFLOAT_LOOP_UNSTABLE"
+      loop_unstable=1
+    elif [ "$param" == "-verbose" ]
+    then
+      verbose=1
+    elif [ "$param" == "-print-path" ]
+    then
+      cxxflags+=" -DFLOAT_PRINT_PATH"
+    elif [ "$param" == "-scenario" ]
+    then
+      cxxflags+=" -DFLOAT_SCENARIO"
+    elif [ "$param" == "-interface" ]
+    then
+      interface=1
+    else
+      ((opt_params_count--))
+      break
+    fi
+  else
+    break
+  fi
+done
+
+if [ ${analysis} -eq 0 ]
+then
+  cxxflags+=" -DFLOAT_EXACT"
+elif [ ${analysis} -eq 1 ]
+then
+  cxxflags+=" -DFLOAT_AFFINE"
+elif [ ${analysis} -eq 2 ]
+then
+  cxxflags+=" -DFLOAT_INTERVAL"
+else
+  cxxflags+=" -DFLOAT_AFFINE"
+fi
+
+if [ ${loop_unstable} = 0 ]
+then
+  cxxflags+=" -DFLOAT_FIRST_FOLLOW_EXE"
+fi
+if [ ${optim} = 1 ]
+then
+  cxxflags+=" -O3 -DDefineDebugLevel=1 -Wall -Wno-unused-but-set-variable \
+           -Wno-unused-local-typedefs -Wno-unused-variable -Woverloaded-virtual -fmessage-length=0"
+else
+  cxxflags+=" -g -O0 -D_GLIBCXX_USE_CXX11_ABI=0"
+fi
+if [ ${verbose} = 0 ]
+then
+  cxxflags+=" -DFLOAT_SILENT_COMPUTATIONS"
+fi
+
+if [ ${interface} = 1 ]
+then
+  cxxflags+=" -DFLOAT_INTERFACE"
+  ldflags="-L${FLOATDIAGNOSIS_LIB} -Wl,-rpath,${FLOATDIAGNOSIS_LIB} -lm -lFloatDiagnosisInterface"
+else
+  ldflags="-L${FLOATDIAGNOSIS_LIB} -Wl,-rpath,${FLOATDIAGNOSIS_LIB} -lm -lFloatDiagnosis"
+fi
+
+ldflags+=" @LDFLAGS@"
+
+shift ${opt_params_count}
+
+basefile=${1##*/}
+basefile=${basefile%.c} 
+if [ "${basefile}" == "" ]
+then
+  basefile=progname
+fi
+
+for param in "$@"
+do
+  if [ "${param}" == "-c" ]
+  then
+    ldflags=""
+  fi
+done
+
+echo @CXX@ -DPROG_NAME="$basefile" ${cxxflags} $* ${ldflags}
+@CXX@ -DPROG_NAME="$basefile" ${cxxflags} $* ${ldflags}
+

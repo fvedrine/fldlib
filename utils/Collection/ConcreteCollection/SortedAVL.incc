@@ -1,0 +1,353 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Concrete collections
+// File      : SortedAVL.incc
+// Description :
+//   Implementation of AVLs as concrete sorted collections.
+//
+
+/*****************************************************************************/
+/* DefTypeBinaryParent                 : AVL implementation with parent edge */
+/*****************************************************************************/
+
+#ifndef DefTypeBinaryParent
+#define DefGenericAVL GenericAVL
+#define DefImplBinaryTree ImpBinaryTree
+#define DefGenericAVLCursor GenericAVLCursor
+#else
+#define DefGenericAVL GenericParentAVL
+#define DefImplBinaryTree ImplParentBinaryTree
+#define DefGenericAVLCursor GenericParentAVLCursor
+#endif
+
+void
+DefGenericAVL::_fullAssign(const DefGenericAVL& source, const ExtendedReplaceParameters& parameters) {
+   VirtualSortedCollection::_fullAssign(source, parameters);
+   if (this != &source) {
+      InvalidateNotification invalidation;
+      notifyCursorUpdate(invalidation);
+      if (parameters.isDuplicate()) {
+         if (!parameters.isFree())
+            inheritedImplementation::removeAll();
+         try { inheritedImplementation::duplicate(source, parameters.getSCast()); }
+         catch (...) { inheritedImplementation::freeAll(); throw; }
+      }
+      else if (parameters.isFree())
+         inheritedImplementation::freeAll();
+   };
+}
+
+void
+DefGenericAVL::_add(Node* newElement, const ExtendedInsertionParameters& parameters,
+      DefGenericAVLCursor* cursor) {
+   inherited::_add(newElement, parameters, cursor);
+   AddGuardian<Node> guard(*this, newElement, parameters);
+   newElement = guard.handleDuplication();
+#ifndef DefTypeBinaryParent
+   InsertionNotification guardNotification;
+   InsertionNotification* notification
+      = (cursor || CastCursorHandler::castTo(*this).isReferenced()) ? &guardNotification : nullptr;
+#endif
+   if (parameters.isInsertion()) {
+      if ((cursor == nullptr) || (!cursor->getImplementation().isValid())) {
+         if (parameters.getRelativePosition() == RPAfter) { // insertion at the beginning
+            AssumeCondition((inheritedImplementation::count() == 0)
+               || (_compareElement(*newElement, *inheritedImplementation::queryFirst()) == CRLess))
+#ifndef DefTypeBinaryParent
+            inheritedImplementation::addAsFirst(newElement, notification);
+#else
+            inheritedImplementation::addAsFirst(newElement);
+#endif
+            guard.release();
+            if (cursor && !parameters.isRemote())
+               cursor->getImplementation().setToFirst(*this);
+         }
+         else { // insertion at the end
+            AssumeCondition((inheritedImplementation::count() == 0)
+               || (_compareElement(*newElement, *inheritedImplementation::queryLast()) == CRGreater))
+#ifndef DefTypeBinaryParent
+            inheritedImplementation::addAsLast(newElement, notification);
+#else
+            inheritedImplementation::addAsLast(newElement);
+#endif
+            guard.release();
+            if (cursor && !parameters.isRemote())
+               cursor->getImplementation().setToLast(*this);
+         };
+      }
+      else { // insertion before or after
+#ifndef DefTypeBinaryParent
+         inheritedImplementation::Cursor copyCursor
+            = inheritedImplementation::Cursor(inheritedImplementation::Cursor::NoAllocation());
+#else
+         inheritedImplementation::Cursor copyCursor;
+#endif
+         inheritedImplementation::Cursor* insertionCursor = &cursor->getImplementation();
+         if (parameters.isRemote()) {
+#ifndef DefTypeBinaryParent
+            copyCursor.setAllocationHeight(height()+1);
+#endif
+            copyCursor = cursor->getImplementation();
+            insertionCursor = &copyCursor;
+         };
+         ExtendedInsertionParameters copyParameters(parameters);
+         if ((parameters.getRelativePosition() == RPBefore) && insertionCursor->setToLeft()) {
+            AssumeCondition((_compareElement(*newElement, *insertionCursor->elementAt()) == CRGreater))
+            while (insertionCursor->setToRight());
+            copyParameters.setRelativePosition(RPAfter);
+         }
+         else if ((parameters.getRelativePosition() == RPAfter) && insertionCursor->setToRight()) {
+            AssumeCondition((_compareElement(*newElement, *insertionCursor->elementAt()) == CRLess))
+            while (insertionCursor->setToLeft());
+            copyParameters.setRelativePosition(RPBefore);
+         };
+
+         if (copyParameters.getRelativePosition() == RPBefore) {
+            AssumeCondition((_compareElement(*newElement, *insertionCursor->elementAt()) == CRLess))
+#ifndef DefTypeBinaryParent
+            inheritedImplementation::addAsSon(newElement, *insertionCursor, COL::ImplBinaryNode::BLeft, notification);
+#else
+            inheritedImplementation::addAsSon(newElement, *insertionCursor, COL::ImplBinaryNode::BLeft);
+#endif
+            guard.release();
+         }
+         else {
+            AssumeCondition((_compareElement(*newElement, *insertionCursor->elementAt()) == CRGreater))
+#ifndef DefTypeBinaryParent
+            inheritedImplementation::addAsSon(newElement, *insertionCursor, COL::ImplBinaryNode::BRight, notification);
+#else
+            inheritedImplementation::addAsSon(newElement, *insertionCursor, COL::ImplBinaryNode::BRight);
+#endif
+            guard.release();
+         };
+      };
+   }
+   else { // insertion in a sorted collection
+      PPCursor garbageCursor;
+      Cursor* locateCursor = nullptr;
+      if (cursor && !parameters.isRemote())
+         locateCursor = cursor;
+      else {
+         garbageCursor = newCursor();
+         locateCursor = garbageCursor.key();
+      };
+
+      LocationResult result = _locate(*newElement, ExtendedLocateParameters(RPUndefined), locateCursor);
+      AssumeCondition(!result)
+#ifndef DefTypeBinaryParent
+      inheritedImplementation::addAsSon(newElement, locateCursor->getImplementation(),
+         (result.getInsertionPosition() == RPAfter) ? COL::ImplBinaryNode::BRight : COL::ImplBinaryNode::BLeft, notification);
+#else
+      inheritedImplementation::addAsSon(newElement, locateCursor->getImplementation(),
+         (result.getInsertionPosition() == RPAfter) ? COL::ImplBinaryNode::BRight : COL::ImplBinaryNode::BLeft);
+#endif
+      guard.release();
+   };
+
+#ifndef DefTypeBinaryParent
+   if (notification) {
+      if (cursor && !parameters.isRemote())
+         notification->setOrigin(*cursor);
+      notifyCursorUpdate(*notification);
+   };
+#endif
+}
+
+void
+DefGenericAVL::_addAll(const DefGenericAVL& source, const ExtendedInsertionParameters& parameters,
+      DefGenericAVLCursor* cursor, const DefGenericAVLCursor* startSource,
+      const DefGenericAVLCursor* endSource) {
+   inherited::_addAll(source, parameters, cursor, startSource, endSource);
+   AssumeCondition(parameters.isDuplicate())
+   if (inheritedImplementation::isEmpty() && !cursor && !startSource && !endSource) {
+      if (this != &source) {
+         try { inheritedImplementation::duplicate(source, parameters.getSCast()); }
+         catch (...) { inheritedImplementation::freeAll(); throw; }
+      };
+   }
+   else
+      VirtualCollection::paddAll(source, parameters, cursor, startSource, endSource);
+}
+
+void
+DefGenericAVL::_moveAllTo(DefGenericAVL& destination, const ExtendedReplaceParameters& parameters,
+      const DefGenericAVLCursor* startCursor, const DefGenericAVLCursor* endCursor,
+      DefGenericAVLCursor* destinationCursor) {
+   inherited::_moveAllTo(destination, parameters, startCursor, endCursor, destinationCursor);
+   if (inheritedImplementation::isEmpty() && !startCursor
+         && !endCursor && !destinationCursor)
+      inheritedImplementation::swap(destination);
+   else
+      VirtualCollection::pmoveAllTo(destination, parameters, startCursor, endCursor, destinationCursor);
+}
+
+void
+DefGenericAVL::_remove(const ExtendedSuppressParameters& parameters, DefGenericAVLCursor* cursor) {
+   inherited::_remove(parameters, cursor);
+   SuppressionNotification guardNotification;
+   SuppressionNotification* notification = nullptr;
+   Node* oldNode = nullptr;
+   
+   if (cursor) {
+      inheritedImplementation::Cursor& implCursor = cursor->getImplementation();
+      setCursor(implCursor, parameters.getRelativePosition());
+      notification = !CastCursorHandler::castTo(*this).isSingleReferenced() ? &guardNotification : nullptr;
+   
+      oldNode = implCursor.elementAt();
+      CursorMove move = inheritedImplementation::removeAt(implCursor, notification);
+
+      if (notification)
+         notification->setOrigin(*cursor);
+      if (parameters.isExact() || parameters.isUndefined())
+         implCursor.invalidate();
+      else
+         inheritedImplementation::adjustRemove(implCursor,
+            parameters.isAfter() ? COL::ImplBinaryNode::BRight : COL::ImplBinaryNode::BLeft, move);
+   }
+   else {
+      inheritedImplementation::Cursor implCursor(*this);
+      setCursor(implCursor, parameters.getRelativePosition(), nullptr);
+      notification = CastCursorHandler::castTo(*this).isReferenced() ? &guardNotification : nullptr;
+   
+      oldNode = implCursor.elementAt();
+      inheritedImplementation::removeAt(implCursor, notification);
+   };
+   if (notification)
+      notifyCursorUpdate(*notification);
+   if (parameters.isFree() && oldNode)
+      delete oldNode;
+}
+
+void
+DefGenericAVL::_removeAll(const ExtendedSuppressParameters& parameters,
+      const DefGenericAVLCursor* start, const DefGenericAVLCursor* end) {
+   inherited::_removeAll(parameters);
+   if (!start && !end) {
+      InvalidateNotification invalidation;
+      notifyCursorUpdate(invalidation);
+      if (parameters.isFree())
+         inheritedImplementation::freeAll();
+      else
+         inheritedImplementation::removeAll();
+   }
+   else
+      inherited::premoveAll(parameters, start, end);
+}
+
+void
+DefGenericAVL::_replace(Node* element, const ExtendedReplaceParameters& parameters,
+      DefGenericAVLCursor* cursor) {
+   inherited::_replace(element, parameters, cursor);
+   AddGuardian<Node> guard(*this, element, parameters); 
+
+   if (parameters.getInsertionPosition() != RPUndefined) {
+      inheritedImplementation::Cursor implCursor(*this);
+      setCursor(implCursor, parameters.getRemovePosition(),
+            cursor ? &cursor->getImplementation() : nullptr);
+      element = guard.handleDuplication();
+      Node* removedNode = implCursor.elementAt();
+      ReplaceNotification notification;
+      inheritedImplementation::replaceAt(implCursor, element, &notification);
+      guard.release();
+      notifyCursorUpdate(notification);
+      if (parameters.isFree() && removedNode)
+         delete removedNode;
+   }
+   else { // perform a move
+      _remove(parameters, cursor);
+      guard.release();
+      _add(element, parameters, cursor);
+   };
+}
+
+DefGenericAVL::Node*
+DefGenericAVL::_getElement(const ExtendedLocateParameters& parameters,
+      const DefGenericAVLCursor* cursor) const {
+   inherited::_getElement(parameters, cursor);
+   if (parameters.getRelativePosition() == RPExact)
+      return cursor->getImplementation().elementAt();
+   else if (!cursor || !cursor->getImplementation().isValid())
+      return (parameters.getRelativePosition() == RPBefore)
+         ? inheritedImplementation::queryLast() : inheritedImplementation::queryFirst();
+   else {
+      inheritedImplementation::Cursor implCursor(cursor->getImplementation());
+      if (parameters.getRelativePosition() == RPBefore)
+         implCursor.setToPrevious(*this);
+      else
+         implCursor.setToNext(*this);
+      return implCursor.elementAt();
+   };
+}
+
+/************************************************/
+/* Implementation of the class GenericAVLCursor */
+/************************************************/
+
+bool
+DefGenericAVLCursor::_isPositionned(const ExtendedLocateParameters& pos,
+      const VirtualCollectionCursor* pvccCursor) const {
+   inherited::_isPositionned(pos, pvccCursor);
+   const DefGenericAVLCursor& cursor = (const DefGenericAVLCursor&) *pvccCursor;
+   switch (pos.getRelativePosition()) {
+      case VirtualCollection::RPAfter:
+         return pvccCursor ? ciPosition.isNext(cursor.ciPosition, getSupport().isEmpty())
+            : ciPosition.isFirst();
+      case VirtualCollection::RPBefore:
+         return pvccCursor ? ciPosition.isPrevious(cursor.ciPosition, getSupport().isEmpty())
+            : ciPosition.isLast();
+      case VirtualCollection::RPExact:
+         return ciPosition.elementAt() == cursor.ciPosition.elementAt();
+      default:
+         return true;
+   };
+}
+
+bool
+DefGenericAVLCursor::_position(const Position& pos) {
+   inherited::_position(pos);
+   switch (pos.getDirection()) {
+      case Position::DInvalid:
+         ciPosition.invalidate(); return false;
+      case Position::DStart:
+         return ciPosition.setToFirst(getSupport());
+      case Position::DEnd:
+         return ciPosition.setToLast(getSupport());
+      case Position::DExact:
+         return ciPosition.isValid();
+      case Position::DForward:
+         return ciPosition.setToNext(getSupport());
+      case Position::DBackward:
+         return ciPosition.setToPrevious(getSupport());
+      case Position::DAny:
+         return ciPosition.setToInnerDepth(getSupport());
+   };
+   return false;
+}
+
+#undef DefGenericAVL
+#undef DefImplBinaryTree
+#undef DefGenericAVLCursor
+

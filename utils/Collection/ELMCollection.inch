@@ -1,0 +1,2863 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Abstract collections
+// File      : ELMCollection.inch
+// Description :
+//   Definition of element typing in collections.
+//
+
+#include "Collection/ELMCollection.incheader"
+
+#ifndef DefCursor
+#ifdef DefJustDeclare
+
+#ifndef DefExcludeElement
+   void add(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void add(DefTypeElement* element, DefTypeCursor& cursor,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void addNew(DefTypeElement* element);
+   void addNew(DefTypeElement* element, DefTypeCursor& cursor);
+   void addCopy(const DefTypeElement& element);
+   void addCopy(const DefTypeElement& element, DefTypeCursor& cursor);
+#endif // !DefExcludeElement -> DefJustDeclare
+
+   void add(DefTypeElement* element, const ExtendedInsertionParameters& parameters,
+         DefTypeCursor* cursor=nullptr);
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+   bool locateOrAdd(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate);
+   bool locateOrAdd(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate);
+   bool locateOrAddCopy(const DefTypeElement& element);
+   bool locateOrAddCopy(const DefTypeElement& element, DefTypeCursor& cursor);
+
+   bool locate(const DefTypeElement& element) const;
+   LocationResult locate(const DefTypeElement& element, DefTypeCursor& cursor, RelativePosition pos = VirtualCollection::RPUndefined) const;
+   LocationResult locate(const DefTypeElement& element, const ExtendedLocateParameters& parameters,
+         DefTypeCursor* cursor=nullptr, const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr) const;
+#endif // !DefExcludeElement -> DefJustDeclare, DefTypeSorted
+#if defined(DefTypeKey) && (!defined(DefBaseMultipleInterface) || defined(DefNeedLocate))
+   bool locateKey(DefTypeKey key) const;
+   LocationResult locateKey(DefTypeKey key, DefTypeCursor& cursor, RelativePosition pos=VirtualCollection::RPUndefined) const;
+   LocationResult locateKey(DefTypeKey key, const ExtendedLocateParameters& parameters,
+         DefTypeCursor* cursor=nullptr, const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr) const;
+
+   DefTypeElement& findKey(DefTypeKey key);
+   const DefTypeElement& findKey(DefTypeKey key) const;
+
+#ifdef DefMapInterface
+   DefTypeControlKey queryKeyAt(const DefTypeCursor& cursor) const;
+   DefTypeControlKey queryNextKey(const DefTypeCursor& cursor) const;
+   DefTypeControlKey queryPreviousKey(const DefTypeCursor& cursor) const;
+   DefTypeControlKey queryFirstKey() const;
+   DefTypeControlKey queryLastKey() const;
+   DefTypeControlKey queryKey(const ExtendedLocateParameters& parameters, const DefTypeCursor* cursor=nullptr) const;
+#endif // DefMapInterface
+#endif // DefTypeKey -> DefTypeSorted, DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> DefJustDeclare, !DefCursor
+
+#ifndef DefBaseMultipleInterface   
+#ifndef HasDefTypeCollection
+   void fullAssign(const VirtualCollection& collection);
+   void fullAssign(const VirtualCollection& collection, const ExtendedReplaceParameters& params);
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, DefJustDeclare, !DefCursor
+   void fullAssign(const DefTypeCollection& collection);
+   void fullAssign(const DefTypeCollection& collection, const ExtendedReplaceParameters& params);
+
+#ifndef HasDefTypeCollection
+   void addAll(const VirtualCollection& collection);
+   void addAll(const VirtualCollection& collection, const VirtualCollectionCursor& start);
+   void addAll(const VirtualCollection& collection, const VirtualCollectionCursor& start,
+         const VirtualCollectionCursor& end);
+   void addAll(const VirtualCollection& collection, const ExtendedInsertionParameters& parameters,
+         VirtualCollectionCursor* cursor, const VirtualCollectionCursor* start,
+         const VirtualCollectionCursor* end);
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, DefJustDeclare, !DefCursor
+   void addAll(const DefTypeCollection& collection);
+   void addAll(const DefTypeCollection& collection, const DefTypeCursor& start);
+   void addAll(const DefTypeCollection& collection, const DefTypeCursor& start,
+         const DefTypeCursor& end);
+   void addAll(const DefTypeCollection& collection, const ExtendedInsertionParameters& parameters,
+         DefTypeCursor* cursor=nullptr, const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr);
+
+#ifndef HasDefTypeCollection
+   void addCopyAll(const VirtualCollection& collection);
+   void addCopyAll(const VirtualCollection& collection, const VirtualCollectionCursor& start);
+   void addCopyAll(const VirtualCollection& collection, const VirtualCollectionCursor& start,
+         const VirtualCollectionCursor& end);
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, DefJustDeclare, !DefCursor
+   void addCopyAll(const DefTypeCollection& collection);
+   void addCopyAll(const DefTypeCollection& collection, const DefTypeCursor& start);
+   void addCopyAll(const DefTypeCollection& collection, const DefTypeCursor& start,
+         const DefTypeCursor& end);
+
+#ifndef HasDefTypeCollection
+   void moveAllTo(VirtualCollection& destination);
+   void moveAllTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+         const DefTypeCursor* startCursor, const DefTypeCursor* endCursor,
+         VirtualCollectionCursor* destinationCursor);
+
+   void moveTo(VirtualCollection& destination, VirtualCollectionCursor& cursor);
+   void moveTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+         VirtualCollectionCursor* cursor, VirtualCollectionCursor* destinationCursor);
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, DefJustDeclare, !DefCursor
+   void moveTo(DefTypeCollection& destination, DefTypeCursor& cursor);
+   void moveTo(DefTypeCollection& destination, const ExtendedReplaceParameters& parameters,
+         DefTypeCursor* cursor=nullptr, DefTypeCursor* destinationCursor=nullptr);
+   void moveAllTo(DefTypeCollection& destination);
+   void moveAllTo(DefTypeCollection& destination, const ExtendedReplaceParameters& parameters,
+         const DefTypeCursor* startCursor=nullptr, const DefTypeCursor* endCursor=nullptr,
+         DefTypeCursor* destinationCursor=nullptr);
+   void swap(DefTypeCollection& source);
+#endif // DefBaseMultipleInterface -> DefJustDeclare, !DefCursor
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+   void addOrReplaceAt(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode freeMode=VirtualCollection::RMRemove,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void addCopyOrReplaceAt(DefTypeCursor& cursor, const DefTypeElement& element,
+         RemoveMode freeMode=VirtualCollection::RMRemove);
+#endif // DefExcludeElement -> DefTypeSorted, DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> DefJustDeclare, !DefCursor
+
+#if (!defined(DefBaseMultipleInterface) || defined(DefNeedLocate))
+   void deleteAll();
+   void deleteAll(DefTypeCursor& start, DefTypeCursor& end);
+   void deleteAt(DefTypeCursor& cursor);
+   void deleteNext(DefTypeCursor& cursor);
+   void deletePrevious(DefTypeCursor& cursor);
+   void deleteFirst();
+   void deleteLast();
+
+   void freeAll();
+   void freeAll(DefTypeCursor& start);
+   void freeAll(DefTypeCursor& start, DefTypeCursor& end);
+   void freeAt(DefTypeCursor& cursor);
+   void freeNext(DefTypeCursor& cursor);
+   void freePrevious(DefTypeCursor& cursor);
+   void freeFirst();
+   void freeLast();
+   void remove(const ExtendedSuppressParameters& parameters, DefTypeCursor* cursor=nullptr);
+   void removeAll(const ExtendedSuppressParameters& parameters,
+      const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr);
+#ifdef DefTypeKey
+   DefTypeElement& extractAtKey(DefTypeKey key);
+   void deleteAtKey(DefTypeKey key);
+   void freeAtKey(DefTypeKey key);
+#endif
+
+   DefTypeElement& getSElementAt(const DefTypeCursor& cursor) const;
+   const DefTypeElement& getElementAt(const DefTypeCursor& cursor) const;
+   const DefTypeElement& getNextElement(const DefTypeCursor& cursor) const;
+   const DefTypeElement& getPreviousElement(const DefTypeCursor& cursor) const;
+   DefTypeElement& getSNextElement(const DefTypeCursor& cursor) const;
+   DefTypeElement& getSPreviousElement(const DefTypeCursor& cursor) const;
+   DefTypeElement& getSFirst() const;
+   DefTypeElement& getSLast() const;
+   const DefTypeElement& getFirst() const;
+   const DefTypeElement& getLast() const;
+   DefTypeElement& getElement(const ExtendedLocateParameters& parameters,
+         const DefTypeCursor* cursor=nullptr) const;
+
+   DefTypeElement& extractElementAt(DefTypeCursor& cursor);
+   DefTypeElement& extractFirst();
+   DefTypeElement& extractLast();
+   DefTypeElement& extractNextElement(DefTypeCursor& cursor);
+   DefTypeElement& extractPreviousElement(DefTypeCursor& cursor);
+#endif // DefBaseMultipleInterface -> DefJustDeclare, !DefCursor
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+   bool gotoAny(DefTypeCursor& cursor, const DefTypeElement& element, RelativePosition pos=VirtualCollection::RPUndefined) const;
+#endif // DefExcludeElement
+#if defined(DefTypeKey) && (!defined(DefBaseMultipleInterface) || defined(DefNeedLocate))
+   bool gotoAnyKey(DefTypeCursor& cursor, DefTypeKey key, RelativePosition pos=VirtualCollection::RPUndefined) const;
+   bool containKey(DefTypeKey key) const;
+#endif // DefTypeKey
+#endif // DefTypeSorted -> DefJustDeclare, !DefCursor
+
+#ifndef DefExcludeElement
+   void insertAtBegin(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void insertAtEnd(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void insertAt(DefTypeCursor& cursor, DefTypeElement* element, RelativePosition position=VirtualCollection::RPBefore,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void insertNewAtBegin(DefTypeElement* element);
+   void insertNewAtEnd(DefTypeElement* element);
+   void insertNewAt(DefTypeCursor& cursor, DefTypeElement* element, RelativePosition position=VirtualCollection::RPBefore);
+#endif // !DefExcludeElement -> DefJustDeclare, !DefCursor
+
+#ifndef DefBaseMultipleInterface   
+#ifndef HasDefTypeCollection
+   void insertAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+        RelativePosition position=VirtualCollection::RPBefore, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void insertAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+        const VirtualCollectionCursor& start, RelativePosition position=VirtualCollection::RPBefore,
+        RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void insertAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+        const VirtualCollectionCursor& start, const VirtualCollectionCursor& end,
+        RelativePosition position=VirtualCollection::RPBefore, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, DefJustDeclare, !DefCursor
+   void insertAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+        RelativePosition position=VirtualCollection::RPBefore, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void insertAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+        const DefTypeCursor& start, RelativePosition position=VirtualCollection::RPBefore,
+        RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void insertAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+        const DefTypeCursor& start, const DefTypeCursor& end,
+        RelativePosition position=VirtualCollection::RPBefore, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+#endif // DefBaseMultipleInterface -> DefJustDeclare, !DefCursor
+
+#ifndef DefExcludeElement
+   void insertCopyAtBegin(const DefTypeElement& element);
+   void insertCopyAtEnd(const DefTypeElement& element);
+   void insertCopyAt(DefTypeCursor& cursor, const DefTypeElement& element,
+        RelativePosition position=VirtualCollection::RPBefore);
+#endif // !DefExcludeElement -> DefJustDeclare, !DefCursor
+
+#ifndef DefBaseMultipleInterface   
+#ifndef HasDefTypeCollection
+   void insertCopyAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+        RelativePosition position=VirtualCollection::RPBefore);
+   void insertCopyAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+        const VirtualCollectionCursor& start, RelativePosition position=VirtualCollection::RPBefore);
+   void insertCopyAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+        const VirtualCollectionCursor& start, const VirtualCollectionCursor& end,
+        RelativePosition position=VirtualCollection::RPBefore);
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, DefJustDeclare, !DefCursor
+   void insertCopyAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+        RelativePosition position=VirtualCollection::RPBefore);
+   void insertCopyAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+        const DefTypeCursor& start, RelativePosition position=VirtualCollection::RPBefore);
+   void insertCopyAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+        const DefTypeCursor& start, const DefTypeCursor& end,
+        RelativePosition position=VirtualCollection::RPBefore);
+
+   int count() const;
+   int queryCount(const ExtendedLocateParameters& parameters,
+         const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr) const;
+   bool isEmpty() const;
+#endif // DefBaseMultipleInterface -> DefJustDeclare, !DefCursor
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+   bool isElement(const DefTypeElement& element) const;
+   bool contain(const DefTypeElement& element) const;
+#endif // DefExcludeElement -> DefTypeSorted, DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> DefJustDeclare, !DefCursor
+
+#ifndef DefExcludeReplaceElement
+   void replaceElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void replaceFirstWith(DefTypeElement* element, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void replaceLastWith(DefTypeElement* element, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void replaceAndFreeElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void replaceAndFreeFirstWith(DefTypeElement* element, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void replaceAndFreeLastWith(DefTypeElement* element, RemoveMode remModeOnError=VirtualCollection::RMRemove);
+   void replaceElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element);
+   void replaceFirstWithCopy(const DefTypeElement& element);
+   void replaceLastWithCopy(const DefTypeElement& element);
+   void replaceAndFreeElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element);
+   void replaceAndFreeFirstWithCopy(const DefTypeElement& element);
+   void replaceAndFreeLastWithCopy(const DefTypeElement& element);
+   void replace(DefTypeElement* element, const ExtendedReplaceParameters& parameters,
+      DefTypeCursor* cursor=nullptr);
+#endif // DefExcludeReplaceElement
+#else // DefJustDeclare
+#ifdef DefTypeInheritedCollection
+#ifdef DefJustInline // -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#ifndef DefExcludeElement
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeElement* element, AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::add(DefTypeCastToCollectHandler(element), dupMode, remModeOnError); }
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeElement* element, DefTypeCursor& cursor,
+         AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::add(DefTypeCastToCollectHandler(element), cursor,
+            dupMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addNew(DefTypeElement* element)
+      {  DefTypeInheritedCollection::addNew(DefTypeCastToCollectHandler(element)); }
+   DefTemplate inline void
+   DefTypeCollection::addNew(DefTypeElement* element, DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::addNew(DefTypeCastToCollectHandler(element), cursor); }
+   DefTemplate inline void
+   DefTypeCollection::addCopy(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::addCopy(*DefTypeCCastToCollectHandler(&element)); }
+   DefTemplate inline void
+   DefTypeCollection::addCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::addCopy(*DefTypeCCastToCollectHandler(&element), cursor); }
+#endif // !DefExcludeElement -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeElement* element, const ExtendedInsertionParameters& parameters,
+         DefTypeCursor* cursor)
+      {  DefTypeInheritedCollection::add(DefTypeCastToCollectHandler(element), parameters, cursor); }
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAdd(DefTypeElement* element, AddMode dupMode)
+      {  return DefTypeInheritedCollection::locateOrAdd(
+            DefTypeCastToCollectHandler(element), dupMode);
+      }
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAdd(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode)
+      {  return DefTypeInheritedCollection::locateOrAdd(
+            DefTypeCastToCollectHandler(element), cursor, dupMode);
+      }
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAddCopy(const DefTypeElement& element)
+      {  return DefTypeInheritedCollection::locateOrAddCopy(*DefTypeCCastToCollectHandler(&element)); }
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAddCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  return DefTypeInheritedCollection::locateOrAddCopy(*DefTypeCCastToCollectHandler(&element), cursor); }
+
+   DefTemplate inline bool
+   DefTypeCollection::locate(const DefTypeElement& element) const
+      {  return DefTypeInheritedCollection::locate(*DefTypeCCastToCollectHandler(&element)); }
+   DefTemplate inline DefTypename DefTypeCollection::LocationResult
+   DefTypeCollection::locate(const DefTypeElement& element, DefTypeCursor& cursor, RelativePosition pos) const
+      {  return DefTypeInheritedCollection::locate(*DefTypeCCastToCollectHandler(&element), cursor, pos); }
+   DefTemplate inline DefTypename DefTypeCollection::LocationResult
+   DefTypeCollection::locate(const DefTypeElement& element, const ExtendedLocateParameters& parameters,
+         DefTypeCursor* cursor, const DefTypeCursor* start, const DefTypeCursor* end) const
+      {  return DefTypeInheritedCollection::locate(*DefTypeCCastToCollectHandler(&element), parameters, cursor, start, end); }
+#endif // !DefExcludeElement -> DefTypeSorted, DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#if defined(DefTypeKey) && (!defined(DefBaseMultipleInterface) || defined(DefNeedLocate))
+   DefTemplate inline bool
+   DefTypeCollection::locateKey(DefTypeKey key) const
+      {  return DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), (DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr); }
+   DefTemplate inline DefTypename DefTypeCollection::LocationResult
+   DefTypeCollection::locateKey(DefTypeKey key, DefTypeCursor& cursor, RelativePosition pos) const
+      {  return DefTypeFinal _locateKey(key, ExtendedLocateParameters(pos), &cursor, (const DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr); }
+   DefTemplate inline DefTypename DefTypeLocation::LocationResult
+   DefTypeCollection::locateKey(DefTypeKey key, const ExtendedLocateParameters& parameters,
+         DefTypeCursor* cursor, const DefTypeCursor* start, const DefTypeCursor* end) const
+      {  return DefTypeFinal _locateKey(key, parameters, cursor, start, end); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::findKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key(), (const DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr);
+         return cursor->elementSAt();
+      }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::findKey(DefTypeKey key) const
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key(), (const DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr);
+         return cursor->elementAt();
+      }
+#ifdef DefMapInterface
+   DefTemplate inline DefTypeControlKey
+   DefTypeCollection::queryKeyAt(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPExact), &cursor); }
+   DefTemplate inline DefTypeControlKey
+   DefTypeCollection::queryNextKey(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPAfter), &cursor); }
+   DefTemplate inline DefTypeControlKey
+   DefTypeCollection::queryPreviousKey(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPBefore), &cursor); }
+   DefTemplate inline DefTypeControlKey
+   DefTypeCollection::queryFirstKey() const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPAfter)); }
+   DefTemplate inline DefTypeControlKey
+   DefTypeCollection::queryLastKey() const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPBefore)); }
+   DefTemplate inline DefTypeControlKey
+   DefTypeCollection::queryKey(const ExtendedLocateParameters& parameters,
+      const DefTypeCursor* cursor) const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(parameters, cursor)); }
+#endif // DefMapInterface
+#endif // DefTypeKey -> DefTypeSorted, DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefBaseMultipleInterface   
+#ifndef HasDefTypeCollection
+   DefTemplate inline void
+   DefTypeCollection::fullAssign(const VirtualCollection& collection)
+      {  DefTypeInheritedCollection::fullAssign(collection); }
+   DefTemplate inline void
+   DefTypeCollection::fullAssign(const VirtualCollection& collection, const ExtendedReplaceParameters& parameters)
+      {  DefTypeInheritedCollection::fullAssign(collection, parameters); }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline void
+   DefTypeCollection::fullAssign(const DefTypeCollection& collection)
+      {  DefTypeInheritedCollection::fullAssign(collection); }
+   DefTemplate inline void
+   DefTypeCollection::fullAssign(const DefTypeCollection& collection, const ExtendedReplaceParameters& parameters)
+      {  DefTypeInheritedCollection::fullAssign(collection, parameters); }
+
+#ifndef HasDefTypeCollection
+   DefTemplate inline void
+   DefTypeCollection::addAll(const VirtualCollection& collection)
+      {  DefTypeInheritedCollection::addAll(collection); }
+   DefTemplate inline void
+   DefTypeCollection::addAll(const VirtualCollection& collection, const VirtualCollectionCursor& start)
+      {  DefTypeInheritedCollection::addAll(collection, start); }
+   DefTemplate inline void
+   DefTypeCollection::addAll(const VirtualCollection& collection, const VirtualCollectionCursor& start,
+         const VirtualCollectionCursor& end)
+      {  DefTypeInheritedCollection::addAll(collection, start, end); }
+   DefTemplate inline void
+   DefTypeCollection::addAll(const VirtualCollection& collection, const ExtendedInsertionParameters& parameters,
+         VirtualCollectionCursor* cursor, const VirtualCollectionCursor* start,
+         const VirtualCollectionCursor* end)
+      {  DefTypeInheritedCollection::addAll(collection, parameters, cursor, start, end); }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline void
+   DefTypeCollection::addAll(const DefTypeCollection& collection)
+      {  DefTypeInheritedCollection::addAll(collection); }
+   DefTemplate inline void
+   DefTypeCollection::addAll(const DefTypeCollection& collection, const DefTypeCursor& start)
+      {  DefTypeInheritedCollection::addAll(collection, start); }
+   DefTemplate inline void
+   DefTypeCollection::addAll(const DefTypeCollection& collection, const DefTypeCursor& start,
+         const DefTypeCursor& end)
+      {  DefTypeInheritedCollection::addAll(collection, start, end); }
+   DefTemplate inline void
+   DefTypeCollection::addAll(const DefTypeCollection& collection, const ExtendedInsertionParameters& parameters,
+         DefTypeCursor* cursor, const DefTypeCursor* start, const DefTypeCursor* end)
+      {  DefTypeInheritedCollection::addAll(collection, parameters, cursor, start, end); }
+
+#ifndef HasDefTypeCollection
+   DefTemplate inline void
+   DefTypeCollection::addCopyAll(const VirtualCollection& collection)
+      {  DefTypeInheritedCollection::addCopyAll(collection); }
+   DefTemplate inline void
+   DefTypeCollection::addCopyAll(const VirtualCollection& collection, const VirtualCollectionCursor& start)
+      {  DefTypeInheritedCollection::addCopyAll(collection, start); }
+   DefTemplate inline void
+   DefTypeCollection::addCopyAll(const VirtualCollection& collection, const VirtualCollectionCursor& start,
+         const VirtualCollectionCursor& end)
+      {  DefTypeInheritedCollection::addCopyAll(collection, start, end); }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline void
+   DefTypeCollection::addCopyAll(const DefTypeCollection& collection)
+      {  DefTypeInheritedCollection::addCopyAll(collection); }
+   DefTemplate inline void
+   DefTypeCollection::addCopyAll(const DefTypeCollection& collection, const DefTypeCursor& start)
+      {  DefTypeInheritedCollection::addCopyAll(collection, start); }
+   DefTemplate inline void
+   DefTypeCollection::addCopyAll(const DefTypeCollection& collection, const DefTypeCursor& start,
+         const DefTypeCursor& end)
+      {  DefTypeInheritedCollection::addCopyAll(collection, start, end); }
+
+#ifndef HasDefTypeCollection
+   DefTemplate inline void
+   DefTypeCollection::moveAllTo(VirtualCollection& destination)
+      {  DefTypeInheritedCollection::moveAllTo(destination); }
+   DefTemplate inline void
+   DefTypeCollection::moveAllTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+         const DefTypeCursor* startCursor, const DefTypeCursor* endCursor,
+         VirtualCollectionCursor* destinationCursor)
+      {  DefTypeInheritedCollection::moveAllTo(destination, parameters, startCursor, endCursor, destinationCursor); }
+   DefTemplate inline void
+   DefTypeCollection::moveTo(VirtualCollection& destination, VirtualCollectionCursor& cursor)
+      {  DefTypeInheritedCollection::moveTo(destination, cursor); }
+   DefTemplate inline void
+   DefTypeCollection::moveTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+         VirtualCollectionCursor* cursor, VirtualCollectionCursor* destinationCursor)
+      {  DefTypeInheritedCollection::moveTo(destination, parameters, cursor, destinationCursor); }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+   DefTemplate inline void
+   DefTypeCollection::moveTo(DefTypeCollection& destination, DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::moveTo(destination, cursor); }
+   DefTemplate inline void
+   DefTypeCollection::moveTo(DefTypeCollection& destination, const ExtendedReplaceParameters& parameters,
+         DefTypeCursor* cursor, DefTypeCursor* destinationCursor)
+      {  DefTypeInheritedCollection::moveTo(destination, parameters, cursor, destinationCursor); }
+   DefTemplate inline void
+   DefTypeCollection::moveAllTo(DefTypeCollection& destination)
+      {  DefTypeInheritedCollection::moveAllTo(destination); }
+   DefTemplate inline void
+   DefTypeCollection::moveAllTo(DefTypeCollection& destination, const ExtendedReplaceParameters& parameters,
+         const DefTypeCursor* startCursor, const DefTypeCursor* endCursor,
+         DefTypeCursor* destinationCursor)
+      {  DefTypeInheritedCollection::moveAllTo(destination, parameters, startCursor,
+            endCursor, destinationCursor);
+      }
+
+   DefTemplate inline void
+   DefTypeCollection::swap(DefTypeCollection& source)
+      {  DefTypeInheritedCollection::swap(source); }
+#endif // DefBaseMultipleInterface -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+   DefTemplate inline void
+   DefTypeCollection::addOrReplaceAt(DefTypeCursor& cursor, DefTypeElement* element,
+      AddMode dupMode, RemoveMode freeMode, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::addOrReplaceAt(cursor,
+            DefTypeCastToCollectHandler(element), dupMode, freeMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addCopyOrReplaceAt(DefTypeCursor& cursor, const DefTypeElement& element,
+      RemoveMode freeMode)
+      {  DefTypeInheritedCollection::addCopyOrReplaceAt(cursor,
+            *DefTypeCCastToCollectHandler(&element), freeMode, remModeOnError);
+      }
+#endif // !DefExcludeElement -> DefTypeSorted, DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#if (!defined(DefBaseMultipleInterface) || defined(DefNeedLocate))
+   DefTemplate inline void
+   DefTypeCollection::deleteAll() { DefTypeInheritedCollection::deleteAll(); }
+   DefTemplate inline void
+   DefTypeCollection::deleteAll(DefTypeCursor& start, DefTypeCursor& end)
+      {  DefTypeInheritedCollection::deleteAll(start, end); }
+   DefTemplate inline void
+   DefTypeCollection::deleteAt(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deleteAt(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::deleteNext(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deleteNext(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::deletePrevious(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deletePrevious(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::deleteFirst() { DefTypeInheritedCollection::deleteFirst(); }
+   DefTemplate inline void
+   DefTypeCollection::deleteLast() { DefTypeInheritedCollection::deleteLast(); }
+
+   DefTemplate inline void
+   DefTypeCollection::freeAll() { DefTypeInheritedCollection::freeAll(); }
+   DefTemplate inline void
+   DefTypeCollection::freeAll(DefTypeCursor& start)
+      {  DefTypeInheritedCollection::freeAll(start); }
+   DefTemplate inline void
+   DefTypeCollection::freeAll(DefTypeCursor& start, DefTypeCursor& end)
+      {  DefTypeInheritedCollection::freeAll(start, end); }
+   DefTemplate inline void
+   DefTypeCollection::freeAt(DefTypeCursor& cursor) { DefTypeInheritedCollection::freeAt(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::freeNext(DefTypeCursor& cursor) { DefTypeInheritedCollection::freeNext(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::freePrevious(DefTypeCursor& cursor) { DefTypeInheritedCollection::freePrevious(cursor); }
+   DefTemplate inline void
+   DefTypeCollection::freeFirst() { DefTypeInheritedCollection::freeFirst(); }
+   DefTemplate inline void
+   DefTypeCollection::freeLast() { DefTypeInheritedCollection::freeLast(); }
+   DefTemplate inline void
+   DefTypeCollection::remove(const ExtendedSuppressParameters& parameters, DefTypeCursor* cursor)
+      {  DefTypeInheritedCollection::remove(parameters, cursor); }
+   DefTemplate inline void
+   DefTypeCollection::removeAll(const ExtendedSuppressParameters& parameters,
+      const DefTypeCursor* start, const DefTypeCursor* end)
+      {  DefTypeInheritedCollection::removeAll(parameters, start, end); }
+#ifdef DefTypeKey
+   DefTemplate void
+   DefTypeCollection::deleteAtKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key());
+         DefTypeInheritedCollection::deleteAt(*cursor);
+      }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::extractAtKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key());
+         DefTypeElement& result = cursor->elementSAt();
+         DefTypeInheritedCollection::deleteAt(*cursor);
+         return result;
+      }
+   DefTemplate inline void
+   DefTypeCollection::freeAtKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key());
+         DefTypeInheritedCollection::freeAt(*cursor);
+      }
+#endif
+
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSElementAt(const DefTypeCursor& cursor) const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getSElementAt(cursor)); }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getElementAt(const DefTypeCursor& cursor) const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getElementAt(cursor)); }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getNextElement(const DefTypeCursor& cursor) const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getNextElement(cursor)); }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getPreviousElement(const DefTypeCursor& cursor) const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getPreviousElement(cursor)); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSNextElement(const DefTypeCursor& cursor) const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getSNextElement(cursor)); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSPreviousElement(const DefTypeCursor& cursor) const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getSPreviousElement(cursor)); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSFirst() const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getSFirst()); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSLast() const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getSLast()); }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getFirst() const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getFirst()); }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getLast() const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getLast()); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getElement(const ExtendedLocateParameters& parameters, const DefTypeCursor* cursor) const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getElement(parameters, cursor)); }
+
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::extractElementAt(DefTypeCursor& cursor)
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::extractElementAt(cursor)); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::extractFirst()
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::extractFirst()); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::extractLast()
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::extractLast()); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::extractNextElement(DefTypeCursor& cursor)
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::extractNextElement(cursor)); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::extractPreviousElement(DefTypeCursor& cursor)
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::extractPreviousElement(cursor)); }
+#endif // DefBaseMultipleInterface -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+   DefTemplate inline bool
+   DefTypeCollection::gotoAny(DefTypeCursor& cursor, const DefTypeElement& element, RelativePosition pos) const
+      {  return DefTypeInheritedCollection::gotoAny(cursor, *DefTypeCCastToCollectHandler(&element), pos); }
+#endif // !DefExcludeElement
+#if defined(DefTypeKey) && !defined(DefBaseMultipleInterface)
+   DefTemplate inline bool
+   DefTypeCollection::gotoAnyKey(DefTypeCursor& cursor, const DefTypeElement& element, RelativePosition pos) const
+      {  return DefTypeInheritedCollection::gotoAnyKey(cursor, *DefTypeCCastToCollectHandler(&element), pos); }
+   DefTemplate inline bool
+   DefTypeCollection::containKey(DefTypeKey key) const
+      {  return DefTypeInheritedCollection::containKey(key); }
+#endif // DefTypeKey
+#endif // DefTypeSorted -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefExcludeElement
+   DefTemplate inline void
+   DefTypeCollection::insertAtBegin(DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertAtBegin(DefTypeCastToCollectHandler(element),
+            dupMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAtEnd(DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertAtEnd(DefTypeCastToCollectHandler(element),
+            dupMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAt(DefTypeCursor& cursor, DefTypeElement* element,
+        RelativePosition position, AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertAt(cursor, DefTypeCastToCollectHandler(element),
+            position, dupMode, remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAtBegin(DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewAtBegin(DefTypeCastToCollectHandler(element)); }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAtEnd(DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewAtEnd(DefTypeCastToCollectHandler(element)); }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAt(DefTypeCursor& cursor, DefTypeElement* element,
+        RelativePosition position)
+      {  DefTypeInheritedCollection::insertNewAt(cursor, DefTypeCastToCollectHandler(element),
+            position);
+      }
+#endif // !DefExcludeElement -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefBaseMultipleInterface   
+#ifndef HasDefTypeCollection
+   DefTemplate inline void
+   DefTypeCollection::insertAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+        RelativePosition position, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertAllAt(cursor, source, position, remModeOnError); }
+   DefTemplate inline void
+   DefTypeCollection::insertAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+        const VirtualCollectionCursor& start, RelativePosition position,
+        RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertAllAt(cursor, source, start, position, remModeOnError); }
+   DefTemplate inline void
+   DefTypeCollection::insertAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+        const VirtualCollectionCursor& start, const VirtualCollectionCursor& end,
+        RelativePosition position, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertAllAt(cursor, source, start, end, position, remModeOnError);
+      }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline void
+   DefTypeCollection::insertAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+        RelativePosition position, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertAllAt(cursor, source, position, remModeOnError); }
+   DefTemplate inline void
+   DefTypeCollection::insertAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+        const DefTypeCursor& start, RelativePosition position, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertAllAt(cursor, source, start, position, remModeOnError); }
+   DefTemplate inline void
+   DefTypeCollection::insertAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+        const DefTypeCursor& start, const DefTypeCursor& end,
+        RelativePosition position, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::insertAllAt(cursor, source, start, end, position, remModeOnError); }
+#endif // DefBaseMultipleInterface -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefExcludeElement
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAtBegin(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertCopyAtBegin(*DefTypeCCastToCollectHandler(&element)); }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAtEnd(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertCopyAtEnd(*DefTypeCCastToCollectHandler(&element)); }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAt(DefTypeCursor& cursor, const DefTypeElement& element,
+        RelativePosition position)
+      {  DefTypeInheritedCollection::insertCopyAt(cursor,
+            *DefTypeCCastToCollectHandler(&element), position);
+      }
+#endif // DefExcludeElement -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefBaseMultipleInterface   
+#ifndef HasDefTypeCollection
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         RelativePosition position)
+      {  DefTypeInheritedCollection::insertCopyAllAt(cursor, source, position); }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         const VirtualCollectionCursor& start, RelativePosition position)
+      {  DefTypeInheritedCollection::insertCopyAllAt(cursor, source, start, position); }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         const VirtualCollectionCursor& start, const VirtualCollectionCursor& end,
+         RelativePosition position)
+      {  DefTypeInheritedCollection::insertCopyAllAt(cursor, source, start, end, position); }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         RelativePosition position)
+      {  DefTypeInheritedCollection::insertCopyAllAt(cursor, source, position); }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         const DefTypeCursor& start, RelativePosition position)
+      {  DefTypeInheritedCollection::insertCopyAllAt(cursor, source, start, position); }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         const DefTypeCursor& start, const DefTypeCursor& end, RelativePosition position)
+      {  DefTypeInheritedCollection::insertCopyAllAt(cursor, source, start, end, position); }
+
+   DefTemplate inline int
+   DefTypeCollection::count() const { return DefTypeInheritedCollection::count(); }
+   DefTemplate inline int
+   DefTypeCollection::queryCount(const ExtendedLocateParameters& parameters,
+         const DefTypeCursor* start, const DefTypeCursor* end) const
+      {  return DefTypeInheritedCollection::queryCount(parameters, start, end); }
+   DefTemplate inline bool
+   DefTypeCollection::isEmpty() const { return DefTypeInheritedCollection::isEmpty(); }
+#endif // DefBaseMultipleInterface -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+   DefTemplate inline bool
+   DefTypeCollection::isElement(const DefTypeElement& element) const
+      {  return DefTypeInheritedCollection::isElement(*DefTypeCCastToCollectHandler(&element)); }
+   DefTemplate inline bool
+   DefTypeCollection::contain(const DefTypeElement& element) const
+      {  return DefTypeInheritedCollection::contain(*DefTypeCCastToCollectHandler(&element)); }
+#endif // DefExcludeElement -> DefTypeSorted, DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefExcludeReplaceElement
+   DefTemplate inline void
+   DefTypeCollection::replaceElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::replaceElementAtWith(cursor,
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceFirstWith(DefTypeElement* element, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::replaceFirstWith(
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceLastWith(DefTypeElement* element, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::replaceLastWith(
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::replaceAndFreeElementAtWith(cursor,
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeFirstWith(DefTypeElement* element, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::replaceAndFreeFirstWith(
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeLastWith(DefTypeElement* element, RemoveMode remModeOnError)
+      {  DefTypeInheritedCollection::replaceAndFreeLastWith(
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceElementAtWithCopy(cursor,
+            *DefTypeCCastToCollectHandler(&element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceFirstWithCopy(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceFirstWithCopy(
+            *DefTypeCCastToCollectHandler(&element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceLastWithCopy(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceLastWithCopy(
+            *DefTypeCCastToCollectHandler(&element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeElementAtWithCopy(DefTypeCursor& cursor,
+         const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceAndFreeElementAtWithCopy(cursor,
+            *DefTypeCCastToCollectHandler(&element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeFirstWithCopy(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceAndFreeFirstWithCopy(
+            *DefTypeCCastToCollectHandler(&element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeLastWithCopy(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceAndFreeLastWithCopy(
+            *DefTypeCCastToCollectHandler(&element));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replace(DefTypeElement* element, const ExtendedReplaceParameters& parameters,
+         DefTypeCursor* cursor)
+      {  DefTypeInheritedCollection::replace(DefTypeCastToCollectHandler(element), parameters, cursor); }
+#endif // DefExcludeReplaceElement
+#else // DefJustInline -> !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#ifndef DefExcludeElement
+   void add(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError = VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::add(DefTypeCastToCollectHandler(element),
+            dupMode, remModeOnError);
+      }
+   void add(DefTypeElement* element, DefTypeCursor& cursor,
+         AddMode dupMode=VirtualCollection::AMNoDuplicate, RemoveMode remModeOnError = VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::add(DefTypeCastToCollectHandler(element), cursor,
+            dupMode, remModeOnError);
+      }
+   void addNew(DefTypeElement* element)
+      {  DefTypeInheritedCollection::addNew(DefTypeCastToCollectHandler(element)); }
+   void addNew(DefTypeElement* element, DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::addNew(DefTypeCastToCollectHandler(element), cursor); }
+   void addCopy(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::addCopy(*DefTypeCCastToCollectHandler(&element)); }
+   void addCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::addCopy(*DefTypeCCastToCollectHandler(&element), cursor); }
+#endif // !DefExcludeElement -> !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+   void add(DefTypeElement* element, const ExtendedInsertionParameters& parameters, DefTypeCursor* cursor=nullptr)
+      {  DefTypeInheritedCollection::add(DefTypeCastToCollectHandler(element), parameters, cursor); }
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+   bool locateOrAdd(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  return DefTypeInheritedCollection::locateOrAdd(
+            DefTypeCastToCollectHandler(element), dupMode);
+      }
+   bool locateOrAdd(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  return DefTypeInheritedCollection::locateOrAdd(
+            DefTypeCastToCollectHandler(element), cursor, dupMode);
+      }
+   bool locateOrAddCopy(const DefTypeElement& element)
+      {  return DefTypeInheritedCollection::locateOrAddCopy(*DefTypeCCastToCollectHandler(&element)); }
+   bool locateOrAddCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  return DefTypeInheritedCollection::locateOrAddCopy(*DefTypeCCastToCollectHandler(&element), cursor); }
+
+   bool locate(const DefTypeElement& element) const
+      {  return DefTypeInheritedCollection::locate(*DefTypeCCastToCollectHandler(&element)); }
+   LocationResult locate(const DefTypeElement& element, DefTypeCursor& cursor, RelativePosition pos=VirtualCollection::RPUndefined) const
+      {  return DefTypeInheritedCollection::locate(*DefTypeCCastToCollectHandler(&element), cursor, pos); }
+   LocationResult locate(const DefTypeElement& element, const ExtendedLocateParameters& parameters,
+         DefTypeCursor* cursor=nullptr, const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr) const
+      {  return DefTypeInheritedCollection::locate(*DefTypeCCastToCollectHandler(&element), parameters, cursor, start, end); }
+#endif // !DefExcludeElement -> DefTypeSorted,!DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#if defined(DefTypeKey) && (!defined(DefBaseMultipleInterface) || defined(DefNeedLocate))
+   bool locateKey(DefTypeKey key) const
+      {  return DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), (DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr); }
+   LocationResult locateKey(DefTypeKey key, DefTypeCursor& cursor, RelativePosition pos=VirtualCollection::RPUndefined) const
+      {  return DefTypeFinal _locateKey(key, ExtendedLocateParameters(pos), &cursor, (const DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr); }
+   LocationResult locateKey(DefTypeKey key, const ExtendedLocateParameters& parameters,
+         DefTypeCursor* cursor=nullptr, const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr) const
+      {  return DefTypeFinal _locateKey(key, parameters, cursor, start, end); }
+   DefTypeElement& findKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key(), (const DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr);
+         return cursor->elementSAt();
+      }
+   const DefTypeElement& findKey(DefTypeKey key) const
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key(), (const DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr);
+         return cursor->elementAt();
+      }
+#ifdef DefMapInterface
+   DefTypeControlKey queryKeyAt(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPExact), &cursor); }
+   DefTypeControlKey queryNextKey(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPAfter), &cursor); }
+   DefTypeControlKey queryPreviousKey(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPBefore), &cursor); }
+   DefTypeControlKey queryFirstKey() const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPAfter)); }
+   DefTypeControlKey queryLastKey() const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPBefore)); }
+   DefTypeControlKey queryKey(const ExtendedLocateParameters& parameters,
+      const DefTypeCursor* cursor=nullptr) const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(parameters, cursor)); }
+#endif // DefMapInterface
+#endif // DefTypeKey -> DefTypeSorted, !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefBaseMultipleInterface   
+#ifndef HasDefTypeCollection
+   void fullAssign(const VirtualCollection& collection)
+      {  DefTypeInheritedCollection::fullAssign(collection); }
+   void fullAssign(const VirtualCollection& collection, const ExtendedReplaceParameters& parameters)
+      {  DefTypeInheritedCollection::fullAssign(collection, parameters); }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   void fullAssign(const DefTypeCollection& collection)
+      {  DefTypeInheritedCollection::fullAssign(collection); }
+   void fullAssign(const DefTypeCollection& collection, const ExtendedReplaceParameters& parameters)
+      {  DefTypeInheritedCollection::fullAssign(collection, parameters); }
+
+#ifndef HasDefTypeCollection
+   void addAll(const VirtualCollection& collection)
+      {  DefTypeInheritedCollection::addAll(collection); }
+   void addAll(const VirtualCollection& collection, const VirtualCollectionCursor& start)
+      {  DefTypeInheritedCollection::addAll(collection, start); }
+   void addAll(const VirtualCollection& collection, const VirtualCollectionCursor& start,
+         const VirtualCollectionCursor& end)
+      {  DefTypeInheritedCollection::addAll(collection, start, end); }
+   void addAll(const VirtualCollection& collection, const ExtendedInsertionParameters& parameters,
+         VirtualCollectionCursor* cursor, const VirtualCollectionCursor* start,
+         const VirtualCollectionCursor* end)
+      {  DefTypeInheritedCollection::addAll(collection, parameters, cursor, start, end); }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   void addAll(const DefTypeCollection& collection)
+      {  DefTypeInheritedCollection::addAll(collection); }
+   void addAll(const DefTypeCollection& collection, const DefTypeCursor& start)
+      {  DefTypeInheritedCollection::addAll(collection, start); }
+   void addAll(const DefTypeCollection& collection, const DefTypeCursor& start,
+         const DefTypeCursor& end)
+      {  DefTypeInheritedCollection::addAll(collection, start, end); }
+   void addAll(const DefTypeCollection& collection, const ExtendedInsertionParameters& parameters,
+         DefTypeCursor* cursor=nullptr, const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr)
+      {  DefTypeInheritedCollection::addAll(collection, parameters, cursor, start, end); }
+
+#ifndef HasDefTypeCollection
+   void addCopyAll(const VirtualCollection& collection)
+      {  DefTypeInheritedCollection::addCopyAll(collection); }
+   void addCopyAll(const VirtualCollection& collection, const VirtualCollectionCursor& start)
+      {  DefTypeInheritedCollection::addCopyAll(collection, start); }
+   void addCopyAll(const VirtualCollection& collection, const VirtualCollectionCursor& start,
+         const VirtualCollectionCursor& end)
+      {  DefTypeInheritedCollection::addCopyAll(collection, start, end); }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   void addCopyAll(const DefTypeCollection& collection)
+      {  DefTypeInheritedCollection::addCopyAll(collection); }
+   void addCopyAll(const DefTypeCollection& collection, const DefTypeCursor& start)
+      {  DefTypeInheritedCollection::addCopyAll(collection, start); }
+   void addCopyAll(const DefTypeCollection& collection, const DefTypeCursor& start,
+         const DefTypeCursor& end)
+      {  DefTypeInheritedCollection::addCopyAll(collection, start, end); }
+
+#ifndef HasDefTypeCollection
+   void moveAllTo(VirtualCollection& destination)
+      {  DefTypeInheritedCollection::moveAllTo(destination); }
+   void moveAllTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+         const DefTypeCursor* startCursor, const DefTypeCursor* endCursor,
+         VirtualCollectionCursor* destinationCursor)
+      {  DefTypeInheritedCollection::moveAllTo(destination, parameters, startCursor, endCursor, destinationCursor); }
+   void moveTo(VirtualCollection& destination, VirtualCollectionCursor& cursor)
+      {  DefTypeInheritedCollection::moveTo(destination, cursor); }
+   void moveTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+         VirtualCollectionCursor* cursor, VirtualCollectionCursor* destinationCursor)
+      {  DefTypeInheritedCollection::moveTo(destination, parameters, cursor, destinationCursor); }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   void moveTo(DefTypeCollection& destination, DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::moveTo(destination, cursor); }
+   void moveTo(DefTypeCollection& destination, const ExtendedReplaceParameters& parameters,
+         DefTypeCursor* cursor=nullptr, DefTypeCursor* destinationCursor=nullptr)
+      {  DefTypeInheritedCollection::moveTo(destination, parameters, cursor, destinationCursor); }
+   void moveAllTo(DefTypeCollection& destination)
+      {  DefTypeInheritedCollection::moveAllTo(destination); }
+   void moveAllTo(DefTypeCollection& destination, const ExtendedReplaceParameters& parameters,
+         const DefTypeCursor* startCursor=nullptr, const DefTypeCursor* endCursor=nullptr,
+         DefTypeCursor* destinationCursor=nullptr)
+      {  DefTypeInheritedCollection::moveAllTo(destination, parameters, startCursor,
+            endCursor, destinationCursor);
+      }
+   void swap(DefTypeCollection& source)
+      {  DefTypeInheritedCollection::swap(source); }
+#endif // DefBaseMultipleInterface -> !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+   void addOrReplaceAt(DefTypeCursor& cursor, DefTypeElement* element,
+         VirtualCollection::AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         VirtualCollection::RemoveMode freeMode=VirtualCollection::RMRemove,
+         VirtualCollection::RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::addOrReplaceAt(cursor,
+            DefTypeCastToCollectHandler(element), dupMode, freeMode, remModeOnError);
+      }
+   void addCopyOrReplaceAt(DefTypeCursor& cursor, const DefTypeElement& element,
+         VirtualCollection::RemoveMode freeMode=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::addCopyOrReplaceAt(cursor,
+         *DefTypeCCastToCollectHandler(&element), freeMode);
+      }
+#endif // !DefExcludeElement -> DefTypeSorted, !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#if (!defined(DefBaseMultipleInterface) || defined(DefNeedLocate))
+   void deleteAll() { DefTypeInheritedCollection::deleteAll(); }
+   void deleteAll(DefTypeCursor& start, DefTypeCursor& end)
+      {  DefTypeInheritedCollection::deleteAll(start, end); }
+   void deleteAt(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deleteAt(cursor); }
+   void deleteNext(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deleteNext(cursor); }
+   void deletePrevious(DefTypeCursor& cursor)
+      {  DefTypeInheritedCollection::deletePrevious(cursor); }
+   void deleteFirst() { DefTypeInheritedCollection::deleteFirst(); }
+   void deleteLast() { DefTypeInheritedCollection::deleteLast(); }
+
+   void freeAll() { DefTypeInheritedCollection::freeAll(); }
+   void freeAll(DefTypeCursor& start)
+      {  DefTypeInheritedCollection::freeAll(start); }
+   void freeAll(DefTypeCursor& start, DefTypeCursor& end)
+      {  DefTypeInheritedCollection::freeAll(start, end); }
+   void freeAt(DefTypeCursor& cursor) { DefTypeInheritedCollection::freeAt(cursor); }
+   void freeNext(DefTypeCursor& cursor) { DefTypeInheritedCollection::freeNext(cursor); }
+   void freePrevious(DefTypeCursor& cursor) { DefTypeInheritedCollection::freePrevious(cursor); }
+   void freeFirst() { DefTypeInheritedCollection::freeFirst(); }
+   void freeLast() { DefTypeInheritedCollection::freeLast(); }
+   void remove(const ExtendedSuppressParameters& parameters, DefTypeCursor* cursor=nullptr)
+      {  DefTypeInheritedCollection::remove(parameters, cursor); }
+   void removeAll(const ExtendedSuppressParameters& parameters,
+      const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr)
+      {  DefTypeInheritedCollection::removeAll(parameters, start, end); }
+#ifdef DefTypeKey
+   void deleteAtKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key());
+         DefTypeInheritedCollection::deleteAt(*cursor);
+      }
+   DefTypeElement& extractAtKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key());
+         DefTypeElement& result = cursor->elementSAt();
+         DefTypeInheritedCollection::deleteAt(*cursor);
+         return result;
+      }
+   void freeAtKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key());
+         DefTypeInheritedCollection::freeAt(*cursor);
+      }
+#endif
+
+   DefTypeElement& getSElementAt(const DefTypeCursor& cursor) const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getSElementAt(cursor)); }
+   const DefTypeElement& getElementAt(const DefTypeCursor& cursor) const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getElementAt(cursor)); }
+   const DefTypeElement& getNextElement(const DefTypeCursor& cursor) const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getNextElement(cursor)); }
+   const DefTypeElement& getPreviousElement(const DefTypeCursor& cursor) const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getPreviousElement(cursor)); }
+   DefTypeElement& getSNextElement(const DefTypeCursor& cursor) const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getSNextElement(cursor)); }
+   DefTypeElement& getSPreviousElement(const DefTypeCursor& cursor) const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getSPreviousElement(cursor)); }
+   DefTypeElement& getSFirst() const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getSFirst()); }
+   DefTypeElement& getSLast() const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getSLast()); }
+   const DefTypeElement& getFirst() const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getFirst()); }
+   const DefTypeElement& getLast() const
+      {  return *DefTypeCCastFromCollectHandler(&DefTypeInheritedCollection::getLast()); }
+   DefTypeElement& getElement(const ExtendedLocateParameters& parameters, const DefTypeCursor* cursor=nullptr) const
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::getElement(parameters, cursor)); }
+
+   DefTypeElement& extractElementAt(DefTypeCursor& cursor)
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::extractElementAt(cursor)); }
+   DefTypeElement& extractFirst()
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::extractFirst()); }
+   DefTypeElement& extractLast()
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::extractLast()); }
+   DefTypeElement& extractNextElement(DefTypeCursor& cursor)
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::extractNextElement(cursor)); }
+   DefTypeElement& extractPreviousElement(DefTypeCursor& cursor)
+      {  return *DefTypeCastFromCollectHandler(&DefTypeInheritedCollection::extractPreviousElement(cursor)); }
+#endif // DefBaseMultipleInterface -> !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+   bool gotoAny(DefTypeCursor& cursor, const DefTypeElement& element, RelativePosition pos=VirtualCollection::RPUndefined) const
+      {  return DefTypeInheritedCollection::gotoAny(cursor, *DefTypeCCastToCollectHandler(&element), pos); }
+#endif // !DefExcludeElement
+#if defined(DefTypeKey) && !defined(DefBaseMultipleInterface)
+   bool gotoAnyKey(DefTypeCursor& cursor, DefTypeKey key, RelativePosition pos=VirtualCollection::RPUndefined) const
+      {  return DefTypeInheritedCollection::gotoAnyKey(cursor, key, pos); }
+   bool containKey(DefTypeKey key) const
+      {  return DefTypeInheritedCollection::containKey(key); }
+#endif // DefTypeKey
+#endif // DefTypeSorted -> !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefExcludeElement
+   void insertAtBegin(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::insertAtBegin(DefTypeCastToCollectHandler(element),
+            dupMode, remModeOnError);
+      }
+   void insertAtEnd(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::insertAtEnd(DefTypeCastToCollectHandler(element),
+            dupMode, remModeOnError);
+      }
+   void insertAt(DefTypeCursor& cursor, DefTypeElement* element,
+         RelativePosition position=VirtualCollection::RPBefore, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::insertAt(cursor, DefTypeCastToCollectHandler(element),
+            position, dupMode, remModeOnError);
+      }
+   void insertNewAtBegin(DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewAtBegin(DefTypeCastToCollectHandler(element)); }
+   void insertNewAtEnd(DefTypeElement* element)
+      {  DefTypeInheritedCollection::insertNewAtEnd(DefTypeCastToCollectHandler(element)); }
+   void insertNewAt(DefTypeCursor& cursor, DefTypeElement* element,
+        RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeInheritedCollection::insertNewAt(cursor, DefTypeCastToCollectHandler(element),
+            position);
+      }
+#endif // !DefExcludeElement -> !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefBaseMultipleInterface   
+#ifndef HasDefTypeCollection
+   void insertAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         RelativePosition position=VirtualCollection::RPBefore, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::insertAllAt(cursor, source, position, remModeOnError); }
+   void insertAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         const VirtualCollectionCursor& start, RelativePosition position=VirtualCollection::RPBefore,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::insertAllAt(cursor, source, start, position, remModeOnError); }
+   void insertAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         const VirtualCollectionCursor& start, const VirtualCollectionCursor& end,
+         RelativePosition position=VirtualCollection::RPBefore, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::insertAllAt(cursor, source, start, end,
+            position, remModeOnError);
+      }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   void insertAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         RelativePosition position=VirtualCollection::RPBefore, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::insertAllAt(cursor, source, position, remModeOnError); }
+   void insertAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         const DefTypeCursor& start, RelativePosition position=VirtualCollection::RPBefore,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::insertAllAt(cursor, source, start, position, remModeOnError); }
+   void insertAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         const DefTypeCursor& start, const DefTypeCursor& end,
+         RelativePosition position=VirtualCollection::RPBefore, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::insertAllAt(cursor, source, start, end,
+            position, remModeOnError);
+      }
+#endif // DefBaseMultipleInterface -> !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefExcludeElement
+   void insertCopyAtBegin(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertCopyAtBegin(*DefTypeCCastToCollectHandler(&element)); }
+   void insertCopyAtEnd(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::insertCopyAtEnd(*DefTypeCCastToCollectHandler(&element)); }
+   void insertCopyAt(DefTypeCursor& cursor, const DefTypeElement& element,
+         RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeInheritedCollection::insertCopyAt(cursor,
+            *DefTypeCCastToCollectHandler(&element), position);
+      }
+#endif // !DefExcludeElement ->  !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefBaseMultipleInterface   
+#ifndef HasDefTypeCollection
+   void insertCopyAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeInheritedCollection::insertCopyAllAt(cursor, source, position); }
+   void insertCopyAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         const VirtualCollectionCursor& start, RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeInheritedCollection::insertCopyAllAt(cursor, source, start, position); }
+   void insertCopyAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         const VirtualCollectionCursor& start, const VirtualCollectionCursor& end,
+         RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeInheritedCollection::insertCopyAllAt(cursor, source, start, end, position); }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   void insertCopyAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeInheritedCollection::insertCopyAllAt(cursor, source, position); }
+   void insertCopyAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         const DefTypeCursor& start, RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeInheritedCollection::insertCopyAllAt(cursor, source, start, position); }
+   void insertCopyAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         const DefTypeCursor& start, const DefTypeCursor& end,
+         RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeInheritedCollection::insertCopyAllAt(cursor, source, start, end, position); }
+
+   int count() const
+      {  return DefTypeInheritedCollection::count(); }
+   int queryCount(const ExtendedLocateParameters& parameters,
+         const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr) const
+      {  return DefTypeInheritedCollection::queryCount(parameters, start, end); }
+   bool isEmpty() const { return DefTypeInheritedCollection::isEmpty(); }
+#endif // DefBaseMultipleInterface -> !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+   bool isElement(const DefTypeElement& element) const
+      {  return DefTypeInheritedCollection::isElement(*DefTypeCCastToCollectHandler(&element)); }
+   bool contain(const DefTypeElement& element) const
+      {  return DefTypeInheritedCollection::contain(*DefTypeCCastToCollectHandler(&element)); }
+#endif // !DefExcludeElement -> DefTypeSorted, !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> !DefJustInline, DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefExcludeReplaceElement
+   void replaceElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::replaceElementAtWith(cursor,
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   void replaceFirstWith(DefTypeElement* element, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::replaceFirstWith(
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   void replaceLastWith(DefTypeElement* element, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::replaceLastWith(
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   void replaceAndFreeElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::replaceAndFreeElementAtWith(cursor,
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   void replaceAndFreeFirstWith(DefTypeElement* element, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::replaceAndFreeFirstWith(
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   void replaceAndFreeLastWith(DefTypeElement* element, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeInheritedCollection::replaceAndFreeLastWith(
+            DefTypeCastToCollectHandler(element), remModeOnError);
+      }
+   void replaceElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceElementAtWithCopy(cursor,
+            *DefTypeCCastToCollectHandler(&element));
+      }
+   void replaceFirstWithCopy(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceFirstWithCopy(
+            *DefTypeCCastToCollectHandler(&element));
+      }
+   void replaceLastWithCopy(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceLastWithCopy(
+            *DefTypeCCastToCollectHandler(&element));
+      }
+   void replaceAndFreeElementAtWithCopy(DefTypeCursor& cursor,
+         const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceAndFreeElementAtWithCopy(cursor,
+            *DefTypeCCastToCollectHandler(&element));
+      }
+   void replaceAndFreeFirstWithCopy(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceAndFreeFirstWithCopy(
+            *DefTypeCCastToCollectHandler(&element));
+      }
+   void replaceAndFreeLastWithCopy(const DefTypeElement& element)
+      {  DefTypeInheritedCollection::replaceAndFreeLastWithCopy(
+            *DefTypeCCastToCollectHandler(&element));
+      }
+   void replace(DefTypeElement* element, const ExtendedReplaceParameters& parameters, DefTypeCursor* cursor=nullptr)
+      {  DefTypeInheritedCollection::replace(DefTypeCastToCollectHandler(element), parameters, cursor); }
+#endif // DefExcludeReplaceElement
+#endif // DefJustInline
+#else  // DefTypeInheritedCollection
+#ifdef DefJustInline // -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#ifndef DefExcludeElement
+#ifdef DefImplementsNativeMethods
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeElement* element, AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(element, ExtendedInsertionParameters(dupMode, remModeOnError)); }
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _add(element, ExtendedInsertionParameters(dupMode, remModeOnError), &cursor); }
+   DefTemplate inline void
+   DefTypeCollection::addNew(DefTypeElement* element)
+      {  DefTypeFinal _add(element, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree)); }
+   DefTemplate inline void
+   DefTypeCollection::addNew(DefTypeElement* element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(element, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree), &cursor); }
+   DefTemplate inline void
+   DefTypeCollection::addCopy(const DefTypeElement& element)
+      {  DefTypeFinal _add(element.createSCopy(), ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree)); }
+   DefTemplate inline void
+   DefTypeCollection::addCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(element.createSCopy(), ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree), &cursor); }
+#else
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeElement* element, AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedInsertionParameters(dupMode, remModeOnError));
+      }
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode,
+      RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedInsertionParameters(dupMode, remModeOnError), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addNew(DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree));
+      }
+   DefTemplate inline void
+   DefTypeCollection::addNew(DefTypeElement* element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addCopy(const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()), ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree)); }
+   DefTemplate inline void
+   DefTypeCollection::addCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()), ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree), &cursor); }
+#endif // !DefImplementsNativeMethods -> !DefExcludeElement, DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // !DefExcludeElement -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifdef DefImplementsNativeMethods
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeElement* element, const ExtendedInsertionParameters& parameters,
+         DefTypeCursor* cursor)
+      {  DefTypeFinal _add(element, parameters, cursor); }
+#else // !DefImplementsNativeMethods
+   DefTemplate inline void
+   DefTypeCollection::add(DefTypeElement* element, const ExtendedInsertionParameters& parameters,
+         DefTypeCursor* cursor)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element), parameters, cursor); }
+#endif // !DefImplementsNativeMethods
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAdd(DefTypeElement* element, AddMode dupMode)
+      {  return locateOrAdd(element, *newCursor(), dupMode); }
+#ifdef DefImplementsNativeMethods
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAdd(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode)
+      {  AssumeAllocation(element)
+         LocationResult result = DefTypeFinal _locate(*element, ExtendedLocateParameters(VirtualCollection::RPUndefined), &cursor);
+         if (!result)
+            DefTypeFinal _add(element, result.queryInsertionParameters().setDuplicate(dupMode),
+               &cursor);
+         return result;
+      }
+
+   DefTemplate inline bool
+   DefTypeCollection::locate(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(element, ExtendedLocateParameters(VirtualCollection::RPExact), nullptr); }
+   DefTemplate inline DefTypename DefTypeCollection::LocationResult
+   DefTypeCollection::locate(const DefTypeElement& element, DefTypeCursor& cursor, RelativePosition pos) const
+      {  return DefTypeFinal _locate(element, ExtendedLocateParameters(pos), &cursor); }
+   DefTemplate inline DefTypename DefTypeCollection::LocationResult
+   DefTypeCollection::locate(const DefTypeElement& element, const ExtendedLocateParameters& parameters,
+         DefTypeCursor* cursor, const DefTypeCursor* start, const DefTypeCursor* end) const
+      {  return DefTypeFinal _locate(element, parameters, cursor, start, end); }
+#else // !DefImplementsNativeMethods
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAdd(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode)
+      {  AssumeAllocation(element)
+         LocationResult result = DefTypeFinal _locate(*DefTypeCastToCollectHandler(element),
+            ExtendedLocateParameters(VirtualCollection::RPUndefined), &cursor);
+         if (!result)
+            DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+               result.queryInsertionParameters().setDuplicate(dupMode), &cursor);
+         return result;
+      }
+
+   DefTemplate inline bool
+   DefTypeCollection::locate(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element), ExtendedLocateParameters(VirtualCollection::RPExact), nullptr); }
+   DefTemplate inline DefTypename DefTypeCollection::LocationResult
+   DefTypeCollection::locate(const DefTypeElement& element, DefTypeCursor& cursor, RelativePosition pos) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element),
+            ExtendedLocateParameters(pos), &cursor);
+      }
+   DefTemplate inline DefTypename DefTypeCollection::LocationResult
+   DefTypeCollection::locate(const DefTypeElement& element, const ExtendedLocateParameters& parameters,
+         DefTypeCursor* cursor, const DefTypeCursor* start, const DefTypeCursor* end) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element), parameters, cursor, start, end); }
+#endif // !DefImplementsNativeMethods
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAddCopy(const DefTypeElement& element)
+      {  return locateOrAdd(const_cast<DefTypeElement*>(&element), *newCursor(), VirtualCollection::AMDuplicate); }
+   DefTemplate inline bool
+   DefTypeCollection::locateOrAddCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  return locateOrAdd(const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate); }
+#endif // !DefExcludeElement -> DefTypeSorted, DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#if defined(DefTypeKey) && (!defined(DefBaseMultipleInterface) || defined(DefNeedLocate))
+   DefTemplate inline bool
+   DefTypeCollection::locateKey(DefTypeKey key) const
+      {  return DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), (DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr); }
+   DefTemplate inline DefTypename DefTypeCollection::LocationResult
+   DefTypeCollection::locateKey(DefTypeKey key, DefTypeCursor& cursor, RelativePosition pos) const
+      {  return DefTypeFinal _locateKey(key, ExtendedLocateParameters(pos), &cursor, (const DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr); }
+   DefTemplate inline DefTypename DefTypeCollection::LocationResult
+   DefTypeCollection::locateKey(DefTypeKey key, const ExtendedLocateParameters& parameters,
+         DefTypeCursor* cursor, const DefTypeCursor* start, const DefTypeCursor* end) const
+      {  return DefTypeFinal _locateKey(key, parameters, cursor, start, end); }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::findKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key(), (const DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr);
+         return cursor->elementSAt();
+      }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::findKey(DefTypeKey key) const
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key(), (const DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr);
+         return cursor->elementAt();
+      }
+#ifdef DefMapInterface
+   DefTemplate inline DefTypeControlKey
+   DefTypeCollection::queryKeyAt(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPExact), &cursor); }
+   DefTemplate inline DefTypeControlKey
+   DefTypeCollection::queryNextKey(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPAfter), &cursor); }
+   DefTemplate inline DefTypeControlKey
+   DefTypeCollection::queryPreviousKey(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPBefore), &cursor); }
+   DefTemplate inline DefTypeControlKey
+   DefTypeCollection::queryFirstKey() const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPAfter)); }
+   DefTemplate inline DefTypeControlKey
+   DefTypeCollection::queryLastKey() const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPBefore)); }
+   DefTemplate inline DefTypeControlKey
+   DefTypeCollection::queryKey(const ExtendedLocateParameters& parameters,
+      const DefTypeCursor* cursor) const
+      {  return DefTypeFinal _queryKey(parameters, cursor); }
+#endif // DefMapInterface
+#endif // DefTypeKey -> DefTypeSorted, DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefBaseMultipleInterface   
+#ifndef HasDefTypeCollection
+   DefTemplate inline void
+   DefTypeCollection::fullAssign(const VirtualCollection& collection)
+      {  DefTypeFinal _fullAssign(collection, ExtendedReplaceParameters().setDuplicate().setFree()); }
+   DefTemplate inline void
+   DefTypeCollection::fullAssign(const VirtualCollection& collection, const ExtendedReplaceParameters& parameters)
+      {  DefTypeFinal _fullAssign(collection, parameters); }
+#endif // HasDefTypeCollection -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline void
+   DefTypeCollection::fullAssign(const DefTypeCollection& collection)
+      {  DefTypeFinal _fullAssign(collection, ExtendedReplaceParameters().setDuplicate().setFree()); }
+   DefTemplate inline void
+   DefTypeCollection::fullAssign(const DefTypeCollection& collection, const ExtendedReplaceParameters& parameters)
+      {  DefTypeFinal _fullAssign(collection, parameters); }
+
+#ifndef HasDefTypeCollection
+   DefTemplate inline void
+   DefTypeCollection::addAll(const VirtualCollection& collection)
+      {  DefTypeFinal _addAll(collection, ExtendedInsertionParameters(), nullptr, nullptr, nullptr); }
+   DefTemplate inline void
+   DefTypeCollection::addAll(const VirtualCollection& collection, const VirtualCollectionCursor& start)
+      {  DefTypeFinal _addAll(collection, ExtendedInsertionParameters(), (VirtualCollectionCursor*) nullptr, &start, nullptr); }
+   DefTemplate inline void
+   DefTypeCollection::addAll(const VirtualCollection& collection, const VirtualCollectionCursor& start,
+         const VirtualCollectionCursor& end)
+      {  DefTypeFinal _addAll(collection, ExtendedInsertionParameters(), (VirtualCollectionCursor*) nullptr, &start, &end); }
+   DefTemplate inline void
+   DefTypeCollection::addAll(const VirtualCollection& collection, const ExtendedInsertionParameters& parameters,
+         VirtualCollectionCursor* cursor, const VirtualCollectionCursor* start,
+         const VirtualCollectionCursor* end)
+      {  DefTypeFinal _addAll(collection, parameters, cursor, start, end); }
+#endif // HasDefTypeCollection -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline void
+   DefTypeCollection::addAll(const DefTypeCollection& collection)
+      {  DefTypeFinal _addAll(collection, ExtendedInsertionParameters()); }
+   DefTemplate inline void
+   DefTypeCollection::addAll(const DefTypeCollection& collection, const DefTypeCursor& start)
+      {  DefTypeFinal _addAll(collection, ExtendedInsertionParameters(), (DefTypeCursor*) nullptr, &start); }
+   DefTemplate inline void
+   DefTypeCollection::addAll(const DefTypeCollection& collection, const DefTypeCursor& start,
+         const DefTypeCursor& end)
+      {  DefTypeFinal _addAll(collection, ExtendedInsertionParameters(), (DefTypeCursor*) nullptr, &start, &end); }
+   DefTemplate inline void
+   DefTypeCollection::addAll(const DefTypeCollection& collection, const ExtendedInsertionParameters& parameters,
+         DefTypeCursor* cursor, const DefTypeCursor* start, const DefTypeCursor* end)
+      {  DefTypeFinal _addAll(collection, parameters, cursor, start, end); }
+
+#ifndef HasDefTypeCollection
+   DefTemplate inline void
+   DefTypeCollection::addCopyAll(const VirtualCollection& source)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate), nullptr, nullptr, nullptr); }
+   DefTemplate inline void
+   DefTypeCollection::addCopyAll(const VirtualCollection& source, const VirtualCollectionCursor& start)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate), (VirtualCollectionCursor*) nullptr, &start, nullptr); }
+   DefTemplate inline void
+   DefTypeCollection::addCopyAll(const VirtualCollection& source, const VirtualCollectionCursor& start,
+         const VirtualCollectionCursor& end)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate), (VirtualCollectionCursor*) nullptr, &start, &end); }
+
+   DefTemplate inline void
+   DefTypeCollection::moveAllTo(VirtualCollection& destination)
+      {  DefTypeFinal _moveAllTo(destination, ExtendedReplaceParameters().setRemoveExact(), nullptr, nullptr, nullptr); }
+   DefTemplate inline void
+   DefTypeCollection::moveAllTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+         const DefTypeCursor* startCursor, const DefTypeCursor* endCursor,
+         VirtualCollectionCursor* destinationCursor)
+      {  DefTypeFinal _moveAllTo(destination, parameters, startCursor, endCursor, destinationCursor); }
+   DefTemplate inline void
+   DefTypeCollection::moveTo(VirtualCollection& destination, VirtualCollectionCursor& cursor)
+      {  DefTypeFinal _moveTo(destination, ExtendedReplaceParameters().setRemovePosition(COL::VirtualCollection::RPExact),
+            &cursor, (VirtualCollectionCursor*) nullptr);
+      }
+   DefTemplate inline void
+   DefTypeCollection::moveTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+         VirtualCollectionCursor* cursor, VirtualCollectionCursor* destinationCursor)
+      {  DefTypeFinal _moveTo(destination, parameters, cursor, destinationCursor); }
+
+#endif // HasDefTypeCollection -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline void
+   DefTypeCollection::addCopyAll(const DefTypeCollection& source)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate)); }
+   DefTemplate inline void
+   DefTypeCollection::addCopyAll(const DefTypeCollection& source, const DefTypeCursor& start)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate), (DefTypeCursor*) nullptr, &start); }
+   DefTemplate inline void
+   DefTypeCollection::addCopyAll(const DefTypeCollection& source, const DefTypeCursor& start,
+         const DefTypeCursor& end)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate), (DefTypeCursor*) nullptr, &start, &end); }
+
+   DefTemplate inline void
+   DefTypeCollection::moveAllTo(DefTypeCollection& destination)
+      {  DefTypeFinal _moveAllTo(destination, ExtendedReplaceParameters().setRemoveExact()); }
+   DefTemplate inline void
+   DefTypeCollection::moveAllTo(DefTypeCollection& destination, const ExtendedReplaceParameters& parameters,
+         const DefTypeCursor* startCursor, const DefTypeCursor* endCursor,
+         DefTypeCursor* destinationCursor)
+      {  DefTypeFinal _moveAllTo(destination, parameters, startCursor,
+            endCursor, destinationCursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::moveTo(DefTypeCollection& destination, DefTypeCursor& cursor)
+      {  DefTypeFinal _moveTo(destination,
+            ExtendedReplaceParameters().setRemovePosition(COL::VirtualCollection::RPExact), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::moveTo(DefTypeCollection& destination, const ExtendedReplaceParameters& parameters,
+         DefTypeCursor* cursor, DefTypeCursor* destinationCursor)
+      {  DefTypeFinal _moveTo(destination, parameters, cursor, destinationCursor); }
+
+   DefTemplate inline void
+   DefTypeCollection::swap(DefTypeCollection& source)
+      {  DefTypeFinal _swap(source); }
+#endif // DefBaseMultipleInterface -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+   DefTemplate inline void
+   DefTypeCollection::addOrReplaceAt(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode, RemoveMode freeMode, RemoveMode remModeOnError)
+      {  if (locateOrAdd(element, cursor, dupMode))
+           DefTypeFinal _replace(DefTypeCastToCollectHandler(element), ExtendedReplaceParameters(dupMode, freeMode, remModeOnError), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::addCopyOrReplaceAt(DefTypeCursor& cursor, const DefTypeElement& element,
+         RemoveMode freeMode)
+      {  if (locateOrAdd(const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate))
+            DefTypeFinal _replace(DefTypeCastToCollectHandler(element.createSCopy()), ExtendedReplaceParameters().setFree(freeMode).setFreeOnError(), &cursor);
+      }
+#endif // !DefExcludeElement -> DefTypeSorted, DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#if (!defined(DefBaseMultipleInterface) || defined(DefNeedLocate))
+   DefTemplate inline void
+   DefTypeCollection::deleteAll() { DefTypeFinal _removeAll(ExtendedSuppressParameters()); }
+   DefTemplate inline void
+   DefTypeCollection::deleteAll(DefTypeCursor& start, DefTypeCursor& end)
+      {  DefTypeFinal _removeAll(ExtendedSuppressParameters(), &start, &end); }
+   DefTemplate inline void
+   DefTypeCollection::deleteAt(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMRemove, VirtualCollection::RPExact), &cursor); }
+   DefTemplate inline void
+   DefTypeCollection::deleteNext(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMRemove, VirtualCollection::RPAfter), &cursor); }
+   DefTemplate inline void
+   DefTypeCollection::deletePrevious(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMRemove, VirtualCollection::RPBefore), &cursor); }
+   DefTemplate inline void
+   DefTypeCollection::deleteFirst() { DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMRemove, VirtualCollection::RPAfter)); }
+   DefTemplate inline void
+   DefTypeCollection::deleteLast() { DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMRemove, VirtualCollection::RPBefore)); }
+
+   DefTemplate inline void
+   DefTypeCollection::freeAll() { DefTypeFinal _removeAll(ExtendedSuppressParameters(VirtualCollection::RMFree)); }
+   DefTemplate inline void
+   DefTypeCollection::freeAll(DefTypeCursor& start)
+      {  DefTypeFinal _removeAll(ExtendedSuppressParameters(VirtualCollection::RMFree), &start); }
+   DefTemplate inline void
+   DefTypeCollection::freeAll(DefTypeCursor& start, DefTypeCursor& end)
+      {  DefTypeFinal _removeAll(ExtendedSuppressParameters(VirtualCollection::RMFree), &start, &end); }
+   DefTemplate inline void
+   DefTypeCollection::freeAt(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMFree, VirtualCollection::RPExact), &cursor); }
+   DefTemplate inline void
+   DefTypeCollection::freeNext(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMFree, VirtualCollection::RPAfter), &cursor); }
+   DefTemplate inline void
+   DefTypeCollection::freePrevious(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMFree, VirtualCollection::RPBefore), &cursor); }
+   DefTemplate inline void
+   DefTypeCollection::freeFirst() { DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMFree, VirtualCollection::RPAfter)); }
+   DefTemplate inline void
+   DefTypeCollection::freeLast() { DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMFree, VirtualCollection::RPBefore)); }
+   DefTemplate inline void
+   DefTypeCollection::remove(const ExtendedSuppressParameters& parameters, DefTypeCursor* cursor)
+      {  DefTypeFinal _remove(parameters, cursor); }
+   DefTemplate inline void
+   DefTypeCollection::removeAll(const ExtendedSuppressParameters& parameters,
+      const DefTypeCursor* start, const DefTypeCursor* end)
+      {  DefTypeFinal _removeAll(parameters, start, end); }
+#ifdef DefTypeKey
+   DefTemplate inline void
+   DefTypeCollection::deleteAtKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key());
+         DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMRemove, VirtualCollection::RPExact), cursor.key());
+      }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::extractAtKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key());
+         DefTypeElement& result = cursor->elementSAt();
+         DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMRemove, VirtualCollection::RPExact), cursor.key());
+         return result;
+      }
+   DefTemplate inline void
+   DefTypeCollection::freeAtKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key());
+         DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMFree, VirtualCollection::RPExact), cursor.key());
+      }
+#endif
+
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSElementAt(const DefTypeCursor& cursor) const
+      {  DefTypeElement* result = DefTypeCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPExact), &cursor));
+         AssumeCondition(result)
+         return *result;
+      }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSFirst() const
+      {  DefTypeElement* result = DefTypeCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPAfter)));
+         AssumeCondition(result)
+         return *result;
+      }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSLast() const
+      {  DefTypeElement* result = DefTypeCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPBefore)));
+         AssumeCondition(result)
+         return *result;
+      }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getElementAt(const DefTypeCursor& cursor) const
+      {  const DefTypeElement* result = DefTypeCCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPExact), &cursor));
+         AssumeCondition(result)
+         return *result;
+      }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getNextElement(const DefTypeCursor& cursor) const
+      {  const DefTypeElement* result = DefTypeCCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPAfter), &cursor));
+         AssumeCondition(result)
+         return *result;
+      }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getPreviousElement(const DefTypeCursor& cursor) const
+      {  const DefTypeElement* result = DefTypeCCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPBefore), &cursor));
+         AssumeCondition(result)
+         return *result;
+      }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSNextElement(const DefTypeCursor& cursor) const
+      {  DefTypeElement* result = DefTypeCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPAfter), &cursor));
+         AssumeCondition(result)
+         return *result;
+      }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getSPreviousElement(const DefTypeCursor& cursor) const
+      {  DefTypeElement* result = DefTypeCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPBefore), &cursor));
+         AssumeCondition(result)
+         return *result;
+      }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getFirst() const
+      {  const DefTypeElement* result = DefTypeCCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPAfter)));
+         AssumeCondition(result)
+         return *result;
+      }
+   DefTemplate inline const DefTypeElement&
+   DefTypeCollection::getLast() const
+      {  const DefTypeElement* result = DefTypeCCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPBefore)));
+         AssumeCondition(result)
+         return *result;
+      }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::getElement(const ExtendedLocateParameters& parameters, const DefTypeCursor* cursor) const
+      {  DefTypeElement* result = DefTypeCastFromCollectHandler(
+            DefTypeFinal _getElement(parameters, cursor));
+         AssumeCondition(result)
+         return *result;
+      }
+
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::extractElementAt(DefTypeCursor& cursor)
+      {  DefTypeElement& result = getSElementAt(cursor); deleteAt(cursor);
+         return result;
+      }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::extractFirst()
+      {  DefTypeElement& result = getSFirst(); deleteFirst(); return result; }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::extractLast()
+      {  DefTypeElement& result = getSLast(); deleteLast(); return result; }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::extractNextElement(DefTypeCursor& cursor)
+      {  DefTypeElement& result = getSNextElement(cursor); deleteNext(cursor);
+         return result;
+      }
+   DefTemplate inline DefTypeElement&
+   DefTypeCollection::extractPreviousElement(DefTypeCursor& cursor)
+      {  DefTypeElement& result = getSPreviousElement(cursor); deletePrevious(cursor);
+         return result;
+      }
+#endif // DefBaseMultipleInterface -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+#ifdef DefImplementsNativeMethods
+   DefTemplate inline bool
+   DefTypeCollection::gotoAny(DefTypeCursor& cursor, const DefTypeElement& element, RelativePosition pos) const
+      {  
+#ifndef DefTypeMultiSorted
+         return _locate(element, ExtendedLocateParameters(VirtualCollection::RPExact), &cursor);
+#else // DefTypeMultiSorted
+         LocationResult result = _locate(element, ExtendedLocateParameters(VirtualCollection::RPExact), &cursor);
+         if (result) {
+            if (pos == VirtualCollection::RPAfter)
+               result.setToFirst(cursor);
+            else if (pos == VirtualCollection::RPBefore)
+               result.setToLast(cursor);
+         };
+         return result;
+#endif // !DefTypeMultiSorted
+      }
+#else // DefImplementsNativeMethods
+   DefTemplate inline bool
+   DefTypeCollection::gotoAny(DefTypeCursor& cursor, const DefTypeElement& element, RelativePosition pos) const
+      {  
+#ifndef DefTypeMultiSorted
+         return _locate(*DefTypeCCastToCollectHandler(&element), ExtendedLocateParameters(VirtualCollection::RPExact), &cursor);
+#else // DefTypeMultiSorted
+         LocationResult result = _locate(*DefTypeCCastToCollectHandler(&element), ExtendedLocateParameters(VirtualCollection::RPExact), &cursor);
+         if (result) {
+            if (pos == VirtualCollection::RPAfter)
+               result.setToFirst(cursor);
+            else if (pos == VirtualCollection::RPBefore)
+               result.setToLast(cursor);
+         };
+         return result;
+#endif // DefTypeMultiSorted
+      }
+#endif // !DefImplementsNativeMethods
+#endif // !DefExcludeElement -> DefTypeSorted,  DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#if defined(DefTypeKey) && (!defined(DefBaseMultipleInterface) || defined(DefNeedLocate))
+   DefTemplate inline bool
+   DefTypeCollection::gotoAnyKey(DefTypeCursor& cursor, DefTypeKey key, RelativePosition pos) const
+      {  
+#ifndef DefTypeMultiSorted
+         return _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), &cursor);
+#else // DefTypeMultiSorted
+         LocationResult result = _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), &cursor);
+         if (result) {
+            if (pos == VirtualCollection::RPAfter)
+               result.setToFirst(cursor);
+            else if (pos == VirtualCollection::RPBefore)
+               result.setToLast(cursor);
+         };
+         return result;
+#endif
+      }
+   DefTemplate inline bool
+   DefTypeCollection::containKey(DefTypeKey key) const
+      {  return _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact)); }
+#endif // DefTypeKey
+#endif // DefTypeSorted -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefExcludeElement
+#ifdef DefImplementsNativeMethods
+   DefTemplate inline void
+   DefTypeCollection::insertAtBegin(DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _add(element,
+            ExtendedInsertionParameters(dupMode, remModeOnError, VirtualCollection::RPAfter));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAtEnd(DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _add(element,
+            ExtendedInsertionParameters(dupMode, remModeOnError, VirtualCollection::RPBefore));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAt(DefTypeCursor& cursor, DefTypeElement* element,
+         RelativePosition position, AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(element,
+            ExtendedInsertionParameters(dupMode, remModeOnError, position), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAtBegin(DefTypeElement* element)
+      {  DefTypeFinal _add(element, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, VirtualCollection::RPAfter)); }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAtEnd(DefTypeElement* element)
+      {  DefTypeFinal _add(element, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, VirtualCollection::RPBefore)); }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAt(DefTypeCursor& cursor, DefTypeElement* element,
+        RelativePosition position)
+      {  DefTypeFinal _add(element,
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, position), &cursor);
+      }
+#else // DefImplementsNativeMethods
+   DefTemplate inline void
+   DefTypeCollection::insertAtBegin(DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedInsertionParameters(dupMode, remModeOnError, VirtualCollection::RPAfter));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAtEnd(DefTypeElement* element, AddMode dupMode,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedInsertionParameters(dupMode, remModeOnError, VirtualCollection::RPBefore));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAt(DefTypeCursor& cursor, DefTypeElement* element,
+         RelativePosition position, AddMode dupMode, RemoveMode remModeOnError)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedInsertionParameters(dupMode, remModeOnError, position), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAtBegin(DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, VirtualCollection::RPAfter));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAtEnd(DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, VirtualCollection::RPBefore));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertNewAt(DefTypeCursor& cursor, DefTypeElement* element,
+         RelativePosition position)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, position), &cursor);
+      }
+#endif // !DefImplementsNativeMethods
+#endif // !DefExcludeElement
+
+#ifndef DefBaseMultipleInterface   
+#ifndef HasDefTypeCollection
+   DefTemplate inline void
+   DefTypeCollection::insertAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         RelativePosition position, RemoveMode remModeOnError)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, remModeOnError, position),
+      	    &cursor, nullptr, nullptr);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         const VirtualCollectionCursor& start, RelativePosition position,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, remModeOnError, position),
+            &cursor, &start, nullptr);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         const VirtualCollectionCursor& start, const VirtualCollectionCursor& end,
+         RelativePosition position, RemoveMode remModeOnError)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, remModeOnError, position),
+      	   &cursor, &start, &end);
+      }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline void
+   DefTypeCollection::insertAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         RelativePosition position, RemoveMode remModeOnError)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, remModeOnError, position),
+            &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         const DefTypeCursor& start, RelativePosition position,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, remModeOnError, position),
+            &cursor, &start);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         const DefTypeCursor& start, const DefTypeCursor& end,
+         RelativePosition position, RemoveMode remModeOnError)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, remModeOnError, position),
+            &cursor, &start, &end);
+      }
+#endif // DefBaseMultipleInterface -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefExcludeElement
+#ifdef DefImplementsNativeMethods
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAtBegin(const DefTypeElement& element)
+      {  DefTypeFinal _add(element.createSCopy(),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, VirtualCollection::RPAfter));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAtEnd(const DefTypeElement& element)
+      {  DefTypeFinal _add(element.createSCopy(),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, VirtualCollection::RPBefore));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAt(DefTypeCursor& cursor, const DefTypeElement& element,
+        RelativePosition position)
+      {  DefTypeFinal _add(element.createSCopy(),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, position), &cursor);
+      }
+#else // !DefImplementsNativeMethods
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAtBegin(const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, VirtualCollection::RPAfter));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAtEnd(const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, VirtualCollection::RPBefore));
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAt(DefTypeCursor& cursor, const DefTypeElement& element,
+        RelativePosition position)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, position), &cursor);
+      }
+#endif // DefImplementsNativeMethods
+#endif // !DefExcludeElement -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefBaseMultipleInterface   
+#ifndef HasDefTypeCollection
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+        RelativePosition position)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate, VirtualCollection::RMRemove, position),
+            &cursor, nullptr, nullptr);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         const VirtualCollectionCursor& start, RelativePosition position)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate, VirtualCollection::RMRemove, position),
+            &cursor, &start, nullptr);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         const VirtualCollectionCursor& start, const VirtualCollectionCursor& end,
+         RelativePosition position)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate, VirtualCollection::RMRemove, position),
+            &cursor, &start, &end);
+      }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         RelativePosition position)
+      {  DefTypeFinal _addAll(source, 
+            ExtendedInsertionParameters(VirtualCollection::AMDuplicate, VirtualCollection::RMRemove, position), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         const DefTypeCursor& start, RelativePosition position)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate, VirtualCollection::RMRemove, position),
+            &cursor, &start);
+      }
+   DefTemplate inline void
+   DefTypeCollection::insertCopyAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         const DefTypeCursor& start, const DefTypeCursor& end, RelativePosition position)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate, VirtualCollection::RMRemove, position),
+            &cursor, &start, &end);
+      }
+
+   DefTemplate inline int
+   DefTypeCollection::count() const { return DefTypeFinal _queryCount(ExtendedLocateParameters()); }
+   DefTemplate inline int
+   DefTypeCollection::queryCount(const ExtendedLocateParameters& parameters,
+         const DefTypeCursor* start, const DefTypeCursor* end) const
+      {  return DefTypeFinal _queryCount(parameters, start, end); }
+   DefTemplate inline bool
+   DefTypeCollection::isEmpty() const { return DefTypeFinal _queryCount(ExtendedLocateParameters()) == 0; }
+#endif // DefBaseMultipleInterface -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+#ifdef DefImplementsNativeMethods
+   DefTemplate inline bool
+   DefTypeCollection::isElement(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(element, ExtendedLocateParameters(VirtualCollection::RPExact)); }
+   DefTemplate inline bool
+   DefTypeCollection::contain(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(element, ExtendedLocateParameters(VirtualCollection::RPExact)); }
+#else
+   DefTemplate inline bool
+   DefTypeCollection::isElement(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element), ExtendedLocateParameters(VirtualCollection::RPExact)); }
+   DefTemplate inline bool
+   DefTypeCollection::contain(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element), ExtendedLocateParameters(VirtualCollection::RPExact)); }
+#endif // !DefImplementsNativeMethods -> !DefExcludeElement, DefTypeSorted, DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // !DefExcludeElement -> DefTypeSorted, DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefExcludeReplaceElement
+   DefTemplate inline void
+   DefTypeCollection::replaceElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedReplaceParameters().setFreeOnError(remModeOnError).setRemoveExact(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceFirstWith(DefTypeElement* element, RemoveMode remModeOnError)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedReplaceParameters().setRemovePosition(VirtualCollection::RPAfter).setFreeOnError(remModeOnError));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceLastWith(DefTypeElement* element, RemoveMode remModeOnError)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedReplaceParameters().setRemovePosition(VirtualCollection::RPBefore).setFreeOnError(remModeOnError));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedReplaceParameters().setFree().setFreeOnError(remModeOnError).setRemoveExact(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeFirstWith(DefTypeElement* element, RemoveMode remModeOnError)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedReplaceParameters().setRemovePosition(VirtualCollection::RPAfter).setFree().setFreeOnError(remModeOnError));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeLastWith(DefTypeElement* element, RemoveMode remModeOnError)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedReplaceParameters().setRemovePosition(VirtualCollection::RPBefore).setFree().setFreeOnError(remModeOnError));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _replace(element.createSCopy(),
+            ExtendedReplaceParameters().setFreeOnError(VirtualCollection::RMFree).setRemoveExact(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceFirstWithCopy(const DefTypeElement& element)
+      {  DefTypeFinal _replace(element.createSCopy(),
+            ExtendedReplaceParameters().setRemovePosition(VirtualCollection::RPAfter).setFreeOnError(VirtualCollection::RMFree));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceLastWithCopy(const DefTypeElement& element)
+      {  DefTypeFinal _replace(element.createSCopy(),
+            ExtendedReplaceParameters().setRemovePosition(VirtualCollection::RPBefore).setFreeOnError(VirtualCollection::RMFree));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _replace(element.createSCopy(),
+            ExtendedReplaceParameters().setFree().setFreeOnError(VirtualCollection::RMFree).setRemoveExact(), &cursor);
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeFirstWithCopy(const DefTypeElement& element)
+      {  DefTypeFinal _replace(element.createSCopy(),
+            ExtendedReplaceParameters().setRemovePosition(VirtualCollection::RPAfter).setFree().setFreeOnError(VirtualCollection::RMFree));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replaceAndFreeLastWithCopy(const DefTypeElement& element)
+      {  DefTypeFinal _replace(element.createSCopy(),
+            ExtendedReplaceParameters().setRemovePosition(VirtualCollection::RPBefore).setFree().setFreeOnError(VirtualCollection::RMFree));
+      }
+   DefTemplate inline void
+   DefTypeCollection::replace(DefTypeElement* element, const ExtendedReplaceParameters& parameters,
+         DefTypeCursor* cursor)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element), parameters, cursor); }
+#endif // DefExcludeReplaceElement
+#else // DefJustInline -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#ifndef DefExcludeElement
+#ifdef DefImplementsNativeMethods
+   void add(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(element, ExtendedInsertionParameters(dupMode, remModeOnError)); }
+   void add(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(element,
+             ExtendedInsertionParameters(dupMode, remModeOnError), &cursor);
+      }
+   void addNew(DefTypeElement* element)
+      {  DefTypeFinal _add(element, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree)); }
+   void addNew(DefTypeElement* element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(element, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree), &cursor); }
+   void addCopy(const DefTypeElement& element)
+      {  DefTypeFinal _add(element.createSCopy(), ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree)); }
+   void addCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(element.createSCopy(), ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree), &cursor); }
+#else // !DefImplementsNativeMethods
+   void add(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+             ExtendedInsertionParameters(dupMode, remModeOnError));
+      }
+   void add(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+             ExtendedInsertionParameters(dupMode, remModeOnError), &cursor);
+      }
+   void addNew(DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+             ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree));
+      }
+   void addNew(DefTypeElement* element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+             ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree), &cursor);
+      }
+   void addCopy(const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()), ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree)); }
+   void addCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()), ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree), &cursor); }
+#endif // !DefImplementsNativeMethods -> !DefExcludeElement, !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // !DefExcludeElement -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifdef DefImplementsNativeMethods
+   void add(DefTypeElement* element, const ExtendedInsertionParameters& parameters, DefTypeCursor* cursor=nullptr)
+      {  DefTypeFinal _add(element, parameters, cursor); }
+#else // !DefImplementsNativeMethods
+   void add(DefTypeElement* element, const ExtendedInsertionParameters& parameters, DefTypeCursor* cursor=nullptr)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element), parameters, cursor); }
+#endif // !DefImplementsNativeMethods
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+#ifdef DefImplementsNativeMethods
+   bool locateOrAdd(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  AssumeAllocation(element)
+         LocationResult result = DefTypeFinal _locate(*element,
+            ExtendedLocateParameters(VirtualCollection::RPUndefined), &cursor);
+         if (!result)
+            DefTypeFinal _add(element,
+               result.queryInsertionParameters().setDuplicate(dupMode), &cursor);
+         return result;
+      }
+   bool locate(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(element, ExtendedLocateParameters(VirtualCollection::RPExact), nullptr); }
+   LocationResult locate(const DefTypeElement& element, DefTypeCursor& cursor, RelativePosition pos=VirtualCollection::RPUndefined) const
+      {  return DefTypeFinal _locate(element, ExtendedLocateParameters(pos), &cursor); }
+   LocationResult locate(const DefTypeElement& element, const ExtendedLocateParameters& parameters,
+         DefTypeCursor* cursor=nullptr, const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr) const
+      {  return DefTypeFinal _locate(element, parameters, cursor, start, end); }
+#else // !DefImplementsNativeMethods
+   bool locateOrAdd(DefTypeElement* element, DefTypeCursor& cursor, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  AssumeAllocation(element)
+         LocationResult result = DefTypeFinal _locate(*DefTypeCastToCollectHandler(element),
+            ExtendedLocateParameters(VirtualCollection::RPUndefined), &cursor);
+         if (!result)
+            DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+               result.queryInsertionParameters().setDuplicate(dupMode), &cursor);
+         return result;
+      }
+   bool locate(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element), ExtendedLocateParameters(VirtualCollection::RPExact), nullptr); }
+   LocationResult locate(const DefTypeElement& element, DefTypeCursor& cursor, RelativePosition pos=VirtualCollection::RPUndefined) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element),
+            ExtendedLocateParameters(pos), &cursor);
+      }
+   LocationResult locate(const DefTypeElement& element, const ExtendedLocateParameters& parameters,
+         DefTypeCursor* cursor=nullptr, const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element), parameters, cursor, start, end); }
+#endif // !DefImplementsNativeMethods
+
+   bool locateOrAdd(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate)
+      {  return locateOrAdd(element, *newCursor(), dupMode); }
+   bool locateOrAddCopy(const DefTypeElement& element)
+      {  return locateOrAdd(const_cast<DefTypeElement*>(&element), *newCursor(), VirtualCollection::AMDuplicate); }
+   bool locateOrAddCopy(const DefTypeElement& element, DefTypeCursor& cursor)
+      {  return locateOrAdd(const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate); }
+#endif // !DefExcludeElement -> DefTypeSorted, !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#if defined(DefTypeKey) && (!defined(DefBaseMultipleInterface) || defined(DefNeedLocate))
+   bool locateKey(DefTypeKey key) const
+      {  return _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), (DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr); }
+   LocationResult locateKey(DefTypeKey key, DefTypeCursor& cursor, RelativePosition pos=VirtualCollection::RPUndefined) const
+      {  return _locateKey(key, ExtendedLocateParameters(pos), &cursor, (const DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr); }
+   LocationResult locateKey(DefTypeKey key, const ExtendedLocateParameters& parameters,
+         DefTypeCursor* cursor=nullptr, const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr) const
+      {  return DefTypeFinal _locateKey(key, parameters, cursor, start, end); }
+   DefTypeElement& findKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key(), (const DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr);
+         return cursor->elementSAt();
+      }
+   const DefTypeElement& findKey(DefTypeKey key) const
+      {  PPCursor cursor = newCursor();
+         _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key(), (const DefTypeCursor*) nullptr, (const DefTypeCursor*) nullptr);
+         return cursor->elementAt();
+      }
+#ifdef DefMapInterface
+   DefTypeControlKey queryKeyAt(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPExact), &cursor); }
+   DefTypeControlKey queryNextKey(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPAfter), &cursor); }
+   DefTypeControlKey queryPreviousKey(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPBefore), &cursor); }
+   DefTypeControlKey queryFirstKey() const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPAfter)); }
+   DefTypeControlKey queryLastKey() const
+      {  return DefTypeFinal _queryKey(ExtendedLocateParameters(VirtualCollection::RPBefore)); }
+   DefTypeControlKey queryKey(const ExtendedLocateParameters& parameters,
+      const DefTypeCursor* cursor=nullptr) const
+      {  return DefTypeFinal _queryKey(parameters, cursor); }
+#endif // DefMapInterface
+#endif // DefTypeKey -> DefTypeSorted, !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefBaseMultipleInterface   
+#ifndef HasDefTypeCollection
+   void fullAssign(const VirtualCollection& collection)
+      {  DefTypeFinal _fullAssign(collection, ExtendedReplaceParameters().setDuplicate().setFree()); }
+   void fullAssign(const VirtualCollection& collection, const ExtendedReplaceParameters& parameters)
+      {  DefTypeFinal _fullAssign(collection, parameters); }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   void fullAssign(const DefTypeCollection& collection)
+      {  DefTypeFinal _fullAssign(collection, ExtendedReplaceParameters().setDuplicate().setFree()); }
+   void fullAssign(const DefTypeCollection& collection, const ExtendedReplaceParameters& parameters)
+      {  DefTypeFinal _fullAssign(collection, parameters); }
+
+#ifndef HasDefTypeCollection
+   void addAll(const VirtualCollection& collection)
+      {  DefTypeFinal _addAll(collection, ExtendedInsertionParameters(), nullptr, nullptr, nullptr); }
+   void addAll(const VirtualCollection& collection, const VirtualCollectionCursor& start)
+      {  DefTypeFinal _addAll(collection, ExtendedInsertionParameters(), (VirtualCollectionCursor*) nullptr, &start, nullptr); }
+   void addAll(const VirtualCollection& collection, const VirtualCollectionCursor& start,
+         const VirtualCollectionCursor& end)
+      {  DefTypeFinal _addAll(collection, ExtendedInsertionParameters(), (VirtualCollectionCursor*) nullptr, &start, &end); }
+   void addAll(const VirtualCollection& collection, const ExtendedInsertionParameters& parameters,
+         VirtualCollectionCursor* cursor, const VirtualCollectionCursor* start,
+         const VirtualCollectionCursor* end)
+      {  DefTypeFinal _addAll(collection, parameters, cursor, start, end); }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   void addAll(const DefTypeCollection& collection)
+      {  DefTypeFinal _addAll(collection, ExtendedInsertionParameters()); }
+   void addAll(const DefTypeCollection& collection, const DefTypeCursor& start)
+      {  DefTypeFinal _addAll(collection, ExtendedInsertionParameters(), (DefTypeCursor*) nullptr, &start); }
+   void addAll(const DefTypeCollection& collection, const DefTypeCursor& start,
+         const DefTypeCursor& end)
+      {  DefTypeFinal _addAll(collection, ExtendedInsertionParameters(), (DefTypeCursor*) nullptr, &start, &end); }
+   void addAll(const DefTypeCollection& collection, const ExtendedInsertionParameters& parameters,
+         DefTypeCursor* cursor=nullptr, const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr)
+      {  DefTypeFinal _addAll(collection, parameters, cursor, start, end); }
+
+#ifndef HasDefTypeCollection
+   void addCopyAll(const VirtualCollection& source)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate), nullptr, nullptr, nullptr); }
+   void addCopyAll(const VirtualCollection& source, const VirtualCollectionCursor& start)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate), (VirtualCollectionCursor*) nullptr, &start, nullptr); }
+   void addCopyAll(const VirtualCollection& source, const VirtualCollectionCursor& start,
+         const VirtualCollectionCursor& end)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate), (VirtualCollectionCursor*) nullptr, &start, &end); }
+
+   void moveAllTo(VirtualCollection& destination)
+      {  DefTypeFinal _moveAllTo(destination, ExtendedReplaceParameters().setRemoveExact(), nullptr, nullptr, nullptr); }
+   void moveAllTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+         const DefTypeCursor* startCursor, const DefTypeCursor* endCursor,
+         VirtualCollectionCursor* destinationCursor)
+      {  DefTypeFinal _moveAllTo(destination, parameters, startCursor, endCursor, destinationCursor); }
+   void moveTo(VirtualCollection& destination, VirtualCollectionCursor& cursor)
+      {  DefTypeFinal _moveTo(destination, ExtendedReplaceParameters().setRemovePosition(COL::VirtualCollection::RPExact),
+            &cursor, (VirtualCollectionCursor*) nullptr);
+      }
+   void moveTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+         VirtualCollectionCursor* cursor, VirtualCollectionCursor* destinationCursor)
+      {  DefTypeFinal _moveTo(destination, parameters, cursor, destinationCursor); }
+
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   void addCopyAll(const DefTypeCollection& source)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate)); }
+   void addCopyAll(const DefTypeCollection& source, const DefTypeCursor& start)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate), (DefTypeCursor*) nullptr, &start); }
+   void addCopyAll(const DefTypeCollection& source, const DefTypeCursor& start,
+         const DefTypeCursor& end)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate), (DefTypeCursor*) nullptr, &start, &end); }
+
+   void moveAllTo(DefTypeCollection& destination)
+      {  DefTypeFinal _moveAllTo(destination, ExtendedReplaceParameters().setRemoveExact()); }
+   void moveAllTo(DefTypeCollection& destination, const ExtendedReplaceParameters& parameters,
+         const DefTypeCursor* startCursor=nullptr, const DefTypeCursor* endCursor=nullptr,
+         DefTypeCursor* destinationCursor=nullptr)
+      {  DefTypeFinal _moveAllTo(destination, parameters, startCursor,
+            endCursor, destinationCursor);
+      }
+   void moveTo(DefTypeCollection& destination, DefTypeCursor& cursor)
+      {  DefTypeFinal _moveTo(destination,
+            ExtendedReplaceParameters().setRemovePosition(COL::VirtualCollection::RPExact), &cursor);
+      }
+   void moveTo(DefTypeCollection& destination, const ExtendedReplaceParameters& parameters,
+         DefTypeCursor* cursor=nullptr, DefTypeCursor* destinationCursor=nullptr)
+      {  DefTypeFinal _moveTo(destination, parameters, cursor, destinationCursor); }
+
+   void swap(DefTypeCollection& source) { DefTypeFinal _swap(source); }
+#endif // DefBaseMultipleInterface -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+   void addOrReplaceAt(DefTypeCursor& cursor, DefTypeElement* element,
+         AddMode dupMode, RemoveMode freeMode, RemoveMode remModeOnError)
+      {  if (locateOrAdd(element, cursor, dupMode))
+            DefTypeFinal _replace(DefTypeCastToCollectHandler(element), ExtendedReplaceParameters(dupMode, freeMode, remModeOnError), &cursor);
+      }
+   void addCopyOrReplaceAt(DefTypeCursor& cursor, const DefTypeElement& element,
+         RemoveMode freeMode)
+      {  if (locateOrAdd(const_cast<DefTypeElement*>(&element), cursor, VirtualCollection::AMDuplicate))
+            DefTypeFinal _replace(DefTypeCastToCollectHandler(element.createSCopy()), ExtendedReplaceParameters().setFree(freeMode).setFreeOnError(), &cursor);
+      }
+#endif // !DefExcludeElement -> DefTypeSorted, !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#if (!defined(DefBaseMultipleInterface) || defined(DefNeedLocate))
+   void deleteAll() { DefTypeFinal _removeAll(ExtendedSuppressParameters()); }
+   void deleteAll(DefTypeCursor& start, DefTypeCursor& end)
+      {  DefTypeFinal _removeAll(ExtendedSuppressParameters(), &start, &end); }
+   void deleteAt(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMRemove, VirtualCollection::RPExact), &cursor); }
+   void deleteNext(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMRemove, VirtualCollection::RPAfter), &cursor); }
+   void deletePrevious(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMRemove, VirtualCollection::RPBefore), &cursor); }
+   void deleteFirst() { DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMRemove, VirtualCollection::RPAfter)); }
+   void deleteLast() { DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMRemove, VirtualCollection::RPBefore)); }
+
+   void freeAll() { DefTypeFinal _removeAll(ExtendedSuppressParameters(VirtualCollection::RMFree)); }
+   void freeAll(DefTypeCursor& start)
+      {  DefTypeFinal _removeAll(ExtendedSuppressParameters(VirtualCollection::RMFree), &start); }
+   void freeAll(DefTypeCursor& start, DefTypeCursor& end)
+      {  DefTypeFinal _removeAll(ExtendedSuppressParameters(VirtualCollection::RMFree), &start, &end); }
+   void freeAt(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMFree, VirtualCollection::RPExact), &cursor); }
+   void freeNext(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMFree, VirtualCollection::RPAfter), &cursor); }
+   void freePrevious(DefTypeCursor& cursor)
+      {  DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMFree, VirtualCollection::RPBefore), &cursor); }
+   void freeFirst() { DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMFree, VirtualCollection::RPAfter)); }
+   void freeLast() { DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMFree, VirtualCollection::RPBefore)); }
+   void remove(const ExtendedSuppressParameters& parameters, DefTypeCursor* cursor=nullptr)
+      {  DefTypeFinal _remove(parameters, cursor); }
+   void removeAll(const ExtendedSuppressParameters& parameters,
+      const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr)
+      {  DefTypeFinal _removeAll(parameters, start, end); }
+#ifdef DefTypeKey
+   void deleteAtKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key());
+         DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMRemove, VirtualCollection::RPExact), cursor.key());
+      }
+   DefTypeElement& extractAtKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key());
+         DefTypeElement& result = cursor->elementSAt();
+         DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMRemove, VirtualCollection::RPExact), cursor.key());
+         return result;
+      }
+   void freeAtKey(DefTypeKey key)
+      {  PPCursor cursor = newCursor();
+         DefTypeFinal _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), cursor.key());
+         DefTypeFinal _remove(ExtendedSuppressParameters(VirtualCollection::RMFree, VirtualCollection::RPExact), cursor.key());
+      }
+#endif
+
+   DefTypeElement& getSElementAt(const DefTypeCursor& cursor) const
+      {  DefTypeElement* result = DefTypeCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPExact), &cursor));
+         AssumeCondition(result)
+         return *result;
+      }
+   DefTypeElement& getSFirst() const
+      {  DefTypeElement* result = DefTypeCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPAfter)));
+         AssumeCondition(result)
+         return *result;
+      }
+   DefTypeElement& getSLast() const
+      {  DefTypeElement* result = DefTypeCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPBefore)));
+         AssumeCondition(result)
+         return *result;
+      }
+   const DefTypeElement& getElementAt(const DefTypeCursor& cursor) const
+      {  const DefTypeElement* result = DefTypeCCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPExact), &cursor));
+         AssumeCondition(result)
+         return *result;
+      }
+   const DefTypeElement& getNextElement(const DefTypeCursor& cursor) const
+      {  const DefTypeElement* result = DefTypeCCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPAfter), &cursor));
+         AssumeCondition(result)
+         return *result;
+      }
+   const DefTypeElement& getPreviousElement(const DefTypeCursor& cursor) const
+      {  const DefTypeElement* result = DefTypeCCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPBefore), &cursor));
+         AssumeCondition(result)
+         return *result;
+      }
+   DefTypeElement& getSNextElement(const DefTypeCursor& cursor) const
+      {  DefTypeElement* result = DefTypeCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPAfter), &cursor));
+         AssumeCondition(result)
+         return *result;
+      }
+   DefTypeElement& getSPreviousElement(const DefTypeCursor& cursor) const
+      {  DefTypeElement* result = DefTypeCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPBefore), &cursor));
+         AssumeCondition(result)
+         return *result;
+      }
+   const DefTypeElement& getFirst() const
+      {  const DefTypeElement* result = DefTypeCCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPAfter)));
+         AssumeCondition(result)
+         return *result;
+      }
+   const DefTypeElement& getLast() const
+      {  const DefTypeElement* result = DefTypeCCastFromCollectHandler(
+            DefTypeFinal _getElement(ExtendedLocateParameters(VirtualCollection::RPBefore)));
+         AssumeCondition(result)
+         return *result;
+      }
+   DefTypeElement& getElement(const ExtendedLocateParameters& parameters, const DefTypeCursor* cursor=nullptr) const
+      {  DefTypeElement* result = DefTypeCastFromCollectHandler(
+            DefTypeFinal _getElement(parameters, cursor));
+         AssumeCondition(result)
+         return *result;
+      }
+
+   DefTypeElement& extractElementAt(DefTypeCursor& cursor)
+      {  DefTypeElement& result = getSElementAt(cursor); deleteAt(cursor);
+         return result;
+      }
+   DefTypeElement& extractFirst()
+      {  DefTypeElement& result = getSFirst(); deleteFirst(); return result; }
+   DefTypeElement& extractLast()
+      {  DefTypeElement& result = getSLast(); deleteLast(); return result; }
+   DefTypeElement& extractNextElement(DefTypeCursor& cursor)
+      {  DefTypeElement& result = getSNextElement(cursor); deleteNext(cursor);
+         return result;
+      }
+   DefTypeElement& extractPreviousElement(DefTypeCursor& cursor)
+      {  DefTypeElement& result = getSPreviousElement(cursor); deletePrevious(cursor);
+         return result;
+      }
+#endif // DefBaseMultipleInterface -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+#ifdef DefImplementsNativeMethods
+   bool gotoAny(DefTypeCursor& cursor, const DefTypeElement& element, RelativePosition pos=VirtualCollection::RPUndefined) const
+      {  
+#ifndef DefTypeMultiSorted
+         return _locate(element, ExtendedLocateParameters(VirtualCollection::RPExact), &cursor);
+#else // DefTypeMultiSorted
+         LocationResult result = _locate(element, ExtendedLocateParameters(VirtualCollection::RPExact), &cursor);
+         if (result) {
+            if (pos == VirtualCollection::RPAfter)
+               result.setToFirst(cursor);
+            else if (pos == VirtualCollection::RPBefore)
+               result.setToLast(cursor);
+         };
+         return result;
+#endif
+      }
+#else // !DefImplementsNativeMethods
+   bool gotoAny(DefTypeCursor& cursor, const DefTypeElement& element, RelativePosition pos=VirtualCollection::RPUndefined) const
+      {  
+#ifndef DefTypeMultiSorted
+         return _locate(*DefTypeCCastToCollectHandler(&element), ExtendedLocateParameters(VirtualCollection::RPExact), &cursor);
+#else // DefTypeMultiSorted
+         LocationResult result = _locate(*DefTypeCCastToCollectHandler(&element), ExtendedLocateParameters(VirtualCollection::RPExact), &cursor);
+         if (result) {
+            if (pos == VirtualCollection::RPAfter)
+               result.setToFirst(cursor);
+            else if (pos == VirtualCollection::RPBefore)
+               result.setToLast(cursor);
+         };
+         return result;
+#endif
+      }
+#endif // !DefImplementsNativeMethods
+#endif // !DefExcludeElement -> DefTypeSorted, !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#if defined(DefTypeKey) && (!defined(DefBaseMultipleInterface) || defined(DefNeedLocate))
+   bool gotoAnyKey(DefTypeCursor& cursor, DefTypeKey key, RelativePosition pos=VirtualCollection::RPUndefined) const
+      {  
+#ifndef DefTypeMultiSorted
+         return _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), &cursor);
+#else // DefTypeMultiSorted
+         LocationResult result = _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), &cursor);
+         if (result) {
+            if (pos == VirtualCollection::RPAfter)
+               result.setToFirst(cursor);
+            else if (pos == VirtualCollection::RPBefore)
+               result.setToLast(cursor);
+         };
+         return result;
+#endif
+      }
+   bool containKey(DefTypeKey key) const
+      {  return _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact)); }
+#endif // DefTypeKey
+#endif // DefTypeSorted -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefExcludeElement
+#ifdef DefImplementsNativeMethods
+   void insertAtBegin(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(element, ExtendedInsertionParameters(dupMode, remModeOnError, VirtualCollection::RPAfter)); }
+   void insertAtEnd(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(element, ExtendedInsertionParameters(dupMode, remModeOnError, VirtualCollection::RPBefore)); }
+   void insertAt(DefTypeCursor& cursor, DefTypeElement* element,
+         RelativePosition position=VirtualCollection::RPBefore, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(element, ExtendedInsertionParameters(dupMode, remModeOnError, position), &cursor); }
+   void insertNewAtBegin(DefTypeElement* element)
+      {  DefTypeFinal _add(element, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, VirtualCollection::RPAfter)); }
+   void insertNewAtEnd(DefTypeElement* element)
+      {  DefTypeFinal _add(element, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, VirtualCollection::RPBefore)); }
+   void insertNewAt(DefTypeCursor& cursor, DefTypeElement* element,
+         RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeFinal _add(element, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, position), &cursor); }
+#else // !DefImplementsNativeMethods
+   void insertAtBegin(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedInsertionParameters(dupMode, remModeOnError, VirtualCollection::RPAfter));
+      }
+   void insertAtEnd(DefTypeElement* element, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedInsertionParameters(dupMode, remModeOnError, VirtualCollection::RPBefore));
+      }
+   void insertAt(DefTypeCursor& cursor, DefTypeElement* element,
+         RelativePosition position=VirtualCollection::RPBefore, AddMode dupMode=VirtualCollection::AMNoDuplicate,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedInsertionParameters(dupMode, remModeOnError, position), &cursor);
+      }
+   void insertNewAtBegin(DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, VirtualCollection::RPAfter));
+      }
+   void insertNewAtEnd(DefTypeElement* element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, VirtualCollection::RPBefore));
+      }
+   void insertNewAt(DefTypeCursor& cursor, DefTypeElement* element,
+        RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, position), &cursor);
+      }
+#endif // !DefImplementsNativeMethods
+#endif // !DefExcludeElement -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefBaseMultipleInterface
+#ifndef HasDefTypeCollection
+   void insertAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         RelativePosition position=VirtualCollection::RPBefore, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, remModeOnError, position),
+      	    &cursor, (VirtualCollectionCursor*) nullptr, (VirtualCollectionCursor*) nullptr);
+      }
+   void insertAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         const VirtualCollectionCursor& start, RelativePosition position=VirtualCollection::RPBefore,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, remModeOnError, position),
+            &cursor, &start, (VirtualCollectionCursor*) nullptr);
+      }
+   void insertAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         const VirtualCollectionCursor& start, const VirtualCollectionCursor& end,
+         RelativePosition position=VirtualCollection::RPBefore, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, remModeOnError, position),
+            &cursor, &start, &end);
+      }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   void insertAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         RelativePosition position=VirtualCollection::RPBefore, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, remModeOnError, position),
+            &cursor);
+      }
+   void insertAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         const DefTypeCursor& start, RelativePosition position=VirtualCollection::RPBefore,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, remModeOnError, position),
+            &cursor, &start);
+      }
+   void insertAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         const DefTypeCursor& start, const DefTypeCursor& end,
+         RelativePosition position=VirtualCollection::RPBefore, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, remModeOnError, position),
+            &cursor, &start, &end);
+      }
+#endif // DefBaseMultipleInterface -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefExcludeElement
+#ifdef DefImplementsNativeMethods
+   void insertCopyAtBegin(const DefTypeElement& element)
+      {  DefTypeFinal _add(element.createSCopy(),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, VirtualCollection::RPAfter));
+      }
+   void insertCopyAtEnd(const DefTypeElement& element)
+      {  DefTypeFinal _add(element.createSCopy(),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, VirtualCollection::RPBefore));
+      }
+   void insertCopyAt(DefTypeCursor& cursor, const DefTypeElement& element,
+         RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeFinal _add(element.createSCopy(),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, position), &cursor);
+      }
+#else
+   void insertCopyAtBegin(const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, VirtualCollection::RPAfter));
+      }
+   void insertCopyAtEnd(const DefTypeElement& element)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, VirtualCollection::RPBefore));
+      }
+   void insertCopyAt(DefTypeCursor& cursor, const DefTypeElement& element,
+         RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeFinal _add(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedInsertionParameters(VirtualCollection::AMNoDuplicate, VirtualCollection::RMFree, position), &cursor);
+      }
+#endif // !DefImplementsNativeMethods
+#endif // DefExcludeElement
+
+#ifndef DefBaseMultipleInterface
+#ifndef HasDefTypeCollection
+   void insertCopyAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate, VirtualCollection::RMRemove, position),
+            &cursor, (VirtualCollectionCursor*) nullptr, (VirtualCollectionCursor*) nullptr);
+      }
+   void insertCopyAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         const VirtualCollectionCursor& start, RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate, VirtualCollection::RMRemove, position),
+            &cursor, &start, (VirtualCollectionCursor*) nullptr);
+      }
+   void insertCopyAllAt(DefTypeCursor& cursor, const VirtualCollection& source,
+         const VirtualCollectionCursor& start, const VirtualCollectionCursor& end,
+         RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate, VirtualCollection::RMRemove, position),
+            &cursor, &start, &end);
+      }
+#endif // HasDefTypeCollection -> DefBaseMultipleInterface, !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+   void insertCopyAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeFinal _addAll(source, 
+            ExtendedInsertionParameters(VirtualCollection::AMDuplicate, VirtualCollection::RMRemove, position), &cursor);
+      }
+   void insertCopyAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         const DefTypeCursor& start, RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate, VirtualCollection::RMRemove, position),
+            &cursor, &start);
+      }
+   void insertCopyAllAt(DefTypeCursor& cursor, const DefTypeCollection& source,
+         const DefTypeCursor& start, const DefTypeCursor& end,
+         RelativePosition position=VirtualCollection::RPBefore)
+      {  DefTypeFinal _addAll(source, ExtendedInsertionParameters(VirtualCollection::AMDuplicate, VirtualCollection::RMRemove, position),
+            &cursor, &start, &end);
+      }
+
+   int count() const { return DefTypeFinal _queryCount(ExtendedLocateParameters()); }
+   int queryCount(const ExtendedLocateParameters& parameters,
+         const DefTypeCursor* start=nullptr, const DefTypeCursor* end=nullptr) const
+      {  return DefTypeFinal _queryCount(parameters, start, end); }
+   bool isEmpty() const { return DefTypeFinal _queryCount(ExtendedLocateParameters()) == 0; }
+#endif // DefBaseMultipleInterface -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+#ifdef DefImplementsNativeMethods
+   bool isElement(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(element, ExtendedLocateParameters(VirtualCollection::RPExact)); }
+   bool contain(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(element, ExtendedLocateParameters(VirtualCollection::RPExact)); }
+#else // !DefImplementsNativeMethods
+   bool isElement(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element), ExtendedLocateParameters(VirtualCollection::RPExact)); }
+   bool contain(const DefTypeElement& element) const
+      {  return DefTypeFinal _locate(*DefTypeCCastToCollectHandler(&element), ExtendedLocateParameters(VirtualCollection::RPExact)); }
+#endif // !DefImplementsNativeMethods
+#endif // !DefExcludeElement -> DefTypeSorted, !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+#endif // DefTypeSorted -> !DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
+
+#ifndef DefExcludeReplaceElement
+   void replaceElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedReplaceParameters().setFreeOnError(remModeOnError).setRemoveExact(), &cursor);
+      }
+   void replaceFirstWith(DefTypeElement* element, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedReplaceParameters().setRemovePosition(VirtualCollection::RPAfter).setFreeOnError(remModeOnError));
+      }
+   void replaceLastWith(DefTypeElement* element, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedReplaceParameters().setRemovePosition(VirtualCollection::RPBefore).setFreeOnError(remModeOnError));
+      }
+   void replaceAndFreeElementAtWith(DefTypeCursor& cursor, DefTypeElement* element,
+         RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedReplaceParameters().setFree().setFreeOnError(remModeOnError).setRemoveExact(), &cursor);
+      }
+   void replaceAndFreeFirstWith(DefTypeElement* element, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedReplaceParameters().setRemovePosition(VirtualCollection::RPAfter).setFree().setFreeOnError(remModeOnError));
+      }
+   void replaceAndFreeLastWith(DefTypeElement* element, RemoveMode remModeOnError=VirtualCollection::RMRemove)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element),
+            ExtendedReplaceParameters().setRemovePosition(VirtualCollection::RPBefore).setFree().setFreeOnError(remModeOnError));
+      }
+   void replaceElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedReplaceParameters().setFreeOnError(VirtualCollection::RMFree).setRemoveExact(), &cursor);
+      }
+   void replaceFirstWithCopy(const DefTypeElement& element)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedReplaceParameters().setRemovePosition(VirtualCollection::RPAfter).setFreeOnError(VirtualCollection::RMFree));
+      }
+   void replaceLastWithCopy(const DefTypeElement& element)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedReplaceParameters().setRemovePosition(VirtualCollection::RPBefore).setFreeOnError(VirtualCollection::RMFree));
+      }
+   void replaceAndFreeElementAtWithCopy(DefTypeCursor& cursor, const DefTypeElement& element)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedReplaceParameters().setFree().setFreeOnError(VirtualCollection::RMFree).setRemoveExact(), &cursor);
+      }
+   void replaceAndFreeFirstWithCopy(const DefTypeElement& element)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedReplaceParameters().setRemovePosition(VirtualCollection::RPAfter).setFree().setFreeOnError(VirtualCollection::RMFree));
+      }
+   void replaceAndFreeLastWithCopy(const DefTypeElement& element)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element.createSCopy()),
+            ExtendedReplaceParameters().setRemovePosition(VirtualCollection::RPBefore).setFree().setFreeOnError(VirtualCollection::RMFree));
+      }
+   void replace(DefTypeElement* element, const ExtendedReplaceParameters& parameters, DefTypeCursor* cursor=nullptr)
+      {  DefTypeFinal _replace(DefTypeCastToCollectHandler(element), parameters, cursor); }
+#endif // DefExcludeReplaceElement
+#endif // DefJustInline
+#endif // DefTypeInheritedCollection
+#endif // DefJustDeclare
+#else // DefCursor
+#ifdef DefTypeInheritedCollection // -> DefTypeInheritedCollection, DefCursor
+   DefTypeElement* getSElement() const
+      {  return (DefTypeElement*) DefTypeCastFromCollectHandler(DefTypeFinal _getSElement()); }
+   const DefTypeElement* getElement() const { return getSElement(); }
+   const DefTypeElement& elementAt() const { return *getSElement(); }
+   DefTypeElement& elementSAt() const { return *getSElement(); }
+#else // DefTypeInheritedCollection -> !DefTypeInheritedCollection, DefCursor
+   bool isLast() const { return DefTypeFinal _isPositionned(VirtualCollection::RPBefore); }
+   bool isFirst() const { return DefTypeFinal _isPositionned(VirtualCollection::RPAfter); }
+   bool setToFirst() { return DefTypeFinal _position(Position::DStart); }
+   bool setToLast() { return DefTypeFinal _position(Position::DEnd); }
+   bool setToNext() { return DefTypeFinal _position(Position::DForward); }
+   bool setToPrevious() { return DefTypeFinal _position(Position::DBackward); }
+   bool setToAny() { return DefTypeFinal _position(Position::DAny); }
+   bool position(const Position& pos) { return DefTypeFinal _position(pos); }
+
+   DefTypeCursor& operator++() { setToNext(); return *this; }
+   DefTypeCursor& operator--() { setToPrevious(); return *this; }
+
+   bool isEqual(const DefTypeCursor& cursor) const
+      {  return DefTypeFinal _isEqual(cursor); }
+   void invalidate() { DefTypeFinal _position(Position::DInvalid); }
+
+   DefTypeElement* getSElement() const
+      {  return (DefTypeElement*) DefTypeCastFromCollectHandler(DefTypeFinal _getSElement()); }
+   const DefTypeElement* getElement() const { return getSElement(); }
+   const DefTypeElement& elementAt() const { DefTypeElement* result = getSElement(); AssumeCondition(result) return *result; }
+   DefTypeElement& elementSAt() const { return *getSElement(); }
+#endif // DefTypeInheritedCollection
+   void gotoReference(const DefTypeElement& element)
+      {  DefTypeFinal _gotoReference(*DefTypeCCastToCollectHandler(&element)); }
+   bool isPositionned(const ExtendedLocateParameters& pos, const DefTypeCursor* cursor=nullptr) const
+      {  return DefTypeFinal _isPositionned(pos, cursor); }
+#ifdef DefTypeSorted
+#ifndef DefExcludeElement
+   bool gotoAny(const DefTypeElement& element, VirtualCollection::RelativePosition pos=VirtualCollection::RPUndefined)
+      {  return getSupport().gotoAny(*this, element, pos); }
+#endif // DefExcludeElement
+#ifdef DefTypeKey
+   bool gotoAnyKey(DefTypeKey key, VirtualCollection::RelativePosition pos=VirtualCollection::RPUndefined)
+      {  return getSupport().gotoAnyKey(*this, key, pos); }
+   bool gotoKey(DefTypeKey key)
+      {  return getSupport().locateKey(key, *this, VirtualCollection::RPExact); }
+#ifdef DefMapInterface
+   DefTypeControlKey queryKey() const { return DefTypeFinal _queryKey(); }
+#endif // DefMapInterface
+#endif // DefTypeKey
+#endif // DefTypeSorted
+#endif // DefCursor
+#include "Collection/ELMCollection.incfoot"

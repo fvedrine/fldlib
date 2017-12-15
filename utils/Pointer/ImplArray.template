@@ -1,0 +1,270 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2013-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Low level implementation
+// File      : ImplArray.template
+// Description :
+//   Implementation of a class of arrays. It provides an implementation
+//   for the COL::TArray collection.
+//
+
+#ifndef COL_ImplArrayTemplate
+#define COL_ImplArrayTemplate
+
+#include "Pointer/ImplArray.h"
+
+#include <memory.h>
+
+namespace COL {
+
+template <class TemplateParameters>
+void
+ImplArray::bubbleSort(const TemplateParameters& parameters, int first, int last) {
+   typedef typename TemplateParameters::Element ElementType;
+   typedef typename TemplateParameters::Cast Cast;
+
+   if (last < 0)
+      last = uCount-1;
+   AssumeCondition((first >= 0) && (last < uCount))
+   while (last > first) {
+      int blob = first;
+      do {
+         if (parameters.key((const ElementType&) Cast::castFrom(*apeoArray[blob]))
+               > parameters.key((const ElementType&) Cast::castFrom(*apeoArray[blob+1]))) {
+            EnhancedObject* temp = apeoArray[blob];
+            apeoArray[blob] = apeoArray[blob+1];
+            apeoArray[blob+1] = temp;
+         };
+         blob++;
+      } while (blob < last);
+      last--;
+   };
+}
+
+template <class TemplateParameters>
+void
+ImplArray::quickSort(const TemplateParameters& parameters, int first, int last) {
+   typedef typename TemplateParameters::Element ElementType;
+   typedef typename TemplateParameters::Cast Cast;
+
+   if (last < 0)
+      last = uCount-1;
+   AssumeCondition((first >= 0) && (last < uCount))
+   if (last - first < 5) {
+      bubbleSort(parameters, first, last);
+      return;
+   }
+   int piv = (last - first)/3 + first;
+   EnhancedObject* temp = apeoArray[piv];
+   apeoArray[piv] = apeoArray[first];
+   apeoArray[first] = temp;
+   int inc = first+1, dec = last;
+   while (inc < dec) {
+      while (parameters.key((const ElementType&) Cast::castFrom(*apeoArray[dec]))
+            > parameters.key((const ElementType&) Cast::castFrom(*apeoArray[first])))
+         dec--;
+      while ((parameters.key((const ElementType&) Cast::castFrom(*apeoArray[inc]))
+               <= parameters.key((const ElementType&) Cast::castFrom(*apeoArray[first])))
+            && (inc < last))
+         inc++;
+      if (inc < dec) {
+         temp = apeoArray[inc];
+         apeoArray[inc] = apeoArray[dec];
+         apeoArray[dec] = temp;
+      };
+   };
+
+   int exchange = dec;
+   if ((dec == inc)
+         && (parameters.key((const ElementType&) Cast::castFrom(*apeoArray[dec]))
+            > parameters.key((const ElementType&) Cast::castFrom(*apeoArray[first]))))
+      exchange--;
+   temp = apeoArray[first];
+   apeoArray[first] = apeoArray[exchange];
+   apeoArray[exchange] = temp;
+
+   if (exchange > 0)
+      quickSort(parameters, first, exchange-1);
+   quickSort(parameters, exchange+1, last);
+}
+
+template <class TemplateParameters>
+void
+ImplArray::selectNth(const TemplateParameters& parameters, int number, int first, int last) {
+   typedef typename TemplateParameters::Element ElementType;
+   typedef typename TemplateParameters::Cast Cast;
+
+   if (last < 0)
+      last = uCount-1;
+   AssumeCondition((first >= 0) && (last < uCount))
+   if (last - first < number)
+      return;
+
+   if (last - first < 5) {
+      bubbleSort(parameters, first, last);
+      return;
+   }
+   int piv = (last - first)/3 + first;
+   EnhancedObject* temp = apeoArray[piv];
+   apeoArray[piv] = apeoArray[first];
+   apeoArray[first] = temp;
+   int inc = first+1, dec = last;
+   while (inc < dec) {
+      while (parameters.key((const ElementType&) Cast::castFrom(*apeoArray[dec]))
+            > parameters.key((const ElementType&) Cast::castFrom(*apeoArray[first])))
+         dec--;
+      while ((parameters.key((const ElementType&) Cast::castFrom(*apeoArray[inc]))
+               <= parameters.key((const ElementType&) Cast::castFrom(*apeoArray[first])))
+            && (inc < last))
+         inc++;
+      if (inc < dec) {
+         temp = apeoArray[inc];
+         apeoArray[inc] = apeoArray[dec];
+         apeoArray[dec] = temp;
+      };
+   };
+
+   int exchange = dec;
+   if ((dec == inc) && (parameters.key((const ElementType&) Cast::castFrom(*apeoArray[dec]))
+         > parameters.key((const ElementType&) Cast::castFrom(*apeoArray[first]))))
+      exchange--;
+   temp = apeoArray[first];
+   apeoArray[first] = apeoArray[exchange];
+   apeoArray[exchange] = temp;
+
+   if (exchange - first > number)
+      selectNth(parameters, number, first, exchange-1);
+   else if (exchange - first < number)
+      selectNth(parameters, number - (exchange-first+1), exchange+1, last);
+}
+
+template <class TemplateParameters>
+int
+ImplArray::localize(typename TemplateParameters::Key::KeyType key,
+      const TemplateParameters& parameters, int first, int last) const {
+   typedef typename TemplateParameters::Element ElementType;
+   typedef typename TemplateParameters::Cast Cast;
+
+   if (last < 0)
+      last = uCount - 1;
+   AssumeCondition((first >= 0) && (last < uCount))
+   if (first > last)
+      return 2*first;
+   int middle=0;
+   ComparisonResult compare = CRGreater;
+   while ((last - first > 1) && (compare != CREqual)) {
+      middle = (first + last)/2;
+      compare = parameters.keyCompare(
+         parameters.key((const ElementType&) Cast::castFrom(*apeoArray[middle])),
+         key);
+      switch (compare) {
+         case CRLess: first = middle; break;
+         case CRGreater: last = middle; break;
+         default: AssumeCondition(compare == CREqual);
+      };
+   };
+
+   if (compare != CREqual) {
+      middle = first;
+      while (middle <= last) {
+         compare = parameters.keyCompare(
+            parameters.key((const ElementType&) Cast::castFrom(*apeoArray[middle])),
+            key);
+         if ((compare == CRLess) && (middle < last))
+            middle++;
+         else
+            last = -1;
+      };
+      AssumeCondition(compare != CRNonComparable)
+   };
+   return 2*middle+1-compare;
+}
+
+template <class TemplateParameters>
+int
+ImplArray::merge(const TemplateParameters& parameters, const ImplArray& source, int firstSource,
+      int lastSource, bool doesDuplicate, const VirtualCast* pvcRetrieveRegistrationFromCopy) {
+   typedef typename TemplateParameters::Element ElementType;
+   typedef typename TemplateParameters::Cast Cast;
+   
+   int result = -1;
+   if (lastSource == -1)
+      lastSource = source.uCount-1;
+   if (firstSource > lastSource)
+      return result;
+   AssumeCondition(ImplArray::isValid() && source.ImplArray::isValid() && (firstSource >= 0)
+      && (lastSource < source.uCount) && (this != &source))
+   bookPlace(lastSource-firstSource+1);
+
+   int last = uCount-1;
+   uCount += lastSource-firstSource+1;
+   int lastPosition = uCount-1;
+
+   try {
+      const VirtualCastWithElement* retrieveRegistrationFromCopy = (const VirtualCastWithElement*) pvcRetrieveRegistrationFromCopy;
+      for (; (lastPosition > last) && (lastPosition > lastSource-firstSource); lastPosition--) {
+         AssumeCondition(lastPosition >= 0)
+         ComparisonResult compare = parameters.keyCompare(
+            parameters.key((const ElementType&) Cast::castFrom(*apeoArray[last])),
+            parameters.key((const ElementType&) Cast::castFrom(*source.apeoArray[lastSource])));
+         AssumeCondition(compare != CRNonComparable)
+         if (compare == CRLess) {
+            EnhancedObject* sourceElement = source.apeoArray[lastSource--]; 
+            apeoArray[lastPosition] = doesDuplicate ? (pvcRetrieveRegistrationFromCopy 
+               ? retrieveRegistrationFromCopy->castFrom(sourceElement->createCopy(), sourceElement)
+               : sourceElement->createSCopy()) : sourceElement;
+            if (result < 0)
+               result = lastPosition;
+         }
+         else
+            apeoArray[lastPosition] = apeoArray[last--];
+      };
+      if (lastSource >= firstSource) {
+         if (doesDuplicate) {
+            for (; lastSource >= firstSource; lastSource--) {
+               EnhancedObject* sourceElement = source.apeoArray[lastSource]; 
+               apeoArray[lastSource-firstSource] = pvcRetrieveRegistrationFromCopy
+                  ? retrieveRegistrationFromCopy->castFrom(sourceElement->createCopy(), sourceElement)
+                  : sourceElement->createSCopy();
+            };
+         }
+         else
+            memcpy(apeoArray, source.apeoArray, (lastSource+1)*sizeof(PEnhancedObject));
+      };
+   }
+   catch (...) {
+      if (lastPosition > last) {
+         uCount -= lastPosition-last;
+         memmove(apeoArray+last, apeoArray+lastPosition, (lastPosition-last)*sizeof(PEnhancedObject));
+      };
+      throw;
+   };
+   AssumeCondition(ImplArray::isValid())
+   return result;
+}
+
+} // end of namespace COL
+
+#endif // COL_ImplArrayTemplate

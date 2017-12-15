@@ -1,0 +1,312 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2013-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : String
+// Unit      : Persistency
+// File      : IOStreamMethods.incc
+// Description :
+//   Implementation of the interface methods that do the link
+//   between the streams and the classes IOObject::ISBase and IOObject::OSBase.
+//
+
+/* DefineImplementsIStreamMethods : Implementation of the virtual methods for a derived      */
+/*                                  object from IOObject::ISBase with a link on std:istream  */
+/*    -> DefineTypeObject         : Class under implementation derived from ISBase           */
+/*    -> DefineLinkStream         : link with the implementation std::istream                */
+/* DefineImplementsOStreamMethods : Implementation of the virtual methods for a derived      */
+/*                                  object from IOObject::OSBase with a link on std:ostream  */
+/*    -> DefineTypeObject         : Class under implementation derived from OSBase           */
+/*    -> DefineLinkStream         : link with the implementation std::ostream                */
+
+#ifdef DefineImplementsIStreamMethods
+
+STG::IOObject::ISBase&
+DefineTypeObject::assume(char ch) {
+   AssumeValidity(*this)
+   char chRead = (char) DefineLinkStream.get();
+   if (!DefineLinkStream.good() || (chRead != ch)) {
+      if (DefineLinkStream.good())
+         DefineLinkStream.unget();
+      throw STG::EReadError();
+   }
+   return *this;
+}
+
+STG::IOObject::ISBase&
+DefineTypeObject::assume(void* achunk) {
+   AssumeValidity(*this)
+   STG::TChunk<char>& chunk = *((STG::TChunk<char>*) achunk);
+   for (size_t charIndex = 0; charIndex < chunk.length; ++charIndex) {
+      char chRead = (char) DefineLinkStream.get();
+      if (!DefineLinkStream.good() || (chRead != chunk.string[charIndex])) {
+         if (DefineLinkStream.good())
+            DefineLinkStream.unget();
+         throw STG::EReadError();
+      }
+   };
+   return *this;
+}
+
+STG::IOObject::ISBase&
+DefineTypeObject::assume(const STG::VirtualStringProperty& text) {
+   AssumeValidity(*this)
+   text.setToFirstChunk();
+   STG::TChunk<char>* chunk = (STG::TChunk<char>*) text.getChunk();
+   int textLength = text.length();
+   size_t chunkIndex = 0;
+   for (int index =0; index < textLength; ++index) {
+      char chRead = (char) DefineLinkStream.get();
+      if (!DefineLinkStream.good())
+         throw STG::EReadError();
+      if (chunkIndex == chunk->length) {
+         do {
+            bool isValid = text.setToNextChunk();
+            AssumeCondition(isValid)
+            chunk = (STG::TChunk<char>*) text.getChunk();
+            chunkIndex = 0;
+         } while (chunk->length == 0);
+      };
+      if (chRead != chunk->string[chunkIndex++])
+         throw STG::EReadError();
+   };
+   return *this;
+}
+
+
+STG::IOObject::ISBase&
+DefineTypeObject::read(char& ch, bool) {
+   AssumeValidity(*this)
+   char chn;
+   DefineLinkStream.get(chn);
+   ch = chn;
+   if (!DefineLinkStream.good()) throw STG::EReadError();
+   return *this;
+}
+
+STG::IOObject::ISBase&
+DefineTypeObject::read(bool& b, bool isRaw) {
+   AssumeValidity(*this)
+   char ch = (char) DefineLinkStream.get();
+   if (!DefineLinkStream.good()) throw STG::EReadError();
+   b = isRaw ? (bool) ch : (bool) (ch - '0');
+   return *this;
+}
+
+#define DefineStandardRead(n, in)                        \
+   AssumeValidity(*this)                                 \
+   if (isRaw) {                                          \
+      in.read((char*) &n, sizeof(n));                    \
+      if (in.good()) throw STG::EReadError();            \
+   }                                                     \
+   else                                                  \
+      in >> n;                                           \
+   return *this;
+
+STG::IOObject::ISBase&
+DefineTypeObject::read(int& n, bool isRaw) { DefineStandardRead(n, DefineLinkStream) }
+
+STG::IOObject::ISBase&
+DefineTypeObject::readHexa(int& n) {
+   AssumeValidity(*this)
+   DefineLinkStream >> std::hex >> n >> std::dec;
+   return *this;
+}
+
+STG::IOObject::ISBase&
+DefineTypeObject::read(unsigned int& n, bool isRaw) { DefineStandardRead(n, DefineLinkStream) }
+
+STG::IOObject::ISBase&
+DefineTypeObject::readHexa(unsigned int& n) {
+   AssumeValidity(*this)
+   DefineLinkStream >> std::hex >> n >> std::dec;
+   return *this;
+}
+
+STG::IOObject::ISBase&
+DefineTypeObject::read(long int& n, bool isRaw) { DefineStandardRead(n, DefineLinkStream) }
+
+STG::IOObject::ISBase&
+DefineTypeObject::readHexa(long int& n) {
+   AssumeValidity(*this)
+   DefineLinkStream >> std::hex >> n >> std::dec;
+   return *this;
+}
+
+STG::IOObject::ISBase&
+DefineTypeObject::read(unsigned long int& n, bool isRaw) { DefineStandardRead(n, DefineLinkStream) }
+
+STG::IOObject::ISBase&
+DefineTypeObject::readHexa(unsigned long int& n) {
+   AssumeValidity(*this)
+   DefineLinkStream >> std::hex >> n >> std::dec;
+   return *this;
+}
+
+STG::IOObject::ISBase&
+DefineTypeObject::read(double& f, bool isRaw) { DefineStandardRead(f, DefineLinkStream) }
+
+#undef DefineStandardRead
+
+STG::IOObject::ISBase&
+DefineTypeObject::read(const STG::VirtualStringProperty& source, bool isRaw) {
+   AssumeValidity(*this)
+   int length = 0;
+   if (isRaw)
+      DefineLinkStream.read((char*) &length, sizeof(length));
+   else {
+      DefineLinkStream >> length;
+      if (DefineLinkStream.get() != ' ')
+         throw STG::EReadError();
+   }
+   if (!DefineLinkStream.good()) throw STG::EReadError();
+   source.read(&DefineLinkStream, length);
+   return *this;
+}
+
+STG::IOObject::ISBase&
+DefineTypeObject::readall(const STG::VirtualStringProperty& source) {
+   AssumeValidity(*this)
+   source.readall(&DefineLinkStream);
+   return *this;
+}
+
+STG::IOObject::ISBase&
+DefineTypeObject::read(const STG::VirtualStringProperty& source, int n, bool) {
+   AssumeValidity(*this)
+   source.read(&DefineLinkStream, n);
+   if (source.length() != n)
+      throw STG::EReadError();
+   return *this;
+}
+
+#endif // DefineImplementsIStreamMethods
+
+#ifdef DefineImplementsOStreamMethods
+
+STG::IOObject::OSBase&
+DefineTypeObject::write(char ch, bool) {
+   AssumeValidity(*this)
+   DefineLinkStream.put(ch);
+   return *this;
+}
+
+#define DefineStandardWrite(n, out)                         \
+   AssumeValidity(*this)                                    \
+   if (isRaw)                                               \
+      out.write((const char*) &n, sizeof(n));               \
+   else                                                     \
+      out << n;                                             \
+   return *this;
+
+STG::IOObject::OSBase&
+DefineTypeObject::write(int n, bool isRaw) {
+   DefineStandardWrite(n, DefineLinkStream)
+}
+
+STG::IOObject::OSBase&
+DefineTypeObject::writeHexa(int n) {
+   AssumeValidity(*this)
+   DefineLinkStream << std::hex << n << std::dec;
+   return *this;
+}
+
+STG::IOObject::OSBase&
+DefineTypeObject::write(unsigned int n, bool isRaw) {
+   DefineStandardWrite(n, DefineLinkStream)
+}
+
+STG::IOObject::OSBase&
+DefineTypeObject::writeHexa(unsigned int n) {
+   AssumeValidity(*this)
+   DefineLinkStream << std::hex << n << std::dec;
+   return *this;
+}
+
+STG::IOObject::OSBase&
+DefineTypeObject::write(long int n, bool isRaw) {
+   DefineStandardWrite(n, DefineLinkStream)
+}
+
+STG::IOObject::OSBase&
+DefineTypeObject::writeHexa(long int n) {
+   AssumeValidity(*this)
+   DefineLinkStream << std::hex << n << std::dec;
+   return *this;
+}
+
+STG::IOObject::OSBase&
+DefineTypeObject::write(unsigned long int n, bool isRaw) {
+   DefineStandardWrite(n, DefineLinkStream)
+}
+
+STG::IOObject::OSBase&
+DefineTypeObject::writeHexa(unsigned long int n) {
+   AssumeValidity(*this)
+   DefineLinkStream << std::hex << n << std::dec;
+   return *this;
+}
+
+STG::IOObject::OSBase&
+DefineTypeObject::write(double f, bool isRaw) {
+   DefineStandardWrite(f, DefineLinkStream)
+}
+
+STG::IOObject::OSBase&
+DefineTypeObject::write(bool b, bool isRaw) {
+   AssumeValidity(*this)
+   if (isRaw)
+      DefineLinkStream.put(b);
+   else
+      DefineLinkStream.put(b ? '1' : '0');
+   return *this;
+}
+
+#undef DefineStandardWrite
+
+STG::IOObject::OSBase&
+DefineTypeObject::write(const STG::VirtualStringProperty& source, bool isRaw) {
+   AssumeValidity(*this)
+   int length = source.length();
+   if (isRaw)
+      DefineLinkStream.write((const char*) &length, sizeof(length));
+   else
+      DefineLinkStream << length << ' ';
+   if (source.setToFirstChunk()) {
+      do {
+         STG::TChunk<char>* chunk = (STG::TChunk<char>*) source.getChunk();
+         DefineLinkStream.write(chunk->string, chunk->length);
+      } while (source.setToNextChunk());
+   };
+   return *this;
+}
+
+STG::IOObject::OSBase&
+DefineTypeObject::writechunk(void* achunk) {
+   AssumeValidity(*this)
+   STG::TChunk<char>& chunk = *((STG::TChunk<char>*) achunk);
+   DefineLinkStream.write((const char*) chunk.string, chunk.length);
+   return *this;
+}
+
+#endif // DefineImplementsOStreamMethods

@@ -1,0 +1,879 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat à l'énergie atomique et aux énergies              */
+/*         alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Concrete collections
+// File      : MultiMap.template
+// Description :
+//   Implementation of multiple maps based on sorted collections
+//     and double linked lists for the elements with the same key.
+//   It is a specialization of multiple collections with only multiple elements.
+//
+
+#ifndef COL_MultiMapTEMPLATE
+#define COL_MultiMapTEMPLATE
+
+#include "Collection/ConcreteCollection/MultiMap.h"
+// #include "Collection/Collection.hpp"
+
+namespace COL {
+
+/**************************************************/
+/* Implementation of the template class TMultiMap */
+/**************************************************/
+
+template <class TypeTraits>
+void
+TMultiMap<TypeTraits>::correctDuplicationSplitReceiver(
+      const typename SortedCollection::Cursor* scursor,
+      VirtualCollection::RelativePosition direction, int addReceiver, bool isFirstExcluded) {
+   typename SortedCollection::Cursor cursor(scSortedCollection);
+   if (scursor) {
+      cursor = *scursor;
+      if (isFirstExcluded && cursor.isValid()) {
+         if (direction == COL::VirtualCollection::RPAfter)
+            cursor.setToNext();
+         else
+            cursor.setToPrevious();
+      }
+      else if (!cursor.isValid()) {
+         if (direction == COL::VirtualCollection::RPAfter)
+            cursor.setToFirst();
+         else
+            cursor.setToLast();
+      };
+   }
+   else if (direction == COL::VirtualCollection::RPAfter)
+      cursor.setToFirst();
+   else
+      cursor.setToLast();
+   try {
+      for (bool doesContinue = (cursor.isValid() && (addReceiver != 0)); doesContinue;
+            doesContinue = (((direction == COL::VirtualCollection::RPAfter) ? cursor.setToNext() : cursor.setToPrevious())
+               && (--addReceiver != 0))) {
+         typename SortedCollection::Node* node = &cursor.elementSAt();
+         scSortedCollection.replaceElementAtWith(cursor,
+            ((ReceiverMultipleElement*) node)->createCopyAndShareElement(),
+            VirtualCollection::RMFree);
+      };
+   }
+   catch (...) {
+      if (cursor.isValid()) {
+         bool doesFreeNext = false;
+         while((direction == COL::VirtualCollection::RPAfter) ? cursor.setToPrevious() : cursor.setToNext()) {
+            if (doesFreeNext)
+               scSortedCollection.remove(ExtendedSuppressParameters()
+                  .setRelativePosition(direction).setFree(), &cursor);
+            typename SortedCollection::Node* node = &cursor.elementSAt();
+            ((ReceiverMultipleElement&) *node).removeAll(ExtendedSuppressParameters());
+            doesFreeNext = true;
+         };
+         if (doesFreeNext)
+            scSortedCollection.remove(ExtendedSuppressParameters()
+               .setRelativePosition(direction).setFree(), nullptr);
+      };
+      throw;
+   };
+}
+
+template <class TypeTraits>
+void
+TMultiMap<TypeTraits>::correctDuplicationCopyReceiver(const thisType& source,
+      const VirtualCast* retrieveRegistrationFromCopy,
+      const typename SortedCollection::Cursor* scursor,
+      const typename SortedCollection::Cursor* sourceStart,
+      const typename SortedCollection::Cursor* sourceEnd,
+      RelativePosition direction, bool isFirstExcluded) {
+   typename SortedCollection::Cursor cursor(scSortedCollection), sourceCursor(source.scSortedCollection);
+   if (direction == COL::VirtualCollection::RPAfter) {
+      if (sourceStart)
+         sourceCursor = *sourceStart;
+      else
+         sourceCursor.setToFirst();
+   }
+   else if (sourceEnd)
+      sourceCursor = *sourceEnd;
+   else
+      sourceCursor.setToLast();
+
+   if (scursor) {
+      cursor = *scursor;
+      if (isFirstExcluded && cursor.isValid()) {
+         if (direction == COL::VirtualCollection::RPAfter)
+            cursor.setToNext();
+         else
+            cursor.setToPrevious();
+      }
+      else if (!cursor.isValid()) {
+         if (direction == COL::VirtualCollection::RPAfter)
+            cursor.setToFirst();
+         else
+            cursor.setToLast();
+      };
+   }
+   else if (direction == COL::VirtualCollection::RPAfter)
+      cursor.setToFirst();
+   else
+      cursor.setToLast();
+
+   for (bool doesContinue = (cursor.isValid() && sourceCursor.isValid()); doesContinue;
+      doesContinue = (direction == COL::VirtualCollection::RPAfter)
+         ? (cursor.setToNext() && sourceCursor.setToNext() && (!sourceEnd || !sourceCursor.isEqual(*sourceEnd)))
+         : (cursor.setToPrevious() && sourceCursor.setToPrevious() && (!sourceStart || !sourceCursor.isEqual(*sourceStart)))) {
+      typename SortedCollection::Node* node = &cursor.elementSAt();
+      AssumeCondition(dynamic_cast<const ReceiverMultipleElement*>(node))
+      ((ReceiverMultipleElement&) *node).adjustCopy(
+         (const ReceiverMultipleElement&) sourceCursor.elementAt(), retrieveRegistrationFromCopy);
+   };
+}
+
+template <class TypeTraits>
+void
+TMultiMap<TypeTraits>::_fullAssign(const thisType& source,
+      const ExtendedReplaceParameters& parameters) {
+   inherited::_fullAssign(source, parameters);
+   if (this == &source)
+      return;
+
+   if (!parameters.isFree())
+      _removeAll(ExtendedSuppressParameters());
+   else {
+      scSortedCollection.freeAll();
+      uCount = 0;
+   };
+
+   try {
+      duplicateBody(source, parameters.getDuplicate(), parameters.getSCast());
+      uCount = source.uCount;
+   }
+   catch (...) {
+      uCount = 0;
+      scSortedCollection.foreachDo([this](const typename SortedCollection::Node& node)
+         {  uCount += ((const ReceiverMultipleElement&) node).count(); return true; });
+      throw;
+   };
+}
+
+template <class TypeTraits>
+void
+TMultiMap<TypeTraits>::_add(EnhancedObject* anObject,
+   const ExtendedInsertionParameters& parameters, VirtualCollectionCursor* cursor) {
+   inherited::_add(anObject, parameters, cursor);
+   AddGuardian<EnhancedObject> guard(*this, anObject, parameters);
+   MultipleElement* element = BaseCast::castFrom(anObject);
+
+   if (parameters.hasKey()) {
+      guard.release();
+      _add(TypeTraits::queryKey(parameters.getKeyHandler()),
+           element, parameters, (Cursor*) cursor);
+   }
+   else if (parameters.containsKey()) {
+      guard.release();
+      _add(key(*element), element, parameters, (Cursor*) cursor);
+   }
+   else {
+      guard.release();
+      _add(element, parameters, (Cursor*) cursor);
+   };
+}
+
+template <class TypeTraits>
+void
+TMultiMap<TypeTraits>::_add(MultipleElement* element,
+      const ExtendedInsertionParameters& parameters, Cursor* cursor) {
+   inherited::_add(BaseCast::castTo(element), parameters, cursor);
+   AddGuardian<MultipleElement> guard(*this, element, parameters);
+   ReceiverMultipleElement* receiver=nullptr;
+   receiver = cursor ? (ReceiverMultipleElement*) &cursor->sortedCursor().elementSAt() : nullptr;
+   AssumeCondition((cursor != nullptr) && dynamic_cast<const ReceiverMultipleElement*>(receiver))
+
+   if (!parameters.isDuplicate() || (HasCopyHandlerOnMultiple && !parameters.hasCast())) {
+      guard.release();
+      receiver->add(element, parameters, cursor->multipleCursor().isValid() ?
+         cursor->multipleCursor().key() : nullptr);
+   }
+   else { // parameters.isDuplicate()
+      DVirtualCollection::TCastParameters<ExtendedInsertionParameters> localParameters(parameters);
+      guard.release();
+      if (parameters.hasCast())
+         receiver->add(element, localParameters.setExternCast(
+            RetrieveAssistedRegistrationFromCopyCast(parameters.getCast())),
+            cursor->multipleCursor().isValid() ? cursor->multipleCursor().key() : nullptr);
+      else
+         receiver->add(element, localParameters.setExternCast(
+            RetrieveRegistrationFromCopyCast()),
+            cursor->multipleCursor().isValid() ? cursor->multipleCursor().key() : nullptr);
+   };
+   ++uCount;
+}
+   
+template <class TypeTraits>
+void
+TMultiMap<TypeTraits>::_add(typename Key::KeyType key, MultipleElement* element,
+      const ExtendedInsertionParameters& params, Cursor* cursor) {
+   inherited::_add(BaseCast::castTo(element), params, cursor);
+   AddGuardian<MultipleElement> guard(*this, element, params);
+   element = (MultipleElement*) guard.handleDuplication(params.hasCast()
+      ? &((const VirtualCast&) RetrieveAssistedRegistrationFromCopyCast(params.getCast()))
+      : (HasCopyHandlerOnMultiple ? nullptr
+      : &((const VirtualCast&) RetrieveRegistrationFromCopyCast())));
+   DVirtualCollection::TReferenceParameters<ExtendedInsertionParameters, ExtendedInsertionParameters>
+      parameters(params, params);
+   parameters.releaseFreeOnError().releaseDuplicate();
+   if (parameters.isInsertion()) {
+      if ((cursor == nullptr) || (!cursor->Cursor::isValid())) {
+         ComparisonResult compare = scSortedCollection.isEmpty()
+            ? getComparison(parameters)
+            : Key::compare(key, scSortedCollection.queryKey(parameters));
+         AssumeCondition((compare == CREqual) || (parameters.isAfter()
+            ? (compare == CRLess) : (compare == CRGreater)))
+         if (compare != CREqual) {
+            parameters.setFreeOnError();
+            ReceiverMultipleElement* receiver = nullptr;
+            scSortedCollection.add(receiver = new ReceiverMultipleElement(key),
+               parameters);
+            parameters.releaseFreeOnError();
+            receiver->add(element, parameters);
+            guard.release();
+            if (cursor && !parameters.isRemote()) {
+               VirtualCollectionCursor::Position position;
+               position.setStartDirection(parameters.getRelativePosition());
+               cursor->sortedCursor().position(position);
+               cursor->multipleCursor() = receiver->newCursor();
+               cursor->multipleCursor()->position(position);
+            };
+         }
+         else { // compare == CREqual
+            ReceiverMultipleElement* receiver = (ReceiverMultipleElement*)
+               &scSortedCollection.getElement(parameters);
+            AssumeCondition(dynamic_cast<const ReceiverMultipleElement*>(
+               (typename SortedCollection::Node*) receiver))
+            if (cursor && !parameters.isRemote()) {
+               cursor->sortedCursor().position(VirtualCollectionCursor::Position()
+                  .setStartDirection(parameters.getRelativePosition()));
+               cursor->multipleCursor() = receiver->newCursor();
+            };
+            receiver->add(element, parameters, ((cursor != nullptr)  && !parameters.isRemote())
+               ? cursor->multipleCursor().key() : nullptr);
+            guard.release();
+         };
+      }
+      else { // cursor->isValid() && parameters.isInsertion()
+         typename SortedCollection::Cursor& sortedCursor = cursor->sortedCursor();
+         ComparisonResult
+            compare = Key::compare(key, sortedCursor.queryKey()),
+            compareNext = sortedCursor.isPositionned(
+               ExtendedLocateParameters(inverse(parameters.getRelativePosition())))
+               ? getComparison(parameters)
+               : Key::compare(key, scSortedCollection.queryKey(parameters,
+                     &sortedCursor));
+         AssumeCondition(
+            ((compare == inverse(getComparison(parameters))) || (compare == CREqual))
+            && ((compareNext == getComparison(parameters)) || (compareNext == CREqual))
+            && (compare != compareNext))
+         ReceiverMultipleElement* receiver = nullptr;
+         if (compare == CREqual) {
+            receiver = (ReceiverMultipleElement*) &sortedCursor.elementSAt();
+            AssumeCondition(dynamic_cast<const ReceiverMultipleElement*>(
+               (typename SortedCollection::Node*) receiver))
+            receiver->add(element, parameters, cursor->multipleCursor().key());
+            guard.release();
+         }
+         else if (compareNext == CREqual) {
+            receiver = (ReceiverMultipleElement*)
+               &scSortedCollection.getElement(parameters, &sortedCursor);
+            AssumeCondition(dynamic_cast<const ReceiverMultipleElement*>(
+               (typename SortedCollection::Node*) receiver))
+            if (!parameters.isRemote()) {
+               cursor->sortedCursor().position((typename Cursor::Position()).setDirection(parameters.getRelativePosition()));
+               cursor->multipleCursor() = receiver->newCursor();
+               receiver->add(element, parameters, cursor->multipleCursor().key());
+            }
+            else
+               receiver->add(element, parameters, nullptr);
+            guard.release();
+         }
+         else {
+            parameters.setFreeOnError();
+            scSortedCollection.add(receiver = new ReceiverMultipleElement(key),
+               parameters, &cursor->sortedCursor());
+            parameters.releaseFreeOnError();
+            receiver->add(element, parameters);
+            guard.release();
+            if (!parameters.isRemote()) {
+               cursor->multipleCursor() = receiver->newCursor();
+               cursor->multipleCursor()->position((typename Cursor::Position())
+                  .setStartDirection(parameters.getRelativePosition()));
+            };
+         };
+      };
+   }
+   else { // !parameters.isInsertion()
+      typename SortedCollection::LocationResult result;
+      if (cursor && !parameters.isRemote()) {
+         result = scSortedCollection.locateKey(key, cursor->sortedCursor());
+         ReceiverMultipleElement* receiver = nullptr;
+         if (!result) {
+            scSortedCollection.add(receiver = new ReceiverMultipleElement(key),
+               result.queryInsertionParameters().setFreeOnError(), &cursor->sortedCursor());
+            receiver->add(element, parameters);
+            guard.release();
+            cursor->multipleCursor() = receiver->newCursor();
+            cursor->multipleCursor()->setToFirst();
+         }
+         else {
+            receiver = (ReceiverMultipleElement*) &cursor->sortedCursor().elementSAt();
+            AssumeCondition(dynamic_cast<const ReceiverMultipleElement*>(
+               (typename SortedCollection::Node*) receiver))
+            cursor->multipleCursor() = receiver->newCursor();
+            receiver->add(element, parameters, cursor->multipleCursor().key());
+            guard.release();
+         };
+      }
+      else { // !cursor || parameters.isRemote()
+         typename SortedCollection::Cursor sortedCursor(scSortedCollection);
+         result = scSortedCollection.locateKey(key, sortedCursor);
+         ReceiverMultipleElement* receiver = nullptr;
+         if (!result) {
+            scSortedCollection.add(receiver = new ReceiverMultipleElement(key),
+               result.queryInsertionParameters().setFreeOnError(), &sortedCursor);
+            receiver->add(element, parameters);
+         }
+         else {
+            receiver = (ReceiverMultipleElement*) &sortedCursor.elementSAt();
+            AssumeCondition(dynamic_cast<const ReceiverMultipleElement*>(
+               (typename SortedCollection::Node*) receiver))
+            receiver->add(element, parameters);
+         };
+         guard.release();
+      };
+   };
+
+   ++uCount;
+}
+
+template <class TypeTraits>
+void
+TMultiMap<TypeTraits>::paddAll(const thisType& source,
+      const ExtendedInsertionParameters& parameters, Cursor* cursor,
+      const Cursor* startSource, const Cursor* endSource) {
+   VirtualCollection::_addAll(source, parameters, cursor, startSource, endSource);
+   const VirtualCollectionCursor* pvccStartSource = startSource, *pvccEndSource = endSource;
+   bool normalize = !source.normalize(pvccStartSource, pvccEndSource);
+   startSource = (const Cursor*) pvccStartSource;
+   endSource = (const Cursor*) pvccEndSource;
+   if (!normalize) {
+      if (cursor) cursor->invalidate();
+      return;
+   };
+
+   typename thisType::PPCursor sourceCursor(source.newCursor());
+   bool isForward = !parameters.isRemote() || !parameters.isAfter();
+   if (isForward) {
+      if (startSource)
+         *sourceCursor = *startSource;
+      else
+         sourceCursor->setToFirst();
+   }
+   else {
+      if (endSource)
+         *sourceCursor = *endSource;
+      else
+         sourceCursor->setToLast();
+   };
+
+   if (this == &source) // probable collision leading to non-termination
+      throw ENotImplemented();
+
+   if (sourceCursor->isValid() && (isForward
+            ? ((endSource==nullptr) || (!sourceCursor->isEqual(*endSource)))
+            : ((startSource==nullptr) || (!sourceCursor->isEqual(*startSource))))) {
+      MultipleElement* sourceElement = sourceCursor->getSElement();
+      DVirtualCollection::TReferenceInsertionParameters<ExtendedInsertionParameters,
+         ExtendedInsertionParameters> paramsCopy(parameters, parameters);
+      paramsCopy.setUndefined();
+      _add(sourceCursor->queryKey(), /* BaseCast::castFrom( */ sourceElement /* ) */, paramsCopy, cursor);
+
+      for (sourceCursor->position(VirtualCollectionCursor::Position().setDirection(isForward ? COL::VirtualCollection::RPAfter : COL::VirtualCollection::RPBefore));
+           sourceCursor->isValid() && (isForward
+               ? ((endSource==nullptr) || (!sourceCursor->isEqual(*endSource)))
+               : ((startSource==nullptr) || (!sourceCursor->isEqual(*startSource))));
+           sourceCursor->position(VirtualCollectionCursor::Position()
+               .setDirection(isForward ? COL::VirtualCollection::RPAfter : COL::VirtualCollection::RPBefore))) {
+         sourceElement = sourceCursor->getSElement();
+         _add(sourceCursor->queryKey(), /* BaseCast::castFrom( */ sourceElement /* ) */, paramsCopy, cursor);
+      };
+   };
+   if ((endSource != nullptr) && (sourceCursor->isValid())) {
+      MultipleElement* source = sourceCursor->getSElement();
+      _add(sourceCursor->queryKey(), /* BaseCast::castFrom(*/source /*)*/, parameters, cursor);
+   };
+}
+
+template <class TypeTraits>
+void
+TMultiMap<TypeTraits>::_addAll(const thisType& source,
+      const ExtendedInsertionParameters& parameters, Cursor* cursor,
+      const Cursor* startSource, const Cursor* endSource) {
+   inherited::_addAll(source, parameters, cursor, startSource, endSource);
+   if (source.uCount == 0)
+      return;
+   if (scSortedCollection.isEmpty()
+         && ((startSource == nullptr) || !startSource->isValid() || !startSource->multipleCursor().isValid())
+         && ((endSource == nullptr) || !endSource->isValid() || !endSource->multipleCursor().isValid())) {
+      int newCount = source.uCount;
+      if (((startSource != nullptr) && startSource->isValid())
+         || ((endSource != nullptr) && endSource->isValid())) {
+         CountReceiver countReceiver;
+         source.scSortedCollection.foreachDo(countReceiver, ExtendedLocateParameters().setExact(),
+            startSource ? &startSource->sortedCursor() : nullptr,
+            endSource ? &endSource->sortedCursor() : nullptr);
+         newCount = countReceiver.getCountElement();
+      };
+
+      try {
+         addBody(source, ExtendedInsertionParameters(parameters).setLocal(),
+            parameters.getSCast(), nullptr,
+            startSource ? &startSource->sortedCursor() : nullptr,
+            endSource ? &endSource->sortedCursor() : nullptr);
+         uCount = newCount;
+      }
+      catch (...) {
+         uCount = 0;
+         scSortedCollection.foreachDo([this](const typename SortedCollection::Node& node)
+            {  uCount += ((const ReceiverMultipleElement&) node).count(); return true; });
+         throw;
+      };
+   }
+   else if (parameters.isDuplicate() && parameters.isInsertion()
+         && ((startSource == nullptr) || !startSource->isValid() || !startSource->multipleCursor().isValid())
+         && ((endSource == nullptr) || !endSource->isValid() || !endSource->multipleCursor().isValid())
+         && ((cursor == nullptr) || !cursor->isValid() || !cursor->multipleCursor().isValid())) {
+      int addCount = source.uCount, addCountReceiver = 0;
+      if (((startSource != nullptr) && startSource->isValid())
+         || ((endSource != nullptr) && endSource->isValid())) {
+         CountReceiver countReceiver;
+         source.scSortedCollection.foreachDo(countReceiver, ExtendedLocateParameters().setExact(),
+            startSource ? &startSource->sortedCursor() : nullptr,
+            endSource ? &endSource->sortedCursor() : nullptr);
+         addCount = countReceiver.getCountElement();
+         addCountReceiver = countReceiver.getCountReceiver();
+      };
+
+      addBody(source, ExtendedInsertionParameters(parameters).setLocal(),
+         parameters.getSCast(),
+         (cursor != nullptr) ? &cursor->sortedCursor() : nullptr,
+         startSource ? &startSource->sortedCursor() : nullptr,
+         endSource ? &endSource->sortedCursor() : nullptr,
+         parameters.isAfter() ? (parameters.isRemote() ? COL::VirtualCollection::RPAfter : COL::VirtualCollection::RPBefore)
+            : (parameters.isRemote() ? COL::VirtualCollection::RPBefore : COL::VirtualCollection::RPAfter), addCountReceiver);
+      uCount += addCount;
+   }
+   else if (this != &source)
+      paddAll(source, parameters, cursor, startSource, endSource);
+   else
+      AssumeUncalled
+}
+
+template <class TypeTraits>
+void
+TMultiMap<TypeTraits>::_moveTo(thisType& destination,
+      const ExtendedReplaceParameters& parameters, Cursor* cursor, Cursor* destinationCursor) {
+   inherited::_moveTo(destination, parameters, cursor, destinationCursor);
+   if (&destination != this) {
+      MultipleElement* movedObject = _getElement((const ExtendedSuppressParameters&) parameters, cursor);
+      _remove((const ExtendedSuppressParameters&) parameters, cursor);
+      try {
+         destination._add(_queryKey((const ExtendedSuppressParameters&) parameters, cursor),
+            movedObject, parameters, destinationCursor);
+      }
+      catch (...) {
+         _add(_queryKey((const ExtendedSuppressParameters&) parameters, cursor),
+            movedObject, parameters, destinationCursor);
+         throw;
+      };
+   }
+   else {
+      AssumeCondition(cursor && destinationCursor)
+      ReceiverMultipleElement* sourceReceiver = (ReceiverMultipleElement*) &cursor->sortedCursor().elementSAt();
+      ReceiverMultipleElement* destinationReceiver = (ReceiverMultipleElement*) &destinationCursor->sortedCursor().elementSAt();
+      if (sourceReceiver->moveTo(*destinationReceiver, parameters,
+         *cursor->multipleCursor(), *destinationCursor->multipleCursor()))
+         scSortedCollection.freeAt(cursor->sortedCursor());
+   };
+}
+
+template <class TypeTraits>
+void
+TMultiMap<TypeTraits>::_moveAllTo(thisType& destination,
+      const ExtendedReplaceParameters& parameters, const Cursor* startCursor,
+      const Cursor* endCursor, Cursor* destinationCursor) {
+   VirtualCollection::pmoveAllTo(destination, parameters, startCursor, endCursor, destinationCursor);
+}
+
+template <class TypeTraits>
+void
+TMultiMap<TypeTraits>::_remove(const ExtendedSuppressParameters& parameters,
+      Cursor* cursor) {
+   inherited::_remove(parameters, cursor);
+   
+   typename SortedCollection::Node* node = nullptr;
+   if (cursor && cursor->isValid()) {
+      node = &cursor->sortedCursor().elementSAt();
+      ReceiverMultipleElement* nodeReceiver = (ReceiverMultipleElement*) node;
+      if (!parameters.isNear() || !cursor->multipleCursor()->isPositionned(
+               ExtendedLocateParameters(inverse(parameters.getRelativePosition())))) {
+         if (nodeReceiver->remove(parameters, cursor->multipleCursor().key()))
+            scSortedCollection.freeAt(cursor->sortedCursor());
+         uCount--;
+         if (!cursor->multipleCursor().isValid())
+            cursor->invalidate();
+         return;
+      }
+   };
+
+   node = &scSortedCollection.getElement(parameters,
+      (cursor && cursor->isValid()) ? &cursor->sortedCursor() : nullptr);
+   if (((ReceiverMultipleElement*) node)->remove(
+         ExtendedSuppressParameters(parameters)
+            .setRelativePosition(inverse(parameters.getRelativePosition())), nullptr))
+      scSortedCollection.remove(ExtendedSuppressParameters(parameters).setFree(),
+         cursor ? &cursor->sortedCursor() : nullptr);
+   uCount--;
+}
+
+template <class TypeTraits>
+void
+TMultiMap<TypeTraits>::_removeAll(const ExtendedSuppressParameters& parameters,
+      const Cursor* start, const Cursor* end) {
+   inherited::_removeAll(parameters, start, end);
+   if (((start == nullptr) || !start->isValid()) && ((end == nullptr) || !end->isValid())
+         && parameters.isFree()) {
+      scSortedCollection.freeAll();
+      uCount = 0;
+   }
+   else {
+      if ((start != nullptr) && start->isValid() && (end != nullptr) && end->isValid()
+               && start->multipleCursor().isValid() && end->multipleCursor().isValid()
+               && start->sortedCursor().isEqual(end->sortedCursor())) {
+         ReceiverMultipleElement* base = (ReceiverMultipleElement*) &start->sortedCursor().elementSAt();
+         AssumeCondition(dynamic_cast<const ReceiverMultipleElement*>((typename SortedCollection::Node*) base))
+         int removed = base->count();
+         if (base->removeAll(parameters, start->multipleCursor().key(), end->multipleCursor().key()))
+            scSortedCollection.freeAt(const_cast<typename SortedCollection::Cursor&>(start->sortedCursor()));
+         else
+            removed -= base->count();
+         uCount -= removed;
+         return;
+      };
+
+      if (start && !start->isValid()) start = nullptr;
+      if (end && !end->isValid()) end = nullptr;
+      if (start && end && (start->sortedCursor() > end->sortedCursor()))
+         return;
+
+      typename SortedCollection::Node
+         *startNode = (start != nullptr)
+            ? (typename SortedCollection::Node*) &start->sortedCursor().elementSAt() : nullptr,
+         *endNode = (end != nullptr)
+            ? (typename SortedCollection::Node*) &end->sortedCursor().elementSAt() : nullptr;
+      ExtendedSuppressParameters copyParameters(parameters);
+      if (startNode) {
+         ReceiverMultipleElement* startNodeReceiver = (ReceiverMultipleElement*) startNode;
+         int removed = startNodeReceiver->count();
+         if (startNodeReceiver->removeAll(parameters, start->multipleCursor().key(), nullptr)) {
+            uCount -= removed;
+            copyParameters.unsetFirstExcluded();
+         }
+         else {
+            removed -= startNodeReceiver->count();
+            uCount -= removed;
+            if (copyParameters.isBefore()) { // the cursor will be invalid in all cases
+               if (!const_cast<typename SortedCollection::Cursor&>(start->sortedCursor())
+                     .setToNext())
+                  return;
+            }
+            else
+               copyParameters.setFirstExcluded();
+         };
+      };
+
+      if (endNode) {
+         ReceiverMultipleElement* endNodeReceiver = (ReceiverMultipleElement*) endNode;
+         int removed = endNodeReceiver->count();
+         if (endNodeReceiver->removeAll(parameters, nullptr, end->multipleCursor().key())) {
+            uCount -= removed;
+            copyParameters.unsetLastExcluded();
+         }
+         else {
+            removed -= endNodeReceiver->count();
+            uCount -= removed;
+            if (copyParameters.isAfter()) { // le curseur sera invalidé dans tous les cas
+               if (!const_cast<typename SortedCollection::Cursor&>(end->sortedCursor())
+                     .setToPrevious())
+                  return;
+            }
+            else
+               copyParameters.setLastExcluded();
+         };
+      };
+
+      const typename SortedCollection::Cursor
+         *startSorted = (start != nullptr) ? &start->sortedCursor() : nullptr,
+         *endSorted = (end != nullptr) ? &end->sortedCursor() : nullptr;
+
+      CountReceiver countReceiver;
+      scSortedCollection.foreachDo(countReceiver, copyParameters, startSorted, endSorted);
+         
+      if (parameters.isFree())
+         scSortedCollection.removeAll(copyParameters, startSorted, endSorted);
+      else {
+         // suppress all the referenced elements
+         FreeReceiver freeReceiver(countReceiver.getCountReceiver());
+         scSortedCollection.foreachDo(freeReceiver, copyParameters, startSorted, endSorted);
+         scSortedCollection.removeAll(copyParameters, startSorted, endSorted);
+         freeReceiver.freeAll();
+      };
+      uCount -= countReceiver.getCountElement();
+   };
+}
+
+template <class TypeTraits>
+void
+TMultiMap<TypeTraits>::_replace(MultipleElement* newElement,
+      const ExtendedReplaceParameters& parameters, Cursor* cursor) {
+   inherited::_replace(BaseCast::castTo(newElement), parameters, cursor);
+   if (cursor && !cursor->isValid()) cursor = nullptr;
+   AddGuardian<MultipleElement> guard(*this, newElement, parameters);
+
+   if (cursor && cursor->multipleCursor().isValid()) {
+      ReceiverMultipleElement* node = (ReceiverMultipleElement*) &cursor->sortedCursor().elementSAt();
+      AssumeCondition(dynamic_cast<const ReceiverMultipleElement*>((typename SortedCollection::Node*) node))
+      if (!parameters.getSuppress().isNear() || (!cursor->multipleCursor()->isPositionned(
+            ExtendedLocateParameters(inverse(parameters.getRemovePosition()))))) {
+         // replace at a multiple place
+         guard.release();
+         if (!parameters.isDuplicate() || (!parameters.hasCast() && HasCopyHandlerOnMultiple))
+            node->replace(newElement, parameters, cursor->multipleCursor().key());
+         else if (parameters.hasCast())
+            node->replace(newElement,
+               DVirtualCollection::TCastParameters<ExtendedReplaceParameters>()
+               .setExternCast(RetrieveAssistedRegistrationFromCopyCast(parameters.getCast())),
+               cursor->multipleCursor().key());
+         else // !HasCopyHandlerOnMultiple && parameters.isDuplicate() && !parameters.hasCast()
+            node->replace(newElement,
+               DVirtualCollection::TCastParameters<ExtendedReplaceParameters>()
+               .setExternCast(RetrieveRegistrationFromCopyCast()),
+               cursor->multipleCursor().key());
+         return;
+      };
+   };
+
+   typename SortedCollection::Cursor* sortedCursor = cursor ? &cursor->sortedCursor() : nullptr;
+   typename SortedCollection::Node* node = &scSortedCollection.getElement(
+      (const ExtendedSuppressParameters&) parameters, sortedCursor);
+
+   // replace at a multiple place
+   ReceiverMultipleElement* nodeReceiver = (ReceiverMultipleElement*) node;
+
+   guard.release();
+   if (!parameters.isDuplicate() || (!parameters.hasCast() && HasCopyHandlerOnMultiple))
+      nodeReceiver->replace(newElement, parameters, nullptr);
+   else if (parameters.hasCast())
+      nodeReceiver->replace(newElement,
+         DVirtualCollection::TCastParameters<ExtendedReplaceParameters>()
+         .setExternCast(RetrieveAssistedRegistrationFromCopyCast(parameters.getCast())), nullptr);
+   else // !HasCopyHandlerOnMultiple && parameters.isDuplicate() && !parameters.hasCast()
+      nodeReceiver->replace(newElement,
+         DVirtualCollection::TCastParameters<ExtendedReplaceParameters>()
+         .setExternCast(RetrieveRegistrationFromCopyCast()), nullptr);
+}
+
+template <class TypeTraits>
+typename TMultiMap<TypeTraits>::MultipleElement*
+TMultiMap<TypeTraits>::_getElement(const ExtendedLocateParameters& parameters,
+      const Cursor* cursor) const {
+   inherited::_getElement(parameters, cursor);
+   
+   typename SortedCollection::Node* node = nullptr;
+   if (cursor && cursor->isValid()) {
+      node = &cursor->sortedCursor().elementSAt();
+
+      ReceiverMultipleElement* nodeReceiver = (ReceiverMultipleElement*) node;
+      if (!parameters.isNear() || !cursor->multipleCursor()->isPositionned(
+            ExtendedLocateParameters(inverse(parameters.getRelativePosition()))))
+         return &nodeReceiver->getElement(parameters, cursor->multipleCursor().key());
+   };
+
+   node = &scSortedCollection.getElement(parameters,
+      (cursor && cursor->isValid()) ? &cursor->sortedCursor() : nullptr);
+   return &((ReceiverMultipleElement*) node)->getElement(
+         ExtendedLocateParameters(inverse(parameters.getRelativePosition())), nullptr);
+}
+
+template <class TypeTraits>
+typename TypeTraits::KeyTraits::ControlKeyType
+TMultiMap<TypeTraits>::_queryKey(
+      const ExtendedLocateParameters& parameters,
+      const typename TMultiMap<TypeTraits>::Cursor* cursor) const {
+   if (cursor && cursor->isValid()) {
+      if (!parameters.isNear() || !cursor->multipleCursor()->isPositionned(
+            ExtendedLocateParameters(inverse(parameters.getRelativePosition()))))
+         return cursor->sortedCursor().queryKey();
+   };
+
+   return scSortedCollection.queryKey(parameters,
+      (cursor && cursor->isValid()) ? &cursor->sortedCursor() : nullptr);
+}
+
+template <class TypeTraits>
+typename TMultiMap<TypeTraits>::LocationResult
+TMultiMap<TypeTraits>::_locate(const EnhancedObject& source, const ExtendedLocateParameters& parameters,
+      VirtualMultiSortedCollectionCursor* pvsccCursor, const VirtualMultiSortedCollectionCursor* pvsccStart,
+      const VirtualMultiSortedCollectionCursor* pvsccEnd) const {
+   Cursor* cursor = (Cursor*) pvsccCursor;
+   const Cursor *start = (const Cursor*) pvsccStart, *end = (const Cursor*) pvsccEnd;
+   const MultipleElement& element = BaseCast::castFrom(source);
+
+   if (parameters.hasKey())
+      return _locateKey(TypeTraits::queryKey(parameters), parameters, cursor, start, end);
+
+   AssumeCondition(parameters.containsKey())
+   return _locateKey(key(element), parameters, cursor, start, end);
+}
+
+template <class TypeTraits>
+typename TMultiMap<TypeTraits>::LocationResult
+TMultiMap<TypeTraits>::_locateKey(typename Key::KeyType key, const ExtendedLocateParameters& parameters,
+      Cursor* cursor, const Cursor* start, const Cursor* end) const {
+   KeyLocationResult result;
+   if (!cursor) {
+      PPCursor garbage = newCursor();
+      cursor = garbage.key();
+   };
+   ((VirtualSortedCollection::LocationResult&) result) = scSortedCollection.locateKey(key,
+      parameters, &cursor->sortedCursor(),
+      start ? &start->sortedCursor() : nullptr, end ? &end->sortedCursor() : nullptr);
+   if (cursor->multipleCursor().isValid())
+      cursor->multipleCursor().release();
+   if (result)
+      result.setCount(1);
+   if (cursor->sortedCursor().isOnLocation()) {
+      const typename SortedCollection::Node& node = cursor->sortedCursor().elementAt();
+      const ReceiverMultipleElement& nodeReceiver = (const ReceiverMultipleElement&) node;
+      cursor->multipleCursor() = nodeReceiver.newCursor();
+      cursor->multipleCursor()->position(parameters.isBefore() ? VirtualCollectionCursor::Position::DEnd
+         : VirtualCollectionCursor::Position::DStart);
+      if (result) {
+         result.setCount(nodeReceiver.count());
+         if (parameters.isBefore())
+            result.setCursorPosition(nodeReceiver.count()-1);
+      };
+   };
+   return result;
+}
+
+/********************************************************/
+/* Implementation of the template class TMultiMapCursor */
+/********************************************************/
+
+template <class TypeTraits>
+void
+TMultiMapCursor<TypeTraits>::_gotoReference(const EnhancedObject& eoElement) {
+   const MultipleElement& element = BaseCast::castFrom(eoElement);
+   sccCursor.gotoReference(TypeTraits::getMultipleBase((const MultipleElement&) element));
+   const typename SortedCollection::Node* node = &sccCursor.elementAt();
+   AssumeCondition(dynamic_cast<const ReceiverMultipleElement*>(node))
+   ppmccMultipleCursor = ((const ReceiverMultipleElement&) *node).newCursor();
+   ppmccMultipleCursor->gotoReference(element);
+}
+
+template <class TypeTraits>
+bool
+TMultiMapCursor<TypeTraits>::_isPositionned(const ExtendedLocateParameters& pos,
+      const VirtualCollectionCursor* pvccCursor) const {
+   const thisType* cursor = (const thisType*) pvccCursor;
+   if (cursor && cursor->isValid()) {
+      if (ppmccMultipleCursor.isValid())
+         return (sccCursor.isEqual(cursor->sccCursor))
+             ? ppmccMultipleCursor->isPositionned(pos, cursor->ppmccMultipleCursor.key())
+             : (sccCursor.isPositionned(pos, &cursor->sccCursor)
+               && ppmccMultipleCursor->isPositionned(pos)
+               && cursor->ppmccMultipleCursor->isPositionned(
+                  ExtendedLocateParameters(inverse(pos.getRelativePosition()))));
+      else
+         return sccCursor.isPositionned(pos, &cursor->sccCursor)
+               && cursor->ppmccMultipleCursor->isPositionned(
+                  ExtendedLocateParameters(inverse(pos.getRelativePosition())));
+   }
+   else {
+      if (sccCursor.isPositionned(pos))
+         return (ppmccMultipleCursor.isValid()) ? ppmccMultipleCursor->isPositionned(pos) : true;
+   };
+   return false;
+}
+
+template <class TypeTraits>
+bool
+TMultiMapCursor<TypeTraits>::_position(const inherited::Position& pos) {
+   typedef inherited::Position Position;
+   inherited::_position(pos);
+   bool result = false;
+   if (pos.isNear()) {
+      normalize();
+      if (ppmccMultipleCursor.isValid()) {
+         if (!(result = ppmccMultipleCursor->position(pos))) {
+            if ((result = sccCursor.position(pos)) != false) {
+               ppmccMultipleCursor = ((const ReceiverMultipleElement&) sccCursor.elementAt()).newCursor();
+               result = ppmccMultipleCursor->position(Position(pos.isForward() ? Position::DStart : Position::DEnd));
+            }
+            else
+               ppmccMultipleCursor.release();
+         };
+      }
+      else {
+         if ((result = sccCursor.position(pos)) != false) {
+            ppmccMultipleCursor = ((const ReceiverMultipleElement&) sccCursor.elementAt()).newCursor();
+            result = ppmccMultipleCursor->position(Position(pos.isForward() ? Position::DStart : Position::DEnd));
+         };
+      };
+   }
+   else if (pos.isExact()) {
+      normalize();
+      return isValid();
+   }
+   else { // pos.isExtremity() || pos.isAny() || pos.isInvalid()
+      result = sccCursor.position(pos);
+      if (sccCursor.isValid()) {
+         ppmccMultipleCursor = ((const ReceiverMultipleElement&) sccCursor.elementAt()).newCursor();
+         result = ppmccMultipleCursor->position(pos);
+      };
+   };
+   return result;
+}
+
+} // end of namespace COL
+
+#endif // COL_MultiMapTEMPLATE
+

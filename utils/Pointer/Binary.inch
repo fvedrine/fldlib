@@ -1,0 +1,529 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2013-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Low level implementation
+// File      : Binary.inch
+// Description :
+//   Definition of a partial template for balanced binary trees.
+//
+
+/* DefineTypeNode          : node type                */
+/* DefineTypeCast          : Cast to ImplBalancedNode */
+/* DefineTypeBinaryTree    : type of binary tree      */
+/* DefineTypeBinaryParent  : parent nodes             */
+
+/******************************************/
+/* Definition of template TImplBinaryTree */
+/******************************************/
+
+#ifndef DefineTemplate
+#define DefineTemplate 
+#define HasDefinedTemplate
+#define DefineDeclareTypeBinaryTree DefineTypeBinaryTree
+#define Typename
+#else
+#define Typename typename
+#endif
+
+DefineTemplate
+class DefineDeclareTypeBinaryTree : public CustomImplBinaryTree {
+  private:
+   typedef CustomImplBinaryTree inherited;
+
+  public:
+   typedef DefineTypeNode Node;
+   class Cursor;
+   friend class Cursor;
+
+   class RouteFreeAction;
+   class RouteRemoveAction;
+   class RouteCopyAction;
+   class RouteValidityAction;
+
+#ifndef DefineTypeBinaryParent
+   class Cursor : public TImplBinaryTreeCursor<Node> {
+     private:
+      typedef TImplBinaryTreeCursor<Node> inherited;
+#else // DefineTypeBinaryParent
+   class Cursor : public TImplParentBinaryTreeCursor<Node> {
+     private:
+      typedef TImplParentBinaryTreeCursor<Node> inherited;
+#endif // DefineTypeBinaryParent
+
+     protected:
+      bool setToFirst(Node* root) { return inherited::setToFirst(root); }
+      bool setToLast(Node* root) { return inherited::setToLast(root); }
+      bool setToNext(Node* root) { return inherited::setToNext(root); }
+      bool setToPrevious(Node* root) { return inherited::setToPrevious(root); }
+      virtual ComparisonResult _compare(const EnhancedObject& asource) const override
+         {  return inherited::_compare(asource); }
+
+      friend class DefineTypeBinaryTree;
+      friend class RouteCopyAction;
+
+#ifndef DefineTypeBinaryParent
+     protected:
+      Cursor(Node* root, int defaultHeight) : inherited(root, defaultHeight) {}
+
+     public:
+      class NoAllocation {};
+      Cursor(NoAllocation) : inherited(nullptr, 0) {}
+      Cursor(const DefineTypeBinaryTree& tree) : inherited(nullptr, tree.height()+1) {}
+#else // DefineTypeBinaryParent
+     public:
+      Cursor() {}
+      Cursor(const DefineTypeBinaryTree& tree) {}
+#endif // DefineTypeBinaryParent
+
+     public:
+      Cursor(const Cursor& source) : inherited(source) {}
+      Cursor& operator=(const Cursor& source) = default;
+      DefineCopy(Cursor)
+
+#ifdef DefineTypeBinaryParent
+      bool setToReference(Node* node)
+         {  inherited::setToReference(node);
+            return (node != nullptr);
+         }
+#endif // DefineTypeBinaryParent
+      bool setToFirst(const DefineTypeBinaryTree& tree)
+         { return inherited::setToFirst((Node*) tree.root()); }
+      bool setToInnerDepth(const DefineTypeBinaryTree& tree);
+      bool setToLast(const DefineTypeBinaryTree& tree)
+         { return inherited::setToLast((Node*) tree.root()); }
+      bool setToNext(const DefineTypeBinaryTree& tree)
+         { return inherited::setToNext((Node*) tree.root()); }
+      bool setToPrevious(const DefineTypeBinaryTree& tree)
+         { return inherited::setToPrevious((Node*) tree.root()); }
+      Node* elementAt() const { return inherited::getReference(); }
+      Node* getReference() const { return inherited::getReference(); }
+      void invalidate() { inherited::invalidate(); }
+
+      bool setToSon(Node* node) { return inherited::setToSon(node); }
+      bool setToSon(Typename Node::Balance balance)
+         {  return (balance == Node::BLeft) ? inherited::setToLeft() : inherited::setToRight(); }
+      bool setToRoot(const DefineTypeBinaryTree& tree)
+         {  return inherited::setToRoot((Node*) tree.root()); }
+      bool setToParent() { return inherited::setToParent(); }
+      bool setToLeft() { return inherited::setToLeft(); }
+      bool setToRight() { return inherited::setToRight(); }
+
+      bool isFirst() const { return inherited::isFirst(); }
+      bool isLast() const { return inherited::isLast(); }
+      bool isNext(const Cursor& source, bool isTreeEmpty) const
+         { return inherited::isNext(source, isTreeEmpty); }
+      bool isPrevious(const Cursor& source, bool isTreeEmpty) const
+         { return inherited::isPrevious(source, isTreeEmpty); }
+      virtual bool isValid() const override { return inherited::isValid(); }
+   };
+
+   class RouteFreeAction {
+     public:
+      RouteFreeAction(DefineTypeBinaryTree&) {}
+   
+      bool init(const DefineTypeBinaryTree& tree, Node* root) { return true; }
+      bool ascent(Node* node, Node* oldNode)
+         {  if (node)
+               disconnectSon(node, oldNode);
+            if (oldNode) delete oldNode;
+            return true;
+         }
+      bool descent(Node* node, Node* parent) { return true; }
+      bool end(const DefineTypeBinaryTree& tree)
+         {  if (tree.root())
+               delete tree.root();
+            const_cast<DefineTypeBinaryTree&>(tree).clearRoot();
+            return true;
+         }
+   };
+   
+   class RouteRemoveAction {
+     public:
+      RouteRemoveAction(DefineTypeBinaryTree&) {}
+   
+      bool init(const DefineTypeBinaryTree& tree, Node* root) { return true; }
+      bool ascent(Node* node, Node* oldNode)
+         {  if (node)
+               disconnectSon(node, oldNode);
+            return true;
+         }
+      bool descent(Node* node, Node* parent) { return true; }
+      bool end(const DefineTypeBinaryTree& tree)
+         { const_cast<DefineTypeBinaryTree&>(tree).clearRoot(); return true; }
+   };
+   
+   class RouteCopyAction {
+     private:
+      typedef DVirtualCollection::VirtualCastWithElement VirtualCastWithElement;
+      Cursor cThisCursor;
+      const VirtualCastWithElement* pvcweRetrieveRegistrationFromCopy;
+   
+     public:
+      RouteCopyAction(DefineTypeBinaryTree& thisTree, const DefineTypeBinaryTree& sourceTree,
+         const VirtualCast* retrieveRegistrationFromCopy=nullptr)
+#ifndef DefineTypeBinaryParent
+         :  cThisCursor(nullptr, sourceTree.height()),
+#else
+         :  cThisCursor(),
+#endif // DefineTypeBinaryParent
+            pvcweRetrieveRegistrationFromCopy((const VirtualCastWithElement*) retrieveRegistrationFromCopy)
+         {  AssumeCondition(!thisTree.root())
+            if (sourceTree.root()) {
+#ifdef DefineUninheritsEnhancedObject
+               thisTree.setRoot(new Node(*sourceTree.root()));
+#else
+               thisTree.setRoot(pvcweRetrieveRegistrationFromCopy
+                  ?  (Node*) Node::castFromCopyHandler(pvcweRetrieveRegistrationFromCopy
+                        ->castFrom(sourceTree.root()->createCopy(), sourceTree.root()))
+                  :  sourceTree.root()->createSCopy());
+#endif
+               cThisCursor.setToRoot(thisTree);
+            };
+         }
+   
+      bool init(const DefineTypeBinaryTree& tree, Node* root) { return true; }
+      bool ascent(Node* node, Node* oldNode)
+         {  setBalance(getReference(cThisCursor), oldNode);
+            cThisCursor.setToParent();
+            return true;
+         }
+      bool descent(Node* node, Node* parent)
+         {  if (left(parent) == node) {
+               AssumeCondition(!left(getReference(cThisCursor)))
+#ifdef DefineUninheritsEnhancedObject
+               setLeft((Node*) getReference(cThisCursor), new Node(*node));
+#else
+               setLeft((Node*) getReference(cThisCursor), pvcweRetrieveRegistrationFromCopy
+                  ? (Node*) Node::castFromCopyHandler(pvcweRetrieveRegistrationFromCopy
+                        ->castFrom(node->createCopy(), node))
+                  : node->createSCopy());
+#endif
+               cThisCursor.setToLeft();
+            }
+            else if (right(parent) == node) {
+               AssumeCondition(!right(getReference(cThisCursor)))
+#ifdef DefineUninheritsEnhancedObject
+               setRight((Node*) getReference(cThisCursor), new Node(*node));
+#else
+               setRight((Node*) getReference(cThisCursor), pvcweRetrieveRegistrationFromCopy
+                  ? (Node*) Node::castFromCopyHandler(pvcweRetrieveRegistrationFromCopy
+                        ->castFrom(node->createCopy(), node))
+                  : node->createSCopy());
+#endif
+               cThisCursor.setToRight();
+            }
+            else
+               AssumeUncalled
+            return true;
+         }
+      bool end(const DefineTypeBinaryTree& sourceTree)
+         {  if (sourceTree.root())
+               setBalance(getReference(cThisCursor), sourceTree.root());
+            return true;
+         }
+   };
+   
+#ifndef DefineTypeBinaryParent
+   class RouteValidityAction {
+     private:
+      int uExpectedHeight;
+      int uLeftCount;
+   
+     public:
+      RouteValidityAction(const DefineTypeBinaryTree& tree)
+         : uExpectedHeight(tree.height()), uLeftCount(tree.count()) {}
+   
+      bool init(const DefineTypeBinaryTree& tree, Node* root)
+         {  return (--uLeftCount >= 0) && (--uExpectedHeight >= 0); }
+      bool ascent(Node* node, Node* oldNode)
+         {  bool result = oldNode->isValid();
+            if (result) {
+               uExpectedHeight += (!unbalance(node, oldNode)) ? 1 : 2;
+               result = (left(node) == oldNode)
+                  ? (*oldNode < *node) : ((right(node) == oldNode)
+                  ? (*oldNode > *node) : false);
+            }
+            return result;
+         }
+      bool descent(Node* node, Node* parent)
+         {  bool result = true;
+            if ((--uLeftCount < 0) || (!unbalance(parent, node)
+                     ? (--uExpectedHeight < 0) : ((uExpectedHeight -= 2) < 0)))
+               result = false;
+            else if (isSingleton(node) && (uExpectedHeight != 0))
+               result = false;
+            return result;
+         }
+      bool end(const DefineTypeBinaryTree&) { return (uLeftCount == 0); }
+   };
+#else // DefineTypeBinaryParent
+   class RouteValidityAction {
+     private:
+      int uLeftCount;
+      int uExpectedHeight;
+   
+     public:
+      RouteValidityAction(const DefineTypeBinaryTree& tree)
+         : uLeftCount(tree.count()), uExpectedHeight(0)
+         {  Cursor cursor;
+            if (cursor.setToRoot(tree)) {
+               do {
+                  uExpectedHeight += (getBalance(*cursor.getReference()) == Node::BRight) ? 2 : 1;
+               } while (cursor.setToLeft());
+            };
+         }
+      bool init(const DefineTypeBinaryTree& tree, Node* root)
+         {  return (--uLeftCount >= 0)  && (--uExpectedHeight >= 0)
+               && (parent(*root) == nullptr) && root->isValid();
+         }
+      bool ascent(Node* node, Node* oldNode)
+         {  bool result = oldNode->isValid();
+            if (result) {
+               uExpectedHeight += (!unbalance(node, oldNode)) ? 1 : 2;
+               result = (left(node) == oldNode)
+                  ? (*oldNode < *node) : ((right(node) == oldNode)
+                  ? (*oldNode > *node) : false);
+            };
+            return result;
+         }
+      bool descent(Node* node, Node* parent)
+         {  bool result = true;
+            if ((--uLeftCount < 0) || (!unbalance(parent, node)
+                     ? (--uExpectedHeight < 0) : ((uExpectedHeight -= 2) < 0)))
+               result = false;
+            if (isSingleton(node) && (uExpectedHeight != 0))
+               result = false;
+            return result;
+         }
+      bool end(const DefineTypeBinaryTree&) { return (uLeftCount == 0); }
+   };
+#endif // DefineTypeBinaryParent
+   
+#ifndef DefineTypeBinaryParent
+   static Typename Cursor::DescentTrace& trace(Cursor& cursor) { return cursor.trace(); }
+   class InsertionNotification : public BinaryInsertionNotification {
+     public:
+      InsertionNotification() {}
+      InsertionNotification(const InsertionNotification& source) : BinaryInsertionNotification(source) {}
+      void apply(Cursor& cursor) const { BinaryInsertionNotification::apply(trace(cursor)); }
+   };
+   class SuppressionNotification : public BinarySuppressionNotification {
+     public:
+      SuppressionNotification() {}
+      SuppressionNotification(const SuppressionNotification& source) : BinarySuppressionNotification(source) {}
+      void apply(Cursor& cursor) const { BinarySuppressionNotification::apply(trace(cursor)); }
+   };
+   class ReplaceNotification : public BinaryReplaceNotification {
+     public:
+      ReplaceNotification() {}
+      ReplaceNotification(const ReplaceNotification& source) : BinaryReplaceNotification(source) {}
+      void apply(Cursor& cursor) const { BinaryReplaceNotification::apply(trace(cursor)); }
+   };
+#else // DefineTypeBinaryParent
+   static Node* parent(const Node& node) { return node.parent(); }
+
+   class InsertionNotification {};
+   class SuppressionNotification : public BinaryParentSuppressionNotification {
+     public:
+      SuppressionNotification() {}
+      SuppressionNotification(const SuppressionNotification& source)
+         : BinaryParentSuppressionNotification(source) {}
+      void apply(Cursor& cursor) const {  BinaryParentSuppressionNotification::apply(cursor); }
+   };
+   class ReplaceNotification : public BinaryParentReplaceNotification {
+     public:
+      ReplaceNotification() {}
+      ReplaceNotification(const ReplaceNotification& source)
+         : BinaryParentReplaceNotification(source) {}
+      void apply(Cursor& cursor) const {  BinaryParentReplaceNotification::apply(cursor); }
+   };
+#endif // DefineTypeBinaryParent
+   static Typename Node::Balance getBalance(const Node& node) { return node.getBalance(); }
+
+  private:
+   static Node* getReference(const Cursor& cursor) { return (Node*) cursor.getReference(); }
+   static bool balance(const Node* node, Node* son) { return node->balance(son); }
+   static bool unbalance(const Node* node, Node* son) { return node->unbalance(son); }
+   static void setBalance(Node* thisNode, const Node* sourceNode) { thisNode->setBalance(*sourceNode); }
+
+   static void disconnectSon(Node* parentNode, Node* son)
+      {  parentNode->disconnectSon(son); }
+   static void setLeft(Node* node, Node* leftNode) { node->setLeft(leftNode); }
+   static void setRight(Node* node, Node* rightNode) { node->setRight(rightNode); }
+   static Node* left(Node* node) { return (Node*) node->left(); }
+   static Node* right(Node* node) { return (Node*) node->right(); }
+   static bool isSingleton(const Node* node) { return node->isSingleton(); }
+
+#ifndef DefineTypeBinaryParent
+   Node* elementAt(const Cursor& cursor, int index) { return (Node*) cursor[index]; }
+
+   void setElement(Cursor& cursor, int index, Node* node)
+      {  if (index > 0)
+            cursor[index-1]->changeSon(cursor[index], node);
+         else
+            setRoot(node);
+         cursor[index] = node;
+      }
+   void insertElementAt(Cursor& cursor, int index, Node* node)
+      {  if (index > 0)
+            cursor[index-1]->changeSon(cursor[index], node);
+         else
+            setRoot(node);
+         cursor.insertAt(index, node);
+      }
+#else // DefineTypeBinaryParent
+   void setElement(Node* node)
+      {  if (node->parent() == nullptr)
+            setRoot(node);
+      }
+   void insertElementAt(Node* node)
+      {  if (node->parent() == nullptr)
+            setRoot(node);
+      }
+#endif // DefineTypeBinaryParent
+
+  private:
+   friend class RouteFreeAction;
+   friend class RouteRemoveAction;
+   friend class RouteCopyAction;
+   friend class RouteValidityAction;
+
+#ifndef DefineTypeBinaryParent
+   typedef ImplBinaryTreeCursorNotification CursorsNotification;
+   bool balanceAfterInsertion(Cursor& cursor, CursorsNotification* notifications=nullptr);
+   bool balanceAfterSuppression(Cursor& cursor, Typename Node::Balance balance,
+         CursorsNotification* notifications=nullptr);
+#else // DefineTypeBinaryParent
+   bool balanceAfterInsertion(Cursor& cursor);
+   bool balanceAfterSuppression(Cursor& cursor, Node::Balance balance);
+#endif // DefineTypeBinaryParent
+
+  protected:
+   Node* root() const { return (Node*) inherited::root(); }
+
+  public:
+   DefineDeclareTypeBinaryTree() {}
+   DefineDeclareTypeBinaryTree(const DefineTypeBinaryTree& source, bool doesDuplicate=false,
+         const VirtualCast* retrieveRegistrationFromCopy=nullptr)
+      :  inherited(source)
+      {  if (doesDuplicate) duplicate(source, retrieveRegistrationFromCopy); }
+   DefineCopy(DefineDeclareTypeBinaryTree)
+   DDefineAssign(DefineDeclareTypeBinaryTree)
+
+   void duplicate(const DefineTypeBinaryTree& source,
+      const VirtualCast* retrieveRegistrationFromCopy=nullptr);
+   const int& count() const { return inherited::count(); }
+
+     // query methods
+   virtual bool isValid() const override;
+
+   Node* queryFirst() const { return (Node*) inherited::queryFirst(); }
+   Node* queryLast() const { return (Node*) inherited::queryLast(); }
+
+     // localization
+   struct TemplateLocate {
+     public:
+      typedef const Node& KeyType;
+      typedef Node ElementType;
+      typedef DefineTypeBinaryTree TabType;
+      typedef DefineTypeBinaryTree TabImplementation;
+      typedef DefineTypeCast Cast;
+      typedef Node TypeNode;
+      typedef Cursor TypeCursor;
+      
+      KeyType key;
+      TypeCursor& cursor;
+
+      TemplateLocate(const Node& node, Cursor& cursorSource) : key(node), cursor(cursorSource) {}
+      static ComparisonResult compare(KeyType fst, KeyType snd) { return fst.compare(snd); }
+   };
+   Typename Node::Balance locateBefore(const Node& node, Cursor& cursor) const
+      {  return tlocateBefore(TemplateLocate(node, cursor)); }
+
+     // Insertion
+#ifndef DefineTypeBinaryParent
+   void addAsFirst(Node* node, InsertionNotification* notification=nullptr);
+   void addAsLast(Node* node, InsertionNotification* notification=nullptr);
+   void addAsSon(Node* node, Cursor& cursor, Typename Node::Balance balance, InsertionNotification* notification=nullptr);
+   bool add(Node* node, InsertionNotification* notification=nullptr);
+#else // DefineTypeBinaryParent
+   void addAsFirst(Node* node);
+   void addAsLast(Node* node);
+   void addAsSon(Node* node, Cursor& cursor, Typename Node::Balance balance);
+   bool add(Node* node);
+#endif // DefineTypeBinaryParent
+
+     // Suppression
+   enum CursorMove { CMUndefined, CMDblBefore, CMBefore, CMAfter, CMDblAfter, CMInvalid };
+   CursorMove removeAt(Cursor& cursor, SuppressionNotification* notification=nullptr);
+   void replaceAt(Cursor& cursor, Node* node, ReplaceNotification* notification=nullptr);
+   void adjustRemove(Cursor& cursor, Typename Node::Balance balance, CursorMove move) const;
+   void freeAll();
+   void removeAll();
+
+   void swap(DefineTypeBinaryTree& source) { inherited::swap(source); }
+
+   static const Node& keyFromCell(const Node& node) { return key(node); }
+   static const Node& key(const Node& node) { return node; }
+   friend class CustomImplBinaryTree;
+};
+
+DefineTemplate
+inline void
+DefineTypeBinaryTree::adjustRemove(Typename DefineTypeBinaryTree::Cursor& cursor,
+      Typename Node::Balance balance, Typename DefineTypeBinaryTree::CursorMove move) const {
+   if (move != CMInvalid) {
+      if (balance == Node::BRight) {
+         if (move == CMAfter)
+            cursor.setToPrevious(*this);
+         else if (move == CMDblAfter) {
+            cursor.setToPrevious(*this);
+            cursor.setToPrevious(*this);
+         }
+         else if (move == CMDblBefore)
+            cursor.setToNext(*this);
+      }
+      if (balance == Node::BLeft) {
+         if (move == CMBefore)
+            cursor.setToNext(*this);
+         else if (move == CMDblBefore) {
+            cursor.setToNext(*this);
+            cursor.setToNext(*this);
+         }
+         else if (move == CMDblAfter)
+            cursor.setToPrevious(*this);
+      };
+   }
+   else
+      cursor.invalidate();
+}
+
+#ifdef HasDefinedTemplate
+#undef DefineTemplate
+#undef DefineDeclareTypeBinaryTree
+#undef HasDefinedTemplate
+#endif
+#undef Typename
+

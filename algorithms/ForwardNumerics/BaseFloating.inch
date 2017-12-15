@@ -1,0 +1,979 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2005-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : ForwardNumerics
+// Unit      : Floating
+// File      : BaseFloating.inch
+// Description :
+//   Definition of a class of floating points with unbound size.
+//
+
+#ifndef DefineGeneric
+
+#define DefineTypeMantissaAndReadTemplateHeader(TypeMantissa, TypeReadParameters) \
+   template <class TypeMantissa, class TypeReadParameters>
+#define DefineBaseType                                     \
+   unsigned int
+#define DefineBaseTypeConstReference                       \
+   unsigned int
+#define DefineBuiltAccess BuiltAccess
+#define DefineMantissaAndExponentTemplateHeader(SizeMantissa, SizeExponent) \
+   template <int SizeMantissa, int SizeExponent>
+#define DefineMantissaAndExponentSTemplateHeader(SizeMantissa, SizeExponent) \
+   template <int SizeMantissa, int SizeExponent>
+#define DefineMantissaAndExponentTemplateParameters(SizeMantissa, SizeExponent) \
+   <SizeMantissa, SizeExponent>
+#define DefineBigCellInt                                   \
+   TBigCellInt
+#define DefineBigInt                                       \
+   TBigInt
+#define DefineCellIntegerTraits                            \
+   DInteger::TCellIntegerTraits
+#define DefineIntegerTraits                                \
+   DInteger::TIntegerTraits
+#define DefineBigCellTemplateParameters(TypeIntegerTraits) \
+   <TypeIntegerTraits>
+#define DefineSizeofBaseTypeInBits                         \
+   (sizeof(unsigned int)*8)
+#define DefineBuiltDoubleTraits BuiltDoubleTraits
+#define DefineBuiltDouble TBuiltDouble
+#define DefineReadDouble TReadDouble
+
+#else
+
+#define DefineTypeMantissaAndReadTemplateHeader(TypeMantissa, TypeReadParameters) \
+   template <class BaseStoreTraits, class TypeMantissa, class TypeReadParameters>
+#define DefineBaseType                                     \
+   typename BaseStoreTraits::BaseType
+#define DefineBaseTypeConstReference                       \
+   typename BaseStoreTraits::BaseTypeConstReference
+#define DefineBuiltAccess GBuiltAccess
+#define DefineMantissaAndExponentTemplateHeader(SizeMantissa, SizeExponent) \
+   template <class BaseStoreTraits, int SizeMantissa, int SizeExponent>
+#define DefineMantissaAndExponentSTemplateHeader(SizeMantissa, SizeExponent) \
+   template <class TBaseStoreTraits, int SizeMantissa, int SizeExponent>
+#define DefineMantissaAndExponentTemplateParameters(SizeMantissa, SizeExponent) \
+   <BaseStoreTraits, SizeMantissa, SizeExponent>
+#define DefineBigCellInt                                   \
+   TGBigCellInt
+#define DefineBigInt                                       \
+   TGBigInt
+#define DefineCellIntegerTraits                            \
+   DInteger::TGCellIntegerTraits
+#define DefineIntegerTraits                                \
+   DInteger::TGIntegerTraits
+#define DefineBigCellTemplateParameters(TypeIntegerTraits) \
+   <BaseStoreTraits, TypeIntegerTraits>
+#define DefineSizeofBaseTypeInBits                         \
+   BaseStoreTraits::sizeBaseInBits()
+#define DefineBuiltDoubleTraits GBuiltDoubleTraits
+#define DefineBuiltDouble TGBuiltDouble
+#define DefineReadDouble TGReadDouble
+
+#endif
+
+namespace DDouble {
+
+class DefineBuiltAccess {
+  public:
+   DefineTypeMantissaAndReadTemplateHeader(TypeMantissa, TypeReadParameters)
+   static Access::Carry trightShift(
+#ifdef DefineGeneric
+         BaseStoreTraits,
+#endif
+         TypeMantissa& mantissa, int shift, DefineBaseTypeConstReference value,
+         TypeReadParameters& params, bool isNegative, int bitSizeMantissa);
+   
+   DefineMantissaAndExponentTemplateHeader(USizeMantissa, USizeExponent)
+   class TFloatConversion {
+     public:
+      typedef DefineBigCellInt DefineBigCellTemplateParameters(
+            DefineCellIntegerTraits DefineBigCellTemplateParameters(USizeMantissa)) Mantissa;
+      typedef DefineBigCellInt DefineBigCellTemplateParameters(
+            DefineCellIntegerTraits DefineBigCellTemplateParameters(USizeExponent)) Exponent;
+
+     private:
+      typedef TFloatConversion DefineMantissaAndExponentTemplateParameters(USizeMantissa, USizeExponent) thisType;
+
+      Mantissa bciMantissa;
+      int uBitsMantissa;
+      Exponent bciExponent;
+      int uBitsExponent;
+      bool fNegative;
+
+     public:
+      TFloatConversion() : bciMantissa(), uBitsMantissa(0), bciExponent(), uBitsExponent(0), fNegative(false) {}
+      TFloatConversion(const thisType& source) = default;
+
+      bool isPositive() const { return !fNegative; }
+      bool isNegative() const { return fNegative; }
+      bool isInftyExponent() const
+         { return Exponent(bciExponent).neg(uBitsExponent).hasZero(uBitsExponent); }
+      bool isZeroExponent() const { return bciExponent.hasZero(uBitsExponent); }
+      bool isZeroMantissa() const { return bciMantissa.hasZero(uBitsMantissa); }
+      const int& getSizeMantissa() const { return uBitsMantissa; }
+      const int& getSizeExponent() const { return uBitsExponent; }
+      int getMaxSizeMantissa() const { return USizeMantissa*DefineSizeofBaseTypeInBits; }
+      int getMaxSizeExponent() const { return USizeExponent*DefineSizeofBaseTypeInBits; }
+
+      thisType& setSizeMantissa(int size) { uBitsMantissa = size; return *this; }
+      thisType& setSizeExponent(int size) { uBitsExponent = size; return *this; }
+
+      void setPositive(bool isPositive) { fNegative = !isPositive; }
+      void setNegative(bool isNegative) { fNegative = isNegative; }
+      const Mantissa& mantissa() const { return bciMantissa; }
+      Mantissa& mantissa() { return bciMantissa; }
+      const Exponent& exponent() const { return bciExponent; }
+      Exponent& exponent() { return bciExponent; }
+   };
+};
+
+} // end of namespace DDouble
+
+DefineMantissaAndExponentSTemplateHeader(UBitSizeMantissa, UBitSizeExponent)
+class DefineBuiltDoubleTraits : public DDouble::DefineBuiltAccess {
+  private:
+   typedef DDouble::DefineBuiltAccess inherited;
+
+  public:
+#ifdef DefineGeneric
+   typedef TBaseStoreTraits BaseStoreTraits;
+#endif
+   static const int BitSizeMantissa = UBitSizeMantissa;
+   static const int BitSizeExponent = UBitSizeExponent;
+   typedef unsigned char CharChunk[UBitSizeMantissa+UBitSizeExponent+1];
+   void setChunkSize(int chunkSize) const { AssumeCondition(chunkSize == (UBitSizeMantissa+UBitSizeExponent+1+7)/8) }
+   void copyChunk(CharChunk& chunk, const void* sourceChunk, int chunkSize) const
+      {  AssumeCondition(chunkSize == (UBitSizeMantissa+UBitSizeExponent+1+7)/8)
+         memcpy((unsigned char*) chunk, sourceChunk, chunkSize);
+      }
+   void retrieveChunk(void* destinationChunk, const CharChunk& chunk, int chunkSize) const
+      {  AssumeCondition(chunkSize == (UBitSizeMantissa+UBitSizeExponent+1+7)/8)
+         memcpy(destinationChunk, (unsigned char*) chunk, chunkSize);
+      }
+   void clearChunk(CharChunk& chunk, int chunkSize) const
+      {  AssumeCondition(chunkSize == (UBitSizeMantissa+UBitSizeExponent+1+7)/8)
+         memset((unsigned char*) chunk, 0, chunkSize);
+      }
+
+   class ExtendedMantissa;
+   class Mantissa : public DefineBigInt DefineBigCellTemplateParameters(
+         DefineIntegerTraits DefineBigCellTemplateParameters(UBitSizeMantissa)) {
+     private:
+      typedef DefineBigInt DefineBigCellTemplateParameters(
+            DefineIntegerTraits DefineBigCellTemplateParameters(UBitSizeMantissa)) inherited;
+
+     public:
+      Mantissa() {}
+      Mantissa(const Mantissa& source) : inherited(source) {}
+      Mantissa(const ExtendedMantissa& source)
+         {  int cellSizeMantissa = inherited::lastCellIndex();
+            for (int index = 0; index < cellSizeMantissa; ++index)
+               inherited::array(index) = source[index];
+         }
+      void normalizeLastCell() { inherited::normalizeLastCell(); }
+
+      Mantissa& operator=(DefineBaseTypeConstReference value) { return (Mantissa&) inherited::operator=(value); }
+      Mantissa& operator=(const typename DefineIntegerTraits
+            DefineBigCellTemplateParameters(UBitSizeMantissa)::QuotientResult& source)
+         {  return (Mantissa&) inherited::operator=((const inherited&) source); }
+      Mantissa& operator=(const Mantissa& source)
+         {  return (Mantissa&) inherited::operator=(source); }
+      Mantissa& operator=(const ExtendedMantissa& source)
+         {  int cellSizeMantissa = inherited::lastCellIndex();
+            for (int index = 0; index <= cellSizeMantissa; ++index)
+               inherited::array(index) = source[index];
+            inherited::normalize();
+            return *this;
+         }
+
+#ifdef DefineGeneric
+      typedef typename BaseStoreTraits::BaseType BaseType;
+#endif
+   };
+   
+   class Exponent : public DefineBigInt DefineBigCellTemplateParameters(
+         DefineIntegerTraits DefineBigCellTemplateParameters(UBitSizeExponent)) {
+     private:
+      typedef DefineBigInt DefineBigCellTemplateParameters(
+            DefineIntegerTraits DefineBigCellTemplateParameters(UBitSizeExponent)) inherited;
+
+     public:
+      class Min { public : Min() {} };
+      class Zero { public : Zero() {} };
+      class One { public : One() {} };
+      class MinusOne { public : MinusOne() {} };
+      class Max { public : Max() {} };
+      class Basic { public : Basic() {} };
+      
+      Exponent() {}
+      Exponent(Basic, int exponentSize, DefineBaseTypeConstReference basicValue) : inherited(basicValue) {}
+      Exponent(Min)  {}
+      Exponent(Max)  { inherited::neg(); }
+      Exponent(Zero) { inherited::neg(); inherited::bitArray(UBitSizeExponent-1) = false; }
+      Exponent(MinusOne)
+         {  inherited::neg();
+            inherited::bitArray(UBitSizeExponent-1) = false;
+            inherited::bitArray(0) = false;
+         }
+      Exponent(One)  { inherited::bitArray(UBitSizeExponent-1) = true; }
+      Exponent(const Exponent& eSource) : inherited(eSource) {}
+
+      Exponent& operator=(const Exponent& source) = default;
+      Exponent& operator=(DefineBaseTypeConstReference source) { return (Exponent&) inherited::operator=(source); }
+      Exponent& operator-=(const Exponent& source) { return (Exponent&) inherited::operator-=(source); }
+      Exponent& operator+=(const Exponent& source) { return (Exponent&) inherited::operator+=(source); }
+      Exponent& operator--() { return (Exponent&) inherited::operator--(); }
+      Exponent& operator++() { return (Exponent&) inherited::operator++(); }
+   };
+   static int bitSizeMantissa(const Mantissa&) { return UBitSizeMantissa; }
+   static int bitSizeExponent(const Exponent&) { return UBitSizeExponent; }
+
+   static Exponent zeroExponent;
+   static Exponent oneExponent;
+   static Exponent minusOneExponent;
+   static Exponent inftyExponent;
+   
+   static const Exponent& getZeroExponent(const Exponent&) { return zeroExponent; }
+   Exponent getBasicExponent(const Exponent&, DefineBaseTypeConstReference exponent) const
+      {  return Exponent(typename Exponent::Basic(), UBitSizeExponent, exponent); }
+   static const Exponent& getOneExponent(const Exponent&) { return oneExponent; }
+   static const Exponent& getMinusOneExponent(const Exponent&) { return minusOneExponent; }
+   static const Exponent& getInftyExponent(const Exponent&) { return inftyExponent; }
+   static const Exponent& getMaxExponent(const Exponent&) { return zeroExponent; }
+
+   class ExtendedMantissa : public DefineBigInt DefineBigCellTemplateParameters(
+         DefineIntegerTraits DefineBigCellTemplateParameters(UBitSizeMantissa+1)) {
+     private:
+      typedef DefineBigInt DefineBigCellTemplateParameters(
+            DefineIntegerTraits DefineBigCellTemplateParameters(UBitSizeMantissa+1)) inherited;
+
+     public:
+      ExtendedMantissa(const ExtendedMantissa& source) = default;
+      ExtendedMantissa(const Mantissa& source)
+         {  int index = 0;
+            int cellSizeMantissa = source.lastCellIndex();
+            for (; index <= cellSizeMantissa; ++index)
+               inherited::array(index) = source[index];
+            inherited::bitArray(UBitSizeMantissa) = true;
+         }
+      typedef DefineBigInt DefineBigCellTemplateParameters(typename inherited::MultResult) EnhancedMultResult;
+      typedef DefineBigInt DefineBigCellTemplateParameters(typename inherited::RemainderResult) EnhancedRemainderResult;
+      int getMultResultCellSize(const EnhancedMultResult& result) const
+         {  return result.getCellSize(); }
+   };
+   
+   class IntConversion {
+     private:
+      DefineBaseType uResult;
+      bool fUnsigned;
+
+     public:
+      IntConversion() : uResult(0U), fUnsigned(false) {}
+      IntConversion(const IntConversion& source) = default;
+
+      IntConversion& setSigned() { fUnsigned = false; return *this; }
+      IntConversion& setUnsigned() { fUnsigned = true; return *this; }
+      IntConversion& assign(int value) { AssumeCondition(!fUnsigned) uResult = value; return *this; }
+      IntConversion& assign(unsigned int value) { AssumeCondition(fUnsigned) uResult = value; return *this; }
+
+      int getSize() const { return DefineSizeofBaseTypeInBits; }
+      int getMaxDigits() const
+         { return fUnsigned ? DefineSizeofBaseTypeInBits : (DefineSizeofBaseTypeInBits-1); }
+      bool isUnsigned() const { return fUnsigned; }
+      bool isSigned() const   { return !fUnsigned; }
+      int asInt() const { AssumeCondition(!fUnsigned) return (int) uResult; }
+      unsigned int asUnsignedInt() const { AssumeCondition(fUnsigned) return uResult; }
+      DefineBaseType& sresult() { return uResult; }
+      void opposite() { AssumeCondition(!fUnsigned) uResult = (~uResult + 1); }
+      bool isPositive() const { return fUnsigned || ((int) uResult >= 0); }
+      bool isNegative() const { return !fUnsigned && ((int) uResult < 0); }
+      bool isDifferentZero() const { return uResult != 0; }
+      int log_base_2() const
+#ifndef DefineGeneric
+         {  return DInteger::Access::log_base_2(uResult); }
+#else
+         {  return UnsignedBaseStoreTraits::log_base_2(uResult); }
+#endif
+      bool hasZero(int digits) const
+#ifndef DefineGeneric
+         {  return !(uResult & ~(~0U << digits)); }
+#else
+         {  return BaseStoreTraits::hasZeroValue(uResult, digits); }
+#endif
+      bool cbitArray(int localIndex) const
+#ifndef DefineGeneric
+         {  return uResult & (1U << localIndex); }
+#else
+         {  return BaseStoreTraits::getBit(uResult, localIndex); }
+#endif
+      IntConversion& operator>>=(int shift)
+#ifndef DefineGeneric
+         {  uResult >>= shift; return *this; }
+#else
+         {  BaseStoreTraits::rightShift(uResult, shift); return *this; }
+#endif
+      IntConversion& operator<<=(int shift)
+#ifndef DefineGeneric
+         {  uResult <<= shift; return *this; }
+#else
+         {  BaseStoreTraits::leftShift(uResult, shift); return *this; }
+#endif
+      IntConversion& operator&=(const IntConversion& source) { uResult &= source.uResult; return *this; }
+      IntConversion& neg() { uResult = ~uResult; return *this; }
+      IntConversion& inc() { ++uResult; return *this; }
+
+      IntConversion& operator=(const IntConversion& source) = default;
+      IntConversion& operator=(int value)
+         {  if (fUnsigned) {
+               AssumeCondition(value >= 0)
+               uResult = (unsigned int) value;
+            }
+            else
+               uResult = (unsigned int) value;
+            return *this;
+         }
+
+      class BitArray {
+        private:
+         unsigned int* puResult;
+         int uIndex;
+
+        public:
+         BitArray(IntConversion& thisConversion, int index)
+            : puResult(&thisConversion.uResult), uIndex(index) {}
+         BitArray(const BitArray& source) = default;
+         BitArray& operator=(const BitArray& source) = default;
+         BitArray& operator=(bool value)
+            {  if (value)
+#ifndef DefineGeneric
+                  *puResult |= (1U << (uIndex%DefineSizeofBaseTypeInBits));
+#else
+                  BaseStoreTraits::setTrueBit(*puResult, uIndex%DefineSizeofBaseTypeInBits);
+#endif
+               else
+#ifndef DefineGeneric
+                  *puResult &= ~(1U << (uIndex%DefineSizeofBaseTypeInBits));
+#else
+                  BaseStoreTraits::setFalseBit(*puResult, uIndex%DefineSizeofBaseTypeInBits);
+#endif
+               return *this;
+            }
+         operator bool() const
+#ifndef DefineGeneric
+            {  return (*puResult & (1U << (uIndex%(sizeof(unsigned int)*8))))
+                  ? true : false;
+            }
+#else
+            {  return BaseStoreTraits::getBit(*puResult, uIndex%BaseStoreTraits::sizeBaseInBits()); }
+#endif
+      };
+      friend class BitArray;
+
+      BitArray bitArray(int index) {  return BitArray(*this, index); }
+      void setBitArray(int index, bool value)
+         {  if (value)
+#ifndef DefineGeneric
+               uResult |= (1U << (index%DefineSizeofBaseTypeInBits));
+#else
+               BaseStoreTraits::setTrueBit(uResult, index%DefineSizeofBaseTypeInBits);
+#endif
+            else
+#ifndef DefineGeneric
+               uResult &= ~(1U << (index%DefineSizeofBaseTypeInBits));
+#else
+               BaseStoreTraits::setFalseBit(uResult, index%DefineSizeofBaseTypeInBits);
+#endif
+         }
+      void setTrueBitArray(int index)
+#ifndef DefineGeneric
+         {  uResult |= (1U << (index%DefineSizeofBaseTypeInBits)); }
+#else
+         {  BaseStoreTraits::setTrueBit(uResult, index%DefineSizeofBaseTypeInBits); }
+#endif
+      void setFalseBitArray(int index)
+#ifndef DefineGeneric
+         {  uResult &= ~(1U << (index%DefineSizeofBaseTypeInBits)); }
+#else
+         {  BaseStoreTraits::setFalseBit(uResult, index%DefineSizeofBaseTypeInBits); }
+#endif
+
+      void setMin()
+#ifndef DefineGeneric
+         {  uResult = fUnsigned ? 0U : (1U << (DefineSizeofBaseTypeInBits-1)); }
+#else
+         {  uResult = (DefineBaseType) 0x0;
+            if (!fUnsigned)
+               BaseStoreTraits::setTrueBit(uResult, DefineSizeofBaseTypeInBits-1);
+         }
+#endif
+      void setMax()
+#ifndef DefineGeneric
+         {  uResult = fUnsigned ? ~0U : ~(1U << (DefineSizeofBaseTypeInBits-1)); }
+#else
+         {  uResult = (DefineBaseType) 0x0;
+            uResult = ~uResult;
+            if (!fUnsigned)
+               BaseStoreTraits::setFalseBit(uResult, DefineSizeofBaseTypeInBits-1);
+         }
+#endif
+      DefineBaseType& operator[](int index) { AssumeCondition(index == 0) return uResult; }
+      const DefineBaseType& operator[](int index) const { AssumeCondition(index == 0) return uResult; }
+   };
+
+   // to be redefined for floating point with more
+   // than 2*BaseStoreTraits::sizeBaseInBits() on the mantissa.
+   typedef typename inherited::TFloatConversion
+         DefineMantissaAndExponentTemplateParameters(2, 1) FloatConversion;
+
+   typedef DefineBigInt DefineBigCellTemplateParameters(
+         DefineIntegerTraits DefineBigCellTemplateParameters(UBitSizeMantissa+UBitSizeExponent+1))
+      DiffDouble;
+   typedef DefineBuiltDoubleTraits DefineMantissaAndExponentTemplateParameters
+         (2*UBitSizeMantissa+1, UBitSizeExponent+1) MultExtension;
+   typedef DDouble::Access::ReadParameters ReadParameters;
+   typedef DDouble::Access::WriteParameters WriteParameters;
+};
+
+template <class TypeTraits>
+class DefineBuiltDouble : protected DDouble::Access, protected TypeTraits {
+  private:
+   typedef DefineBuiltDouble<TypeTraits> thisType;
+
+  public:
+   typedef thisType BuiltDouble;
+#ifdef DefineGeneric
+   typedef typename TypeTraits::BaseStoreTraits BaseStoreTraits;
+#endif
+   typedef typename TypeTraits::ReadParameters ReadParameters;
+   typedef typename TypeTraits::WriteParameters WriteParameters;
+   class MultParameters {
+     private:
+      enum Operation { OPlusPlus=0, OPlusMinus=1, OMinusPlus=2, OMinusMinus=3 };
+      ReadParameters& rpParams;
+      const thisType* pbdAdd;
+      Operation oOperation;
+
+     public:
+      MultParameters(ReadParameters& params)
+         :  rpParams(params), pbdAdd(nullptr), oOperation(OPlusPlus) {}
+      MultParameters(const MultParameters& source) = default;
+
+      MultParameters& setAdd(const thisType& add) { pbdAdd = &add; return *this; }
+      void clear() { pbdAdd = nullptr; oOperation = OPlusPlus; }
+      MultParameters& setPositiveMult()
+         { oOperation = (Operation) ((int) oOperation & (int) OPlusMinus); return *this; }
+      MultParameters& setNegativeMult()
+         {  oOperation = (Operation) ((int) oOperation | (int) OMinusPlus); return *this; }
+      MultParameters& setPositiveAdditive()
+         {  oOperation = (Operation) ((int) oOperation & (int) OMinusPlus); return *this; }
+      MultParameters& setNegativeAdditive()
+         { oOperation = (Operation) ((int) oOperation | (int) OPlusMinus); return *this; }
+      bool hasAdd() const { return pbdAdd != nullptr; }
+      ReadParameters& readParams() const { return rpParams; }
+      const thisType& getAddSource() const { AssumeCondition(pbdAdd) return *pbdAdd; }
+      bool isPositiveAdditive() const { return !(oOperation & OPlusMinus); }
+      bool isNegativeAdditive() const { return (oOperation & OPlusMinus); }
+      bool isPositiveMult() const { return !(oOperation & OMinusPlus); }
+      bool isNegativeMult() const { return (oOperation & OMinusPlus); }
+      bool hasSameSign(bool isNegative) const
+         {  AssumeCondition(pbdAdd)
+            bool result = pbdAdd->fNegative == isNegative;
+            return ((oOperation == OPlusPlus) || (oOperation == OMinusMinus)) ? result : !result;
+         }
+   };
+   friend class MultParameters;
+   
+  public:
+   int bitSizeMantissa() const { return TypeTraits::bitSizeMantissa(biMantissa); }
+   int bitSizeExponent() const { return TypeTraits::bitSizeExponent(biExponent); }
+
+  private:
+   typename TypeTraits::Mantissa biMantissa;
+   typename TypeTraits::Exponent biExponent;
+   bool fNegative;
+
+   void addExtension(const thisType& source,
+         typename TypeTraits::ExtendedMantissa::EnhancedMultResult& result,
+         ReadParameters& params, bool isPositiveAdd, int& logResult,
+         bool& isExponentHasCarry, bool& isResultPositiveExponent, bool& doesAddExponent);
+
+  public:
+   thisType& plusAssignSureNN(const thisType& source, ReadParameters& params);
+   thisType& plusAssignSureND(const thisType& source, ReadParameters& params);
+   thisType& plusAssignSureDN(const thisType& source, ReadParameters& params);
+   thisType& plusAssignSureDD(const thisType& source, ReadParameters& params);
+   thisType& minusAssignSureNN(const thisType& source, ReadParameters& params);
+   thisType& minusAssignSureND(const thisType& source, ReadParameters& params);
+   thisType& minusAssignSureDD(const thisType& source, ReadParameters& params);
+   thisType& multAssignNN(const thisType& source, const MultParameters& params);
+   thisType& multAssignND(const thisType& source, const MultParameters& params);
+   thisType& multAssignDN(const thisType& source, const MultParameters& params);
+   thisType& multAssignDD(const thisType& source, const MultParameters& params);
+   thisType& divAssignNN(const thisType& source, ReadParameters& params);
+   thisType& divAssignND(const thisType& source, ReadParameters& params);
+   thisType& divAssignDN(const thisType& source, ReadParameters& params);
+   thisType& divAssignDD(const thisType& source, ReadParameters& params);
+
+  public:
+   DefineBuiltDouble() : biMantissa(), biExponent(), fNegative(false) {}
+   DefineBuiltDouble(DefineBaseTypeConstReference value, const thisType* sourceForSizes=nullptr);
+   typedef typename TypeTraits::IntConversion IntConversion;
+   typedef typename TypeTraits::FloatConversion FloatConversion;
+   DefineBuiltDouble(const IntConversion& value, ReadParameters& params)
+      :  biMantissa(), biExponent(), fNegative(false)
+      {  setInteger(value, params); }
+   DefineBuiltDouble(const FloatConversion& value, ReadParameters& params)
+      :  biMantissa(), biExponent(), fNegative(false)
+      {  setFloat(value, params); }
+   DefineBuiltDouble(const thisType& source) = default;
+   thisType& operator=(const thisType& source) = default;
+
+   void setChunk(const void* chunk) { setChunk(chunk, !DDouble::Access::isBigEndian()); }
+   void fillChunk(void* chunk) const { fillChunk(chunk, !DDouble::Access::isBigEndian()); }
+   void setChunk(const void* chunk, bool isLittleEndian); // size(chunk) = UByteSizeImplementation
+   void fillChunk(void* chunk, bool isLittleEndian) const;
+
+   void setFloat(const FloatConversion& value, ReadParameters& params);
+   void setInteger(const IntConversion& value, ReadParameters& params);
+   void retrieveInteger(IntConversion& result, ReadParameters& params) const;
+   ComparisonResult compare(const thisType& source) const
+      {  ComparisonResult result = CRNonComparable;
+         if (!isNaN() && !source.isNaN()) {
+            if (fNegative != source.fNegative)
+               result = fNegative ? CRLess : CRGreater;
+            else {
+               result = biExponent.compare(source.biExponent);
+               AssumeCondition(result != CRNonComparable)
+               if (result == CREqual)
+                  result = biMantissa.compare(source.biMantissa);
+               if (fNegative)
+                  result = (ComparisonResult) (-result);
+            };
+         };
+         return result;
+      }
+   ComparisonResult compareValue(const thisType& source) const
+      {  ComparisonResult result;
+         if (fNegative != source.fNegative) {
+            if (!isZero() || !source.isZero())
+               result = fNegative ? CRLess : CRGreater;
+            else
+               result = CREqual;
+         }
+         else {
+            result = biExponent.compare(source.biExponent);
+            AssumeCondition(result != CRNonComparable)
+            if (result == CREqual)
+               result = biMantissa.compare(source.biMantissa);
+            if (fNegative)
+               result = (ComparisonResult) (-result);
+         };
+         return result;
+      }
+   bool operator==(const thisType& source) const { return compare(source) == CREqual; }
+   bool operator!=(const thisType& source) const
+      {  ComparisonResult result = compare(source);
+         return (result == CRLess) || (result == CRGreater);
+      }
+   bool operator<(const thisType& source) const { return compare(source) == CRLess; }
+   bool operator>(const thisType& source) const { return compare(source) == CRGreater; }
+   bool operator<=(const thisType& source) const
+      {  ComparisonResult result = compare(source);
+         return (result == CRLess) || (result == CREqual);
+      }
+   bool operator>=(const thisType& source) const
+      {  ComparisonResult result = compare(source);
+         return (result == CRGreater) || (result == CREqual);
+      }
+   bool isEqualValue(const thisType& source) const { return compareValue(source) == CREqual; }
+   bool isDifferentValue(const thisType& source) const
+      {  ComparisonResult result = compareValue(source);
+         return (result == CRLess) || (result == CRGreater);
+      }
+   bool isLessValue(const thisType& source) const { return compareValue(source) == CRLess; }
+   bool isGreaterValue(const thisType& source) const { return compareValue(source) == CRGreater; }
+   bool isLessOrEqualValue(const thisType& source) const
+      {  ComparisonResult result = compareValue(source);
+         return (result == CRLess) || (result == CREqual);
+      }
+   bool isGreaterOrEqualValue(const thisType& source) const
+      {  ComparisonResult result = compareValue(source);
+         return (result == CRGreater) || (result == CREqual);
+      }
+   
+
+   typename TypeTraits::Exponent getZeroExponent() const { return TypeTraits::getZeroExponent(biExponent); }
+   typename TypeTraits::Exponent getBasicExponent(unsigned int exponent) const
+      {  return TypeTraits::getBasicExponent(biExponent, exponent); }
+   typename TypeTraits::Exponent getOneExponent() const { return TypeTraits::getOneExponent(biExponent); }
+   typename TypeTraits::Exponent getMinusOneExponent() const { return TypeTraits::getMinusOneExponent(biExponent); }
+   typename TypeTraits::Exponent getInftyExponent() const { return TypeTraits::getInftyExponent(biExponent); }
+   typename TypeTraits::Exponent getMaxExponent() const { return TypeTraits::getMaxExponent(biExponent); }
+
+   const typename TypeTraits::Exponent& getBasicExponent() const { return biExponent; }
+   typename TypeTraits::Exponent& getSBasicExponent() { return biExponent; }
+   bool hasPositiveExponent() const { return biExponent > TypeTraits::getZeroExponent(biExponent); }
+   bool hasPositiveOrNullExponent() const { return biExponent >= TypeTraits::getZeroExponent(biExponent); }
+   bool hasNullExponent() const { return biExponent == TypeTraits::getZeroExponent(biExponent); }
+   bool hasNegativeExponent() const { return biExponent < TypeTraits::getZeroExponent(biExponent); }
+   bool hasNegativeOrNullExponent() const { return biExponent <= TypeTraits::getZeroExponent(biExponent); }
+   
+   typename TypeTraits::Exponent queryExponent() const
+      {  typename TypeTraits::Exponent result = TypeTraits::getZeroExponent(biExponent);
+         if (biExponent >= result) {
+            result = biExponent;
+            result -= TypeTraits::getZeroExponent(biExponent);
+         }
+         else
+            result -= biExponent;
+         return result;
+      }
+   void setBasicExponent(const typename TypeTraits::Exponent& exponent) { biExponent = exponent; }
+   void setInfty() { fNegative = false; biExponent = TypeTraits::getInftyExponent(biExponent); biMantissa.clear(); }
+   void setPlusInfty() { fNegative = false; biExponent = TypeTraits::getInftyExponent(biExponent); biMantissa.clear(); }
+   void setMinusInfty() { fNegative = true; biExponent = TypeTraits::getInftyExponent(biExponent); biMantissa.clear(); }
+   void setZero() { fNegative = false; biExponent.clear(); biMantissa.clear(); }
+   void setOne() { fNegative = false; biExponent = TypeTraits::getZeroExponent(biExponent); biMantissa.clear(); }
+   void setExponent(const typename TypeTraits::Exponent& exponent, bool isNegative = false)
+      {  if (!isNegative) {
+            biExponent = exponent;
+            biExponent += TypeTraits::getZeroExponent(biExponent);
+         }
+         else {
+            biExponent = TypeTraits::getZeroExponent(biExponent);
+            biExponent -= exponent;
+         };
+      }
+   bool isPositive() const {  return !fNegative; }
+   bool isNegative() const {  return fNegative; }
+   void setSign(bool isPositive) {  fNegative = !isPositive; }
+   thisType& opposite() { fNegative = !fNegative; return *this; }
+   void setPositive() { fNegative = false; }
+   void setNegative(bool isNegative=true) { fNegative = isNegative; }
+
+   bool isInfty() const
+      {  return (biExponent == TypeTraits::getInftyExponent(biExponent)) && biMantissa.isZero(); }
+   bool isInftyExponent() const
+      {  return (biExponent == TypeTraits::getInftyExponent(biExponent)); }
+   bool isNaN() const
+      {  return (biExponent == TypeTraits::getInftyExponent(biExponent)) && !biMantissa.isZero(); }
+   bool isSNaN() const
+      {  return (biExponent == TypeTraits::getInftyExponent(biExponent)) && !biMantissa.isZero()
+            && !biMantissa.cbitArray(bitSizeMantissa()-1);
+      }
+   bool isQNaN() const
+      {  return (biExponent == TypeTraits::getInftyExponent(biExponent))
+            && biMantissa.cbitArray(bitSizeMantissa()-1);
+      }
+   bool isNormalized() const
+      {  return (!biExponent.isZero()) && (biExponent != TypeTraits::getInftyExponent(biExponent)); }
+   bool isDenormalized() const { return biExponent.isZero() && !biMantissa.isZero(); }
+   bool isZero() const { return biExponent.isZero() && biMantissa.isZero(); }
+
+   void setToEpsilon()
+      {  if (biExponent > bitSizeMantissa()) {
+            Exponent subValue(biExponent);
+            subValue.clear();
+            subValue[0] = bitSizeMantissa();
+            biExponent.sub(subValue);
+            biMantissa.clear();
+         }
+         else if (biExponent.isZero())
+            biMantissa = 0x1;
+         else {
+            biMantissa.clear();
+            biMantissa.bitArray(biExponent.getValue()-1) = true;
+            biExponent.clear();
+         };
+      }
+   thisType queryEpsilon() const
+      {  thisType result = *this;
+         result.setToEpsilon();
+         return result;
+      }
+
+   typedef typename TypeTraits::Exponent Exponent;
+   typedef typename TypeTraits::Mantissa Mantissa;
+   const Mantissa& getMantissa() const { return biMantissa; }
+   Mantissa& getSMantissa() { return biMantissa; }
+
+   typedef typename TypeTraits::DiffDouble DiffDouble;
+   DiffDouble queryNumberOfFloatsBetween(const thisType& source) const;
+
+   thisType queryNthSuccessor(const DiffDouble& intSource) const;
+   bool setToNext();
+   thisType queryNthPredecessor(const DiffDouble& intSource) const;
+   bool setToPrevious();
+
+   thisType& plusAssignDouble(const thisType& source, ReadParameters& params);
+   thisType& plusAssign(const thisType& source, ReadParameters& params) { return plusAssignDouble(source, params); }
+   thisType& minusAssignDouble(const thisType& source, ReadParameters& params);
+   thisType& minusAssign(const thisType& source, ReadParameters& params) { return minusAssignDouble(source, params); }
+   thisType& multAssign(DefineBaseTypeConstReference value, ReadParameters& params);
+   thisType& multAssignDouble(const thisType& source, ReadParameters& params);
+   thisType& multAndAddAssign(const thisType& mult, const thisType& add, ReadParameters& params)
+      {  return multAssign(mult, MultParameters(params).setAdd(add)); }
+   thisType& multAndSubAssign(const thisType& mult, const thisType& add, ReadParameters& params)
+      {  return multAssign(mult, MultParameters(params).setAdd(add).setNegativeAdditive()); }
+   thisType& multNegativeAndAddAssign(const thisType& mult, const thisType& add, ReadParameters& params)
+      {  return multAssign(mult, MultParameters(params).setAdd(add).setNegativeMult()); }
+   thisType& multNegativeAndSubAssign(const thisType& mult, const thisType& add, ReadParameters& params)
+      {  return multAssign(mult, MultParameters(params).setAdd(add).setNegativeMult().setNegativeAdditive()); }
+   thisType& multAssign(const thisType& source, const MultParameters& params);
+   thisType& divAssign(DefineBaseTypeConstReference value, ReadParameters& params);
+   thisType& divAssignDouble(const thisType& source, ReadParameters& params);
+   thisType& divAssign(const thisType& source, ReadParameters& params) { return divAssignDouble(source, params); }
+
+   thisType& operator+=(const thisType& source)
+      {  return plusAssign(source, ReadParameters().setNearestRound()); }
+   thisType operator+(const thisType& source) const
+      {  thisType thisCopy = *this;
+         thisCopy.plusAssign(source, ReadParameters().setNearestRound());
+         return thisCopy;
+      }
+   thisType& operator-=(const thisType& source)
+      {  return minusAssign(source, ReadParameters().setNearestRound()); }
+   thisType operator-(const thisType& source) const
+      {  thisType thisCopy = *this;
+         thisCopy.minusAssign(source, ReadParameters().setNearestRound());
+         return thisCopy;
+      }
+   thisType& operator*=(const thisType& source)
+      {  return multAssign(source, ReadParameters().setNearestRound()); }
+   thisType operator*(const thisType& source) const
+      {  thisType thisCopy = *this;
+         thisCopy.multAssign(source, ReadParameters().setNearestRound());
+         return thisCopy;
+      }
+   thisType& operator/=(const thisType& source)
+      {  return divAssign(source, ReadParameters().setNearestRound()); }
+   thisType operator/(const thisType& source) const
+      {  thisType thisCopy = *this;
+         thisCopy.divAssign(source, ReadParameters().setNearestRound());
+         return thisCopy;
+      }
+   void read(STG::IOObject::ISBase& in, ReadParameters& params);
+   void readDecimal(STG::IOObject::ISBase& in, ReadParameters& params);
+   void write(STG::IOObject::OSBase& out, const WriteParameters& params) const;
+   void writeDecimal(STG::IOObject::OSBase& out) const;
+
+   void clear()
+      {  biMantissa.clear();
+         biExponent.clear();
+         fNegative = false;
+      }
+   void swap(thisType& source)
+      {  biMantissa.swap(source.biMantissa);
+         biExponent.swap(source.biExponent);
+         bool temp = fNegative;
+         fNegative = source.fNegative;
+         source.fNegative = temp;
+      }
+
+   thisType& sqrtAssign(); // u_{n+1} = (u_n + this/u_n)/2
+   thisType& squareAssign(ReadParameters& params) { return multAssign(*this, params); }
+   thisType& inverseAssign(ReadParameters& params)
+      {  thisType result;
+         result.biExponent = Exponent(typename Exponent::Zero());
+         result.divAssign(*this, params);
+         return operator=(result);
+      }
+   thisType& nthRootAssign(int n); // u_{p+1} = 1/n*[(n-1)*u_p + this/(u_p)^(n-1)]
+   thisType& nthExponentAssign(int n);
+};
+
+template <class TypeDouble, class TypeDouble_n>
+class DefineReadDouble : public TypeDouble {
+#ifdef DefineGeneric
+  public:
+   typedef typename TypeDouble::BaseStoreTraits BaseStoreTraits;
+#endif
+
+  private:
+   typedef DefineReadDouble<TypeDouble, TypeDouble_n> thisType;
+   typedef TypeDouble inherited;
+
+  public:
+   class EnhancedDouble : public TypeDouble_n {
+     private:
+      typedef TypeDouble_n inherited;
+
+     public:
+      EnhancedDouble() {}
+      EnhancedDouble(const inherited& source) : inherited(source) {}
+      EnhancedDouble(inherited&& source) : inherited(source) {}
+      EnhancedDouble(const TypeDouble& source)
+         {  for (int index = 0; index <= source.getMantissa().lastCellIndex(); ++index)
+               inherited::getSMantissa()[index] = source.getMantissa()[index];
+            inherited::getSMantissa() <<= (inherited::bitSizeMantissa() - source.bitSizeMantissa());
+            for (int index = 0; index <= source.getBasicExponent().lastCellIndex(); ++index)
+               inherited::getSBasicExponent()[index] = source.getBasicExponent()[index];
+            inherited::setSign(source.isPositive());
+         }
+      EnhancedDouble& operator=(const inherited& source) { return (EnhancedDouble&) inherited::operator=(source); }
+      EnhancedDouble& operator=(inherited&& source) { return (EnhancedDouble&) inherited::operator=(source); }
+      EnhancedDouble& operator=(const TypeDouble& source)
+         {  for (int index = 0; index <= source.getMantissa().lastCellIndex(); ++index)
+               inherited::getSMantissa()[index] = source.getMantissa()[index];
+            inherited::getSMantissa() <<= (inherited::bitSizeMantissa() - source.bitSizeMantissa());
+            for (int index = 0; index <= source.getBasicExponent().lastCellIndex(); ++index)
+               inherited::getSBasicExponent()[index] = source.getBasicExponent()[index];
+            inherited::setSign(source.isPositive());
+            return *this;
+         }
+      EnhancedDouble& operator=(const EnhancedDouble& source) = default;
+
+      void retrieveDouble(TypeDouble& source, typename TypeDouble::ReadParameters& params) const
+         {  int bits = inherited::bitSizeMantissa() - source.bitSizeMantissa();
+            typename inherited::Mantissa mantissa(inherited::getMantissa());
+            typename inherited::Exponent exponent(inherited::getBasicExponent());
+            if (bits < (int) DefineSizeofBaseTypeInBits) {
+#ifndef DefineGeneric
+               DefineBaseType left = mantissa[0] & ~(~0U << bits);
+               if (left != 0)
+#else
+               DefineBaseType left = BaseStoreTraits::getLowPart(mantissa[0], bits);
+               if (!BaseStoreTraits::isZeroValue(left))
+#endif
+               {  bool doesAdd = false;
+                  if (params.isNearestRound()) {
+#ifndef DefineGeneric
+                     DefineBaseType limit = 1U << (bits-1);
+#else
+                     DefineBaseType limit = 0x1;
+                     BaseStoreTraits::leftShift(limit, bits-1);
+#endif
+                     if (params.isDownApproximate())
+                        doesAdd = (left >= limit);
+                     else if (!params.isApproximate())
+                        doesAdd = (!params.isRoundToEven() || mantissa.cbitArray(bits))
+                             ? (left >= limit) : (left > limit);
+                     else
+                        doesAdd = left > limit;
+                  }
+                  else if (params.isHighestRound())
+                     doesAdd = inherited::isPositive();
+                  else if (params.isLowestRound())
+                     doesAdd = !inherited::isPositive();
+   
+                  mantissa >>= bits;
+                  if (doesAdd) {
+                     mantissa.inc();
+                     if (mantissa.cbitArray(inherited::bitSizeMantissa()-bits))
+                        exponent.inc();
+                  };
+                  if (inherited::isPositive())
+                     params.setApproximate(doesAdd ? TypeDouble::ReadParameters::Up : TypeDouble::ReadParameters::Down);
+                  else
+                     params.setApproximate(doesAdd ? TypeDouble::ReadParameters::Down : TypeDouble::ReadParameters::Up);
+               }
+               else
+                  mantissa >>= bits;
+            }
+            else {
+               typename inherited::Mantissa left;
+               left.neg(bits);
+               left &= mantissa;
+               if (!left.isZero()) {
+                  bool doesAdd = false;
+                  if (params.isNearestRound()) {
+                     if (params.isDownApproximate())
+                        doesAdd = left.cbitArray(bits-1);
+                     else if (!params.isApproximate()) {
+                        doesAdd = left.cbitArray(bits-1);
+                        if (doesAdd && params.isRoundToEven() && !mantissa.cbitArray(bits))
+                           doesAdd = !left.hasZero(bits-1);
+                     }
+                     else
+                        doesAdd = left.cbitArray(bits-1) && !left.hasZero(bits-1);
+                  }
+                  else if (params.isHighestRound())
+                     doesAdd = inherited::isPositive();
+                  else if (params.isLowestRound())
+                     doesAdd = !inherited::isPositive();
+   
+                  mantissa >>= bits;
+                  if (doesAdd) {
+                     mantissa.inc();
+                     if (mantissa.cbitArray(inherited::bitSizeMantissa()-bits))
+                        exponent.inc();
+                  };
+                  if (inherited::isPositive())
+                     params.setApproximate(doesAdd ? TypeDouble::ReadParameters::Up : TypeDouble::ReadParameters::Down);
+                  else
+                     params.setApproximate(doesAdd ? TypeDouble::ReadParameters::Down : TypeDouble::ReadParameters::Up);
+               }
+               else
+                  mantissa >>= bits;
+            };
+
+            int lastCellIndex = source.getMantissa().lastCellIndex();
+            for (int index = 0; index <= lastCellIndex; ++index)
+               source.getSMantissa()[index] = (DefineBaseType) mantissa[index];
+            source.getSMantissa().normalize();
+            lastCellIndex = source.getBasicExponent().lastCellIndex();
+            for (int index = 0; index <= lastCellIndex; ++index)
+               source.getSBasicExponent()[index] = (DefineBaseType) exponent[index];
+            source.getSBasicExponent().normalize();
+            source.setSign((params.acceptMinusZero() || !source.isZero())
+                  ? inherited::isPositive() : true);
+         }
+   };
+
+  public:
+   DefineReadDouble() {}
+   DefineReadDouble(DefineBaseTypeConstReference value) : inherited(value) {}
+
+   typedef typename inherited::ReadParameters ReadParameters;
+   DefineReadDouble(const typename inherited::IntConversion& value, ReadParameters& params)
+      :  inherited(value, params) {}
+   DefineReadDouble(const typename inherited::FloatConversion& value, ReadParameters& params)
+      :  inherited(value, params) {}
+   DefineReadDouble(const typename inherited::BuiltDouble& source) : inherited(source) {}
+
+   void read(STG::IOObject::ISBase& in, ReadParameters& params);
+   void write(STG::IOObject::OSBase& out, const typename inherited::WriteParameters& params) const;
+
+   thisType& nthRootAssign(int n, ReadParameters& params);
+   thisType& nthExponentAssign(int n, ReadParameters& params);
+};
+
+#undef DefineTypeMantissaAndReadTemplateHeader
+#undef DefineBaseType
+#undef DefineBaseTypeConstReference
+#undef DefineBuiltAccess
+#undef DefineMantissaAndExponentTemplateHeader
+#undef DefineMantissaAndExponentSTemplateHeader
+#undef DefineMantissaAndExponentTemplateParameters
+#undef DefineBigCellInt
+#undef DefineBigInt
+#undef DefineCellIntegerTraits
+#undef DefineIntegerTraits
+#undef DefineBigCellTemplateParameters
+#undef DefineSizeofBaseTypeInBits
+#undef DefineBuiltDoubleTraits
+#undef DefineBuiltDouble
+#undef DefineReadDouble
+

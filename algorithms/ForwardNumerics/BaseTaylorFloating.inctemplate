@@ -1,0 +1,798 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2015-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : ForwardNumerics
+// Unit      : Floating
+// File      : BaseTaylorFloating.inctemplate
+// Description :
+//   Implementation of a class of floating points with mathematic functions
+//   defined by Taylor approximations
+//
+
+#ifndef DefineGeneric
+
+#define DefineTaylorDouble TTaylorDouble
+#define DefineBaseTypeConstReference                       \
+   unsigned int
+#define DefineBaseStoreTraits 
+#define DefineBaseType                                     \
+   unsigned int
+#define DefineSizeofBaseTypeInBits                         \
+   (sizeof(unsigned int)*8)
+
+#else
+
+#define DefineTaylorDouble TGTaylorDouble
+#define DefineBaseTypeConstReference                       \
+   typename inherited::BuiltDouble::BaseStoreTraits::BaseTypeConstReference
+#define DefineBaseStoreTraits                              \
+   typedef typename inherited::BuiltDouble::BaseStoreTraits BaseStoreTraits;
+#define DefineBaseType                                     \
+   typename BaseStoreTraits::BaseType
+#define DefineSizeofBaseTypeInBits                         \
+   BaseStoreTraits::sizeBaseInBits()
+
+#endif
+
+template <class TypeDouble, class TypeDouble_n, class TypeBigInteger>
+DefineTaylorDouble<TypeDouble, TypeDouble_n, TypeBigInteger>::EnhancedDouble::EnhancedDouble(
+      const TypeBigInteger& integer, typename TypeDouble::ReadParameters& params, bool isNegative) {
+   if (!integer.isZero()) {
+      int logBase2 = integer.log_base_2();
+      TypeBigInteger mantissa(integer);
+      if (logBase2 <= inherited::bitSizeMantissa()) {
+         mantissa <<= (inherited::bitSizeMantissa()+1-logBase2);
+         mantissa.setBitSize(inherited::bitSizeMantissa());
+      }
+      else if (logBase2 == inherited::bitSizeMantissa()+1)
+         mantissa.clear(inherited::bitSizeMantissa());
+      else if (logBase2 > inherited::bitSizeMantissa()+1) {
+         // see trightShift
+         int shift = logBase2 - (inherited::bitSizeMantissa()+1);
+         bool doesAdd = false;
+         bool isRoundToEven = false;
+         bool isApproximate = false;
+         if (!mantissa.hasZero(shift)) {
+            if (params.isNearestRound()) {
+               if (!params.isApproximate(isNegative ? TypeDouble::ReadParameters::Down : TypeDouble::ReadParameters::Up)
+                     || !mantissa.hasZero(shift-1))
+                  doesAdd = mantissa.cbitArray(shift-1);
+               if (doesAdd && !params.isApproximate() && params.isRoundToEven()) {
+                  isRoundToEven = mantissa.hasZero(shift-1) && !params.isApproximate();
+                  if (isRoundToEven)
+                     params.setEffectiveRoundToEven();
+               };
+            }
+            else if (params.isHighestRound())
+               doesAdd = !isNegative;
+            else if (params.isLowestRound())
+               doesAdd = isNegative;
+            isApproximate = true;
+         };
+         mantissa >>= shift;
+         if (doesAdd && ((doesAdd = (!isRoundToEven || mantissa.cbitArray(0))) != false)) {
+            mantissa.inc();
+            if (mantissa.cbitArray(inherited::bitSizeMantissa()+1)) {
+               ++logBase2;
+               mantissa.setFalseBitArray(inherited::bitSizeMantissa()+1);
+            };
+         };
+         if (isApproximate) {
+            if (isNegative)
+               params.setApproximate(doesAdd ? TypeDouble::ReadParameters::Down : TypeDouble::ReadParameters::Up);
+            else
+               params.setApproximate(doesAdd ? TypeDouble::ReadParameters::Up : TypeDouble::ReadParameters::Down);
+         };
+         mantissa.clear(inherited::bitSizeMantissa());
+      };
+#ifdef DefineGeneric
+      DefineBaseStoreTraits
+      if (DefineSizeofBaseTypeInBits == TypeBigInteger::BaseStoreTraits::sizeBaseInBits())
+#endif
+      {  for (int index = 0; index <= inherited::getMantissa().lastCellIndex(); ++index)
+            inherited::getSMantissa()[index] = mantissa[index];
+      }
+#ifdef DefineGeneric
+      else {
+         int firstBit = 0, firstSourceBit = 0, index = 0, sourceIndex = 0;
+         while (index <= inherited::getMantissa().lastCellIndex()) {
+            int copiedBitsNumber = inherited::BuiltDouble::BaseStoreTraits::sizeBaseInBits()-firstBit;
+            int temp = TypeBigInteger::BaseStoreTraits::sizeBaseInBits()-firstSourceBit;
+            if (copiedBitsNumber > temp)
+               copiedBitsNumber = temp;
+            inherited::BuiltDouble::BaseStoreTraits::storeIntoHighPart(
+               (typename inherited::BuiltDouble::BaseStoreTraits::BaseType) TypeBigInteger
+                  ::BaseStoreTraits::getHighPart(mantissa[sourceIndex], firstSourceBit),
+               firstBit, inherited::getSMantissa()[index]);
+            firstSourceBit += copiedBitsNumber;
+            firstBit += copiedBitsNumber;
+            if (firstSourceBit == TypeBigInteger::BaseStoreTraits::sizeBaseInBits()) {
+               firstSourceBit -= TypeBigInteger::BaseStoreTraits::sizeBaseInBits();
+               ++sourceIndex;
+            }
+            if (firstBit >= inherited::BuiltDouble::BaseStoreTraits::sizeBaseInBits()) {
+               firstBit -= inherited::BuiltDouble::BaseStoreTraits::sizeBaseInBits();
+               ++index;
+            }
+            AssumeCondition(firstSourceBit < TypeBigInteger::BaseStoreTraits::sizeBaseInBits()
+                  && firstBit < inherited::BuiltDouble::BaseStoreTraits::sizeBaseInBits())
+         };
+      }
+#endif
+      inherited::getSBasicExponent() = inherited::getZeroExponent();
+      inherited::getSBasicExponent().plusAssign(logBase2-1);
+   }
+   inherited::setNegative(isNegative);
+}
+
+
+template <class TypeDouble, class TypeDouble_n, class TypeBigInteger>
+void
+DefineTaylorDouble<TypeDouble, TypeDouble_n, TypeBigInteger>::EnhancedDouble::retrieveDouble(
+      TypeDouble& source, typename TypeDouble::ReadParameters& params,
+      EnhancedDouble* minError, EnhancedDouble* maxError) const {
+   int bits = inherited::bitSizeMantissa() - source.bitSizeMantissa();
+   typename inherited::Mantissa mantissa(inherited::getMantissa());
+   typename inherited::Exponent exponent(inherited::getBasicExponent());
+   EnhancedDouble localMinError, localMaxError;
+   DefineBaseStoreTraits
+   if (bits < (int) DefineSizeofBaseTypeInBits) {
+#ifdef DefineGeneric
+      DefineBaseType left = mantissa[0];
+      BaseStoreTraits::clearHighValuePart(left, bits);
+      if (!BaseStoreTraits::isZeroValue(left))
+#else
+      DefineBaseType left = mantissa[0] & ~(~0U << bits);
+      if (left != 0)
+#endif
+      {  bool doesAdd = false;
+         if (params.isNearestRound()) {
+#ifdef DefineGeneric
+            DefineBaseType limit = BaseStoreTraits::getStoreHighPart(0x1, (bits-1), 0);
+#else
+            DefineBaseType limit = (1U << (bits-1));
+#endif
+            if (params.isDownApproximate())
+               doesAdd = (left >= limit);
+            else if (!params.isApproximate())
+               doesAdd = (!params.isRoundToEven() || mantissa.cbitArray(bits))
+                    ? (left >= limit) : (left > limit);
+            else
+               doesAdd = (left > limit);
+         }
+         else if (params.isHighestRound())
+            doesAdd = inherited::isPositive();
+         else if (params.isLowestRound())
+            doesAdd = !inherited::isPositive();
+
+         if ((minError || maxError) && !mantissa.hasZero(bits)) {
+            localMaxError.getSMantissa() = inherited::getMantissa();
+            localMaxError.getSMantissa().clearHigh(bits);
+            localMaxError.getSBasicExponent() = inherited::getBasicExponent();
+            int shiftErrorMantissa = localMaxError.getMantissa().log_base_2();
+            localMaxError.getSBasicExponent().minusAssign(
+               source.bitSizeMantissa()+2+(bits-shiftErrorMantissa));
+            localMaxError.getSMantissa() <<= (inherited::bitSizeMantissa()+1 - shiftErrorMantissa);
+
+            localMinError.getSMantissa() = inherited::getMantissa();
+            localMinError.getSMantissa().clearHigh(bits);
+            localMinError.getSMantissa().neg(bits);
+            localMinError.getSMantissa().inc();
+            localMinError.getSBasicExponent() = inherited::getBasicExponent();
+            shiftErrorMantissa = localMinError.getMantissa().log_base_2();
+            localMinError.getSBasicExponent().minusAssign(
+               source.bitSizeMantissa()+2+(bits-shiftErrorMantissa));
+            localMinError.getSMantissa() <<= (inherited::bitSizeMantissa()+1 - shiftErrorMantissa);
+            localMinError.opposite();
+         };
+         mantissa >>= bits;
+         if (doesAdd) {
+            mantissa.inc();
+            if (mantissa.cbitArray(inherited::bitSizeMantissa()-bits))
+               exponent.inc();
+            localMaxError.setZero();
+         }
+         else
+            localMinError.setZero();
+         if (inherited::isPositive())
+            params.setApproximate(doesAdd ? TypeDouble::ReadParameters::Up : TypeDouble::ReadParameters::Down);
+         else
+            params.setApproximate(doesAdd ? TypeDouble::ReadParameters::Down : TypeDouble::ReadParameters::Up);
+      }
+      else
+         mantissa >>= bits;
+   }
+   else {
+      typename inherited::Mantissa left;
+      left.neg(bits);
+      left &= mantissa;
+      if (!left.isZero()) {
+         bool doesAdd = false;
+         if (params.isNearestRound()) {
+            if (params.isDownApproximate())
+               doesAdd = left.cbitArray(bits-1);
+            else if (!params.isApproximate()) {
+               doesAdd = left.cbitArray(bits-1);
+               if (doesAdd && params.isRoundToEven() && !mantissa.cbitArray(bits))
+                  doesAdd = !left.hasZero(bits-1);
+            }
+            else
+               doesAdd = left.cbitArray(bits-1) && !left.hasZero(bits-1);
+         }
+         else if (params.isHighestRound())
+            doesAdd = inherited::isPositive();
+         else if (params.isLowestRound())
+            doesAdd = !inherited::isPositive();
+
+         if ((minError || maxError) && !mantissa.hasZero(bits)) {
+            localMaxError.getSMantissa() = inherited::getMantissa();
+            localMaxError.getSMantissa().clearHigh(bits);
+            localMaxError.getSBasicExponent() = inherited::getBasicExponent();
+            int shiftErrorMantissa = localMaxError.getMantissa().log_base_2();
+            localMaxError.getSBasicExponent().minusAssign(
+               source.bitSizeMantissa()+2+(bits-shiftErrorMantissa));
+            localMaxError.getSMantissa() <<= (inherited::bitSizeMantissa()+1 - shiftErrorMantissa);
+
+            localMinError.getSMantissa() = inherited::getMantissa();
+            localMinError.getSMantissa().clearHigh(bits);
+            localMinError.getSMantissa().neg(bits);
+            localMinError.getSMantissa().inc();
+            localMinError.getSBasicExponent() = inherited::getBasicExponent();
+            shiftErrorMantissa = localMinError.getMantissa().log_base_2();
+            localMinError.getSBasicExponent().minusAssign(
+               source.bitSizeMantissa()+2+(bits-shiftErrorMantissa));
+            localMinError.getSMantissa() <<= (inherited::bitSizeMantissa()+1 - shiftErrorMantissa);
+            localMinError.opposite();
+         };
+         mantissa >>= bits;
+         if (doesAdd) {
+            mantissa.inc();
+            if (mantissa.cbitArray(inherited::bitSizeMantissa()-bits))
+               exponent.inc();
+            localMaxError.setZero();
+         }
+         else
+            localMinError.setZero();
+         if (inherited::isPositive())
+            params.setApproximate(doesAdd ? TypeDouble::ReadParameters::Up : TypeDouble::ReadParameters::Down);
+         else
+            params.setApproximate(doesAdd ? TypeDouble::ReadParameters::Down : TypeDouble::ReadParameters::Up);
+      }
+      else
+         mantissa >>= bits;
+   };
+
+   int lastCellIndex = source.getMantissa().lastCellIndex();
+   for (int index = 0; index <= lastCellIndex; ++index)
+      source.getSMantissa()[index] = (DefineBaseType) mantissa[index];
+   source.getSMantissa().normalize();
+   lastCellIndex = source.getBasicExponent().lastCellIndex();
+   for (int index = 0; index <= lastCellIndex; ++index)
+      source.getSBasicExponent()[index] = (DefineBaseType) exponent[index];
+   source.getSBasicExponent().normalize();
+   source.setSign((params.acceptMinusZero() || !source.isZero())
+         ? inherited::isPositive() : true);
+   if (!localMinError.isZero() && minError) {
+      typename TypeDouble::ReadParameters minParams(params);
+      minParams.setLowestRound();
+      minError->plusAssign(localMinError, minParams);
+   };
+   if (!localMaxError.isZero() && maxError) {
+      typename TypeDouble::ReadParameters maxParams(params);
+      maxParams.setLowestRound();
+      maxError->plusAssign(localMaxError, maxParams);
+   }
+}
+
+template <class TypeDouble, class TypeDouble_n, class TypeBigInteger>
+void
+DefineTaylorDouble<TypeDouble, TypeDouble_n, TypeBigInteger>::expAssign(TypeDouble& errorMin,
+      TypeDouble& errorMax, ReadParameters& params) {
+   if (inherited::isInftyExponent())
+      return;
+   int powerTwo = 0;
+   inherited oneHalf(0x1, this);
+   oneHalf.divAssign(0x2, params);
+   if (inherited::isPositive()) {
+      while (inherited::compare(oneHalf) == CRGreater) {
+         inherited::divAssign(0x2, params);
+         ++powerTwo;
+      };
+   }
+   else {
+      oneHalf.opposite();
+      while (inherited::compare(oneHalf) == CRLess) {
+         inherited::divAssign(0x2, params);
+         ++powerTwo;
+      };
+   }
+
+   // copy = x
+   EnhancedDouble copy(*this);
+   EnhancedDouble methodError(copy);
+   if (inherited::isNegative())
+      methodError.opposite();
+   methodError.multAssign(0x2, params);
+   ReadParameters maxParams(params);
+   maxParams.setHighestRound();
+   methodError.plusAssign(TypeDouble_n(0x1, &methodError), maxParams);
+   maxParams.clear();
+   if (inherited::isNegative())
+      methodError.opposite();
+   methodError.multAssign(copy, maxParams);
+   // methodError = x*(1+2|x|)
+   maxParams.clear();
+   bool isErrorNegative = inherited::isNegative();
+
+   TypeBigInteger fact = 0x1;
+   int count = 1;
+   typename EnhancedDouble::Exponent eightUlpExponent = methodError.getZeroExponent();
+   eightUlpExponent.minusAssign(methodError.bitSizeMantissa()-2);
+   while (methodError.getSBasicExponent().compare(eightUlpExponent) == CRGreater) {
+      ++count;
+      methodError.divAssign(count, maxParams);
+      maxParams.clear();
+      if (inherited::isNegative()) {
+         methodError.opposite();
+         isErrorNegative = !isErrorNegative;
+      };
+      methodError.multAssign(copy, maxParams);
+      maxParams.clear();
+      fact.multAssign(count);
+   };
+   // methodError = \frac{x^count}{count!} * (1+2|x|)
+
+   EnhancedDouble result(copy);
+   EnhancedDouble minImplementationError, maxImplementationError;
+   ReadParameters nearestParams(params);
+   nearestParams.setNearestRound().setRoundToEven();
+   ReadParameters minParams(params);
+   minParams.setLowestRound();
+   EnhancedDouble dfact(fact, nearestParams);
+   dfact.adjustComputation(nearestParams, minImplementationError, maxImplementationError);
+   EnhancedDouble factMinusError = minImplementationError;
+   factMinusError.minusAssign(dfact, maxParams);
+   maxParams.clear();
+   factMinusError.opposite();
+   minImplementationError.divAssign(factMinusError, minParams);
+   minParams.clear();
+   maxImplementationError.divAssign(factMinusError, maxParams);
+   maxParams.clear();
+   // x/fact = x /_enhanced fact + error/(fact-error) * (x /_enhanced fact)
+   
+   result.divAssign(dfact, nearestParams);
+   result.adjustComputation(nearestParams, minImplementationError, maxImplementationError);
+   while (--count >= 1) {
+      fact.divAssign(count+1);
+      if (inherited::isPositive()) {
+         minImplementationError.multAssign(copy, minParams);
+         minParams.clear();
+         maxImplementationError.multAssign(copy, maxParams);
+         maxParams.clear();
+      }
+      else {
+         minImplementationError.multAssign(copy, maxParams);
+         maxParams.clear();
+         maxImplementationError.multAssign(copy, minParams);
+         minParams.clear();
+         minImplementationError.swap(maxImplementationError);
+      };
+      result.multAssign(copy, nearestParams);
+      result.adjustComputation(nearestParams, minImplementationError, maxImplementationError);
+      // result * x = result *_enhanced x + error * x
+
+      EnhancedDouble term(copy);
+      EnhancedDouble minTermError, maxTermError;
+      EnhancedDouble dfact(fact, nearestParams);
+      dfact.adjustComputation(nearestParams, minTermError, maxTermError);
+      EnhancedDouble factMinusError = minTermError;
+      factMinusError.minusAssign(dfact, maxParams);
+      maxParams.clear();
+      factMinusError.opposite();
+      minTermError.divAssign(factMinusError, minParams);
+      minParams.clear();
+      maxTermError.divAssign(factMinusError, maxParams);
+      maxParams.clear();
+      term.divAssign(dfact, nearestParams);
+      term.adjustComputation(nearestParams, minTermError, maxTermError);
+      // (result * x) /fact = (result * x) /_enhanced fact + error/(fact-error) * ((result * x) /_enhanced fact)
+   
+      minImplementationError.plusAssign(minTermError, minParams);
+      minParams.clear();
+      maxImplementationError.plusAssign(maxTermError, maxParams);
+      maxParams.clear();
+
+      result.plusAssign(term, nearestParams);
+      result.adjustComputation(nearestParams, minImplementationError, maxImplementationError);
+   };
+   result.plusAssign(EnhancedDouble(0x1, params), nearestParams);
+   result.adjustComputation(nearestParams, minImplementationError, maxImplementationError);
+
+   if (isErrorNegative) {
+      minImplementationError.minusAssign(methodError, minParams);
+      minParams.clear();
+   }
+   else {
+      maxImplementationError.plusAssign(methodError, maxParams);
+      maxParams.clear();
+   };
+
+   if (powerTwo > 0) {
+      --powerTwo;
+      do {
+         EnhancedDouble highLeverError(minImplementationError);
+         highLeverError.multAssign(minImplementationError, minParams);
+         minParams.clear();
+         minImplementationError.multAssign(result, minParams);
+         minParams.clear();
+         minImplementationError.multAssign(0x2, minParams);
+         minParams.clear();
+         minImplementationError.plusAssign(highLeverError, minParams);
+         minParams.clear();
+
+         highLeverError = maxImplementationError;
+         highLeverError.multAssign(maxImplementationError, maxParams);
+         maxParams.clear();
+         maxImplementationError.multAssign(result, maxParams);
+         maxParams.clear();
+         maxImplementationError.multAssign(0x2, maxParams);
+         maxParams.clear();
+         maxImplementationError.plusAssign(highLeverError, maxParams);
+         maxParams.clear();
+
+         result.multAssign(result, nearestParams);
+         result.adjustComputation(nearestParams, minImplementationError, maxImplementationError);
+      } while (--powerTwo >= 0);
+   };
+
+   if (!params.isNearestRound()) {
+      if (params.isLowestRound() || params.isZeroRound()) {
+         result.plusAssign(minImplementationError, minParams);
+         minParams.clear();
+         minImplementationError.minusAssign(maxImplementationError, minParams);
+         minParams.clear();
+         maxImplementationError.setZero();
+      }
+      else {
+         AssumeCondition(params.isHighestRound())
+         result.plusAssign(maxImplementationError, maxParams);
+         maxParams.clear();
+         maxImplementationError.minusAssign(minImplementationError, maxParams);
+         maxParams.clear();
+         minImplementationError.setZero();
+      };
+   };
+
+   result.retrieveDouble(*this, params, &minImplementationError, &maxImplementationError);
+   minImplementationError.retrieveDouble(errorMin, minParams);
+   maxImplementationError.retrieveDouble(errorMax, maxParams);
+}
+
+template <class TypeDouble, class TypeDouble_n, class TypeBigInteger>
+void
+DefineTaylorDouble<TypeDouble, TypeDouble_n, TypeBigInteger>::logAssignLimited(EnhancedDouble& copy,
+      EnhancedDouble& minCopyError, EnhancedDouble& maxCopyError,
+      ReadParameters& nearestParams, ReadParameters& minParams, ReadParameters& maxParams) {
+   AssumeCondition(!inherited::isNegative() && !inherited::isZero())
+
+   if (inherited::isInftyExponent())
+      return;
+   EnhancedDouble minImplementationError(minCopyError), maxImplementationError(maxCopyError);
+   // methodError = copy^(2k+1)*2/(2k+1)/(1-copy^2)
+   // methodError = copy*2/(1-copy^2) * copy^(2k)/(2k+1)
+   EnhancedDouble methodError(copy);
+   EnhancedDouble copySquare(copy);
+   copySquare.multAssign(copy, maxParams);
+   maxParams.clear();
+   EnhancedDouble one;
+   one.setOne();
+   EnhancedDouble oneMinusCopySquare(one);
+   oneMinusCopySquare.minusAssign(copySquare, minParams);
+   minParams.clear();
+   methodError.multAssign(0x2, maxParams);
+   maxParams.clear();
+
+   int count = 0;
+   typename EnhancedDouble::Exponent eightUlpExponent = methodError.getZeroExponent();
+   eightUlpExponent.minusAssign(methodError.bitSizeMantissa()-2);
+   while (methodError.getSBasicExponent().compare(eightUlpExponent) == CRGreater) {
+      ++count;
+      methodError.multAssign(copySquare, maxParams);
+      maxParams.clear();
+      methodError.multAssign(2*count-1, maxParams);
+      maxParams.clear();
+      methodError.divAssign(2*count+1, maxParams);
+      maxParams.clear();
+   };
+
+   EnhancedDouble result(copy);
+   EnhancedDouble term;
+   term.setOne();
+   EnhancedDouble minTermError, maxTermError;
+   if (count > 0)
+      --count;
+   // result_0 =2*copy/(2*count+1);
+
+   minImplementationError.multAssign(0x2, minParams);
+   minParams.clear();
+   maxImplementationError.multAssign(0x2, maxParams);
+   maxParams.clear();
+   result.multAssign(0x2, nearestParams);
+   result.adjustComputation(nearestParams, minImplementationError, maxImplementationError);
+   DefineBaseStoreTraits
+   minImplementationError.divAssign((DefineBaseType) (2*count+1), minParams);
+   minParams.clear();
+   maxImplementationError.divAssign((DefineBaseType) (2*count+1), maxParams);
+   maxParams.clear();
+   result.divAssign((DefineBaseType) (2*count+1), nearestParams);
+   result.adjustComputation(nearestParams, minImplementationError, maxImplementationError);
+
+   EnhancedDouble minCopySquareError(minCopyError), maxCopySquareError(maxCopyError);
+   copySquare = copy;
+   // (copy+e)^2 = copy^2 + 2*e*copy + e^2
+   {  EnhancedDouble temp(maxCopySquareError);
+      temp.multAssign(maxCopySquareError, maxParams);
+      EnhancedDouble temp2(minCopySquareError);
+      temp.multAssign(minCopySquareError, maxParams);
+      if (temp < temp2)
+         temp.swap(temp2);
+      
+      minCopySquareError.multAssign(0x2, minParams);
+      minParams.clear();
+      maxCopySquareError.multAssign(0x2, maxParams);
+      maxParams.clear();
+      if (copy.isPositive()) {
+         maxCopySquareError.multAssign(copy, maxParams);
+         maxParams.clear();
+         minCopySquareError.multAssign(copy, minParams);
+         minParams.clear();
+         maxCopySquareError.plusAssign(temp, maxParams);
+         maxParams.clear();
+      }
+      else {
+         maxCopySquareError.multAssign(copy, minParams);
+         minParams.clear();
+         minCopySquareError.multAssign(copy, maxParams);
+         maxParams.clear();
+         minCopySquareError.swap(maxCopySquareError);
+         maxCopySquareError.plusAssign(temp, maxParams);
+         maxParams.clear();
+      }
+   };
+   copySquare.multAssign(copy, nearestParams);
+   copySquare.adjustComputation(nearestParams, minCopySquareError, maxCopySquareError);
+
+   while (--count >= 0) {
+      // result_{n+1} = (result_n+e) * (copySquare+e') + 2*(copy+e'')/(2*count+1);
+      //              = result_n * copySquare + 2*copy/(2*count+1)
+      //                + e*e' + e*copySquare + e'*result_n + 2*e''/(2count+1)
+      EnhancedDouble newMinResultError(minImplementationError), newMaxResultError(maxImplementationError);
+      newMinResultError.multAssign(maxCopySquareError, minParams);
+      minParams.clear();
+      {  EnhancedDouble temp(maxImplementationError);
+         temp.multAssign(minCopySquareError, minParams);
+         minParams.clear();
+         if (temp < newMinResultError)
+            newMinResultError = temp;
+      };
+      newMaxResultError.multAssign(maxCopySquareError, maxParams);
+      maxParams.clear();
+      {  EnhancedDouble temp(minImplementationError);
+         temp.multAssign(minCopySquareError, maxParams);
+         maxParams.clear();
+         if (temp > newMaxResultError)
+            newMaxResultError = temp;
+      };
+      minImplementationError.multAssign(copySquare, minParams);
+      minParams.clear();
+      maxImplementationError.multAssign(copySquare, maxParams);
+      maxParams.clear();
+      minImplementationError.plusAssign(newMinResultError, minParams);
+      minParams.clear();
+      maxImplementationError.plusAssign(newMaxResultError, maxParams);
+      maxParams.clear();
+      newMinResultError = minCopySquareError;
+      newMaxResultError = maxCopySquareError;
+      if (result.isPositive()) {
+         newMinResultError.multAssign(result, minParams);
+         minParams.clear();
+         newMaxResultError.multAssign(result, maxParams);
+         maxParams.clear();
+      }
+      else {
+         newMinResultError.multAssign(result, maxParams);
+         maxParams.clear();
+         newMaxResultError.multAssign(result, minParams);
+         minParams.clear();
+         newMinResultError.swap(newMaxResultError);
+      };
+      minImplementationError.plusAssign(newMinResultError, minParams);
+      minParams.clear();
+      maxImplementationError.plusAssign(newMaxResultError, maxParams);
+      maxParams.clear();
+      EnhancedDouble term(copy);
+      newMinResultError = minCopyError;
+      newMaxResultError = maxCopyError;
+      newMinResultError.multAssign(0x2, minParams);
+      minParams.clear();
+      newMaxResultError.multAssign(0x2, maxParams);
+      maxParams.clear();
+      term.multAssign(0x2, nearestParams);
+      term.adjustComputation(nearestParams, newMinResultError, newMaxResultError);
+      newMinResultError.divAssign((DefineBaseType) (2*count+1), minParams);
+      minParams.clear();
+      newMaxResultError.divAssign((DefineBaseType) (2*count+1), maxParams);
+      maxParams.clear();
+      term.divAssign((DefineBaseType) (2*count+1), nearestParams);
+      term.adjustComputation(nearestParams, newMinResultError, newMaxResultError);
+      minImplementationError.plusAssign(newMinResultError, minParams);
+      minParams.clear();
+      maxImplementationError.plusAssign(newMaxResultError, maxParams);
+      maxParams.clear();
+      result.multAssign(copySquare, nearestParams);
+      result.adjustComputation(nearestParams, minImplementationError, maxImplementationError);
+      result.plusAssign(term, nearestParams);
+      result.adjustComputation(nearestParams, minImplementationError, maxImplementationError);
+   };
+
+   if (result.isPositive()) {
+      maxImplementationError.plusAssign(methodError, maxParams);
+      maxParams.clear();
+   }
+   else {
+      minImplementationError.plusAssign(methodError, minParams);
+      minParams.clear();
+   };
+   minCopyError = minImplementationError;
+   maxCopyError = maxImplementationError;
+   copy = result;
+}
+
+template <class TypeDouble, class TypeDouble_n, class TypeBigInteger>
+void
+DefineTaylorDouble<TypeDouble, TypeDouble_n, TypeBigInteger>::logAssign(TypeDouble& errorMin,
+      TypeDouble& errorMax, ReadParameters& params) {
+   AssumeCondition(!inherited::isNegative() && !inherited::isZero())
+
+   if (inherited::isInftyExponent())
+      return;
+   typename inherited::Exponent exponent;
+   bool isExponentPositive = true;
+   if (inherited::getBasicExponent() > inherited::getZeroExponent()) {
+      exponent = inherited::getBasicExponent();
+      exponent.minusAssign(inherited::getZeroExponent());
+   }
+   else {
+      exponent = inherited::getZeroExponent();
+      exponent.minusAssign(inherited::getBasicExponent());
+      isExponentPositive = false;
+   }
+
+   inherited::getSBasicExponent() = inherited::getZeroExponent();
+
+   ReadParameters nearestParams(params);
+   nearestParams.setNearestRound().setRoundToEven();
+   ReadParameters minParams(params);
+   minParams.setLowestRound();
+   ReadParameters maxParams(params);
+   maxParams.setHighestRound();
+
+   // copy = (x-1)/(x+1)
+   EnhancedDouble copy(*this);
+   EnhancedDouble copyPlusOne(copy);
+   EnhancedDouble minCopyError, maxCopyError;
+   EnhancedDouble one;
+   one.setOne();
+   copy.minusAssign(one, nearestParams);
+   copy.adjustComputation(nearestParams, minCopyError, maxCopyError);
+   EnhancedDouble minLocalCopyError, maxLocalCopyError;
+   copyPlusOne.plusAssign(one, nearestParams);
+   copyPlusOne.adjustComputation(nearestParams, minLocalCopyError, maxLocalCopyError);
+
+   // (x-1+e)/(x+1+e') = (x-1)/(x+1) + (e - (x-1)/(x+1)*e')/(x+1+e')
+   copy.divAssign(copyPlusOne, nearestParams);
+   copyPlusOne.plusAssign(minLocalCopyError, minParams);
+   minParams.clear();
+   if (copy.isPositive()) {
+      minLocalCopyError.multAssign(copy, minParams);
+      minParams.clear();
+      maxLocalCopyError.multAssign(copy, maxParams);
+      maxParams.clear();
+   }
+   else {
+      minLocalCopyError.multAssign(copy, maxParams);
+      maxParams.clear();
+      maxLocalCopyError.multAssign(copy, minParams);
+      minParams.clear();
+      minLocalCopyError.swap(maxLocalCopyError);
+   }
+   minCopyError.minusAssign(maxLocalCopyError, minParams);
+   minParams.clear();
+   maxCopyError.minusAssign(minLocalCopyError, maxParams);
+   maxParams.clear();
+   minCopyError.divAssign(copyPlusOne, minParams);
+   minParams.clear();
+   maxCopyError.divAssign(copyPlusOne, maxParams);
+   maxParams.clear();
+   copy.adjustComputation(nearestParams, minCopyError, maxCopyError);
+   // copy in ]-1, 1[
+
+   logAssignLimited(copy, minCopyError, maxCopyError, nearestParams, minParams, maxParams);
+
+   if (!exponent.isZero()) {
+      EnhancedDouble ln2;
+      EnhancedDouble minLn2Error, maxLn2Error;
+      ln2.setOne();
+      ln2.divAssign(0x3, nearestParams);
+      ln2.adjustComputation(nearestParams, minLn2Error, maxLn2Error);
+      logAssignLimited(ln2, minLn2Error, maxLn2Error, nearestParams, minParams, maxParams);
+
+      minLn2Error.multAssign(exponent[0], minParams);
+      minParams.clear();
+      maxLn2Error.multAssign(exponent[0], maxParams);
+      maxParams.clear();
+      ln2.multAssign(exponent[0], nearestParams);
+      ln2.adjustComputation(nearestParams, minLn2Error, maxLn2Error);
+      if (!isExponentPositive) {
+         minLn2Error.opposite();
+         maxLn2Error.opposite();
+         minLn2Error.swap(maxLn2Error);
+         ln2.opposite();
+      };
+      minCopyError.plusAssign(minLn2Error, minParams);
+      minParams.clear();
+      maxCopyError.plusAssign(maxLn2Error, maxParams);
+      maxParams.clear();
+      copy.plusAssign(ln2, nearestParams);
+      copy.adjustComputation(nearestParams, minCopyError, maxCopyError);
+   };
+
+   if (!params.isNearestRound()) {
+      if (params.isLowestRound() || params.isZeroRound()) {
+         copy.plusAssign(minCopyError, minParams);
+         minParams.clear();
+         minCopyError.minusAssign(maxCopyError, minParams);
+         minParams.clear();
+         maxCopyError.setZero();
+      }
+      else {
+         AssumeCondition(params.isHighestRound())
+         copy.plusAssign(maxCopyError, maxParams);
+         maxParams.clear();
+         maxCopyError.minusAssign(minCopyError, maxParams);
+         maxParams.clear();
+         minCopyError.setZero();
+      };
+   };
+
+   copy.retrieveDouble(*this, params, &minCopyError, &maxCopyError);
+   minCopyError.retrieveDouble(errorMin, minParams);
+   maxCopyError.retrieveDouble(errorMax, maxParams);
+}
+
+#undef DefineTaylorDouble
+#undef DefineBaseTypeConstReference
+#undef DefineBaseStoreTraits
+#undef DefineBaseType
+#undef DefineSizeofBaseTypeInBits

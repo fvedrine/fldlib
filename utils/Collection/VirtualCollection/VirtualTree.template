@@ -1,0 +1,2100 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat à l'énergie atomique et aux énergies              */
+/*         alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Librairie   : Collection
+// Module      : Abstract collections
+// Fichier     : VirtualTree.template
+// Description :
+//   Implementation of the iteration methods of the class VirtualTree.
+//
+
+#ifndef COL_VirtualTreeTemplate
+#define COL_VirtualTreeTemplate
+
+#include "Collection/VirtualCollection/VirtualTree.h"
+#include "Pointer/Pointer.template"
+
+namespace COL {
+
+/*******************************************/
+/* Implementation of the class VirtualTree */
+/*******************************************/
+
+/* Implementation of the forward iteration methods */
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::foreachSonLevelSDo(TemplateParameters, Action& action,
+      const ExtendedTreeLocateParameters& parameters,
+      const typename TemplateParameters::Tree::Cursor* start,
+      const typename TemplateParameters::Tree::Cursor* end) const {
+   typedef typename TemplateParameters::Element Element;
+   typedef typename TemplateParameters::Tree TypeTree;
+
+   const TypeTree& thisTree = ((const TypeTree&) *this);
+   typename TypeTree::PPCursor cursor = thisTree.newCursor();
+
+   if (start)
+      *cursor = *start;
+   else if (end)
+      *cursor = *end;
+   else if (!cursor->setToRoot())
+      return true;
+   Element* oldElement = nullptr;
+
+   if (parameters.isFirstExcluded() || (!start && end)) {
+      if (!cursor->setToFirstSon())
+         return true;
+      if (!action.init(thisTree, *cursor))
+         return false;
+   }
+   else {
+      if (!action.init(thisTree, *cursor))
+         return false;
+      oldElement = (Element*) &cursor->elementSAt();
+      if (!cursor->setToFirstSon()) {
+         cursor->setToFather();
+         return action.end(thisTree, *cursor);
+      };
+      if (!action.descent(*cursor, *oldElement))
+         return false;
+   };
+   oldElement = (Element*) &cursor->elementSAt();
+   while (cursor->setToNextBrother()) {
+      if (!action.next(*cursor, *oldElement))
+         return false;
+      oldElement = (Element*) &cursor->elementSAt();
+   };
+
+   if (parameters.isLastExcluded() || (start && !end)) {
+      cursor->setToLastBrother();
+      return action.end(thisTree, *cursor);
+   };
+   cursor->setToFather();
+   return action.ascent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::foreachBrotherLevelSDo(TemplateParameters, Action& action,
+      const ExtendedTreeLocateParameters& parameters,
+      const typename TemplateParameters::Tree::Cursor* start,
+      const typename TemplateParameters::Tree::Cursor* end) const {
+   typedef typename TemplateParameters::Element Element;
+   typedef typename TemplateParameters::Tree TypeTree;
+
+   const TypeTree& thisTree = ((const TypeTree&) *this);
+   typename TypeTree::PPCursor cursor = thisTree.newCursor();
+
+   if (!start || !end) {
+      if (!start && !end) {
+         if (!cursor->setToRoot())
+            return true;
+         return (parameters.getRelativePosition() == RPExact)
+            ? (action.init(thisTree, *cursor) && action.end(thisTree, *cursor)) : true;
+      }
+      else if (!start) { // end != nullptr
+         *cursor = *end;
+
+         if (!cursor->setToFirstBrother()
+               || (cursor->isEqual(*end) && parameters.isLastExcluded()))
+            return true;
+         if (!action.init(thisTree, *cursor))
+            return false;
+         Element* oldElement = (Element*) &cursor->elementSAt();
+         while (!cursor->isEqual(*end) && cursor->setToNextBrother()) {
+            if (!action.next(*cursor, *oldElement))
+               return false;
+            oldElement = (Element*) &cursor->elementSAt();
+         };
+         AssumeCondition(cursor->isEqual(*end))
+         if (parameters.isLastExcluded())
+            cursor->setToPreviousBrother();
+         else if (!action.next(*cursor, *oldElement))
+            return false;
+         return action.end(thisTree, *cursor);
+      }
+      else { // (start != nullptr) && (end == nullptr)
+         *cursor = *start;
+
+         if (parameters.isFirstExcluded() && !cursor->setToNextBrother())
+            return true;
+         if (!action.init(thisTree, *cursor))
+            return false;
+         Element* oldElement = (Element*) &cursor->elementSAt();
+         while (cursor->setToNextBrother()) {
+            if (!action.next(*cursor, *oldElement))
+               return false;
+            oldElement = (Element*) &cursor->elementSAt();
+         }; 
+         cursor->setToLastBrother();
+         return action.end(thisTree, *cursor);
+      };
+   }
+   else {
+      *cursor = *start;
+
+      if (parameters.isFirstExcluded()) {
+         if (start->isEqual(*end) || (cursor->setToNextBrother()
+               && parameters.isLastExcluded() && cursor->isEqual(*end)))
+            return true;
+      }
+      else if (parameters.isLastExcluded() && start->isEqual(*end))
+         return true;
+      if (!action.init(thisTree, *cursor))
+         return false;
+      Element* oldElement = (Element*) &cursor->elementSAt();
+      while (!cursor->isEqual(*end) && cursor->setToNextBrother()) {
+         if (!action.next(*cursor, *oldElement))
+            return false;
+         oldElement = (Element*) &cursor->elementSAt();
+      };
+      AssumeCondition(cursor->isEqual(*end))
+      if (parameters.isLastExcluded())
+         cursor->setToPreviousBrother();
+      else if (!action.next(*cursor, *oldElement))
+         return false;
+      return action.end(thisTree, *cursor);
+   };
+   return true;
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::foreachMultiSonLevelSDo(TemplateParameters, Action& action,
+      const ExtendedTreeLocateParameters& parameters,
+      const typename TemplateParameters::Tree::Cursor* start,
+      const typename TemplateParameters::Tree::Cursor* end) const {
+   typedef typename TemplateParameters::Tree TypeTree;
+   const TypeTree& thisTree = ((const TypeTree&) *this);
+
+   typename TypeTree::PPCursor cursor = thisTree.newCursor();
+   *cursor = *start;
+   VirtualTreeCursor::ValidityMode startMode = start->_getMode(), endMode = end->getMode();
+   AssumeCondition((startMode != VirtualTreeCursor::VMUpRoot) && (startMode != VirtualTreeCursor::VMDownCursor)
+      && (endMode != VirtualTreeCursor::VMUpRoot) && (endMode != VirtualTreeCursor::VMDownCursor))
+   PNT::PassPointer<VirtualTreeCursor::VirtualCursorPath> path = cursor->newPath(end);
+
+   EnhancedObject* oldElement = nullptr;
+   bool hasAscent = true;
+   bool hasUp = true;
+   // treatment of init and of the first sons
+   if ((startMode == VirtualTreeCursor::VMInvalidCursor) || path->hasAscent()) {
+      AssumeCondition(path->hasAscent())
+      if ((startMode == VirtualTreeCursor::VMTree) && !parameters.isFirstExcluded()) {
+         if (!action.init(thisTree, *cursor))
+            return false;
+         oldElement = &cursor->elementSAt();
+         if (cursor->setToFirstSon()) {
+            if (!action.descent(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+            while (cursor->setToNextBrother()) {
+               if (!action.next(*cursor, *oldElement))
+                  return false;
+               oldElement = &cursor->elementSAt();
+            };
+            cursor->setToFather();
+            if (!action.ascent(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         }
+         else
+            cursor->setToFather();
+      }
+      else { // path->hasAscent() && ((startMode == VMInvalidCursor) || parameters.isFirstExcluded())
+         if ((startMode == VirtualTreeCursor::VMTree) && cursor->setToFirstSon()) {
+            if (!action.init(thisTree, *cursor))
+               return false;
+            oldElement = &cursor->elementSAt();
+            while (cursor->setToNextBrother()) {
+               if (!action.next(*cursor, *oldElement))
+                  return false;
+               oldElement = &cursor->elementSAt();
+            };
+            cursor->setToFather();
+            if (!action.ascent(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         }
+         else {
+            path->ascent(*cursor);
+            if (!path->hasDescent() && cursor->isEqual(*end)) {
+               if (parameters.isLastExcluded())
+                  return true;
+               return action.init(thisTree, *cursor) && action.end(thisTree, *cursor);
+            };
+            if (!action.init(thisTree, *cursor))
+               return false;
+            oldElement = &cursor->elementSAt();
+         }
+      };
+   }
+   else { // startMode == VMTree && !path->hasAscent()
+      hasAscent = false;
+      if (path->hasNext(*cursor)) {
+         bool isOnSon = false;
+         if (!parameters.isFirstExcluded()) {
+            if (!action.init(thisTree, *cursor))
+               return false;
+            if (cursor->setToFirstSon()) {
+               isOnSon = true;
+               if (!action.descent(*cursor, *oldElement))
+                  return false;
+               oldElement = &cursor->elementSAt();
+            };
+         }
+         else if (cursor->setToFirstSon()) { // parameters.isFirstExcluded()
+            if (!action.init(thisTree, *cursor))
+               return false;
+            oldElement = &cursor->elementSAt();
+            isOnSon = true;
+         };
+
+         if (isOnSon) {
+            while (cursor->setToNextBrother()) {
+               if (!action.next(*cursor, *oldElement))
+                  return false;
+               oldElement = &cursor->elementSAt();
+            };
+            cursor->setToFather();
+            if (!action.ascent(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         }
+         else
+            cursor->setToFather();
+      }
+      else { // !path->hasNext(*cursor)
+         hasUp = false;
+         if (!parameters.isFirstExcluded()) {
+            if (!action.init(thisTree, *cursor))
+               return false;
+            oldElement = &cursor->elementSAt();
+            if (path->descent(*cursor)) {
+               int sonIndex = 0;
+               while (cursor->setToPreviousBrother())
+                  ++sonIndex;
+               cursor->setToFirstBrother();
+               if (!action.descent(*cursor, *oldElement))
+                  return false;
+               oldElement = &cursor->elementSAt();
+               while (--sonIndex >= 0) {
+                  if (!cursor->setToNextBrother())
+                     {  AssumeUncalled }
+                  if (!action.next(*cursor, *oldElement))
+                     return false;
+                  oldElement = &cursor->elementSAt();
+               };
+            }
+            else
+               { AssumeUncalled }
+         }
+         else if (path->descent(*cursor)) {
+            if (cursor->isFirstSon() && cursor->isEqual(*end)
+                  && !hasSons(*end) && parameters.isLastExcluded())
+               return true;
+            int sonIndex = 0;
+            while (cursor->setToPreviousBrother())
+               ++sonIndex;
+            cursor->setToFirstBrother();
+            if (!action.init(thisTree, *cursor))
+               return false;
+            oldElement = &cursor->elementSAt();
+            while (--sonIndex >= 0) {
+               if (!cursor->setToNextBrother())
+                  {  AssumeUncalled }
+               if (!action.next(*cursor, *oldElement))
+                  return false;
+               oldElement = &cursor->elementSAt();
+            };
+         }
+         else
+            {  AssumeUncalled }
+      };
+   };
+
+   // treatment of the ascending part
+   bool hasDescent = path->hasDescent();
+   if (hasAscent) {
+      while ((hasDescent || !cursor->isSon(*end)) && path->ascent(*cursor)) {
+         if (!action.ascent(*cursor, *oldElement))
+            return false;
+         oldElement = &cursor->elementSAt();
+      };
+
+      if (!hasDescent && cursor->isSon(*end)) {
+         if (!action.ascent(*cursor, *oldElement))
+            return false;
+         oldElement = &cursor->elementSAt();
+         while (path->next(*cursor)) {
+            if (!action.next(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         };
+         if (parameters.isLastExcluded())
+            return action.end(thisTree, *cursor);
+         cursor->setToFather();
+         return action.ascent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+      };
+   };
+
+   if (hasUp) {
+      path->up(*cursor);
+      if (!action.ascent(*cursor, *oldElement))
+         return false;
+      oldElement = &cursor->elementSAt();
+      path->down(*cursor);
+      if (!action.descent(*cursor, *oldElement))
+         return false;
+      oldElement = &cursor->elementSAt();
+   };
+
+   if (!hasDescent) {
+      if (cursor->setToFirstSon()) {
+         if (!action.descent(*cursor, *oldElement))
+            return false;
+         oldElement = &cursor->elementSAt();
+         while (cursor->setToNextBrother()) {
+            if (!action.next(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         };
+         if (parameters.isLastExcluded()) {
+            cursor->setToLastBrother();
+            return action.end(thisTree, *cursor);
+         };
+         cursor->setToFather();
+         return action.ascent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+      }
+      else {
+         cursor->setToFather();
+         return action.end(thisTree, *cursor);
+      };
+   };
+
+   // treatment of the descending part
+   while (hasDescent && !cursor->isFather(*end) && path->descent(*cursor)) {
+      if (!action.descent(*cursor, *oldElement))
+         return false;
+      oldElement = &cursor->elementSAt();
+   };
+
+   AssumeCondition(cursor->isFather(*end))
+
+   if ((endMode == VirtualTreeCursor::VMTree) && hasSons(*end)) {
+      path->descent(*cursor);
+      if (!action.descent(*cursor, *oldElement))
+         return false;
+      oldElement = &cursor->elementSAt();
+
+      cursor->setToFirstSon();
+      if (!action.descent(*cursor, *oldElement))
+         return false;
+      oldElement = &cursor->elementSAt();
+      
+      while (cursor->setToNextBrother()) {
+         if (!action.next(*cursor, *oldElement))
+            return false;
+         oldElement = &cursor->elementSAt();
+      };
+
+      if (parameters.isLastExcluded()) {
+         cursor->setToLastBrother();
+         return action.end(thisTree, *cursor);
+      };
+      cursor->setToFather();
+      return action.ascent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+   };
+
+   if (!parameters.isLastExcluded()) {
+      path->descent(*cursor);
+      if (!action.descent(*cursor, *oldElement))
+         return false;
+   };
+   return action.end(thisTree, *cursor);
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::foreachMultiBrotherLevelSDo(TemplateParameters, Action& action,
+      const ExtendedTreeLocateParameters& parameters,
+      const typename TemplateParameters::Tree::Cursor* start,
+      const typename TemplateParameters::Tree::Cursor* end) const {
+   typedef typename TemplateParameters::Element Element;
+   typedef typename TemplateParameters::Tree TypeTree;
+   const TypeTree& thisTree = ((const TypeTree&) *this);
+
+   typename TypeTree::PPCursor cursor = thisTree.newCursor();
+   *cursor = *start;
+   VirtualTreeCursor::ValidityMode startMode = start->_getMode(), endMode = end->getMode();
+   AssumeCondition((startMode != VirtualTreeCursor::VMUpRoot) && (startMode != VirtualTreeCursor::VMDownCursor)
+      && (endMode != VirtualTreeCursor::VMUpRoot) && (endMode != VirtualTreeCursor::VMDownCursor))
+   PNT::PassPointer<VirtualTreeCursor::VirtualCursorPath> path = cursor->newPath(end);
+
+   bool hasAscent = true;
+   if ((startMode == VirtualTreeCursor::VMInvalidCursor) || path->hasAscent()) {
+      AssumeCondition(path->hasAscent())
+      if (((startMode == VirtualTreeCursor::VMTree) && !parameters.isFirstExcluded())
+            || cursor->setToNextBrother()) {
+         if (!action.init(thisTree, *cursor))
+            return false;
+      }
+      else {
+         if ((endMode == VirtualTreeCursor::VMTree) && end->isFather(*start))
+            return true;
+         path->ascent(*cursor);
+         if (!action.init(thisTree, *cursor))
+            return false;
+      };
+   }
+   else { // startMode == VMTree && !path->hasAscent()
+      hasAscent = false;
+      if (path->hasNext(*cursor)) {
+         if (!parameters.isFirstExcluded() || path->next(*cursor)) {
+            if (!action.init(thisTree, *cursor))
+               return false;
+         }
+         else { // parameters.isFirstExcluded() && !path->next(*cursor)
+            if (end->isSon(*start))
+               return true;
+            path->descent(*cursor);
+            cursor->setToFirstBrother();
+            if (!action.init(thisTree, *cursor))
+               return false;
+         };
+      }
+      else { // !path->hasNext(*cursor)
+         if (parameters.isFirstExcluded()) {
+            if (!path->down(*cursor) || cursor->isEqual(*end))
+               return true;
+            cursor->setToFirstBrother();
+         };
+         if (!action.init(thisTree, *cursor))
+            return false;
+      }
+   };
+
+   Element* oldElement = &cursor->elementSAt();
+   bool hasDescent = !hasAscent && path->hasDescent();
+   while (true) {
+      if (!hasAscent && !hasDescent) {
+         while (path->next(*cursor)) {
+            if ((endMode == VirtualTreeCursor::VMTree) && cursor->isEqual(*end)) {
+               if (parameters.isLastExcluded()) {
+                  cursor->setToPreviousBrother();
+                  return action.end(thisTree, *cursor);
+               };
+               return action.next(*cursor, *oldElement) && action.end(thisTree, *cursor);
+            };
+            if (!action.next(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         };
+         cursor->setToLastBrother();
+         return action.end(thisTree, *cursor);
+      }
+      else {
+         while (path->next(*cursor)) {
+            if (!action.next(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         };
+      };
+      
+      if (hasAscent) {
+         if (!hasDescent && cursor->isSon(*end)) {
+            if (parameters.isLastExcluded())
+               return action.end(thisTree, *cursor);
+            path->ascent(*cursor);
+            return action.ascent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+         };
+         if (path->ascent(*cursor)) {
+            if (!action.ascent(*cursor, *oldElement))
+               return false;
+         }
+         else
+            hasAscent = false;
+      };
+      if (!hasAscent) {
+         if ((endMode == VirtualTreeCursor::VMTree) && end->isFirstSon(*cursor)) {
+            if (parameters.isLastExcluded())
+               return action.end(thisTree, *cursor);
+            path->descent(*cursor);
+            return action.descent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+         };
+         if (path->descent(*cursor)) {
+            hasDescent = path->hasDescent();
+            cursor->setToFirstBrother();
+            if (!action.descent(*cursor, *oldElement))
+               return false;
+         }
+         else
+            return true;
+      };
+      oldElement = &cursor->elementSAt();
+   };
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::foreachInnerSonsLevelSDo(TemplateParameters, Action& action,
+      const ExtendedTreeLocateParameters& parameters,
+      const typename TemplateParameters::Tree::Cursor* start,
+      const typename TemplateParameters::Tree::Cursor* end) const {
+   typedef typename TemplateParameters::Tree TypeTree;
+   const TypeTree& thisTree = ((const TypeTree&) *this);
+
+   typename TypeTree::PPCursor cursor = thisTree.newCursor(), endCursor;
+   VirtualTreeCursor::ValidityMode
+      startMode = start ? start->_getMode() : VirtualTreeCursor::VMTree,
+      endMode = end ? end->_getMode() : VirtualTreeCursor::VMTree;
+   bool doesExcludeLast = parameters.isLastExcluded(), doesExcludeFirst = parameters.isFirstExcluded();
+   if (start) {
+      *cursor = *start;
+      if (hasSons(*cursor)) {
+         cursor->setToInnerFirstSon();
+         doesExcludeFirst = false;
+      };
+   }
+   else {
+      cursor->setToRoot();
+      cursor->setToInnerFirstSon();
+      doesExcludeFirst = false;
+   };
+   if (endMode != VirtualTreeCursor::VMTree) {
+      endCursor = thisTree.newCursor();
+      endCursor = *end;
+      doesExcludeLast = false;
+      end = endCursor.key();
+      if ((endMode == VirtualTreeCursor::VMDownCursor) || !endCursor->setToLastBrother())
+         endCursor->setToFather();
+   };
+   if (startMode != VirtualTreeCursor::VMTree) {
+      if ((startMode == VirtualTreeCursor::VMDownCursor) || !cursor->setToFirstBrother())
+         cursor->setToFather();
+   }
+   else if (doesExcludeFirst) {
+      if (end && cursor->isEqual(*end))
+         return true;
+      do {
+         cursor->setToNext(VirtualTreeCursor::RBottomUp);
+      } while (hasSons(*cursor) && !cursor->isEqual(*end));
+      if (hasSons(*cursor))
+         return true;
+   };
+
+   if (end && cursor->isEqual(*end))
+      return doesExcludeLast || (action.init(thisTree, *cursor) && action.end(thisTree, *cursor));
+
+   if (!action.init(thisTree, *cursor))
+      return false;
+   EnhancedObject* oldElement = &cursor->elementSAt();
+   bool hasFinished = false;
+   while (true) {
+      do {
+         cursor->setToNext(VirtualTreeCursor::RBottomUp);
+      } while (cursor->isValid() && hasSons(*cursor)
+               && !(hasFinished = (!cursor->isValid() || (end && cursor->isEqual(*end)))));
+      if (hasFinished) {
+         if (!cursor->isValid() || hasSons(*cursor) || doesExcludeLast) {
+            do {
+               cursor->setToPrevious(VirtualTreeCursor::RTopDown);
+            } while (hasSons(*cursor));
+            return action.end(thisTree, *cursor);
+         };
+         return action.next(*cursor, *oldElement) && action.end(thisTree, *cursor);
+      }
+      if (!action.next(*cursor, *oldElement))
+         return false;
+      oldElement = &cursor->elementSAt();
+   };
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::foreachBrothersSDo(TemplateParameters, Action& action,
+      const ExtendedTreeLocateParameters& parameters,
+      const typename TemplateParameters::Tree::Cursor* start,
+      const typename TemplateParameters::Tree::Cursor* end) const {
+   typedef typename TemplateParameters::Tree TypeTree;
+   const TypeTree& thisTree = ((const TypeTree&) *this);
+   typename TypeTree::PPCursor cursor = thisTree.newCursor(), endCursor;
+   VirtualTreeCursor::ValidityMode
+      startMode = start ? start->_getMode() : VirtualTreeCursor::VMTree,
+      endMode = end ? end->_getMode() : VirtualTreeCursor::VMTree;
+   bool doesExcludeLast = parameters.isLastExcluded(), doesExcludeFirst = parameters.isFirstExcluded();
+   if (start) {
+      *cursor = *start;
+      if ((startMode == VirtualTreeCursor::VMInvalidCursor) || (startMode == VirtualTreeCursor::VMDownCursor)) {
+         cursor->setToFather();
+         doesExcludeFirst = false;
+      };
+   }
+   else {
+      cursor->setToRoot();
+      doesExcludeFirst = false;
+   };
+
+   if (endMode != VirtualTreeCursor::VMTree) {
+      endCursor = thisTree.newCursor();
+      endCursor = *end;
+      doesExcludeLast = false;
+      end = endCursor.key();
+      if ((endMode == VirtualTreeCursor::VMDownCursor) || !endCursor->setToLastBrother())
+         endCursor->setToFather();
+   };
+   if (doesExcludeFirst && end && cursor->isEqual(*end))
+      return true;
+   EnhancedObject* oldElement = nullptr;
+   if (doesExcludeFirst) {
+      if (cursor->setToNextBrother()) {
+         if (doesExcludeLast && end && cursor->isEqual(*end))
+            return true;
+         if (!action.init(thisTree, *cursor))
+            return false;
+         oldElement = &cursor->elementSAt();
+         while (cursor->setToFirstSon()) {
+            if (!action.descent(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         };
+         cursor->setToFather();
+      }
+      else if (!cursor->setToFather())
+         return true;
+      else if (!action.init(thisTree, *cursor))
+         return false;
+      else
+         oldElement = &cursor->elementSAt();
+   }
+   else {
+      if (!action.init(thisTree, *cursor))
+         return false;
+      oldElement = &cursor->elementSAt();
+   };
+
+   while (true) {
+      if (cursor->setToNextBrother()) {
+         if (end && cursor->isEqual(*end)) {
+            if (doesExcludeLast) {
+               cursor->setToPreviousBrother();
+               return action.end(thisTree, *cursor);
+            };
+            return action.next(*cursor, *oldElement) && action.end(thisTree, *cursor);
+         };
+         if (!action.next(*cursor, *oldElement))
+            return false;
+         oldElement = &cursor->elementSAt();
+
+         while (cursor->setToFirstSon()) {
+            if (end && cursor->isEqual(*end)) {
+               if (doesExcludeLast) {
+                  cursor->setToFather();
+                  return action.end(thisTree, *cursor);
+               };
+               return action.descent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+            };
+            if (!action.descent(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         };
+         cursor->setToFather();
+      }
+      else {
+         if (end && cursor->isSon(*end)) {
+            if (doesExcludeLast)
+               return action.end(thisTree, *cursor);
+            cursor->setToFather();
+            return action.ascent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+         };
+         if (!cursor->setToFather()) {
+            cursor->setToRoot();
+            return action.end(thisTree, *cursor);
+         };
+         if (!action.ascent(*cursor, *oldElement))
+            return false;
+         oldElement = &cursor->elementSAt();
+      };
+   };
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::foreachSonsSDo(TemplateParameters, Action& action,
+      const ExtendedTreeLocateParameters& parameters,
+      const typename TemplateParameters::Tree::Cursor* start,
+      const typename TemplateParameters::Tree::Cursor* end) const {
+   typedef typename TemplateParameters::Element Element;
+   typedef typename TemplateParameters::Tree TypeTree;
+
+   const TypeTree& thisTree = ((const TypeTree&) *this);
+   typename TypeTree::PPCursor cursor = thisTree.newCursor(), endCursor;
+   VirtualTreeCursor::ValidityMode
+      startMode = start ? start->_getMode() : VirtualTreeCursor::VMTree,
+      endMode = end ? end->_getMode() : VirtualTreeCursor::VMTree;
+   bool doesExcludeLast = parameters.isLastExcluded(), doesExcludeFirst = parameters.isFirstExcluded();
+   if (start) {
+      *cursor = *start;
+      if ((startMode == VirtualTreeCursor::VMInvalidCursor) || (startMode == VirtualTreeCursor::VMDownCursor)) {
+         cursor->setToFather();
+         doesExcludeFirst = false;
+      };
+   }
+   else {
+      cursor->setToRoot();
+      doesExcludeFirst = false;
+   };
+
+   if (endMode != VirtualTreeCursor::VMTree) {
+      endCursor = thisTree.newCursor();
+      endCursor = *end;
+      doesExcludeLast = false;
+      end = endCursor.key();
+      if ((endMode == VirtualTreeCursor::VMDownCursor) || !endCursor->setToLastBrother())
+         endCursor->setToFather();
+   };
+   if (doesExcludeFirst && end && cursor->isEqual(*end) && !hasSons(*end))
+      return true;
+
+   Element* oldElement = nullptr;
+   if (doesExcludeFirst) {
+      if (cursor->setToFirstSon()) {
+         if (doesExcludeLast && end && cursor->isEqual(*end))
+            return true;
+         if (!action.init(thisTree, *cursor))
+            return false;
+      }
+      else {
+         cursor->setToFather();
+         if (cursor->setToNextBrother()) {
+            if (end && cursor->isEqual(*end) && !hasSons(*end)) {
+               if (doesExcludeLast)
+                  return true;
+               return action.init(thisTree, *cursor) && action.end(thisTree, *cursor);
+            };
+            if (!action.init(thisTree, *cursor))
+               return false;
+            oldElement = &cursor->elementSAt();
+         }
+         else if (cursor->setToFather()) {
+            if (end && cursor->isEqual(*end)) {
+               if (doesExcludeLast)
+                  return true;
+               return action.init(thisTree, *cursor) && action.end(thisTree, *cursor);
+            };
+            if (!action.init(thisTree, *cursor))
+               return false;
+            oldElement = &cursor->elementSAt();
+            while (!cursor->setToNextBrother()) {
+               if (end && cursor->isSon(*end)) {
+                  if (doesExcludeLast)
+                     return true;
+                  cursor->setToFather();
+                  return action.ascent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+               };
+               if (cursor->setToFather()) {
+                  if (!action.ascent(*cursor, *oldElement))
+                     return false;
+                  oldElement = &cursor->elementSAt();
+               };
+            };
+         }
+         else
+            return true;
+      };
+   }
+   else {
+      if (!action.init(thisTree, *cursor))
+         return false;
+      oldElement = &cursor->elementSAt();
+   };
+
+
+   while (true) {
+      if (cursor->setToFirstSon()) {
+         if (end && cursor->isEqual(*end) && !hasSons(*cursor)) {
+            if (doesExcludeLast) {
+               cursor->setToFather();
+               return action.end(thisTree, *cursor);
+            };
+            return action.descent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+         };
+         if (!action.descent(*cursor, *oldElement))
+            return false;
+      }
+      else {
+         cursor->setToFather(); // back to a consistent cursor
+         while (true) {
+            if (cursor->setToNextBrother()) {
+               if (end && end->isEqual(*cursor) && !hasSons(*cursor)) {
+                  if (doesExcludeLast) {
+                     cursor->setToPreviousBrother();
+                     return action.end(thisTree, *cursor);
+                  };
+                  return action.next(*cursor, *oldElement) && action.end(thisTree, *cursor);
+               }
+               if (!action.next(*cursor, *oldElement))
+                  return false;
+               oldElement = &cursor->elementSAt();
+               break;
+            }
+            else if (cursor->setToFather()) {
+               if (end && end->isEqual(*cursor)) {
+                  if (doesExcludeLast) {
+                     cursor->setToLastSon();
+                     return action.end(thisTree, *cursor);
+                  };
+                  return action.ascent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+               };
+               if (!action.ascent(*cursor, *oldElement))
+                  return false;
+            }
+            else {
+               cursor->setToRoot();
+               return action.end(thisTree, *cursor);
+            };
+         };
+      };
+      oldElement = (Element*) &cursor->elementSAt();
+   };
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::tforeachSDo(TemplateParameters, Action& action,
+      const ExtendedTreeLocateParameters& parameters,
+      const typename TemplateParameters::Tree::Cursor* start,
+      const typename TemplateParameters::Tree::Cursor* end) const {
+   typedef typename TemplateParameters::Tree TypeTree;
+
+   const VirtualCollectionCursor *pvcStart = start, *pvcEnd = end;
+   if (!normalize(pvcStart, pvcEnd))
+      return true;
+   start = (const typename TypeTree::Cursor*) pvcStart;
+   end = (const typename TypeTree::Cursor*) pvcEnd;
+
+   if (parameters.isSingleLevel() && !parameters.isInnerSons()) {
+      if (parameters.isBrother()) {
+         if (!start || !end || start->isBrother(*end))
+            return foreachBrotherLevelSDo(TemplateParameters(), action, parameters, start, end);
+         return foreachMultiBrotherLevelSDo(TemplateParameters(), action, parameters, start, end);
+      }
+      else { // parameters.isSons()
+         if (!start || !end || start->isEqual(*end))
+            return foreachSonLevelSDo(TemplateParameters(), action, parameters, start, end);
+         return foreachMultiSonLevelSDo(TemplateParameters(), action, parameters, start, end);
+      };
+   }
+   else if (parameters.isInnerSons())
+      return foreachInnerSonsLevelSDo(TemplateParameters(), action, parameters, start, end);
+   else if (parameters.isBrother()) // !parameters.isSingleLevel()
+      return foreachBrothersSDo(TemplateParameters(), action, parameters, start, end);
+   return foreachSonsSDo(TemplateParameters(), action, parameters, start, end);
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::tforeachSDo(TemplateParameters, Action& action) const {
+   typedef typename TemplateParameters::Element Element;
+   typedef typename TemplateParameters::Tree TypeTree;
+   const TypeTree& thisTree = ((const TypeTree&) *this);
+
+   typename TypeTree::PPCursor cursor = thisTree.newCursor();
+   if (!cursor->setToRoot())
+      return true;
+   if (!action.init(thisTree, *cursor))
+      return false;
+
+   while (true) {
+      Element* oldElement = (Element*) &cursor->elementSAt();
+      if (cursor->setToFirstSon()) {
+         if (!action.descent(*cursor, *oldElement))
+            return false;
+      }
+      else {
+         cursor->setToFather(); // back to a consistent cursor
+         while (true) {
+            if (cursor->setToNextBrother()) {
+               if (!action.next(*cursor, *oldElement))
+                  return false;
+               break;
+            }
+            else if (cursor->setToFather()) {
+               if (!action.ascent(*cursor, *oldElement))
+                  return false;
+               if (cursor->isRoot())
+                  return action.end(thisTree, *cursor);
+               oldElement = &cursor->elementSAt();
+            }
+            else {
+               cursor->setToRoot();
+               return action.end(thisTree, *cursor);
+            };
+         };
+      };
+   };
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::tforeachSSubnodeDo(TemplateParameters, Action& action,
+      const typename TemplateParameters::Tree::Cursor& originCursor) const {
+   typedef typename TemplateParameters::Element Element;
+   typedef typename TemplateParameters::Tree TypeTree;
+   typedef typename TypeTree::PPCursor PPTreeCursor;
+
+   const TypeTree& thisTree = (const TypeTree&) *this;
+
+   PPTreeCursor cursor = PPTreeCursor(originCursor);
+   if (!cursor->isValid())
+      return true;
+   if (!action.init(thisTree, *cursor))
+      return false;
+
+   while (true) {
+      Element* oldElement = (Element*) &cursor->elementSAt();
+      if (cursor->setToFirstSon()) {
+         if (!action.descent(*cursor, *oldElement))
+            return false;
+      }
+      else {
+         cursor->setToFather(); // back to a consistent cursor
+         if (originCursor.isEqual(*cursor))
+            return action.end(thisTree, *cursor);
+         while (true) {
+            if (cursor->setToNextBrother()) {
+               if (!action.next(*cursor, *oldElement))
+                  return false;
+               break;
+            }
+            else if (cursor->setToFather()) {
+               if (!action.ascent(*cursor, *oldElement))
+                  return false;
+               if (originCursor.isEqual(*cursor))
+                  return action.end(thisTree, *cursor);
+               oldElement = &cursor->elementSAt();
+            }
+            else
+               return true;
+         };
+      };
+   };
+}
+
+/* Implementation of the reverse iteration methods */
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::foreachSonLevelSReverseDo(TemplateParameters, Action& action,
+      const ExtendedTreeLocateParameters& parameters,
+      const typename TemplateParameters::Tree::Cursor* start,
+      const typename TemplateParameters::Tree::Cursor* end) const {
+   typedef typename TemplateParameters::Element Element;
+   typedef typename TemplateParameters::Tree TypeTree;
+
+   const TypeTree& thisTree = ((const TypeTree&) *this);
+   typename TypeTree::PPCursor cursor = thisTree.newCursor();
+
+   if (start)
+      *cursor = *start;
+   else if (end)
+      *cursor = *end;
+   else if (!cursor->setToRoot())
+      return true;
+   Element* oldElement = nullptr;
+
+   if (parameters.isFirstExcluded() || (!start && end)) {
+      if (!cursor->setToLastSon())
+         return true;
+      if (!action.init(thisTree, *cursor))
+         return false;
+   }
+   else {
+      if (!action.init(thisTree, *cursor))
+         return false;
+      oldElement = (Element*) &cursor->elementSAt();
+      if (!cursor->setToLastSon()) {
+         cursor->setToFather();
+         return action.end(thisTree, *cursor);
+      };
+      if (!action.descent(*cursor, *oldElement))
+         return false;
+   };
+   oldElement = (Element*) &cursor->elementSAt();
+   while (cursor->setToPreviousBrother()) {
+      if (!action.next(*cursor, *oldElement))
+         return false;
+      oldElement = (Element*) &cursor->elementSAt();
+   };
+
+   if (parameters.isLastExcluded() || (start && !end)) {
+      cursor->setToFirstBrother();
+      return action.end(thisTree, *cursor);
+   };
+   cursor->setToFather();
+   return action.ascent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::foreachBrotherLevelSReverseDo(TemplateParameters, Action& action,
+      const ExtendedTreeLocateParameters& parameters,
+      const typename TemplateParameters::Tree::Cursor* start,
+      const typename TemplateParameters::Tree::Cursor* end) const {
+   typedef typename TemplateParameters::Element Element;
+   typedef typename TemplateParameters::Tree TypeTree;
+
+   const TypeTree& thisTree = ((const TypeTree&) *this);
+   typename TypeTree::PPCursor cursor = thisTree.newCursor();
+
+   if (!start || !end) {
+      if (!start && !end) {
+         if (!cursor->setToRoot())
+            return true;
+         return (parameters.getRelativePosition() == RPExact)
+            ? (action.init(thisTree, *cursor) && action.end(thisTree, *cursor)) : true;
+      }
+      else if (!start) { // end != nullptr
+         *cursor = *end;
+
+         if (!cursor->setToLastBrother()
+               || (cursor->isEqual(*end) && parameters.isLastExcluded()))
+            return true;
+         if (!action.init(thisTree, *cursor))
+            return false;
+         Element* oldElement = (Element*) &cursor->elementSAt();
+         while (!cursor->isEqual(*end) && cursor->setToPreviousBrother()) {
+            if (!action.next(*cursor, *oldElement))
+               return false;
+            oldElement = (Element*) &cursor->elementSAt();
+         };
+         AssumeCondition(cursor->isEqual(*end))
+         if (parameters.isLastExcluded())
+            cursor->setToNextBrother();
+         else if (!action.next(*cursor, *oldElement))
+            return false;
+         return action.end(thisTree, *cursor);
+      }
+      else { // (start != nullptr) && (end == nullptr)
+         *cursor = *start;
+
+         if (parameters.isFirstExcluded() && !cursor->setToPreviousBrother())
+            return true;
+         if (!action.init(thisTree, *cursor))
+            return false;
+         Element* oldElement = (Element*) &cursor->elementSAt();
+         while (cursor->setToPreviousBrother()) {
+            if (!action.next(*cursor, *oldElement))
+               return false;
+            oldElement = (Element*) &cursor->elementSAt();
+         }; 
+         cursor->setToFirstBrother();
+         return action.end(thisTree, *cursor);
+      };
+   }
+   else {
+      *cursor = *start;
+
+      if (parameters.isFirstExcluded()) {
+         if (start->isEqual(*end) || (cursor->setToPreviousBrother()
+               && parameters.isLastExcluded() && cursor->isEqual(*end)))
+            return true;
+      }
+      else if (parameters.isLastExcluded() && start->isEqual(*end))
+         return true;
+      if (!action.init(thisTree, *cursor))
+         return false;
+      Element* oldElement = (Element*) &cursor->elementSAt();
+      while (!cursor->isEqual(*end) && cursor->setToPreviousBrother()) {
+         if (!action.next(*cursor, *oldElement))
+            return false;
+         oldElement = (Element*) &cursor->elementSAt();
+      };
+      AssumeCondition(cursor->isEqual(*end))
+      if (parameters.isLastExcluded())
+         cursor->setToNextBrother();
+      else if (!action.next(*cursor, *oldElement))
+         return false;
+      return action.end(thisTree, *cursor);
+   };
+   return true;
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::foreachMultiSonLevelSReverseDo(TemplateParameters, Action& action,
+      const ExtendedTreeLocateParameters& parameters,
+      const typename TemplateParameters::Tree::Cursor* start,
+      const typename TemplateParameters::Tree::Cursor* end) const {
+   typedef typename TemplateParameters::Tree TypeTree;
+   const TypeTree& thisTree = ((const TypeTree&) *this);
+
+   typename TypeTree::PPCursor cursor = thisTree.newCursor();
+   *cursor = *start;
+   VirtualTreeCursor::ValidityMode startMode = start->_getMode(), endMode = end->getMode();
+   AssumeCondition((startMode != VirtualTreeCursor::VMUpRoot) && (startMode != VirtualTreeCursor::VMDownCursor)
+      && (endMode != VirtualTreeCursor::VMUpRoot) && (endMode != VirtualTreeCursor::VMDownCursor))
+   PNT::PassPointer<VirtualTreeCursor::VirtualCursorPath> path = cursor->newPath(end);
+
+   EnhancedObject* oldElement = nullptr;
+   bool hasAscent = true;
+   bool hasUp = true;
+   // Traitement du init et des premiers enfants
+   if ((startMode == VirtualTreeCursor::VMInvalidCursor) || path->hasAscent()) {
+      AssumeCondition(path->hasAscent())
+      if ((startMode == VirtualTreeCursor::VMTree) && !parameters.isFirstExcluded()) {
+         if (!action.init(thisTree, *cursor))
+            return false;
+         oldElement = &cursor->elementSAt();
+         if (cursor->setToLastSon()) {
+            if (!action.descent(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+            while (cursor->setToPreviousBrother()) {
+               if (!action.next(*cursor, *oldElement))
+                  return false;
+               oldElement = &cursor->elementSAt();
+            };
+            cursor->setToFather();
+            if (!action.ascent(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         }
+         else
+            cursor->setToFather();
+      }
+      else { // path->hasAscent() && ((startMode == VMInvalidCursor) || parameters.isFirstExcluded())
+         if ((startMode == VirtualTreeCursor::VMTree) && cursor->setToLastSon()) {
+            if (!action.init(thisTree, *cursor))
+               return false;
+            oldElement = &cursor->elementSAt();
+            while (cursor->setToPreviousBrother()) {
+               if (!action.next(*cursor, *oldElement))
+                  return false;
+               oldElement = &cursor->elementSAt();
+            };
+            cursor->setToFather();
+            if (!action.ascent(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         }
+         else {
+            path->ascent(*cursor);
+            if (!path->hasDescent() && cursor->isEqual(*end)) {
+               if (parameters.isLastExcluded())
+                  return true;
+               return action.init(thisTree, *cursor) && action.end(thisTree, *cursor);
+            };
+            if (!action.init(thisTree, *cursor))
+               return false;
+            oldElement = &cursor->elementSAt();
+         }
+      };
+   }
+   else { // startMode == VMTree && !path->hasAscent()
+      hasAscent = false;
+      if (path->hasNext(*cursor)) {
+         bool isOnSon = false;
+         if (!parameters.isFirstExcluded()) {
+            if (!action.init(thisTree, *cursor))
+               return false;
+            if (cursor->setToLastSon()) {
+               isOnSon = true;
+               if (!action.descent(*cursor, *oldElement))
+                  return false;
+               oldElement = &cursor->elementSAt();
+            };
+         }
+         else if (cursor->setToLastSon()) { // parameters.isFirstExcluded()
+            if (!action.init(thisTree, *cursor))
+               return false;
+            oldElement = &cursor->elementSAt();
+            isOnSon = true;
+         };
+
+         if (isOnSon) {
+            while (cursor->setToPreviousBrother()) {
+               if (!action.next(*cursor, *oldElement))
+                  return false;
+               oldElement = &cursor->elementSAt();
+            };
+            cursor->setToFather();
+            if (!action.ascent(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         }
+         else
+            cursor->setToFather();
+      }
+      else { // !path->hasNext(*cursor)
+         hasUp = false;
+         if (!parameters.isFirstExcluded()) {
+            if (!action.init(thisTree, *cursor))
+               return false;
+            oldElement = &cursor->elementSAt();
+            if (path->descent(*cursor)) {
+               int sonIndex = 0;
+               while (cursor->setToNextBrother())
+                  ++sonIndex;
+               cursor->setToLastBrother();
+               if (!action.descent(*cursor, *oldElement))
+                  return false;
+               oldElement = &cursor->elementSAt();
+               while (--sonIndex >= 0) {
+                  if (!cursor->setToPreviousBrother())
+                     {  AssumeUncalled }
+                  if (!action.next(*cursor, *oldElement))
+                     return false;
+                  oldElement = &cursor->elementSAt();
+               };
+            }
+            else
+               { AssumeUncalled }
+         }
+         else if (path->descent(*cursor)) {
+            if (cursor->isLastSon() && cursor->isEqual(*end)
+                  && !hasSons(*end) && parameters.isLastExcluded())
+               return true;
+            int sonIndex = 0;
+            while (cursor->setToNextBrother())
+               ++sonIndex;
+            cursor->setToLastBrother();
+            if (!action.init(thisTree, *cursor))
+               return false;
+            oldElement = &cursor->elementSAt();
+            while (--sonIndex >= 0) {
+               if (!cursor->setToPreviousBrother())
+                  {  AssumeUncalled }
+               if (!action.next(*cursor, *oldElement))
+                  return false;
+               oldElement = &cursor->elementSAt();
+            };
+         }
+         else
+            {  AssumeUncalled }
+      };
+   };
+
+   // treatment of the ascending part
+   bool hasDescent = path->hasDescent();
+   if (hasAscent) {
+      while ((hasDescent || !cursor->isSon(*end)) && path->ascent(*cursor)) {
+         if (!action.ascent(*cursor, *oldElement))
+            return false;
+         oldElement = &cursor->elementSAt();
+      };
+
+      if (!hasDescent && cursor->isSon(*end)) {
+         if (!action.ascent(*cursor, *oldElement))
+            return false;
+         oldElement = &cursor->elementSAt();
+         while (path->next(*cursor)) {
+            if (!action.next(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         };
+         if (parameters.isLastExcluded())
+            return action.end(thisTree, *cursor);
+         cursor->setToFather();
+         return action.ascent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+      };
+   };
+
+   if (hasUp) {
+      path->up(*cursor);
+      if (!action.ascent(*cursor, *oldElement))
+         return false;
+      oldElement = &cursor->elementSAt();
+      path->down(*cursor);
+      if (!action.descent(*cursor, *oldElement))
+         return false;
+      oldElement = &cursor->elementSAt();
+   };
+
+   if (!hasDescent) {
+      if (cursor->setToLastSon()) {
+         if (!action.descent(*cursor, *oldElement))
+            return false;
+         oldElement = &cursor->elementSAt();
+         while (cursor->setToPreviousBrother()) {
+            if (!action.next(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         };
+         if (parameters.isLastExcluded()) {
+            cursor->setToFirstBrother();
+            return action.end(thisTree, *cursor);
+         };
+         cursor->setToFather();
+         return action.ascent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+      }
+      else {
+         cursor->setToFather();
+         return action.end(thisTree, *cursor);
+      };
+   };
+
+   // treatment of the descending part
+   while (hasDescent && !cursor->isFather(*end) && path->descent(*cursor)) {
+      if (!action.descent(*cursor, *oldElement))
+         return false;
+      oldElement = &cursor->elementSAt();
+   };
+
+   AssumeCondition(cursor->isFather(*end))
+
+   if ((endMode == VirtualTreeCursor::VMTree) && hasSons(*end)) {
+      path->descent(*cursor);
+      if (!action.descent(*cursor, *oldElement))
+         return false;
+      oldElement = &cursor->elementSAt();
+
+      cursor->setToLastSon();
+      if (!action.descent(*cursor, *oldElement))
+         return false;
+      oldElement = &cursor->elementSAt();
+      
+      while (cursor->setToPreviousBrother()) {
+         if (!action.next(*cursor, *oldElement))
+            return false;
+         oldElement = &cursor->elementSAt();
+      };
+
+      if (parameters.isLastExcluded()) {
+         cursor->setToFirstBrother();
+         return action.end(thisTree, *cursor);
+      };
+      cursor->setToFather();
+      return action.ascent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+   };
+
+   if (!parameters.isFirstExcluded()) {
+      path->descent(*cursor);
+      if (!action.descent(*cursor, *oldElement))
+         return false;
+   };
+   return action.end(thisTree, *cursor);
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::foreachMultiBrotherLevelSReverseDo(TemplateParameters, Action& action,
+      const ExtendedTreeLocateParameters& parameters,
+      const typename TemplateParameters::Tree::Cursor* start,
+      const typename TemplateParameters::Tree::Cursor* end) const {
+   typedef typename TemplateParameters::Element Element;
+   typedef typename TemplateParameters::Tree TypeTree;
+   const TypeTree& thisTree = ((const TypeTree&) *this);
+
+   typename TypeTree::PPCursor cursor = thisTree.newCursor();
+   *cursor = *start;
+   VirtualTreeCursor::ValidityMode startMode = start->_getMode(), endMode = end->getMode();
+   AssumeCondition((startMode != VirtualTreeCursor::VMUpRoot) && (startMode != VirtualTreeCursor::VMDownCursor)
+      && (endMode != VirtualTreeCursor::VMUpRoot) && (endMode != VirtualTreeCursor::VMDownCursor))
+   PNT::PassPointer<VirtualTreeCursor::VirtualCursorPath> path = cursor->newPath(end);
+
+   bool hasAscent = true;
+   if ((startMode == VirtualTreeCursor::VMInvalidCursor) || path->hasAscent()) {
+      AssumeCondition(path->hasAscent())
+      if (((startMode == VirtualTreeCursor::VMTree) && !parameters.isFirstExcluded())
+            || cursor->setToPreviousBrother()) {
+         if (!action.init(thisTree, *cursor))
+            return false;
+      }
+      else {
+         if ((endMode == VirtualTreeCursor::VMTree) && end->isFather(*start))
+            return true;
+         path->ascent(*cursor);
+         if (!action.init(thisTree, *cursor))
+            return false;
+      };
+   }
+   else { // startMode == VMTree && !path->hasAscent()
+      hasAscent = false;
+      if (path->hasNext(*cursor)) {
+         if (!parameters.isFirstExcluded() || path->next(*cursor)) {
+            if (!action.init(thisTree, *cursor))
+               return false;
+         }
+         else { // parameters.isFirstExcluded() && !path->next(*cursor)
+            if (end->isSon(*start))
+               return true;
+            path->descent(*cursor);
+            cursor->setToLastBrother();
+            if (!action.init(thisTree, *cursor))
+               return false;
+         };
+      }
+      else { // !path->hasNext(*cursor)
+         if (parameters.isFirstExcluded()) {
+            if (!path->down(*cursor) || cursor->isEqual(*end))
+               return true;
+            cursor->setToLastBrother();
+         };
+         if (!action.init(thisTree, *cursor))
+            return false;
+      }
+   };
+
+   Element* oldElement = &cursor->elementSAt();
+   bool hasDescent = !hasAscent && path->hasDescent();
+   while (true) {
+      if (!hasAscent && !hasDescent) {
+         while (path->next(*cursor)) {
+            if ((endMode == VirtualTreeCursor::VMTree) && cursor->isEqual(*end)) {
+               if (parameters.isLastExcluded()) {
+                  cursor->setToNextBrother();
+                  return action.end(thisTree, *cursor);
+               };
+               return action.next(*cursor, *oldElement) && action.end(thisTree, *cursor);
+            };
+            if (!action.next(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         };
+         cursor->setToFirstBrother();
+         return action.end(thisTree, *cursor);
+      }
+      else {
+         while (path->next(*cursor)) {
+            if (!action.next(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         };
+      };
+      
+      if (hasAscent) {
+         if (!hasDescent && cursor->isSon(*end)) {
+            if (parameters.isLastExcluded())
+               return action.end(thisTree, *cursor);
+            path->ascent(*cursor);
+            return action.ascent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+         };
+         if (path->ascent(*cursor)) {
+            if (!action.ascent(*cursor, *oldElement))
+               return false;
+         }
+         else
+            hasAscent = false;
+      };
+      if (!hasAscent) {
+         if ((endMode == VirtualTreeCursor::VMTree) && end->isFirstSon(*cursor)) {
+            if (parameters.isLastExcluded())
+               return action.end(thisTree, *cursor);
+            path->descent(*cursor);
+            return action.descent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+         };
+         if (path->descent(*cursor)) {
+            hasDescent = path->hasDescent();
+            cursor->setToLastBrother();
+            if (!action.descent(*cursor, *oldElement))
+               return false;
+         }
+         else
+            return true;
+      };
+      oldElement = &cursor->elementSAt();
+   };
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::foreachInnerSonsLevelSReverseDo(TemplateParameters, Action& action,
+      const ExtendedTreeLocateParameters& parameters,
+      const typename TemplateParameters::Tree::Cursor* start,
+      const typename TemplateParameters::Tree::Cursor* end) const {
+   typedef typename TemplateParameters::Tree TypeTree;
+   const TypeTree& thisTree = ((const TypeTree&) *this);
+
+   typename TypeTree::PPCursor cursor = thisTree.newCursor(), endCursor;
+   VirtualTreeCursor::ValidityMode
+      startMode = start ? start->_getMode() : VirtualTreeCursor::VMTree,
+      endMode = end ? end->_getMode() : VirtualTreeCursor::VMTree;
+   bool doesExcludeLast = parameters.isLastExcluded(), doesExcludeFirst = parameters.isFirstExcluded();
+   if (start) {
+      *cursor = *start;
+      if (hasSons(*cursor)) {
+         cursor->setToInnerLastSon();
+         doesExcludeFirst = false;
+      };
+   }
+   else {
+      cursor->setToRoot();
+      cursor->setToInnerLastSon();
+      doesExcludeFirst = false;
+   };
+   if (endMode != VirtualTreeCursor::VMTree) {
+      endCursor = thisTree.newCursor();
+      endCursor = *end;
+      doesExcludeLast = false;
+      end = endCursor.key();
+      if ((endMode == VirtualTreeCursor::VMDownCursor) || !endCursor->setToFirstBrother())
+         endCursor->setToFather();
+   };
+   if (startMode != VirtualTreeCursor::VMTree) {
+      if ((startMode == VirtualTreeCursor::VMDownCursor) || !cursor->setToLastBrother())
+         cursor->setToFather();
+   }
+   else if (doesExcludeFirst) {
+      if (end && cursor->isEqual(*end))
+         return true;
+      do {
+         cursor->setToPrevious(VirtualTreeCursor::RBottomUp);
+      } while (hasSons(*cursor) && !cursor->isEqual(*end));
+      if (hasSons(*cursor))
+         return true;
+   };
+
+   if (end && cursor->isEqual(*end))
+      return doesExcludeLast || (action.init(thisTree, *cursor) && action.end(thisTree, *cursor));
+
+   if (!action.init(thisTree, *cursor))
+      return false;
+   EnhancedObject* oldElement = &cursor->elementSAt();
+   bool hasFinished = false;
+   while (true) {
+      do {
+         cursor->setToPrevious(VirtualTreeCursor::RBottomUp);
+      } while (cursor->isValid() && hasSons(*cursor)
+               && !(hasFinished = (!cursor->isValid() || (end && cursor->isEqual(*end)))));
+      if (hasFinished) {
+         if (!cursor->isValid() || hasSons(*cursor) || doesExcludeLast) {
+            do {
+               cursor->setToNext(VirtualTreeCursor::RTopDown);
+            } while (hasSons(*cursor));
+            return action.end(thisTree, *cursor);
+         };
+         return action.next(*cursor, *oldElement) && action.end(thisTree, *cursor);
+      }
+      if (!action.next(*cursor, *oldElement))
+         return false;
+      oldElement = &cursor->elementSAt();
+   };
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::foreachBrothersSReverseDo(TemplateParameters, Action& action,
+      const ExtendedTreeLocateParameters& parameters,
+      const typename TemplateParameters::Tree::Cursor* start,
+      const typename TemplateParameters::Tree::Cursor* end) const {
+   typedef typename TemplateParameters::Tree TypeTree;
+   const TypeTree& thisTree = ((const TypeTree&) *this);
+   typename TypeTree::PPCursor cursor = thisTree.newCursor(), endCursor;
+   VirtualTreeCursor::ValidityMode
+      startMode = start ? start->_getMode() : VirtualTreeCursor::VMTree,
+      endMode = end ? end->_getMode() : VirtualTreeCursor::VMTree;
+   bool doesExcludeLast = parameters.isLastExcluded(), doesExcludeFirst = parameters.isFirstExcluded();
+   if (start) {
+      *cursor = *start;
+      if ((startMode == VirtualTreeCursor::VMInvalidCursor) || (startMode == VirtualTreeCursor::VMDownCursor)) {
+         cursor->setToFather();
+         doesExcludeFirst = false;
+      };
+   }
+   else {
+      cursor->setToRoot();
+      doesExcludeFirst = false;
+   };
+
+   if (endMode != VirtualTreeCursor::VMTree) {
+      endCursor = thisTree.newCursor();
+      endCursor = *end;
+      doesExcludeLast = false;
+      end = endCursor.key();
+      if ((endMode == VirtualTreeCursor::VMDownCursor) || !endCursor->setToFirstBrother())
+         endCursor->setToFather();
+   };
+   if (doesExcludeFirst && end && cursor->isEqual(*end))
+      return true;
+   EnhancedObject* oldElement = nullptr;
+   if (doesExcludeFirst) {
+      if (cursor->setToPreviousBrother()) {
+         if (doesExcludeLast && end && cursor->isEqual(*end))
+            return true;
+         if (!action.init(thisTree, *cursor))
+            return false;
+         oldElement = &cursor->elementSAt();
+         while (cursor->setToLastSon()) {
+            if (!action.descent(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         };
+         cursor->setToFather();
+      }
+      else if (!cursor->setToFather())
+         return true;
+      else if (!action.init(thisTree, *cursor))
+         return false;
+      else
+         oldElement = &cursor->elementSAt();
+   }
+   else {
+      if (!action.init(thisTree, *cursor))
+         return false;
+      oldElement = &cursor->elementSAt();
+   };
+
+   while (true) {
+      if (cursor->setToPreviousBrother()) {
+         if (end && cursor->isEqual(*end)) {
+            if (doesExcludeLast) {
+               cursor->setToNextBrother();
+               return action.end(thisTree, *cursor);
+            };
+            return action.next(*cursor, *oldElement) && action.end(thisTree, *cursor);
+         };
+         if (!action.next(*cursor, *oldElement))
+            return false;
+         oldElement = &cursor->elementSAt();
+
+         while (cursor->setToLastSon()) {
+            if (end && cursor->isEqual(*end)) {
+               if (doesExcludeLast) {
+                  cursor->setToFather();
+                  return action.end(thisTree, *cursor);
+               };
+               return action.descent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+            };
+            if (!action.descent(*cursor, *oldElement))
+               return false;
+            oldElement = &cursor->elementSAt();
+         };
+         cursor->setToFather();
+      }
+      else {
+         if (end && cursor->isSon(*end)) {
+            if (doesExcludeLast)
+               return action.end(thisTree, *cursor);
+            cursor->setToFather();
+            return action.ascent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+         };
+         if (!cursor->setToFather()) {
+            cursor->setToRoot();
+            return action.end(thisTree, *cursor);
+         };
+         if (!action.ascent(*cursor, *oldElement))
+            return false;
+         oldElement = &cursor->elementSAt();
+      };
+   };
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::foreachSonsSReverseDo(TemplateParameters, Action& action,
+      const ExtendedTreeLocateParameters& parameters,
+      const typename TemplateParameters::Tree::Cursor* start,
+      const typename TemplateParameters::Tree::Cursor* end) const {
+   typedef typename TemplateParameters::Element Element;
+   typedef typename TemplateParameters::Tree TypeTree;
+
+   const TypeTree& thisTree = ((const TypeTree&) *this);
+   typename TypeTree::PPCursor cursor = thisTree.newCursor(), endCursor;
+   VirtualTreeCursor::ValidityMode
+      startMode = start ? start->_getMode() : VirtualTreeCursor::VMTree,
+      endMode = end ? end->_getMode() : VirtualTreeCursor::VMTree;
+   bool doesExcludeLast = parameters.isLastExcluded(), doesExcludeFirst = parameters.isFirstExcluded();
+   if (start) {
+      *cursor = *start;
+      if ((startMode == VirtualTreeCursor::VMInvalidCursor) || (startMode == VirtualTreeCursor::VMDownCursor)) {
+         cursor->setToFather();
+         doesExcludeFirst = false;
+      };
+   }
+   else {
+      cursor->setToRoot();
+      doesExcludeFirst = false;
+   };
+
+   if (endMode != VirtualTreeCursor::VMTree) {
+      endCursor = thisTree.newCursor();
+      endCursor = *end;
+      doesExcludeLast = false;
+      end = endCursor.key();
+      if ((endMode == VirtualTreeCursor::VMDownCursor) || !endCursor->setToFirstBrother())
+         endCursor->setToFather();
+   };
+   if (doesExcludeFirst && end && cursor->isEqual(*end) && !hasSons(*end))
+      return true;
+
+   Element* oldElement = nullptr;
+   if (doesExcludeFirst) {
+      if (cursor->setToLastSon()) {
+         if (doesExcludeLast && end && cursor->isEqual(*end))
+            return true;
+         if (!action.init(thisTree, *cursor))
+            return false;
+      }
+      else {
+         cursor->setToFather();
+         if (cursor->setToPreviousBrother()) {
+            if (end && cursor->isEqual(*end) && !hasSons(*end)) {
+               if (doesExcludeLast)
+                  return true;
+               return action.init(thisTree, *cursor) && action.end(thisTree, *cursor);
+            };
+            if (!action.init(thisTree, *cursor))
+               return false;
+            oldElement = &cursor->elementSAt();
+         }
+         else if (cursor->setToFather()) {
+            if (end && cursor->isEqual(*end)) {
+               if (doesExcludeLast)
+                  return true;
+               return action.init(thisTree, *cursor) && action.end(thisTree, *cursor);
+            };
+            if (!action.init(thisTree, *cursor))
+               return false;
+            oldElement = &cursor->elementSAt();
+            while (!cursor->setToPreviousBrother()) {
+               if (end && cursor->isSon(*end)) {
+                  if (doesExcludeLast)
+                     return true;
+                  cursor->setToFather();
+                  return action.ascent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+               };
+               if (cursor->setToFather()) {
+                  if (!action.ascent(*cursor, *oldElement))
+                     return false;
+                  oldElement = &cursor->elementSAt();
+               };
+            };
+         }
+         else
+            return true;
+      };
+   }
+   else {
+      if (!action.init(thisTree, *cursor))
+         return false;
+      oldElement = &cursor->elementSAt();
+   };
+
+
+   while (true) {
+      if (cursor->setToLastSon()) {
+         if (end && cursor->isEqual(*end) && !hasSons(*cursor)) {
+            if (doesExcludeLast) {
+               cursor->setToFather();
+               return action.end(thisTree, *cursor);
+            };
+            return action.descent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+         };
+         if (!action.descent(*cursor, *oldElement))
+            return false;
+      }
+      else {
+         cursor->setToFather(); // back to a consistent cursor
+         while (true) {
+            if (cursor->setToPreviousBrother()) {
+               if (end && end->isEqual(*cursor) && !hasSons(*cursor)) {
+                  if (doesExcludeLast) {
+                     cursor->setToNextBrother();
+                     return action.end(thisTree, *cursor);
+                  };
+                  return action.next(*cursor, *oldElement) && action.end(thisTree, *cursor);
+               }
+               if (!action.next(*cursor, *oldElement))
+                  return false;
+               oldElement = &cursor->elementSAt();
+               break;
+            }
+            else if (cursor->setToFather()) {
+               if (end && end->isEqual(*cursor)) {
+                  if (doesExcludeLast) {
+                     cursor->setToFirstSon();
+                     return action.end(thisTree, *cursor);
+                  };
+                  return action.ascent(*cursor, *oldElement) && action.end(thisTree, *cursor);
+               };
+               if (!action.ascent(*cursor, *oldElement))
+                  return false;
+            }
+            else {
+               cursor->setToRoot();
+               return action.end(thisTree, *cursor);
+            };
+         };
+      };
+      oldElement = (Element*) &cursor->elementSAt();
+   };
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::tforeachSReverseDo(TemplateParameters, Action& action,
+      const ExtendedTreeLocateParameters& parameters,
+      const typename TemplateParameters::Tree::Cursor* start,
+      const typename TemplateParameters::Tree::Cursor* end) const {
+   typedef typename TemplateParameters::Tree TypeTree;
+
+   const VirtualCollectionCursor *pvcStart = start, *pvcEnd = end;
+   if (!normalizeReverse(pvcStart, pvcEnd))
+      return true;
+   start = (const typename TypeTree::Cursor*) pvcStart;
+   end = (const typename TypeTree::Cursor*) pvcEnd;
+
+   if (parameters.isSingleLevel() && !parameters.isInnerSons()) {
+      if (parameters.isBrother()) {
+         if (!start || !end || start->isBrother(*end))
+            return foreachBrotherLevelSReverseDo(TemplateParameters(), action, parameters, start, end);
+         return foreachMultiBrotherLevelSReverseDo(TemplateParameters(), action, parameters, start, end);
+      }
+      else { // parameters.isSons()
+         if (!start || !end || start->isEqual(*end))
+            return foreachSonLevelSReverseDo(TemplateParameters(), action, parameters, start, end);
+         return foreachMultiSonLevelSReverseDo(TemplateParameters(), action, parameters, start, end);
+      };
+   }
+   else if (parameters.isInnerSons())
+      return foreachInnerSonsLevelSReverseDo(TemplateParameters(), action, parameters, start, end);
+   else if (parameters.isBrother()) // !parameters.isSingleLevel()
+      return foreachBrothersSReverseDo(TemplateParameters(), action, parameters, start, end);
+   return foreachSonsSReverseDo(TemplateParameters(), action, parameters, start, end);
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::tforeachSReverseDo(TemplateParameters, Action& action) const {
+   typedef typename TemplateParameters::Element Element;
+   typedef typename TemplateParameters::Tree TypeTree;
+   const TypeTree& thisTree = ((const TypeTree&) *this);
+
+   typename TypeTree::PPCursor cursor = thisTree.newCursor();
+   if (!cursor->setToRoot())
+      return true;
+   if (!action.init(thisTree, *cursor))
+      return false;
+
+   while (true) {
+      Element* oldElement = (Element*) &cursor->elementSAt();
+      if (cursor->setToLastSon()) {
+         if (!action.descent(*cursor, *oldElement))
+            return false;
+      }
+      else {
+         cursor->setToFather(); // back to a consistent cursor
+         while (true) {
+            if (cursor->setToPreviousBrother()) {
+               if (!action.next(*cursor, *oldElement))
+                  return false;
+               break;
+            }
+            else if (cursor->setToFather()) {
+               if (!action.ascent(*cursor, *oldElement))
+                  return false;
+               oldElement = &cursor->elementSAt();
+            }
+            else {
+               cursor->setToRoot();
+               return action.end(thisTree, *cursor);
+            };
+         };
+      };
+   };
+}
+
+template <class Action, class TemplateParameters>
+bool
+VirtualTree::tforeachSSubnodeReverseDo(TemplateParameters, Action& action,
+      const typename TemplateParameters::Tree::Cursor& originCursor) const {
+   typedef typename TemplateParameters::Element Element;
+   typedef typename TemplateParameters::Tree TypeTree;
+   typedef typename TypeTree::PPCursor PPTreeCursor;
+
+   const TypeTree& thisTree = (const TypeTree&) *this;
+
+   PPTreeCursor cursor = PPTreeCursor(originCursor);
+   if (!cursor->isValid())
+      return true;
+   if (!action.init(thisTree, *cursor))
+      return false;
+
+   while (true) {
+      Element* oldElement = (Element*) &cursor->elementSAt();
+      if (cursor->setToLastSon()) {
+         if (!action.descent(*cursor, *oldElement))
+            return false;
+      }
+      else {
+         cursor->setToFather(); // back to a consistent cursor
+         while (true) {
+            if (cursor->setToPreviousBrother()) {
+               if (!action.next(*cursor, *oldElement))
+                  return false;
+               break;
+            }
+            else if (cursor->setToFather()) {
+               if (!action.ascent(*cursor, *oldElement))
+                  return false;
+               if (originCursor.isEqual(*cursor))
+                  return action.end(thisTree, *cursor);
+               oldElement = &cursor->elementSAt();
+            }
+            else
+               return true;
+         };
+      };
+   };
+}
+
+/*************************************************/
+/* Implementation of the class VirtualTreeCursor */
+/*************************************************/
+
+template <class Action> bool
+VirtualTreeCursor::tsetToNext(Route route, Action& action) {
+   if (isValid()) {
+      EnhancedObject* oldElement = &elementSAt();
+      if (route == RTopDown) {
+         if (setToFirstSon())
+            return action.descent(*this, *oldElement);
+         setToFather();
+         if (isRoot()) {
+            if (!action.end(getSupport(), *this))
+               return false;
+            setToFather();
+            return false;
+         };
+         if (setToNextBrother())
+            return action.next(*this, *oldElement);
+         while (setToFather()) {
+            oldElement = &elementSAt();
+            if (!action.ascent(*this, *oldElement))
+               return false;
+            if (isRoot()) {
+				if (!action.end(getSupport(), *this))
+				   return false;
+				setToFather();
+				return false;
+			};
+            if (setToNextBrother())
+               return action.next(*this, *oldElement);
+         };
+         return false;
+      }
+      else {
+         if (setToNextBrother()) {
+            if (!action.next(*this, *oldElement))
+               return false;
+            while (setToFirstSon()) {
+               oldElement = &elementSAt();
+               if (!action.descent(*this, *oldElement))
+                  return false;
+            };
+            setToFather();
+            return true;
+         };
+         if (setToFather())
+            return action.ascent(*this, *oldElement);
+         setToRoot();
+         if (!action.end(getSupport(), *this))
+            return false;
+         setToFather();
+         return false;
+      };
+   }
+   else
+      return tsetToFirst<Action>(route, action);
+}
+
+template <class Action> bool
+VirtualTreeCursor::tsetToFirst(Route route, Action& action) {
+   if (!setToRoot() || !action.init(getSupport(), *this))
+      return false;
+   if (route != RTopDown) {
+      EnhancedObject* oldElement = &elementSAt();
+      while (setToFirstSon()) {
+         if (!action.descent(*this, *oldElement))
+            return false;
+         oldElement = &elementSAt();
+      };
+      setToFather();
+   };
+   return true;
+}
+
+template <class Action> bool
+VirtualTreeCursor::tsetToPrevious(Route route, Action& action) {
+   if (isValid()) {
+      EnhancedObject* oldElement = &elementSAt();
+      if (route != RTopDown) {
+         if (setToLastSon())
+            return action.descent(*this, *oldElement);
+         setToFather();
+         while (setToFather()) {
+            oldElement = &elementSAt();
+            if (!action.ascent(*this, *oldElement))
+               return false;
+            if (setToPreviousBrother())
+               return action.next(*this, *oldElement);
+         };
+         return false;
+      }
+      else {
+         if (setToPreviousBrother()) {
+            if (!action.next(*this, *oldElement))
+               return false;
+            while (setToLastSon()) {
+               oldElement = &elementSAt();
+               if (!action.descent(*this, *oldElement))
+                  return false;
+            };
+            setToFather();
+            return true;
+         };
+         if (setToFather())
+            return action.ascent(*this, *oldElement);
+         setToRoot();
+         if (!action.end(getSupport(), *this))
+            return false;
+         setToFather();
+         return false;
+      };
+   }
+   else
+      return tsetToLast<Action>(route, action);
+}
+
+template <class Action> bool
+VirtualTreeCursor::tsetToLast(Route route, Action& action) {
+   if (!setToRoot() || !action.init(getSupport(), *this))
+      return false;
+   if (route != RTopDown) {
+      EnhancedObject* oldElement = &elementSAt();
+      while (setToLastSon()) {
+         if (!action.descent(*this, *oldElement))
+            return false;
+         oldElement = &elementSAt();
+      };
+      setToFather();
+   };
+   return true;
+}
+
+} // end of namespace COL
+
+#endif

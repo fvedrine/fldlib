@@ -1,0 +1,88 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Concrete collections
+// File      : SortedAVL.inctemplate
+// Description :
+//   Definition of template localization methods for AVLs.
+//
+
+/*****************************************************************************/
+/* DefTypeBinaryParent                 : AVL implementation with parent edge */
+/*****************************************************************************/
+
+#ifndef DefTypeBinaryParent
+#define DefGenericAVL GenericAVL
+#define DefImplBinaryTree ImpBinaryTree
+#define DefGenericAVLCursor GenericAVLCursor
+#else
+#define DefGenericAVL GenericParentAVL
+#define DefImplBinaryTree ImplParentBinaryTree
+#define DefGenericAVLCursor GenericParentAVLCursor
+#endif
+
+template <class TypeLocate>
+DefGenericAVL::LocationResult
+DefGenericAVL::tlocate(TypeLocate locate) const {
+   Node::Balance balance;
+   if (locate.cursor) {
+      locate.cursor->invalidate();
+      balance = tlocateBefore(ImplementationTemplateLocate<TypeLocate>
+            (locate, locate.key, locate.cursor->getImplementation()));
+   }
+   else {
+      inheritedImplementation::Cursor cursor(*this);
+      balance = tlocateBefore(ImplementationTemplateLocate<TypeLocate>(locate, locate.key, cursor));
+   };
+   switch (locate.parameters.getRelativePosition()) {
+      case RPUndefined:
+         return LocationResult((balance == Node::BEqual) ? RPExact
+            : ((balance == Node::BRight) ? RPBefore : RPAfter));
+      case RPBefore:
+         if ((balance == Node::BEqual) || (balance == Node::BRight))
+            return LocationResult((balance == Node::BEqual) ? RPExact : RPBefore);
+         if (locate.cursor && locate.cursor->getImplementation().isValid())
+            locate.cursor->getImplementation().setToPrevious(*this);
+         return LocationResult(RPBefore);
+      case RPAfter:
+         if ((balance == Node::BEqual) || (balance == Node::BLeft))
+            return LocationResult((balance == Node::BEqual) ? RPExact : RPAfter);
+         if (locate.cursor && locate.cursor->getImplementation().isValid())
+            locate.cursor->getImplementation().setToNext(*this);
+         return LocationResult(RPAfter);
+      case RPExact:
+         if (balance == Node::BEqual)
+            return LocationResult(RPExact);
+         if (locate.cursor)
+            locate.cursor->getImplementation().invalidate();
+         return LocationResult();
+   };
+   return LocationResult();
+}
+
+#undef DefGenericAVL
+#undef DefImplBinaryTree
+#undef DefGenericAVLCursor
+

@@ -1,0 +1,594 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Concrete collections
+// File      : Array.incc
+// Description :
+//   Implementation of concrete classes based on sorted and non-sorted arrays.
+//
+
+/********************************************************************/
+/* Implementation of notifications for cursors on DefTypeCollection */
+/********************************************************************/
+
+void
+DefTypeCollection::MoveIndexNotification::update(DefTypeCursor& cursor) const {
+   int cursorIndex = index(cursor);
+   if (cursorIndex == getIndex())
+      setIndex(cursor, uInserted);
+   else if ((getIndex() < uInserted) || (uInserted < 0)) {
+      if ((cursorIndex > getIndex()) && ((cursorIndex < uInserted) || (uInserted < 0)))
+         decreaseIndex(cursor);
+   }
+   else { // getIndex() > uInserted
+      if ((cursorIndex >= uInserted) && (cursorIndex < getIndex()))
+         increaseIndex(cursor);
+   };
+}
+
+void
+DefTypeCollection::MoveBoundNotification::update(DefTypeCursor& cursor) const {
+   int cursorIndex = index(cursor);
+   if ((cursorIndex >= getStartIndex())
+       && ((getEndIndex() < 0) || (cursorIndex <= getEndIndex())))
+      increaseIndex(cursor, uInserted-getStartIndex());
+   else if ((getEndIndex() < uInserted) || (uInserted < 0)) {
+      if (cursorIndex > getEndIndex() && ((cursorIndex < uInserted) || (uInserted < 0)))
+         increaseIndex(cursor, getStartIndex()-getEndIndex()-1);
+   }
+   else { // getStartIndex() > uInserted
+      if ((cursorIndex >= uInserted) && (cursorIndex < getStartIndex()))
+         increaseIndex(cursor, getEndIndex()-getStartIndex()+1);
+   };
+}
+
+/*************************************************/
+/* Implementation of the class DefTypeCollection */
+/*************************************************/
+
+void
+DefTypeCollection::_fullAssign(const DefTypeCollection& source, const ExtendedReplaceParameters& parameters) {
+   DefTypeVirtualInheritedCollection::_fullAssign(source, parameters);
+   if (this != &source) {
+      InvalidateNotification invalidation;
+      notifyCursorUpdate(invalidation);
+      if (parameters.isFree() != parameters.isDuplicate())
+         ImplArray::removeAll(parameters.isFree());
+      try {
+         ImplArray::assign((const ImplArray&) source, parameters.isDuplicate(),
+            parameters.hasCast() ? &parameters.getCast() : nullptr);
+      }
+      catch (...) {
+         ImplArray::removeAll(parameters.isFree());
+         throw;
+      };
+   };
+}
+
+/* Insertion methods */
+void
+DefTypeCollection::_add(EnhancedObject* newElement, const ExtendedInsertionParameters& parameters,
+      DefTypeCursor* cursor) {
+   DefTypeVirtualInheritedCollection::_add(newElement, parameters, cursor);
+   AddGuardian<EnhancedObject> guard(*this, newElement, parameters);
+   newElement = guard.handleDuplication();
+   int index = ImplArray::count();
+   if (parameters.isInsertion()) {
+      if ((cursor == nullptr) || (!cursor->DefTypeCursor::isValid())) {
+         if (parameters.getRelativePosition() == RPAfter) {
+#ifdef DefTypeSorted
+#ifndef DefTypeMultiSorted
+            AssumeCondition((ImplArray::count() == 0)
+               || (DefTypeFinal _compareElement(*newElement, *ImplArray::elementAt(0)) == CRLess))
+#else
+            ComparisonResult compare;
+            AssumeCondition((ImplArray::count() == 0)
+               || ((compare = DefTypeFinal _compareElement(*newElement, *ImplArray::elementAt(0))) == CRLess)
+               || (compare == CREqual))
+#endif
+#endif // DefTypeSorted
+            ImplArray::insertAt(index = 0, newElement);
+         }
+         else {
+#ifdef DefTypeSorted
+#ifndef DefTypeMultiSorted
+            AssumeCondition((ImplArray::count() == 0)
+               || (DefTypeFinal _compareElement(*newElement, *ImplArray::elementAt(ImplArray::count()-1)) == CRGreater))
+#else
+            ComparisonResult compare;
+            AssumeCondition((ImplArray::count() == 0)
+               || ((compare = DefTypeFinal _compareElement(*newElement, *ImplArray::elementAt(ImplArray::count()-1))) == CRGreater)
+               || (compare == CREqual))
+#endif
+#endif // DefTypeSorted
+            ImplArray::insertAtEnd(newElement);
+         };
+         guard.release();
+      }
+      else {
+         index = cursor->index();
+         if (parameters.getRelativePosition() == RPBefore) {
+#ifdef DefTypeSorted
+#ifndef DefTypeMultiSorted
+            AssumeCondition((DefTypeFinal _compareElement(*newElement, *ImplArray::elementAt(index)) == CRLess)
+               && ((index == 0)
+                  || (DefTypeFinal _compareElement(*newElement, *ImplArray::elementAt(index-1)) == CRGreater)))
+#else
+            ComparisonResult result;
+            AssumeCondition((((result = DefTypeFinal _compareElement(*newElement, *ImplArray::elementAt(index))) == CRLess)
+               || (result == CREqual)) && ((index == 0)
+                  || ((result = DefTypeFinal _compareElement(*newElement, *ImplArray::elementAt(index-1))) == CRGreater)
+                  || (result == CREqual)))
+#endif
+#endif // DefTypeSorted
+            ImplArray::insertAt(index, newElement);
+         }
+         else {
+#ifdef DefTypeSorted
+#ifndef DefTypeMultiSorted
+            AssumeCondition((DefTypeFinal _compareElement(*newElement, *ImplArray::elementAt(index)) == CRGreater)
+               && ((index == ImplArray::count()-1)
+                  || (DefTypeFinal _compareElement(*newElement, *ImplArray::elementAt(index+1)) == CRLess)))
+#else
+            ComparisonResult result;
+            AssumeCondition((((result = DefTypeFinal _compareElement(*newElement, *ImplArray::elementAt(index))) == CRGreater)
+               || (result == CREqual)) && ((index == ImplArray::count()-1)
+                  || ((result = DefTypeFinal _compareElement(*newElement, *ImplArray::elementAt(index+1))) == CRLess)
+                  || (result == CREqual)))
+#endif
+#endif // DefTypeSorted
+            ImplArray::insertAt(++index, newElement);
+         };
+         guard.release();
+      };
+   }
+   else {
+#ifdef DefTypeSorted
+      LocationResult result;
+      if (cursor) {
+         result = DefTypeFinal _locate(*newElement, ExtendedLocateParameters(RPUndefined), cursor);
+         AssumeCondition(!result)
+         index = cursor->index()+((result.getInsertionPosition() == RPAfter) ? 1 : 0);
+      }
+      else {
+         PPCursor localCursor(newCursor());
+         result = DefTypeFinal _locate(*newElement, ExtendedLocateParameters(RPUndefined), localCursor.key());
+         AssumeCondition(!result)
+         index = localCursor->index()+((result.getInsertionPosition() == RPAfter) ? 1 : 0);
+      };
+      ImplArray::insertAt(index, newElement);
+#else // DefTypeSorted
+      ImplArray::insertAtEnd(newElement);
+#endif // DefTypeSorted
+      guard.release();
+   };
+   if ((cursor != nullptr) && !parameters.isRemote())
+      cursor->setIndex(index);
+   if (index == ImplArray::count()-1)
+      return;
+
+   InsertIndexNotification insertion(index);
+   if ((cursor != nullptr) && !parameters.isRemote())
+      insertion.setOrigin(*cursor);
+   notifyCursorUpdate(insertion);
+}
+
+#ifdef DefTypeSorted
+
+bool
+DefTypeCollection::sortVerification(int firstIndex, int lastIndex, bool doesFree) {
+   EnhancedObject* previousElement = (firstIndex > 0) ? ImplArray::elementAt(firstIndex-1) : ImplArray::elementAt(firstIndex);
+   EnhancedObject* nextElement = nullptr;
+   for (int index=(firstIndex>0) ? firstIndex : firstIndex+1; index <= lastIndex; index++) {
+      nextElement = ImplArray::elementAt(index);
+#ifndef DefTypeMultiSorted
+      if (DefTypeFinal _compareElement(*previousElement, *nextElement) != CRLess)
+#else
+      ComparisonResult result = DefTypeFinal _compareElement(*previousElement, *nextElement);
+      if ((result != CRLess) && (result != CREqual))
+#endif
+      {  PPCursor firstCursor(newCursor());
+         PPCursor lastCursor(newCursor());
+         firstCursor->setIndex(index);
+         lastCursor->setIndex(lastIndex);
+         DefTypeFinal _removeAll(ExtendedSuppressParameters(doesFree ? RMFree : RMRemove),
+               firstCursor.key(), lastCursor.key());
+         return false;
+      };
+      previousElement = nextElement;
+   };
+#ifndef DefTypeMultiSorted
+   if ((lastIndex < ImplArray::count()-1)
+         && (DefTypeFinal _compareElement(*previousElement, *ImplArray::elementAt(lastIndex+1)) != CRLess))
+#else
+   ComparisonResult result;
+   if ((lastIndex < ImplArray::count()-1)
+         && ((result = DefTypeFinal _compareElement(*previousElement, *ImplArray::elementAt(lastIndex+1))) != CRLess)
+         && (result != CREqual))
+#endif
+   {  PPCursor localCursor(newCursor());
+      localCursor->setIndex(lastIndex);
+      DefTypeFinal _remove(ExtendedSuppressParameters(doesFree ? RMFree : RMRemove), localCursor.key());
+      return false;
+   };
+   return true;
+}
+
+#endif // DefTypeSorted
+
+void
+DefTypeCollection::_addAll(const DefTypeCollection& source, const ExtendedInsertionParameters& parameters,
+      DefTypeCursor* cursor, const DefTypeCursor* startSource, const DefTypeCursor* endSource) {
+   DefTypeVirtualInheritedCollection::_addAll(source, parameters, cursor, startSource, endSource);
+
+#ifdef DefTypeSorted
+   AssumeCondition(this != &source)
+   if (parameters.isInsertion()) {
+#endif // DefTypeSorted
+      int destinationIndex = getInsertionIndex(cursor ? cursor->index() : -1, parameters.getRelativePosition());
+      int oldCount = ImplArray::count();
+      try {
+         ImplArray::addAll((const ImplArray&) source, startSource ? startSource->index() : 0,
+            endSource ? endSource->index() : -1, destinationIndex, parameters.isDuplicate(),
+               parameters.getSCast());
+      }
+      catch (...) {
+         if (cursor)
+            cursor->setIndex(destinationIndex+ImplArray::count() - oldCount);
+         InsertBoundNotification insertion(destinationIndex, destinationIndex+ImplArray::count() - oldCount);
+         if (cursor) insertion.setOrigin(*cursor);
+         notifyCursorUpdate(insertion);
+         throw;
+      }
+      if ((cursor != nullptr) && !parameters.isRemote())
+         cursor->setIndex(destinationIndex+ImplArray::count() - oldCount);
+
+      InsertBoundNotification insertion(destinationIndex, destinationIndex+ImplArray::count() - oldCount);
+      if ((cursor != nullptr) && !parameters.isRemote())
+         insertion.setOrigin(*cursor);
+      notifyCursorUpdate(insertion);
+
+#ifdef DefTypeSorted
+      AssumeCondition(sortVerification(destinationIndex,
+               destinationIndex+ImplArray::count() - oldCount-1, parameters.isDuplicate()))
+   }
+   else { // Non insertion -> merge if no cursors are inside
+      if ((cursor && AbstractCollection::CastCursorHandler::castTo(*this).isSingleReferenced()
+            && !parameters.isRemote())
+            || (!cursor && !AbstractCollection::CastCursorHandler::castTo(*this).isReferenced())) {
+         int lastInserted = DefTypeFinal _merge((const ImplArray&) source, startSource? startSource->index() : 0,
+               endSource ? endSource->index() : -1, parameters.isDuplicate());
+         if (cursor)
+            cursor->setIndex(lastInserted);
+      }
+      else
+         VirtualCollection::paddAll(source, parameters, cursor, startSource, endSource);
+   };
+#endif // DefTypeSorted
+}
+
+/* move methods */
+void
+DefTypeCollection::_moveTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+      VirtualCollectionCursor* cursor, VirtualCollectionCursor* pvccDestinationCursor) {
+#ifndef DefTypeSorted
+   if (&destination != this) {
+#endif // !DefTypeSorted
+      DefTypeVirtualInheritedCollection::pmoveTo(destination, parameters, cursor, pvccDestinationCursor);
+#ifndef DefTypeSorted
+      return;
+   };
+
+   // intern move
+   DefTypeCursor& localCursor = (DefTypeCursor&) *cursor;
+   DefTypeVirtualInheritedCollection::_moveTo(destination, parameters, cursor, pvccDestinationCursor);
+   int removedIndex = getIndex(cursor ? localCursor.index() : 0,
+         parameters.getRemovePosition());
+   DefTypeCursor& destinationCursor = (DefTypeCursor&) *pvccDestinationCursor;
+   int insertionIndex = getInsertionIndex(
+         pvccDestinationCursor ? destinationCursor.index() : -1,
+         parameters.getInsertionPosition());
+   if ((removedIndex == insertionIndex-1) || (removedIndex == insertionIndex))
+      return;
+
+   ImplArray::moveAllTo(*this, removedIndex, removedIndex, insertionIndex);
+
+   bool movingCursor = cursor && ((parameters.getRemovePosition() == RPExact)
+         || (parameters.getRemovePosition() == RPUndefined));
+   if (movingCursor && !parameters.isRemote())
+      localCursor.setIndex(insertionIndex);
+
+   MoveIndexNotification move(removedIndex, insertionIndex);
+   if (movingCursor && !parameters.isRemote())
+      move.setOrigin(localCursor);
+   notifyCursorUpdate(move);
+#endif // !DefTypeSorted
+}
+
+void
+DefTypeCollection::_moveAllTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+      const VirtualCollectionCursor* startCursor, const VirtualCollectionCursor* endCursor,
+      VirtualCollectionCursor* destinationCursor) {
+#ifndef DefTypeSorted
+   if (this != &destination)
+#endif // !DefTypeSorted
+      VirtualCollection::pmoveAllTo(destination, parameters, startCursor, endCursor,
+            destinationCursor);
+#ifndef DefTypeSorted
+   else
+      DefTypeFinal _moveAllTo(*this, parameters, (const DefTypeCursor*) startCursor,
+            (const DefTypeCursor*) endCursor, (DefTypeCursor*) destinationCursor);
+#endif // !DefTypeSorted
+}
+
+void
+DefTypeCollection::_moveAllTo(DefTypeCollection& destination, const ExtendedReplaceParameters& parameters,
+      const DefTypeCursor* startCursor, const DefTypeCursor* endCursor,
+      DefTypeCursor* destinationCursor) {
+   DefTypeVirtualInheritedCollection::_moveAllTo(destination, parameters, startCursor, endCursor, destinationCursor);
+#ifdef DefTypeSorted
+   AssumeCondition(this != &destination)
+   if (!parameters.isInsertion()) { // No merge -> complex to guarantee the invariants in case of errors
+      VirtualCollection::pmoveAllTo(destination, parameters, startCursor, endCursor, destinationCursor);
+      return;
+   };
+#endif // DefTypeSorted
+
+   // Interval of elements to move, their number and the insertion position.
+   int startIndex = startCursor ? startCursor->index() : 0;
+   int endIndex = endCursor ? endCursor->index() : -1;
+   if (!retrieveRemovedInterval(startIndex, endIndex, parameters.getRemovePosition())
+         || (startIndex > endIndex))
+      return;
+   int destinationIndex = getInsertionIndex(destinationCursor
+         ? destinationCursor->index() : -1, parameters.getInsertionPosition());
+
+#ifndef DefTypeSorted
+   if (this != &destination) {
+#endif // !DefTypeSorted
+      // Notification of the cursors
+      if (startCursor || endCursor) {
+         RemoveBoundNotification remove(startIndex, endIndex);
+         notifyCursorUpdate(remove);
+      }
+      else {
+         InvalidateNotification invalidation;
+         notifyCursorUpdate(invalidation);
+      }
+
+      // effective move and update of the number of elements
+      ImplArray::moveAllTo((ImplArray&) destination, startIndex, endIndex, destinationIndex);
+
+      if (destinationCursor) {
+         InsertBoundNotification insertion(destinationIndex, destinationIndex+endIndex-startIndex+1);
+         destination.notifyCursorUpdate(insertion);
+         if (!parameters.isRemote())
+            destinationCursor->setIndex(parameters.getInsertionPosition() == RPBefore
+               ? destinationIndex+endIndex-startIndex+1 : destinationIndex+endIndex-startIndex);
+      };
+#ifndef DefTypeSorted // !DefTypeSorted
+   }
+   else { // intern move
+      if ((destinationIndex >= startIndex) && (destinationIndex <= endIndex+1))
+         return;
+      ImplArray::moveAllTo((ImplArray&) destination, startIndex, endIndex, destinationIndex);
+      MoveBoundNotification move(startIndex, endIndex, destinationIndex);
+      notifyCursorUpdate(move);
+   };
+#endif // DefTypeSorted
+}
+
+void
+DefTypeCollection::_swap(VirtualCollection& source) {
+   DefTypeVirtualInheritedCollection::_swap(source);
+   DefTypeCollection temp;
+   DefTypeCollection::_moveAllTo(temp, ExtendedReplaceParameters());
+   try {
+      source.moveAllTo(*this);
+      temp.DefTypeCollection::_moveAllTo(source, ExtendedReplaceParameters());
+   }
+   catch (...) {
+      temp.DefTypeCollection::_moveAllTo(*this, ExtendedReplaceParameters());
+      throw;
+   };
+}
+
+void
+DefTypeCollection::_swap(DefTypeCollection& source) {
+   DefTypeVirtualInheritedCollection::_swap(source);
+   InvalidateNotification invalidation;
+   notifyCursorUpdate(invalidation);
+   source.notifyCursorUpdate(invalidation);
+   ImplArray::swap((ImplArray&) source);
+}
+
+/* suppression methods */
+void
+DefTypeCollection::_remove(const ExtendedSuppressParameters& parameters, DefTypeCursor* cursor) {
+   DefTypeVirtualInheritedCollection::_remove(parameters, cursor);
+   int removedIndex = getIndex(cursor ? cursor->index() : -1,
+         parameters.getRelativePosition());
+
+   // optimized notification
+   RemoveIndexNotification remove(removedIndex);
+   if (cursor) {
+      if ((parameters.getRelativePosition() != RPUndefined)) {
+         remove.setOrigin(*cursor);
+         if (parameters.getRelativePosition() == RPBefore)
+            cursor->decreaseIndex();
+      }
+      if ((parameters.getRelativePosition() == RPExact))
+         cursor->invalidate();
+   };
+   notifyCursorUpdate(remove);
+   EnhancedObject* removedElement = ImplArray::elementAt(removedIndex);
+   if (cursor || (removedIndex < ImplArray::count()-1) /* (parameters.getRelativePosition() != RPAfter) */)
+      ImplArray::removeAt(removedIndex);
+   else
+      ImplArray::removeAtEnd();
+   if (parameters.isFree() && removedElement)
+      delete removedElement;
+}
+
+void
+DefTypeCollection::_removeAll(const ExtendedSuppressParameters& parameters,
+      const DefTypeCursor* startCursor, const DefTypeCursor* endCursor) {
+   DefTypeVirtualInheritedCollection::_removeAll(parameters, startCursor, endCursor);
+
+   // optimized version for the case "without cursor"
+   if (!startCursor && ! endCursor) {
+      InvalidateNotification invalidation;
+      notifyCursorUpdate(invalidation);
+      ImplArray::removeAll(parameters.isFree());
+      return;
+   };
+   
+   // Interval of elements to remove, their number and the suppression position.
+   int startIndex = startCursor ? startCursor->index() : 0;
+   int endIndex = endCursor ? endCursor->index() : -1;
+   if ((!retrieveRemovedInterval(startIndex, endIndex, parameters.getRelativePosition()))
+      || (startIndex > endIndex))
+      return;
+
+   // Notification de suppressions
+   RemoveBoundNotification remove(startIndex, endIndex);
+   notifyCursorUpdate(remove);
+
+   // effective suppression and update of the number of elements
+   ImplArray removedList;
+   ImplArray::moveAllTo(removedList, startIndex, endIndex);
+   removedList.removeAll(parameters.isFree());
+}
+
+/* replacement methods */
+void
+DefTypeCollection::_replace(EnhancedObject* element, const ExtendedReplaceParameters& parameters,
+      DefTypeCursor* cursor) {
+   DefTypeVirtualInheritedCollection::_replace(element, parameters, cursor);
+   AddGuardian<EnhancedObject> guard(*this, element, parameters);
+
+#ifdef DefTypeSorted
+   if (parameters.getInsertionPosition() != RPUndefined) {
+#endif // DefTypeSorted
+      int replaceIndex = getIndex(cursor ? cursor->index() : -1,
+            parameters.getRemovePosition());
+#ifdef DefTypeSorted
+#ifndef DefTypeMultiSorted
+      AssumeCondition(((replaceIndex == 0)
+            || (DefTypeFinal _compareElement(*ImplArray::elementAt(replaceIndex-1), *element) == CRLess))
+         && ((replaceIndex >= ImplArray::count()-1)
+            || (DefTypeFinal _compareElement(*ImplArray::elementAt(replaceIndex+1), *element) == CRGreater)))
+#else
+      ComparisonResult result;
+      AssumeCondition(((replaceIndex == 0)
+            || ((result = DefTypeFinal _compareElement(*ImplArray::elementAt(replaceIndex-1), *element)) == CRLess)
+            || (result == CREqual))
+         && ((replaceIndex >= ImplArray::count()-1)
+            || ((result = DefTypeFinal _compareElement(*ImplArray::elementAt(replaceIndex+1), *element)) == CRGreater)
+            || (result == CREqual)))
+#endif
+#endif // DefTypeSorted
+      element = guard.handleDuplication();
+      if (parameters.isFree()) {
+         PEnhancedObject* removedElement = &ImplArray::referenceAt(replaceIndex);
+         if (*removedElement) delete *removedElement;
+         *removedElement = element;
+      }
+      else
+         ImplArray::referenceAt(replaceIndex) = element;
+      guard.release();
+#ifdef DefTypeSorted
+   }
+   else {
+      DefTypeFinal _remove(parameters, cursor);
+      guard.release();
+      DefTypeFinal _add(element, parameters, cursor);
+   };
+#endif
+}
+
+/* query methods */
+EnhancedObject*
+DefTypeCollection::_getElement(const ExtendedLocateParameters& parameters,
+      const DefTypeCursor* cursor) const {
+   DefTypeVirtualInheritedCollection::_getElement(parameters, cursor);
+   return ImplArray::elementAt(getIndex(cursor ? cursor->index() : -1,
+         parameters.getRelativePosition()));
+}
+
+/*********************************************/
+/* Implementation of the class DefTypeCursor */
+/*********************************************/
+
+bool
+DefTypeCursor::_isPositionned(const DefTypeCollection::ExtendedLocateParameters& pos,
+   const VirtualCollectionCursor* pvccCursor) const {
+   DefTypeVirtualInheritedCursor::_isPositionned(pos, pvccCursor);
+   const DefTypeCursor& cursor = (const DefTypeCursor&) *pvccCursor;
+   switch (pos.getRelativePosition()) {
+      case DefTypeVirtualInheritedCollection::RPAfter:
+         return pvccCursor ? (uIndex == cursor.uIndex+1) : uIndex == 0;
+      case DefTypeVirtualInheritedCollection::RPBefore:
+         return pvccCursor ? (uIndex == cursor.uIndex-1)
+            : uIndex == getSupport().getImplementation().count() - 1;
+      case DefTypeVirtualInheritedCollection::RPExact:
+         return uIndex == cursor.uIndex;
+      case DefTypeVirtualInheritedCollection::RPUndefined:
+         return true;
+   };
+   return false;
+}
+
+bool
+DefTypeCursor::_position(const Position& pos) {
+   DefTypeVirtualInheritedCursor::_position(pos);
+   switch (pos.getDirection()) {
+      case Position::DInvalid:
+         {  uIndex = -1; return false; }
+      case Position::DStart:
+         {  return (uIndex = (getSupport().getImplementation().count() == 0) ? -1 : 0) >= 0; }
+      case Position::DEnd:
+         {  return (uIndex = getSupport().getImplementation().count() - 1) >= 0; }
+      case Position::DExact:
+         {  return uIndex >= 0; }
+      case Position::DForward:
+         {  if (++uIndex != getSupport().getImplementation().count())
+               return true;
+            uIndex = -1;
+            return false;
+         };
+      case Position::DBackward:
+         {  if (uIndex-- < 0)
+               uIndex = getSupport().getImplementation().count()-1;
+            return uIndex >= 0;
+         };
+      case Position::DAny:
+         {  uIndex = getSupport().getImplementation().count()-1;
+            return uIndex >= 0;
+         }
+   };
+   return false;
+}
+

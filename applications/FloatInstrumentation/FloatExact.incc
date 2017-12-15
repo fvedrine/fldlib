@@ -1,0 +1,242 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2015-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : NumericalDomains
+// Unit      : FloatExact
+// File      : FloatExact.incc
+// Description :
+//   Implementation of a class of comparison between floating points
+//
+
+namespace NumericalDomains { namespace DDoubleExact {
+
+class ExecutionPath::IFStream : public STG::IOObject::ISBase {
+  public:
+   typedef STG::IOObject::ISBase ISBase;
+
+  private:
+   std::ifstream fsIn;
+
+  public:
+   IFStream(const char* name) : fsIn(name) {}
+   IFStream(const char* name, std::ios_base::openmode mode) : fsIn(name, mode) {}
+   IFStream(const IFStream& source) = delete;
+
+   bool isValid() const { return true; }
+   virtual bool isStreamBased() const { return true; }
+   std::ifstream& inputStream() { return fsIn; }
+
+   #define DefineDeclareIMethods
+   #include "StandardClasses/IOStreamMethods.inch"
+   #undef DefineDeclareIMethods
+};
+
+class ExecutionPath::OFStream : public STG::IOObject::OSBase {
+  public:
+   typedef STG::IOObject::OSBase OSBase;
+
+  private:
+   std::ofstream ofsOut;
+
+  public:
+   OFStream(const char* fileName) : ofsOut(fileName) {}
+   OFStream(const char* fileName, std::ios_base::openmode mode) : ofsOut(fileName, mode) {}
+   OFStream(const OFStream& source) = delete;
+
+   bool isValid() const { return true; }
+   void close() { ofsOut.close(); }
+   virtual bool isStreamBased() const { return true; }
+
+   #define DefineDeclareOMethods
+   #include "StandardClasses/IOStreamMethods.inch"
+   #undef DefineDeclareOMethods
+};
+
+class ExecutionPath::DebugStream : public STG::IOObject::OSBase {
+  public:
+   typedef STG::IOObject::OSBase OSBase;
+
+  private:
+   std::ostringstream ssOut;
+
+  public:
+   DebugStream() {}
+   DebugStream(const DebugStream& source) = delete;
+
+   bool isValid() const { return true; }
+   void clear() { ssOut.str(""); ssOut.clear(); }
+   const char* content() const { return ssOut.str().c_str(); }
+
+   #define DefineDeclareOMethods
+   #include "StandardClasses/IOStreamMethods.inch"
+   #undef DefineDeclareOMethods
+};
+
+#define DefineInlineIStreamMethods
+
+#define DefineTypeObject ExecutionPath::IFStream
+#define DefineLinkStream fsIn
+#include "StandardClasses/IOStreamMethods.inch"
+#undef DefineLinkStream
+#undef DefineTypeObject
+
+#undef DefineInlineIStreamMethods
+
+#define DefineInlineOStreamMethods
+
+#define DefineTypeObject ExecutionPath::OFStream
+#define DefineLinkStream ofsOut
+#include "StandardClasses/IOStreamMethods.inch"
+#undef DefineLinkStream
+#undef DefineTypeObject
+
+#define DefineTypeObject ExecutionPath::DebugStream
+#define DefineLinkStream ssOut
+#include "StandardClasses/IOStreamMethods.inch"
+#undef DefineLinkStream
+#undef DefineTypeObject
+
+#undef DefineInlineOStreamMethods
+
+   /* class IFStream */
+
+#define DefineImplementsIStreamMethods
+#define DefineTypeObject ExecutionPath::IFStream
+#define DefineLinkStream fsIn
+#include "StandardClasses/IOStreamMethods.incc"
+#undef DefineLinkStream
+#undef DefineTypeObject
+#undef DefineImplementsIStreamMethods
+
+   /* class OFStream */
+
+#define DefineImplementsOStreamMethods
+#define DefineTypeObject ExecutionPath::OFStream
+#define DefineLinkStream ofsOut
+#include "StandardClasses/IOStreamMethods.incc"
+#undef DefineLinkStream
+#undef DefineTypeObject
+
+#define DefineImplementsOStreamMethods
+#define DefineTypeObject ExecutionPath::DebugStream
+#define DefineLinkStream ssOut
+#include "StandardClasses/IOStreamMethods.incc"
+#undef DefineLinkStream
+#undef DefineTypeObject
+
+STG::IOObject::OSBase* ExecutionPath::oTraceFile = nullptr;
+STG::IOObject::ISBase* ExecutionPath::iTraceFile = nullptr;
+int ExecutionPath::uCurrentUnstableBranch = 0;
+int ExecutionPath::uNumberOfUnstableBranches = 0;
+bool ExecutionPath::fDoesFollow = false;
+ExecutionPath::SpecialValue ExecutionPath::svSpecial = SVNone;
+const char* ExecutionPath::szFile = nullptr;
+int ExecutionPath::uLine = 0;
+const char* ExecutionPath::szSynchronisationFile = nullptr;
+int ExecutionPath::uSynchronisationLine = 0;
+const char* ExecutionPath::szCurrentFile = nullptr;
+int ExecutionPath::uCurrentLine = 0;
+bool ExecutionPath::fHasNewFile = false;
+bool ExecutionPath::fHasNewLine = false;
+
+bool ExecutionPath::fSupportAtomic = false;
+bool ExecutionPath::fSupportUnstableInLoop = false;
+bool ExecutionPath::fSupportVerbose = false;
+bool ExecutionPath::fSupportThreshold = false;
+bool ExecutionPath::fSupportFirstFollowFloat = false;
+BuiltReal ExecutionPath::brThreshold;
+BuiltReal ExecutionPath::brMaximalAccuracy;
+
+void
+ExecutionPath::initializeGlobals(const char* fileSuffix) {
+   int suffixLength = strlen(fileSuffix);
+   char* file = (char*) malloc(suffixLength+5);
+   strcpy(file, fileSuffix);
+   strcpy(file+suffixLength, "_out");
+   oTraceFile = new OFStream(file);
+   strcpy(file+suffixLength, "_in");
+   iTraceFile = new IFStream(file);
+   free(file);
+   fDoesFollow = iTraceFile->good();
+   svSpecial = SVNone;
+   initializeNearestParams();
+   if (fDoesFollow) {
+      try {
+         iTraceFile->assume("path condition: ");
+         (*iTraceFile) >> uNumberOfUnstableBranches;
+         if (uNumberOfUnstableBranches < 0)
+            throw STG::EReadError("wrong number of unstable branches");
+         iTraceFile->assume('\n');
+         fDoesFollow = (uNumberOfUnstableBranches > 0);
+         if (fSupportThreshold) {
+            iTraceFile->assume("maximal accuracy: ");
+            BuiltReal::ReadParameters defaultParams;
+            brThreshold.read(*iTraceFile, defaultParams);
+            char ch = iTraceFile->get();
+            if (ch == ' ') {
+               iTraceFile->assume("s\n");
+               delete iTraceFile;
+               iTraceFile = nullptr;
+               fDoesFollow = false;
+            }
+            else if (ch != '\n')
+               throw STG::EReadError();
+         };
+      }
+      catch (STG::EReadError& error) {
+         if (!error.getMessage())
+            error = STG::EReadError("initialisation problem");
+         throw;
+      };
+   }
+   else {
+      delete iTraceFile;
+      iTraceFile = nullptr;
+      fDoesFollow = false;
+   };
+}
+
+void
+ExecutionPath::finalizeGlobals() {
+   if (oTraceFile) {
+      if (fSupportThreshold) {
+         oTraceFile->writesome("maximal accuracy: ");
+         brMaximalAccuracy.write(*oTraceFile, BuiltReal::WriteParameters().setDecimal());
+         oTraceFile->put('\n');
+      };
+      oTraceFile->writesome("path condition: ");
+      if (svSpecial == SVNone)
+         uCurrentUnstableBranch = 0;
+      (*oTraceFile) << uCurrentUnstableBranch;
+      oTraceFile->put('\n');
+      delete oTraceFile;
+      oTraceFile = nullptr;
+   }
+   if (iTraceFile)
+      delete iTraceFile;
+   iTraceFile = nullptr;
+}
+
+}} // end of namespace NumericalDomains::DDoubleExact
+

@@ -1,0 +1,396 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2015-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : NumericalDomains
+// Unit      : FloatInterval
+// File      : FloatInterval.cpp
+// Description :
+//   Implementation of a class of floating point intervals
+//
+
+namespace NumericalDomains { namespace DDoubleInterval {
+
+class ExecutionPath::IFStream : public STG::IOObject::ISBase {
+  public:
+   typedef STG::IOObject::ISBase ISBase;
+
+  private:
+   std::ifstream fsIn;
+
+  public:
+   IFStream(const char* name) : fsIn(name) {}
+   IFStream(const char* name, std::ios_base::openmode mode) : fsIn(name, mode) {}
+   IFStream(const IFStream& source) = delete;
+
+   bool isValid() const { return true; }
+   virtual bool isStreamBased() const { return true; }
+   std::ifstream& inputStream() { return fsIn; }
+
+   #define DefineDeclareIMethods
+   #include "StandardClasses/IOStreamMethods.inch"
+   #undef DefineDeclareIMethods
+};
+
+class ExecutionPath::OFStream : public STG::IOObject::OSBase {
+  public:
+   typedef STG::IOObject::OSBase OSBase;
+
+  private:
+   std::ofstream ofsOut;
+
+  public:
+   OFStream(const char* fileName) : ofsOut(fileName) {}
+   OFStream(const char* fileName, std::ios_base::openmode mode) : ofsOut(fileName, mode) {}
+   OFStream(const OFStream& source) = delete;
+
+   bool isValid() const { return true; }
+   void close() { ofsOut.close(); }
+   virtual bool isStreamBased() const { return true; }
+
+   #define DefineDeclareOMethods
+   #include "StandardClasses/IOStreamMethods.inch"
+   #undef DefineDeclareOMethods
+};
+
+class ExecutionPath::DebugStream : public STG::IOObject::OSBase {
+  public:
+   typedef STG::IOObject::OSBase OSBase;
+
+  private:
+   std::ostringstream ssOut;
+
+  public:
+   DebugStream() {}
+   DebugStream(const DebugStream& source) = delete;
+
+   bool isValid() const { return true; }
+   void clear() { ssOut.str(""); ssOut.clear(); }
+   const char* content() const { return ssOut.str().c_str(); }
+
+   #define DefineDeclareOMethods
+   #include "StandardClasses/IOStreamMethods.inch"
+   #undef DefineDeclareOMethods
+};
+
+#define DefineInlineIStreamMethods
+
+#define DefineTypeObject ExecutionPath::IFStream
+#define DefineLinkStream fsIn
+#include "StandardClasses/IOStreamMethods.inch"
+#undef DefineLinkStream
+#undef DefineTypeObject
+
+#undef DefineInlineIStreamMethods
+
+#define DefineInlineOStreamMethods
+
+#define DefineTypeObject ExecutionPath::OFStream
+#define DefineLinkStream ofsOut
+#include "StandardClasses/IOStreamMethods.inch"
+#undef DefineLinkStream
+#undef DefineTypeObject
+
+#define DefineTypeObject ExecutionPath::DebugStream
+#define DefineLinkStream ssOut
+#include "StandardClasses/IOStreamMethods.inch"
+#undef DefineLinkStream
+#undef DefineTypeObject
+
+#undef DefineInlineOStreamMethods
+
+   /* class IFStream */
+
+#define DefineImplementsIStreamMethods
+#define DefineTypeObject ExecutionPath::IFStream
+#define DefineLinkStream fsIn
+#include "StandardClasses/IOStreamMethods.incc"
+#undef DefineLinkStream
+#undef DefineTypeObject
+#undef DefineImplementsIStreamMethods
+
+   /* class OFStream */
+
+#define DefineImplementsOStreamMethods
+#define DefineTypeObject ExecutionPath::OFStream
+#define DefineLinkStream ofsOut
+#include "StandardClasses/IOStreamMethods.incc"
+#undef DefineLinkStream
+#undef DefineTypeObject
+
+#define DefineImplementsOStreamMethods
+#define DefineTypeObject ExecutionPath::DebugStream
+#define DefineLinkStream ssOut
+#include "StandardClasses/IOStreamMethods.incc"
+#undef DefineLinkStream
+#undef DefineTypeObject
+
+STG::IOObject::OSBase* ExecutionPath::oTraceFile = nullptr;
+STG::IOObject::ISBase* ExecutionPath::iTraceFile = nullptr;
+ExecutionPath::PathExplorer ExecutionPath::pPathExplorer;
+// Numerics::BigInteger ExecutionPath::biStackTrace;
+// int ExecutionPath::uCurrentStackPosition = 0;
+// unsigned ExecutionPath::uLastResult = 0;
+// unsigned ExecutionPath::uLastLogCases = 0;
+// unsigned ExecutionPath::uLastZeroBit = 0;
+// unsigned ExecutionPath::uLastIncBit = 0;
+bool ExecutionPath::fDoesFollow = false;
+ExecutionPath::PathExplorer* ExecutionPath::currentPathExplorer = &ExecutionPath::pPathExplorer;
+const char* ExecutionPath::szCurrentFile = nullptr;
+int ExecutionPath::uCurrentLine = 0;
+bool ExecutionPath::fHasNewFile = false;
+bool ExecutionPath::fHasNewLine = false;
+
+bool ExecutionPath::fSupportAtomic = false;
+bool ExecutionPath::fSupportUnstableInLoop = false;
+bool ExecutionPath::fSupportVerbose = false;
+bool ExecutionPath::fSupportThreshold = false;
+bool ExecutionPath::fSupportFirstFollowFloat = false;
+BuiltFloat ExecutionPath::brFloatThreshold;
+BuiltDouble ExecutionPath::brDoubleThreshold;
+BuiltLongDouble ExecutionPath::brLongDoubleThreshold;
+BuiltFloat ExecutionPath::brFloatMaximalAccuracy;
+BuiltDouble ExecutionPath::brDoubleMaximalAccuracy;
+BuiltLongDouble ExecutionPath::brLongDoubleMaximalAccuracy;
+
+void
+ExecutionPath::initializeGlobals(const char* fileSuffix) {
+   int suffixLength = strlen(fileSuffix);
+   char* file = (char*) malloc(suffixLength+5);
+   strcpy(file, fileSuffix);
+   strcpy(file+suffixLength, "_out");
+   oTraceFile = new OFStream(file);
+   strcpy(file+suffixLength, "_in");
+   iTraceFile = new IFStream(file);
+   free(file);
+   fDoesFollow = iTraceFile->good();
+   initializeMinMaxParams();
+
+   if (fDoesFollow) {
+      try {
+         iTraceFile->assume("path condition: ");
+         pPathExplorer.stackTrace().read(*iTraceFile, Numerics::BigInteger::FormatParameters().setBinary());
+         iTraceFile->assume('\n');
+         fDoesFollow = !pPathExplorer.stackTrace().isZero();
+         if (fSupportThreshold) {
+            iTraceFile->assume("maximal accuracy: ");
+            BuiltLongDouble::ReadParameters defaultParams;
+            brLongDoubleThreshold.read(*iTraceFile, defaultParams);
+            BuiltLongDouble::FloatConversion conversion;
+            conversion.setSizeMantissa(brLongDoubleThreshold.bitSizeMantissa())
+                  .setSizeExponent(brLongDoubleThreshold.bitSizeExponent());
+            int sizeMantissa = (brLongDoubleThreshold.bitSizeMantissa() + 8*sizeof(unsigned) - 1)/(8*sizeof(unsigned));
+            for (int index = 0; index < sizeMantissa; ++index)
+               conversion.mantissa()[index] = brLongDoubleThreshold.getMantissa()[index];
+            int sizeExponent = (brLongDoubleThreshold.bitSizeExponent() + 8*sizeof(unsigned) - 1)/(8*sizeof(unsigned));
+            for (int index = 0; index < sizeExponent; ++index)
+               conversion.exponent()[index] = brLongDoubleThreshold.getBasicExponent()[index];
+            conversion.setNegative(brLongDoubleThreshold.isNegative());
+            Numerics::DDouble::Access::ReadParameters nearestParams;
+            nearestParams.setNearestRound().setRoundToEven();
+            brDoubleThreshold.setFloat(conversion, nearestParams);
+            nearestParams.clear();
+            brFloatThreshold.setFloat(conversion, nearestParams);
+            nearestParams.clear();
+
+            char ch = iTraceFile->get();
+            if (ch == ' ') {
+               iTraceFile->assume("s\n");
+               delete iTraceFile;
+               iTraceFile = nullptr;
+            }
+            else if (ch != '\n')
+               throw STG::EReadError();
+         };
+      }
+      catch (STG::EReadError& error) {
+         if (!error.getMessage())
+            error = STG::EReadError("initialisation problem");
+         throw;
+      };
+   }
+}
+
+void
+ExecutionPath::finalizeGlobals() {
+   if (oTraceFile) {
+      if (fSupportThreshold) {
+         BuiltLongDouble maximalAccuracy(brLongDoubleMaximalAccuracy);
+         Numerics::DDouble::Access::ReadParameters nearestParams;
+         nearestParams.setNearestRound().setRoundToEven();
+         {  BuiltLongDouble::FloatConversion conversion;
+            conversion.setSizeMantissa(brDoubleMaximalAccuracy.bitSizeMantissa())
+                  .setSizeExponent(brDoubleMaximalAccuracy.bitSizeExponent());
+            int sizeMantissa = (brDoubleMaximalAccuracy.bitSizeMantissa() + 8*sizeof(unsigned) - 1)/(8*sizeof(unsigned));
+            for (int index = 0; index < sizeMantissa; ++index)
+               conversion.mantissa()[index] = brDoubleMaximalAccuracy.getMantissa()[index];
+            int sizeExponent = (brDoubleMaximalAccuracy.bitSizeExponent() + 8*sizeof(unsigned) - 1)/(8*sizeof(unsigned));
+            for (int index = 0; index < sizeExponent; ++index)
+               conversion.exponent()[index] = brDoubleMaximalAccuracy.getBasicExponent()[index];
+            conversion.setNegative(brDoubleMaximalAccuracy.isNegative());
+            BuiltLongDouble otherMaximalAccuracy;
+            otherMaximalAccuracy.setFloat(conversion, nearestParams);
+            nearestParams.clear();
+            if (otherMaximalAccuracy >maximalAccuracy)
+               maximalAccuracy = otherMaximalAccuracy;
+         };
+         {  BuiltLongDouble::FloatConversion conversion;
+            conversion.setSizeMantissa(brFloatMaximalAccuracy.bitSizeMantissa())
+                  .setSizeExponent(brFloatMaximalAccuracy.bitSizeExponent());
+            int sizeMantissa = (brFloatMaximalAccuracy.bitSizeMantissa() + 8*sizeof(unsigned) - 1)/(8*sizeof(unsigned));
+            for (int index = 0; index < sizeMantissa; ++index)
+               conversion.mantissa()[index] = brFloatMaximalAccuracy.getMantissa()[index];
+            int sizeExponent = (brFloatMaximalAccuracy.bitSizeExponent() + 8*sizeof(unsigned) - 1)/(8*sizeof(unsigned));
+            for (int index = 0; index < sizeExponent; ++index)
+               conversion.exponent()[index] = brFloatMaximalAccuracy.getBasicExponent()[index];
+            conversion.setNegative(brFloatMaximalAccuracy.isNegative());
+            BuiltLongDouble otherMaximalAccuracy;
+            otherMaximalAccuracy.setFloat(conversion, nearestParams);
+            nearestParams.clear();
+            if (otherMaximalAccuracy >maximalAccuracy)
+               maximalAccuracy = otherMaximalAccuracy;
+         };
+
+         oTraceFile->writesome("maximal accuracy: ");
+         maximalAccuracy.write(*oTraceFile, BuiltLongDouble::WriteParameters().setDecimal());
+         oTraceFile->put('\n');
+      };
+      oTraceFile->writesome("path condition: ");
+      if (pPathExplorer.lastLogCases() > 0) {
+         if (pPathExplorer.lastResult() == 0) { // pop from last branch/conversion
+            AssumeCondition(pPathExplorer.lastZeroBit() == 0 || pPathExplorer.lastIncBit() < pPathExplorer.lastZeroBit())
+            pPathExplorer.stackTrace().clearHigh(pPathExplorer.lastZeroBit());
+            if (pPathExplorer.lastZeroBit() > 0) {
+               while (pPathExplorer.stackTrace().cbitArray(pPathExplorer.lastIncBit())) {
+                  pPathExplorer.stackTrace().setFalseBitArray(pPathExplorer.lastIncBit());
+                  ++pPathExplorer.lastIncBit();
+               };
+               AssumeCondition(pPathExplorer.lastIncBit() < pPathExplorer.lastZeroBit());
+               pPathExplorer.stackTrace().setTrueBitArray(pPathExplorer.lastIncBit());
+            };
+         }
+         else if (pPathExplorer.lastLogCases() == 1) { // branch
+            AssumeCondition(pPathExplorer.lastResult() <= 1)
+            pPathExplorer.stackTrace().setBitArray(pPathExplorer.currentStackPosition()-1, (bool) pPathExplorer.lastResult());
+         }
+         else { // conversion
+            AssumeCondition(pPathExplorer.currentStackPosition() >= (int) pPathExplorer.lastLogCases())
+            int index = ((pPathExplorer.currentStackPosition()-pPathExplorer.lastLogCases()) + 8*sizeof(unsigned) - 1)/(8*sizeof(unsigned));
+            int shiftIndex = (pPathExplorer.currentStackPosition()-pPathExplorer.lastLogCases()) % (8*sizeof(unsigned));
+            if ((int) (8*sizeof(unsigned) - shiftIndex) < (int) pPathExplorer.lastLogCases()) {
+               pPathExplorer.stackTrace()[index] &= ~(~(~0U << pPathExplorer.lastLogCases()) << shiftIndex);
+               pPathExplorer.stackTrace()[index] |= pPathExplorer.lastResult() << shiftIndex;
+            }
+            else {
+               pPathExplorer.stackTrace()[index] &= ~(~0U << shiftIndex);
+               pPathExplorer.stackTrace()[index+1] &= ~0U << (pPathExplorer.lastLogCases() - (8*sizeof(unsigned) - shiftIndex));
+               pPathExplorer.stackTrace()[index] |= pPathExplorer.lastResult() << shiftIndex;
+               pPathExplorer.stackTrace()[index+1] |= pPathExplorer.lastResult() >> (pPathExplorer.lastLogCases() - (8*sizeof(unsigned) - shiftIndex));
+            };
+         };
+      };
+
+      pPathExplorer.stackTrace().write(*oTraceFile, Numerics::BigInteger::FormatParameters().setBinary());
+      oTraceFile->put('\n');
+      delete oTraceFile;
+      oTraceFile = nullptr;
+   }
+   if (iTraceFile)
+      delete iTraceFile;
+   iTraceFile = nullptr;
+}
+
+bool
+ExecutionPath::followNewUnresolvedBranch(bool& isLastBranch) {
+   bool result;
+   if (fDoesFollow) {
+      fDoesFollow = (currentPathExplorer->currentStackPosition() < (int) currentPathExplorer->stackTrace().log_base_2() - 1);
+      if (fDoesFollow) {
+         result = !currentPathExplorer->stackTrace().cbitArray(currentPathExplorer->currentStackPosition());
+         if (result) {
+            currentPathExplorer->lastIncBit() = currentPathExplorer->currentStackPosition();
+            currentPathExplorer->lastZeroBit() = currentPathExplorer->currentStackPosition()+1;
+         }
+      }
+      else {
+         if (!currentPathExplorer->stackTrace().cbitArray(currentPathExplorer->currentStackPosition()))
+            throw STG::EReadError();
+         currentPathExplorer->lastLogCases() = 1;
+         currentPathExplorer->lastResult() = 0; /* false */
+         // currentPathExplorer->stackTrace().bitArray(currentPathExplorer->currentStackPosition()) = false;
+         result = false;
+      };
+   }
+   else {
+      currentPathExplorer->lastLogCases() = 1;
+      currentPathExplorer->lastResult() = 1; /* true */
+      currentPathExplorer->lastIncBit() = currentPathExplorer->currentStackPosition();
+      currentPathExplorer->lastZeroBit() = currentPathExplorer->currentStackPosition()+1;
+      // currentPathExplorer->stackTrace().bitArray(currentPathExplorer->currentStackPosition()) = true;
+      result = true;
+   };
+   isLastBranch = !fDoesFollow;
+   ++currentPathExplorer->currentStackPosition();
+   return result;
+}
+
+unsigned
+ExecutionPath::followNewConversionBranch(unsigned conversion, bool& isLastBranch) {
+   unsigned result;
+   int number = Numerics::DInteger::Access::log_base_2(conversion);
+   int index = (currentPathExplorer->currentStackPosition() + 8*sizeof(unsigned) - 1)/(8*sizeof(unsigned));
+   int shiftIndex = currentPathExplorer->currentStackPosition() % (8*sizeof(unsigned));
+   if (fDoesFollow) {
+      result = (currentPathExplorer->stackTrace()[index] >> shiftIndex);
+      if ((int) (8*sizeof(unsigned) - shiftIndex) < number)
+         result |= (currentPathExplorer->stackTrace()[index+1] & ~(~0U << shiftIndex)) << (8*sizeof(unsigned) - shiftIndex);
+      result &= ~(~0U << number);
+
+      fDoesFollow = ((currentPathExplorer->currentStackPosition() + number) <= (int) currentPathExplorer->stackTrace().log_base_2() - 1);
+      if (!fDoesFollow) {
+         if (!(result > 0))
+            throw STG::EReadError();
+         currentPathExplorer->lastLogCases() = number;
+         currentPathExplorer->lastResult() = result+1;
+         if (currentPathExplorer->lastResult() == conversion)
+            currentPathExplorer->lastResult() = 0;
+         else {
+            currentPathExplorer->lastZeroBit() = currentPathExplorer->currentStackPosition()+number;
+            currentPathExplorer->lastIncBit() = currentPathExplorer->currentStackPosition();
+         };
+      };
+   }
+   else {
+      currentPathExplorer->lastLogCases() = number;
+      currentPathExplorer->lastResult() = 1; /* true */
+      // currentPathExplorer->stackTrace().bitArray(currentPathExplorer->currentStackPosition()) = true;
+      currentPathExplorer->lastIncBit() = currentPathExplorer->currentStackPosition();
+      currentPathExplorer->lastZeroBit() = currentPathExplorer->currentStackPosition()+1;
+      result = 1;
+   };
+   isLastBranch = !fDoesFollow;
+   currentPathExplorer->currentStackPosition() += number;
+   return (result == 0) ? (conversion - 1) : (result - 1);
+}
+
+}} // end of namespace NumericalDomains::DDoubleInterval

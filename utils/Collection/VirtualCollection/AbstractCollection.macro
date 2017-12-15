@@ -1,0 +1,441 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat à l'énergie atomique et aux énergies              */
+/*         alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Librairie   : Collection
+// Module      : Abstract collections
+// Fichier     : AbstractCollection.macro
+// Description :
+//   Definition of the macro for the derived classe of AbstractCollection.
+//
+
+#define DefineCursorNotificationMethods(NotificationType, TypeCursor)                        \
+  protected:                                                                                 \
+   bool hasOrigin() const { return PNT::SharedPointer::Notification::getOrigin(); }          \
+   const TypeCursor& getOrigin() const                                                       \
+      {  const PNT::SharedPointer* origin = PNT::SharedPointer::Notification::getOrigin();   \
+         AssumeCondition(origin)                                                             \
+         return (const TypeCursor&) AbstractCursor::CastSupportHandler::castFrom(*origin);   \
+      }                                                                                      \
+   virtual void _update(PNT::SharedPointer& call) override                                   \
+      {  update((TypeCursor&) AbstractCursor::CastSupportHandler::castFrom(call)); }         \
+  public:                                                                                    \
+   DefineCopy(NotificationType)
+
+#define DefineCollectionForAbstractCollect(TypeCollection, TypeCursor)                       \
+  protected:                                                                                 \
+   virtual void assumeCompatibility(AbstractCursor& cursor) const override;                  \
+   virtual AbstractCursor* createNewCursor() const override;                                 \
+  public:                                                                                    \
+   typedef PNT::TPassPointer<TypeCursor, PPAbstractCursor> PPCursor;                         \
+   typedef TypeCursor Cursor;                                                                \
+   virtual AbstractCollection* createDefault() const override { return new TypeCollection(); }\
+   TypeCollection* createSDefault() const { return (TypeCollection*) createDefault(); }      \
+   PPCursor newCursor() const { return PPCursor(snewCursor()); }
+
+#define DeclareCollectionIteratorForConcreteCollect                                          \
+   class iterator;                                                                           \
+   typedef iterator const_iterator;                                                          \
+   iterator begin() const;                                                                   \
+   iterator end() const;                                                                     \
+                                                                                             \
+   class reverse_iterator;                                                                   \
+   typedef reverse_iterator const_reverse_iterator;                                          \
+   reverse_iterator rbegin() const;                                                          \
+   reverse_iterator rend() const;
+
+#define InlineCollectionIteratorForConcreteCollect(TypeCollection, TypeElement)              \
+class TypeCollection::iterator : public VirtualCollection::titerator<TypeCollection, TypeElement> {\
+  private:                                                                                   \
+   typedef VirtualCollection::titerator<TypeCollection, TypeElement> inherited;              \
+                                                                                             \
+   iterator(const TypeCollection& support) : inherited(support) {}                           \
+   friend class TypeCollection;                                                              \
+                                                                                             \
+  protected:                                                                                 \
+   iterator(const typename inherited::Base& source) : inherited(source) {}                   \
+                                                                                             \
+  public:                                                                                    \
+   iterator(const iterator& source) = default;                                               \
+   iterator(iterator&& source) : inherited(source) {}                                        \
+};                                                                                           \
+                                                                                             \
+inline TypeCollection::iterator                                                              \
+TypeCollection::begin() const {                                                              \
+   iterator result(*this);                                                                   \
+   result.setToFirst();                                                                      \
+   return result;                                                                            \
+}                                                                                            \
+                                                                                             \
+inline TypeCollection::iterator                                                              \
+TypeCollection::end() const                                                                  \
+   {  return iterator(*this); }                                                              \
+                                                                                             \
+class TypeCollection::reverse_iterator : public VirtualCollection::treverse_iterator<TypeCollection, TypeElement> {\
+  private:                                                                                   \
+   typedef VirtualCollection::treverse_iterator<TypeCollection, TypeElement> inherited;      \
+                                                                                             \
+   reverse_iterator(const TypeCollection& support) : inherited(support) {}                   \
+   friend class TypeCollection;                                                              \
+                                                                                             \
+  protected:                                                                                 \
+   reverse_iterator(const typename inherited::Base& source) : inherited(source) {}           \
+                                                                                             \
+  public:                                                                                    \
+   reverse_iterator(const reverse_iterator& source) = default;                               \
+   reverse_iterator(reverse_iterator&& source) : inherited(source) {}                        \
+   iterator base() const                                                                     \
+      {  iterator result((const iterator&) (const inherited&) *this);                        \
+         ++result;                                                                           \
+         return result;                                                                      \
+      }                                                                                      \
+};                                                                                           \
+                                                                                             \
+inline                                                                                       \
+TypeCollection::reverse_iterator                                                             \
+TypeCollection::rbegin() const                                                               \
+{  reverse_iterator result(*this);                                                           \
+   result.setToLast();                                                                       \
+   return result;                                                                            \
+}                                                                                            \
+                                                                                             \
+inline                                                                                       \
+TypeCollection::reverse_iterator                                                             \
+TypeCollection::rend() const                                                                 \
+   {  return reverse_iterator(*this); }
+
+#define TemplateDefineCollectionForAbstractCollect(TypeCollection, TypeCursor, FstT)         \
+  protected:                                                                                 \
+   virtual void assumeCompatibility(AbstractCursor& cursor) const override;                  \
+   virtual AbstractCursor* createNewCursor() const override;                                 \
+  public:                                                                                    \
+   typedef PNT::TPassPointer<TypeCursor<FstT>, PPAbstractCursor> PPCursor;                   \
+   typedef TypeCursor<FstT> Cursor;                                                          \
+   virtual AbstractCollection* createDefault() const override { return new TypeCollection<FstT>(); }\
+   TypeCollection* createSDefault() const { return (TypeCollection<FstT>*) createDefault(); }\
+   PPCursor newCursor() const { return PPCursor(AbstractCollection::snewCursor()); }
+
+#define TemplateInlineCollectionIteratorForConcreteCollect(TypeCollection, TypeElement, TypeCast)\
+template <class TypeElement, class TypeCast>                                                 \
+class TypeCollection<TypeElement, TypeCast>::iterator : public VirtualCollection::titerator<TypeCollection<TypeElement, TypeCast>, TypeElement> {\
+  private:                                                                                   \
+   typedef VirtualCollection::titerator<TypeCollection<TypeElement, TypeCast>, TypeElement> inherited;\
+                                                                                             \
+   iterator(const TypeCollection<TypeElement, TypeCast>& support) : inherited(support) {}    \
+   friend class TypeCollection<TypeElement, TypeCast>;                                       \
+                                                                                             \
+  protected:                                                                                 \
+   iterator(const typename inherited::Base& source) : inherited(source) {}                   \
+                                                                                             \
+  public:                                                                                    \
+   iterator(const iterator& source) = default;                                               \
+   iterator(iterator&& source) : inherited(source) {}                                        \
+};                                                                                           \
+                                                                                             \
+template <class TypeElement, class TypeCast>                                                 \
+inline typename TypeCollection<TypeElement, TypeCast>::iterator                              \
+TypeCollection<TypeElement, TypeCast>::begin() const {                                       \
+   iterator result(*this);                                                                   \
+   result.setToFirst();                                                                      \
+   return result;                                                                            \
+}                                                                                            \
+                                                                                             \
+template <class TypeElement, class TypeCast>                                                 \
+inline typename TypeCollection<TypeElement, TypeCast>::iterator                              \
+TypeCollection<TypeElement, TypeCast>::end() const                                           \
+   {  return iterator(*this); }                                                              \
+                                                                                             \
+template <class TypeElement, class TypeCast>                                                 \
+class TypeCollection<TypeElement, TypeCast>::reverse_iterator : public VirtualCollection::treverse_iterator<TypeCollection<TypeElement, TypeCast>, TypeElement> {\
+  private:                                                                                   \
+   typedef VirtualCollection::treverse_iterator<TypeCollection<TypeElement, TypeCast>, TypeElement> inherited;\
+                                                                                             \
+   reverse_iterator(const TypeCollection<TypeElement, TypeCast>& support) : inherited(support) {}\
+   friend class TypeCollection<TypeElement, TypeCast>;                                       \
+                                                                                             \
+  protected:                                                                                 \
+   reverse_iterator(const typename inherited::Base& source) : inherited(source) {}           \
+                                                                                             \
+  public:                                                                                    \
+   reverse_iterator(const reverse_iterator& source) = default;                               \
+   reverse_iterator(reverse_iterator&& source) : inherited(source) {}                        \
+   iterator base() const                                                                     \
+      {  iterator result((const iterator&) (const inherited&) *this);                        \
+         ++result;                                                                           \
+         return result;                                                                      \
+      }                                                                                      \
+};                                                                                           \
+                                                                                             \
+template <class TypeElement, class TypeCast>                                                 \
+inline typename TypeCollection<TypeElement, TypeCast>::reverse_iterator                      \
+TypeCollection<TypeElement, TypeCast>::rbegin() const                                        \
+{  reverse_iterator result(*this);                                                           \
+   result.setToLast();                                                                       \
+   return result;                                                                            \
+}                                                                                            \
+                                                                                             \
+template <class TypeElement, class TypeCast>                                                 \
+inline typename TypeCollection<TypeElement, TypeCast>::reverse_iterator                      \
+TypeCollection<TypeElement, TypeCast>::rend() const                                          \
+   {  return reverse_iterator(*this); }
+
+#define Template2DefineCollectionForAbstractCollect(TypeCollection, TypeCursor, FstT, SndT)  \
+  protected:                                                                                 \
+   virtual void assumeCompatibility(AbstractCursor& cursor) const override;                  \
+   virtual AbstractCursor* createNewCursor() const override;                                 \
+  public:                                                                                    \
+   typedef PNT::TPassPointer<TypeCursor<FstT, SndT>, PPAbstractCursor> PPCursor;             \
+   typedef TypeCursor<FstT, SndT> Cursor;                                                    \
+   virtual AbstractCollection* createDefault() const override { return new TypeCollection<FstT, SndT>(); }\
+   TypeCollection* createSDefault() const { return (TypeCollection<FstT, SndT>*) createDefault(); }\
+   PPCursor newCursor() const { return PPCursor(AbstractCollection::snewCursor()); }
+
+#define Template2InlineCollectionIteratorForConcreteCollect(TypeCollection, TypeElement, TypeKey, TypeCast)\
+template <class TypeElement, class TypeKey, class TypeCast>                                  \
+class TypeCollection<TypeElement, TypeKey, TypeCast>::iterator : public VirtualCollection::titerator<TypeCollection<TypeElement, TypeKey, TypeCast>, TypeElement> {\
+  private:                                                                                   \
+   typedef VirtualCollection::titerator<TypeCollection<TypeElement, TypeKey, TypeCast>, TypeElement> inherited;\
+                                                                                             \
+   iterator(const TypeCollection<TypeElement, TypeKey, TypeCast>& support) : inherited(support) {}    \
+   friend class TypeCollection<TypeElement, TypeKey, TypeCast>;                              \
+                                                                                             \
+  protected:                                                                                 \
+   iterator(const typename inherited::Base& source) : inherited(source) {}                   \
+                                                                                             \
+  public:                                                                                    \
+   iterator(const iterator& source) = default;                                               \
+   iterator(iterator&& source) : inherited(source) {}                                        \
+};                                                                                           \
+                                                                                             \
+template <class TypeElement, class TypeKey, class TypeCast>                                  \
+inline typename TypeCollection<TypeElement, TypeKey, TypeCast>::iterator                     \
+TypeCollection<TypeElement, TypeKey, TypeCast>::begin() const {                              \
+   iterator result(*this);                                                                   \
+   result.setToFirst();                                                                      \
+   return result;                                                                            \
+}                                                                                            \
+                                                                                             \
+template <class TypeElement, class TypeKey, class TypeCast>                                  \
+inline typename TypeCollection<TypeElement, TypeKey, TypeCast>::iterator                     \
+TypeCollection<TypeElement, TypeKey, TypeCast>::end() const                                  \
+   {  return iterator(*this); }                                                              \
+                                                                                             \
+template <class TypeElement, class TypeKey, class TypeCast>                                  \
+class TypeCollection<TypeElement, TypeKey, TypeCast>::reverse_iterator : public VirtualCollection::treverse_iterator<TypeCollection<TypeElement, TypeKey, TypeCast>, TypeElement> {\
+  private:                                                                                   \
+   typedef VirtualCollection::treverse_iterator<TypeCollection<TypeElement, TypeKey, TypeCast>, TypeElement> inherited;\
+                                                                                             \
+   reverse_iterator(const TypeCollection<TypeElement, TypeKey, TypeCast>& support) : inherited(support) {}\
+   friend class TypeCollection<TypeElement, TypeKey, TypeCast>;                              \
+                                                                                             \
+  protected:                                                                                 \
+   reverse_iterator(const typename inherited::Base& source) : inherited(source) {}           \
+                                                                                             \
+  public:                                                                                    \
+   reverse_iterator(const reverse_iterator& source) = default;                               \
+   reverse_iterator(reverse_iterator&& source) : inherited(source) {}                        \
+   iterator base() const                                                                     \
+      {  iterator result((const iterator&) (const inherited&) *this);                        \
+         ++result;                                                                           \
+         return result;                                                                      \
+      }                                                                                      \
+};                                                                                           \
+                                                                                             \
+template <class TypeElement, class TypeKey, class TypeCast>                                  \
+inline typename TypeCollection<TypeElement, TypeKey, TypeCast>::reverse_iterator             \
+TypeCollection<TypeElement, TypeKey, TypeCast>::rbegin() const                               \
+{  reverse_iterator result(*this);                                                           \
+   result.setToLast();                                                                       \
+   return result;                                                                            \
+}                                                                                            \
+                                                                                             \
+template <class TypeElement, class TypeKey, class TypeCast>                                  \
+inline typename TypeCollection<TypeElement, TypeKey, TypeCast>::reverse_iterator             \
+TypeCollection<TypeElement, TypeKey, TypeCast>::rend() const                                 \
+   {  return reverse_iterator(*this); }
+
+#define Template3DefineCollectionForAbstractCollect(TypeCollection, TypeCursor, FstT, SndT, ThirdT)\
+  protected:                                                                                 \
+   virtual void assumeCompatibility(AbstractCursor& cursor) const override;                  \
+   virtual AbstractCursor* createNewCursor() const override;                                 \
+  public:                                                                                    \
+   typedef PNT::TPassPointer<TypeCursor<FstT, SndT, ThirdT>, PPAbstractCursor> PPCursor;     \
+   typedef TypeCursor<FstT, SndT, ThirdT> Cursor;                                            \
+   virtual AbstractCollection* createDefault() const override { return new TypeCollection<FstT, SndT, ThirdT>(); }\
+   TypeCollection* createSDefault() const { return (TypeCollection<FstT, SndT, ThirdT>*) createDefault(); }\
+   PPCursor newCursor() const { return PPCursor(AbstractCollection::snewCursor()); }
+
+#define Template4DefineCollectionForAbstractCollect(TypeCollection, TypeCursor, FstT, SndT, ThirdT, FourthT)\
+  protected:                                                                                 \
+   virtual void assumeCompatibility(AbstractCursor& cursor) const override;                  \
+   virtual AbstractCursor* createNewCursor() const override;                                 \
+  public:                                                                                    \
+   typedef PNT::TPassPointer<TypeCursor<FstT, SndT, ThirdT, FourthT>, PPAbstractCursor> PPCursor;\
+   typedef TypeCursor<FstT, SndT, ThirdT, FourthT> Cursor;                                   \
+   virtual AbstractCollection* createDefault() const override { return new TypeCollection<FstT, SndT, ThirdT, FourthT>(); }\
+   TypeCollection* createSDefault() const { return (TypeCollection<FstT, SndT, ThirdT, FourthT>*) createDefault(); }\
+   PPCursor newCursor() const { return PPCursor(AbstractCollection::snewCursor()); }
+
+#define Template5DefineCollectionForAbstractCollect(TypeCollection, TypeCursor, FstT, SndT, ThirdT, FourthT, FifthT)\
+  protected:                                                                                 \
+   virtual void assumeCompatibility(AbstractCursor& cursor) const override;                  \
+   virtual AbstractCursor* createNewCursor() const override;                                 \
+  public:                                                                                    \
+   typedef PNT::TPassPointer<TypeCursor<FstT, SndT, ThirdT, FourthT, FifthT>, PPAbstractCursor> PPCursor;\
+   typedef TypeCursor<FstT, SndT, ThirdT, FourthT, FifthT> Cursor;                           \
+   virtual AbstractCollection* createDefault() const override { return new TypeCollection<FstT, SndT, ThirdT, FourthT, FifthT>(); }\
+   TypeCollection* createSDefault() const { return (TypeCollection<FstT, SndT, ThirdT, FourthT, FifthT>*) createDefault(); }\
+   PPCursor newCursor() const { return PPCursor(AbstractCollection::snewCursor()); }
+
+#define InlineCollectionForAbstractCollect(TypeCollection, TypeCursor)                       \
+inline void                                                                                  \
+TypeCollection::assumeCompatibility(AbstractCursor& cursor) const                            \
+   {  AssumeCondition(dynamic_cast<TypeCursor*>(&cursor) && (&cursor.getSupport() == this)) }\
+                                                                                             \
+inline AbstractCursor*                                                                       \
+TypeCollection::createNewCursor() const                                                      \
+   {  AbstractCursor* result = new TypeCursor(*this);                                        \
+      AssumeAllocation(result) return result;                                                \
+   }
+
+#define TemplateInlineCollectionForAbstractCollect(TypeCollection, TypeCursor, FstT)         \
+template <class FstT>                                                                        \
+inline void                                                                                  \
+TypeCollection<FstT>::assumeCompatibility(AbstractCursor& cursor) const                      \
+   {  AssumeCondition(dynamic_cast<Cursor*>(&cursor) && (&cursor.getSupport() == this)) }    \
+                                                                                             \
+template <class FstT>                                                                        \
+inline AbstractCursor*                                                                       \
+TypeCollection<FstT>::createNewCursor() const                                                \
+   {  AbstractCursor* result = new Cursor(*this);                                            \
+      AssumeAllocation(result) return result;                                                \
+   }
+
+#define Template2InlineCollectionForAbstractCollect(TypeCollection, TypeCursor, FstT, SndT)  \
+template <class FstT, class SndT>                                                            \
+inline void                                                                                  \
+TypeCollection<FstT, SndT>::assumeCompatibility(AbstractCursor& cursor) const                \
+   {  AssumeCondition(dynamic_cast<Cursor*>(&cursor) && (&cursor.getSupport() == this)) }    \
+                                                                                             \
+template <class FstT, class SndT>                                                            \
+inline AbstractCursor*                                                                       \
+TypeCollection<FstT, SndT>::createNewCursor() const                                          \
+   {  AbstractCursor* result = new Cursor(*this);                                            \
+      AssumeAllocation(result) return result;                                                \
+   }
+
+#define Template3InlineCollectionForAbstractCollect(TypeCollection, TypeCursor, FstT, SndT, ThirdT)\
+template <class FstT, class SndT, class ThirdT>                                              \
+inline void                                                                                  \
+TypeCollection<FstT, SndT, ThirdT>::assumeCompatibility(AbstractCursor& cursor) const        \
+   {  AssumeCondition(dynamic_cast<Cursor*>(&cursor) && (&cursor.getSupport() == this)) }    \
+                                                                                             \
+template <class FstT, class SndT, class ThirdT>                                              \
+inline AbstractCursor*                                                                       \
+TypeCollection<FstT, SndT, ThirdT>::createNewCursor() const                                  \
+   {  AbstractCursor* result = new Cursor(*this);                                            \
+      AssumeAllocation(result) return result;                                                \
+   }
+
+#define Template4InlineCollectionForAbstractCollect(TypeCollection, TypeCursor, FstT, SndT, ThirdT, FourthT)\
+template <class FstT, class SndT, class ThirdT, class FourthT>                               \
+inline void                                                                                  \
+TypeCollection<FstT, SndT, ThirdT, FourthT>::assumeCompatibility(AbstractCursor& cursor) const\
+   {  AssumeCondition(dynamic_cast<Cursor*>(&cursor) && (&cursor.getSupport() == this)) }    \
+                                                                                             \
+template <class FstT, class SndT, class ThirdT, class FourthT>                               \
+inline AbstractCursor*                                                                       \
+TypeCollection<FstT, SndT, ThirdT, FourthT>::createNewCursor() const                         \
+   {  AbstractCursor* result = new Cursor(*this);                                            \
+      AssumeAllocation(result) return result;                                                \
+   }
+
+#define Template5InlineCollectionForAbstractCollect(TypeCollection, TypeCursor, FstT, SndT, ThirdT, FourthT, FifThT)\
+template <class FstT, class SndT, class ThirdT, class FourthT, class FifThT>                 \
+inline void                                                                                  \
+TypeCollection<FstT, SndT, ThirdT, FourthT, FifThT>::assumeCompatibility(AbstractCursor& cursor) const\
+   {  AssumeCondition(dynamic_cast<Cursor*>(&cursor) && (&cursor.getSupport() == this)) }    \
+                                                                                             \
+template <class FstT, class SndT, class ThirdT, class FourthT, class FifThT>                 \
+inline AbstractCursor*                                                                       \
+TypeCollection<FstT, SndT, ThirdT, FourthT, FifThT>::createNewCursor() const                 \
+   {  AbstractCursor* result = new Cursor(*this);                                            \
+      AssumeAllocation(result) return result;                                                \
+   }
+
+#define DefineCursorForAbstractCollect(TypeCollection, TypeCursor)                           \
+  protected:                                                                                 \
+   friend class TypeCollection;                                                              \
+                                                                                             \
+  public:                                                                                    \
+   const TypeCollection& getSupport() const                                                  \
+      {  return (const TypeCollection&) TypeCollection::CastCollectionHandler::castFrom(getSSupport()); }
+
+#define TemplateDefineCursorForAbstractCollect(TypeCollection, TypeCursor, FstT)             \
+  protected:                                                                                 \
+   friend class TypeCollection<FstT>;                                                        \
+                                                                                             \
+  public:                                                                                    \
+   const TypeCollection<FstT>& getSupport() const                                            \
+      {  return (const TypeCollection<FstT>&) TypeCollection<FstT>::CastCollectionHandler::castFrom(AbstractCursor::getSSupport()); }
+
+#define Template2DefineCursorForAbstractCollect(TypeCollection, TypeCursor, FstT, SndT)      \
+  protected:                                                                                 \
+   friend class TypeCollection<FstT, SndT>;                                                  \
+                                                                                             \
+  public:                                                                                    \
+   const TypeCollection<FstT, SndT>& getSupport() const                                      \
+      {  return (const TypeCollection<FstT, SndT>&) TypeCollection<FstT, SndT>::CastCollectionHandler::castFrom(AbstractCursor::getSSupport()); }
+
+#define Template3DefineCursorForAbstractCollect(TypeCollection, TypeCursor, FstT, SndT, ThdT)\
+  protected:                                                                                 \
+   friend class TypeCollection<FstT, SndT, ThdT>;                                            \
+                                                                                             \
+  public:                                                                                    \
+   const TypeCollection<FstT, SndT, ThdT>& getSupport() const                                \
+      {  return (const TypeCollection<FstT, SndT, ThdT>&)                                    \
+            TypeCollection<FstT, SndT, ThdT>::CastCollectionHandler::castFrom(AbstractCursor::getSSupport()); \
+      }
+
+#define Template4DefineCursorForAbstractCollect(TypeCollection, TypeCursor, FstT, SndT, ThdT, FourthT)  \
+  protected:                                                                                 \
+   friend class TypeCollection<FstT, SndT, ThdT, FourthT>;                                   \
+                                                                                             \
+  public:                                                                                    \
+   const TypeCollection<FstT, SndT, ThdT, FourthT>& getSupport() const                       \
+      {  return (const TypeCollection<FstT, SndT, ThdT, FourthT>&)                           \
+            TypeCollection<FstT, SndT, ThdT, FourthT>::CastCollectionHandler::castFrom(AbstractCursor::getSSupport()); \
+      }
+
+#define Template5DefineCursorForAbstractCollect(TypeCollection, TypeCursor, FstT, SndT, ThdT, FourthT, fifthT) \
+  protected:                                                                                 \
+   friend class TypeCollection<FstT, SndT, ThdT, FourthT, fifthT>;                           \
+                                                                                             \
+  public:                                                                                    \
+   const TypeCollection<FstT, SndT, ThdT, FourthT, fifthT>& getSupport() const               \
+      {  return (const TypeCollection<FstT, SndT, ThdT, FourthT, fifthT>&)                   \
+            TypeCollection<FstT, SndT, ThdT, FourthT, fifthT>::CastCollectionHandler::castFrom(AbstractCursor::getSSupport()); \
+      }
+
+
+

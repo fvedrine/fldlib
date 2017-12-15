@@ -1,0 +1,324 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Concrete collections
+// File      : Array.inline
+// Description :
+//   Definition of the inline methods of array classes within
+//   the VirtualCollection inheritance framework.
+//
+
+/*************************************************/
+/* Inline methods of the class DefTypeCollection */
+/*************************************************/
+
+inline const int&
+DefTypeCollection::ArrayCursorNotification::index(const DefTypeCursor& cursor)
+   {  return cursor.index(); }
+
+inline void
+DefTypeCollection::ArrayCursorNotification::setIndex(DefTypeCursor& cursor, int index)
+   {  cursor.setIndex(index); }
+
+inline void
+DefTypeCollection::ArrayCursorNotification::invalidate(DefTypeCursor& cursor)
+   {  cursor.setIndex(-1); }
+
+inline void
+DefTypeCollection::ArrayCursorNotification::decreaseIndex(DefTypeCursor& cursor)
+   {  cursor.decreaseIndex(); }
+
+inline void
+DefTypeCollection::ArrayCursorNotification::increaseIndex(DefTypeCursor& cursor, int add)
+   {  cursor.increaseIndex(add); }
+
+inline int
+DefTypeCollection::getInsertionIndex(int index, RelativePosition position) const {
+   if (position == RPAfter)
+      return (index >= 0) ? (index+1) : 0;
+   else if (position != RPUndefined)
+      return (index >= 0) ? index : -1;
+   return -1;
+}
+
+inline int
+DefTypeCollection::getIndex(int index, RelativePosition position) const {
+   if (index >= 0)
+      return (position == RPUndefined) ? (ImplArray::count()-1) : (index + (position-RPExact));
+   else {
+      AssumeCondition(position != RPExact)
+      return (position == RPAfter) ? 0 : ImplArray::count()-1;
+   };
+}
+
+inline int
+DefTypeCollection::queryInternCount(const ExtendedLocateParameters& parameters,
+      const DefTypeCursor* start, const DefTypeCursor* end) const {
+   int result;
+   if ((end != nullptr) && (end->index() >= 0)) {
+      result = end->index();
+      if (parameters.isBefore() || parameters.isUndefined())
+         result--;
+   }
+   else
+      result = ImplArray::count();
+   if ((start != nullptr) && (start->index() >= 0)) {
+      result -= start->index();
+      if (parameters.isAfter() || parameters.isUndefined())
+         result--;
+   };
+   return (result >= 0) ? result : 0;
+}
+
+inline int
+DefTypeCollection::_queryCount(const ExtendedLocateParameters& parameters,
+      const VirtualCollectionCursor* start, const VirtualCollectionCursor* end) const
+{  return ((start == nullptr) && (end == nullptr)) ? ImplArray::count()
+      : queryInternCount(parameters, (DefTypeCursor*) start, (DefTypeCursor*) end);
+}
+
+inline bool
+DefTypeCollection::retrieveRemovedInterval(int& startIndex, int& endIndex, RelativePosition pos) const {
+   if (((pos == RPUndefined) || (pos == RPAfter)) && (startIndex >= 0)) {
+      if (++startIndex >= ImplArray::count())
+         return false;
+   };
+   if (startIndex < 0) {
+      startIndex = 0;
+      if (ImplArray::count() == 0)
+         return false;
+   };
+
+   if (((pos == RPUndefined) || (pos == RPBefore)) && endIndex >= 0) {
+      if (--endIndex < 0)
+         return false;
+   };
+   if (endIndex < 0)
+      endIndex = ImplArray::count()-1;
+   return true;
+}
+
+#ifdef DefTypeSorted
+
+template <class TabType, class ElementType, class Key, class Cast>
+#ifndef DefTypeMultiSorted
+inline VirtualSortedCollection::LocationResult
+#else
+inline VirtualMultiSortedCollection::LocationResult
+#endif
+DefTypeCollection::tlocate(const TabType& thisArray, typename Key::KeyType key, const ExtendedLocateParameters& parameters,
+      DefTypeCursor* cursor, const DefTypeCursor* start, const DefTypeCursor* end) const {
+   int localization = ImplArray::localize(key,
+         TemplateElementEnhancedKeyCastParameters<ElementType, Key, Cast>(*this),
+         start ? start->index() : 0, end ? end->index() : -1);
+   if (cursor)
+      cursor->setIndex((localization % 2) ? (localization/2)
+            : (((parameters.getRelativePosition() == RPBefore)
+                  || (parameters.getRelativePosition() == RPUndefined)) ? (localization/2-1)
+            : ((parameters.getRelativePosition() == RPAfter) ? 
+               ((localization < 2*ImplArray::count()-1) ? ((localization+1)/2) : -1)
+            : -1)));
+#ifndef DefTypeMultiSorted
+   return LocationResult((localization % 2) ? RPExact :
+         ((!cursor || (parameters.getRelativePosition() == RPExact)) ? RPUndefined
+          : ((parameters.getRelativePosition() == RPAfter) ? RPAfter : RPBefore)));
+#else
+   LocationResult result((localization % 2) ? RPExact :
+         ((!cursor || (parameters.getRelativePosition() == RPExact)) ? RPUndefined
+          : ((parameters.getRelativePosition() == RPAfter) ? RPAfter : RPBefore)));
+   if (localization % 2) {
+      int index = localization/2, indexLocalization = localization/2;
+      Key keyCompare(thisArray);
+      while ((--index >= 0) && (keyCompare.compare(key, keyCompare.key((const ElementType&)
+         Cast::castFrom(*ImplArray::elementAt(index)))) == CREqual));
+      int cursorPosition = indexLocalization-index-1;
+      int count = indexLocalization-index;
+      index = indexLocalization;
+      while ((++index < ImplArray::count()) && (keyCompare.compare(key, keyCompare.key((const ElementType&)
+         Cast::castFrom(*ImplArray::elementAt(index)))) == CREqual));
+      count += index-indexLocalization-1;
+      result.setCount(count);
+      result.setCursorPosition(cursorPosition);
+   };
+   return result;
+#endif
+}
+
+#ifndef DefTypeMultiSorted
+inline VirtualSortedCollection::LocationResult
+DefTypeCollection::_locateKey(const EnhancedObject& source, const ExtendedLocateParameters& parameters,
+      VirtualSortedCollectionCursor* cursor, const VirtualSortedCollectionCursor* start,
+      const VirtualSortedCollectionCursor* end) const
+#else
+inline VirtualMultiSortedCollection::LocationResult
+DefTypeCollection::_locateKey(const EnhancedObject& source, const ExtendedLocateParameters& parameters,
+      VirtualMultiSortedCollectionCursor* cursor, const VirtualMultiSortedCollectionCursor* start,
+      const VirtualMultiSortedCollectionCursor* end) const
+#endif
+{  DefTypeVirtualInheritedCollection::_locateKey(source, parameters, cursor, start, end);
+   return tlocate<DefTypeCollection, EnhancedObject, EnhancedKey, SimpleCast>
+      (*this, source, parameters, (DefTypeCursor*) cursor, (DefTypeCursor*) start, (DefTypeCursor*) end);
+}
+
+inline int
+DefTypeCollection::_merge(const ImplArray& source, int firstSourceIndex, int lastSourceIndex, bool doesDuplicate) {
+   return merge(TemplateElementKeyCastParameters<EnhancedObject, SimpleKey, SimpleCast>(),
+         source, firstSourceIndex, lastSourceIndex, doesDuplicate);
+}
+
+#endif // DefTypeSorted
+
+/***************************************/
+/* Intern classes of DefTypeCollection */
+/***************************************/
+
+class DefTypeCollection::IndexNotification : public CursorNotification, protected ArrayCursorNotification {
+  private:
+   int uIndex;
+
+  protected:
+   const int& getIndex() const { return uIndex; }
+
+  public:
+   IndexNotification(int index) : uIndex(index) {}
+   IndexNotification(const IndexNotification& source) = default;
+   DDefineAssign(IndexNotification)
+   DefineCursorNotificationMethods(IndexNotification, DefTypeCursor)
+};
+
+class DefTypeCollection::RemoveIndexNotification : public IndexNotification {
+  protected:
+   void update(DefTypeCursor& cursor)
+      {  int cursorIndex = index(cursor);
+         if (cursorIndex >= getIndex()) {
+            if (cursorIndex > getIndex())
+               decreaseIndex(cursor);
+            else
+               invalidate(cursor);
+         };
+      }
+
+  public:
+   RemoveIndexNotification(int removedIndex) : IndexNotification(removedIndex) {}
+   RemoveIndexNotification(const RemoveIndexNotification& source) = default;
+   DefineCursorNotificationMethods(RemoveIndexNotification, DefTypeCursor)
+};
+
+class DefTypeCollection::InsertIndexNotification : public DefTypeCollection::IndexNotification {
+  protected:
+   void update(DefTypeCursor& cursor)
+      { if (index(cursor) >= getIndex())
+           increaseIndex(cursor);
+      }
+
+  public:
+   InsertIndexNotification(int insertIndex) : IndexNotification(insertIndex) {}
+   InsertIndexNotification(const InsertIndexNotification& source) : IndexNotification(source) {}
+   DefineCursorNotificationMethods(InsertIndexNotification, DefTypeCursor)
+};
+
+class DefTypeCollection::BoundNotification : public CursorNotification, protected ArrayCursorNotification {
+  private:
+   int uStart;
+   int uEnd;
+
+  protected:
+   const int& getStartIndex() const { return uStart; }
+   const int& getEndIndex() const { return uEnd; }
+
+  public:
+   BoundNotification(int start, int end) : uStart(start), uEnd(end) {}
+   BoundNotification(const BoundNotification& source) = default;
+   DDefineAssign(BoundNotification)
+   DefineCursorNotificationMethods(BoundNotification, DefTypeCursor)
+};
+
+class DefTypeCollection::RemoveBoundNotification : public BoundNotification {
+  protected:
+   void update(DefTypeCursor& cursor)
+      {  int cursorIndex = index(cursor);
+         if (cursorIndex >= getStartIndex()) {
+            if (cursorIndex > getEndIndex())
+               increaseIndex(cursor, getStartIndex() - getEndIndex());
+            else
+               invalidate(cursor);
+         };
+      }
+
+  public:
+   RemoveBoundNotification(int start, int end) : BoundNotification(start, end) {}
+   RemoveBoundNotification(const RemoveBoundNotification& source) = default;
+   DefineCursorNotificationMethods(RemoveBoundNotification, DefTypeCursor)
+};
+
+class DefTypeCollection::InsertBoundNotification : public BoundNotification {
+  protected:
+   void update(DefTypeCursor& cursor)
+      {  if (index(cursor) >= getStartIndex())
+            increaseIndex(cursor, getEndIndex() - getStartIndex());
+      }
+
+  public:
+   InsertBoundNotification(int start, int end) : BoundNotification(start, end) {}
+   InsertBoundNotification(const InsertBoundNotification& source) = default;
+   DefineCursorNotificationMethods(InsertBoundNotification, DefTypeCursor)
+};
+
+class DefTypeCollection::MoveIndexNotification : public IndexNotification {
+  private:
+   int uInserted;
+
+  protected:
+   void update(DefTypeCursor& cursor) const;
+
+  public:
+   MoveIndexNotification(int removed, int inserted)
+      :  IndexNotification(removed), uInserted(inserted)
+      {  AssumeCondition((inserted != removed) && (inserted != removed+1)) }
+   MoveIndexNotification(const MoveIndexNotification& source) = default;
+   DDefineAssign(MoveIndexNotification)
+   DefineCursorNotificationMethods(MoveIndexNotification, DefTypeCursor)
+};
+
+class DefTypeCollection::MoveBoundNotification : public BoundNotification {
+  private:
+   int uInserted;
+
+  protected:
+   void update(DefTypeCursor& cursor) const;
+
+  public:
+   MoveBoundNotification(int startIndex, int endIndex, int inserted)
+      :  BoundNotification(startIndex, endIndex), uInserted(inserted)
+      {  AssumeCondition((inserted < startIndex) || (inserted > endIndex+1) || (inserted < 0)) }
+   MoveBoundNotification(const MoveBoundNotification& source) = default;
+   DDefineAssign(MoveBoundNotification)
+   DefineCursorNotificationMethods(MoveBoundNotification, DefTypeCursor)
+};
+
+#define DefJustInline
+#include "Collection/ELMCollection.inch"
+#undef DefJustInline
+

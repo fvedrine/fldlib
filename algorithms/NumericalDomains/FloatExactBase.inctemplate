@@ -1,0 +1,682 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2015-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : NumericalDomains
+// Unit      : FloatExact
+// File      : FloatExactBase.inctemplate
+// Description :
+//   Implementation of a class of comparison between floating points
+//
+
+#ifndef DefineGeneric
+
+#define DefineCompareFloatExact TCompareFloatExact
+#define DefineSizeofBaseTypeInBits                                   \
+   (sizeof(unsigned int)*8)
+#define DefineFillContent fillContent
+#define DefineBaseType                                               \
+   unsigned int
+
+#else
+
+#define DefineCompareFloatExact TGCompareFloatExact
+#define DefineSizeofBaseTypeInBits                                   \
+   BaseStoreTraits::sizeBaseInBits()
+#define DefineFillContent gfillContent
+#define DefineBaseType                                               \
+   typename BaseStoreTraits::BaseType
+
+#endif
+
+namespace DDoubleExact {
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+void
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::retrieveReal(
+      const TypeBuiltDouble& source, BuiltReal& result) {
+   result.setNegative(source.isNegative());
+   if (!source.getBasicExponent().isZero()
+         || !source.getMantissa().isZero()) {
+      AssumeCondition(source.bitSizeExponent() <= result.bitSizeExponent())
+      int logMantissa = source.getBasicExponent().isZero()
+         ? source.getMantissa().log_base_2()
+         : (source.bitSizeMantissa() + 1);
+#ifdef DefineGeneric
+      typedef typename TypeBuiltDouble::BuiltDouble::BaseStoreTraits BaseStoreTraits;
+#endif
+      if (source.isInftyExponent()) {
+         result.setInfty();
+         result.setNegative(source.isNegative());
+      }
+      else {
+         int sizeExponent = (source.bitSizeExponent() + DefineSizeofBaseTypeInBits - 1) / DefineSizeofBaseTypeInBits;
+         for (int exponentIndex = 0; exponentIndex < sizeExponent; ++exponentIndex)
+            result.getSBasicExponent()[exponentIndex] = (DefineBaseType) source.getBasicExponent()[exponentIndex];
+         if (source.bitSizeExponent() < result.bitSizeExponent()) {
+            result.getSBasicExponent().normalize();
+            typename BuiltReal::Exponent add;
+            add.setSize(result.bitSizeExponent());
+            result.getSBasicExponent().add(add.neg(result.bitSizeExponent()
+               - source.bitSizeExponent()) <<= (source.bitSizeExponent()-1));
+            if (source.getBasicExponent().isZero()) 
+               result.getSBasicExponent().sub(source.bitSizeMantissa() - logMantissa);
+         };
+      };
+
+      int sizeMantissa = (source.bitSizeMantissa() + DefineSizeofBaseTypeInBits - 1) / (DefineSizeofBaseTypeInBits);
+      for (int mantissaIndex = 0; mantissaIndex < sizeMantissa; ++mantissaIndex)
+         result.getSMantissa()[mantissaIndex] = (DefineBaseType) source.getMantissa()[mantissaIndex];
+      result.getSMantissa() <<= (result.bitSizeMantissa() - logMantissa + 1);
+      result.getSMantissa().normalize();
+   };
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+void
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::retrieveImplementation(
+      const BuiltReal& source, TypeBuiltDouble& result) {
+#ifdef DefineGeneric
+   typedef typename TypeBuiltDouble::BuiltDouble::BaseStoreTraits BaseStoreTraits;
+#endif
+   typename BuiltReal::FloatConversion conversion;
+   conversion.setSizeMantissa(source.bitSizeMantissa()).setSizeExponent(source.bitSizeExponent());
+   int sizeMantissa = (source.bitSizeMantissa() + DefineSizeofBaseTypeInBits - 1)/(DefineSizeofBaseTypeInBits);
+   for (int index = 0; index < sizeMantissa; ++index)
+      conversion.mantissa()[index] = source.getMantissa()[index];
+   int sizeExponent = (source.bitSizeExponent() + DefineSizeofBaseTypeInBits - 1)/(DefineSizeofBaseTypeInBits);
+   for (int index = 0; index < sizeExponent; ++index)
+      conversion.exponent()[index] = source.getBasicExponent()[index];
+   conversion.setNegative(source.isNegative());
+   auto& params = inherited::nearestParams();
+   result.setFloat(conversion, params);
+   params.clear();
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+void
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::retrieveRelativeError(BuiltReal& result) const {
+   retrieveReal(bfImplementation, result);
+   if (!(result == brReal)) {
+      auto& params = inherited::nearestParams();
+      if (result.isPositive()) {
+         if (brReal.isPositive()) {
+            if (result > brReal) { // result > brReal >= 0
+               BuiltReal denominator(result);
+               result.minusAssign(brReal, params);
+               params.clear();
+               result.divAssign(denominator, params);
+               params.clear();
+            }
+            else { // brReal > result >= 0
+               result.minusAssign(brReal, params);
+               params.clear();
+               result.opposite();
+               result.divAssign(brReal, params);
+               params.clear();
+            };
+         }
+         else { // result >= 0 && brReal <= 0
+            result.opposite();
+            if (result > brReal) { // brReal < -result <= 0
+               result.plusAssign(brReal, params);
+               params.clear();
+               result.divAssign(brReal, params);
+               params.clear();
+            }
+            else { // -result < brReal <= 0
+               BuiltReal denominator(result);
+               result.plusAssign(brReal, params);
+               params.clear();
+               result.divAssign(denominator, params);
+               params.clear();
+            }
+         };
+      }
+      else { // result <= 0
+         if (brReal.isNegative()) {
+            if (result < brReal) { // result < brReal <= 0
+               BuiltReal denominator(result);
+               result.minusAssign(brReal, params);
+               params.clear();
+               result.divAssign(denominator, params);
+               params.clear();
+            }
+            else { // brReal < result <= 0
+               result.minusAssign(brReal, params);
+               params.clear();
+               result.opposite();
+               result.divAssign(brReal, params);
+               params.clear();
+            };
+         }
+         else { // result <= 0 && brReal >= 0
+            result.opposite();
+            if (result > brReal) { // brReal > -result >= 0
+               result.plusAssign(brReal, params);
+               params.clear();
+               result.divAssign(brReal, params);
+               params.clear();
+            }
+            else { // -result > brReal >= 0
+               BuiltReal denominator(result);
+               result.plusAssign(brReal, params);
+               params.clear();
+               result.divAssign(denominator, params);
+               params.clear();
+            }
+         };
+      };
+   }
+   else
+      result.setZero();
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+bool
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::operator<(const thisType& source) const {
+   bool result;
+   auto mode = inherited::getMode();
+   if (mode == inherited::SVNone) {
+      bool implementationResult = bfImplementation.compareValue(source.bfImplementation) == CRLess;
+      bool realResult = brReal.compareValue(source.brReal) == CRLess;
+      if (realResult == implementationResult)
+         result = realResult;
+      else {
+         result = inherited::getThenBranch(implementationResult, realResult);
+         inherited::notifyForBranchCompare(*this);
+         source.inherited::notifyForBranchCompare(source);
+      };
+   }
+   else {
+      if (mode == inherited::SVNoImplementation)
+         result = brReal.compareValue(source.brReal) == CRLess;
+      else {
+         AssumeCondition(mode == inherited::SVNoReal)
+         result = bfImplementation.compareValue(source.bfImplementation) == CRLess;
+      }
+   };
+   return result;
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+bool
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::operator<=(const thisType& source) const {
+   bool result;
+   auto mode = inherited::getMode();
+   if (mode == inherited::SVNone) {
+      ComparisonResult comparisonResult = bfImplementation.compareValue(source.bfImplementation);
+      bool implementationResult = (comparisonResult == CRLess || comparisonResult == CREqual);
+      comparisonResult = brReal.compareValue(source.brReal);
+      bool realResult = (comparisonResult == CRLess || comparisonResult == CREqual);
+      if (realResult == implementationResult)
+         result = realResult;
+      else {
+         result = inherited::getThenBranch(implementationResult, realResult);
+         inherited::notifyForBranchCompare(*this);
+         source.inherited::notifyForBranchCompare(source);
+      };
+   }
+   else {
+      if (mode == inherited::SVNoImplementation) {
+         ComparisonResult comparisonResult = brReal.compareValue(source.brReal);
+         result = (comparisonResult == CRLess || comparisonResult == CREqual);
+      }
+      else {
+         AssumeCondition(mode == inherited::SVNoReal)
+         ComparisonResult comparisonResult = bfImplementation.compareValue(source.bfImplementation);
+         result = (comparisonResult == CRLess || comparisonResult == CREqual);
+      }
+   };
+   return result;
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+bool
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::operator==(const thisType& source) const {
+   bool result;
+   auto mode = inherited::getMode();
+   if (mode == inherited::SVNone) {
+      bool implementationResult = bfImplementation.compareValue(source.bfImplementation) == CREqual;
+      bool realResult = brReal.compareValue(source.brReal) == CREqual;
+      if (realResult == implementationResult)
+         result = realResult;
+      else {
+         result = inherited::getThenBranch(implementationResult, realResult);
+         inherited::notifyForBranchCompare(*this);
+         source.inherited::notifyForBranchCompare(source);
+      };
+   }
+   else {
+      if (mode == inherited::SVNoImplementation)
+         result = brReal.compareValue(source.brReal) == CREqual;
+      else {
+         AssumeCondition(mode == inherited::SVNoReal)
+         result = bfImplementation.compareValue(source.bfImplementation) == CREqual;
+      }
+   };
+   return result;
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+bool
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::operator!=(const thisType& source) const {
+   bool result;
+   auto mode = inherited::getMode();
+   if (mode == inherited::SVNone) {
+      ComparisonResult comparisonResult = bfImplementation.compareValue(source.bfImplementation);
+      bool implementationResult = (comparisonResult == CRLess || comparisonResult == CRGreater);
+      comparisonResult = brReal.compareValue(source.brReal);
+      bool realResult = (comparisonResult == CRLess || comparisonResult == CRGreater);
+      if (realResult == implementationResult)
+         result = realResult;
+      else {
+         result = inherited::getThenBranch(implementationResult, realResult);
+         inherited::notifyForBranchCompare(*this);
+         source.inherited::notifyForBranchCompare(source);
+      };
+   }
+   else {
+      if (mode == inherited::SVNoImplementation) {
+         ComparisonResult comparisonResult = brReal.compareValue(source.brReal);
+         result = (comparisonResult == CRLess || comparisonResult == CRGreater);
+      }
+      else {
+         AssumeCondition(mode == inherited::SVNoReal)
+         ComparisonResult comparisonResult = bfImplementation.compareValue(source.bfImplementation);
+         result = (comparisonResult == CRLess || comparisonResult == CRGreater);
+      }
+   };
+   return result;
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+bool
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::operator>=(const thisType& source) const {
+   bool result;
+   auto mode = inherited::getMode();
+   if (mode == inherited::SVNone) {
+      ComparisonResult comparisonResult = bfImplementation.compareValue(source.bfImplementation);
+      bool implementationResult = (comparisonResult == CRGreater || comparisonResult == CREqual);
+      comparisonResult = brReal.compareValue(source.brReal);
+      bool realResult = (comparisonResult == CRGreater || comparisonResult == CREqual);
+      if (realResult == implementationResult)
+         result = realResult;
+      else {
+         result = inherited::getThenBranch(implementationResult, realResult);
+         inherited::notifyForBranchCompare(*this);
+         source.inherited::notifyForBranchCompare(source);
+      };
+   }
+   else {
+      if (mode == inherited::SVNoImplementation) {
+         ComparisonResult comparisonResult = brReal.compareValue(source.brReal);
+         result = (comparisonResult == CRGreater || comparisonResult == CREqual);
+      }
+      else {
+         AssumeCondition(mode == inherited::SVNoReal)
+         ComparisonResult comparisonResult = bfImplementation.compareValue(source.bfImplementation);
+         result = (comparisonResult == CRGreater || comparisonResult == CREqual);
+      }
+   };
+   return result;
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+bool
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::operator>(const thisType& source) const {
+   bool result;
+   auto mode = inherited::getMode();
+   if (mode == inherited::SVNone) {
+      bool implementationResult = bfImplementation.compareValue(source.bfImplementation) == CRGreater;
+      bool realResult = brReal.compareValue(source.brReal) == CRGreater;
+      if (realResult == implementationResult)
+         result = realResult;
+      else {
+         result = inherited::getThenBranch(implementationResult, realResult);
+         inherited::notifyForBranchCompare(*this);
+         source.inherited::notifyForBranchCompare(source);
+      };
+   }
+   else {
+      if (mode == inherited::SVNoImplementation)
+         result = brReal.compareValue(source.brReal) == CRGreater;
+      else {
+         AssumeCondition(mode == inherited::SVNoReal)
+         result = bfImplementation.compareValue(source.bfImplementation) == CRGreater;
+      }
+   };
+   return result;
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>&
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::operator*=(const thisType& source) {
+   dValue *= source.dValue;
+   auto& params = inherited::nearestParams();
+   auto mode = inherited::getMode();
+   if (mode != inherited::SVNoImplementation) {
+      bfImplementation.multAssign(source.bfImplementation, params);
+      params.clear();
+   };
+   if (mode != inherited::SVNoReal) {
+      brReal.multAssign(source.brReal, params);
+      params.clear();
+   };
+   inherited::notifyForCompare(*this);
+   return *this;
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>&
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::operator/=(const thisType& source) {
+   bool isDivisionByZero = false;
+   auto& params = inherited::nearestParams();
+   auto mode = inherited::getMode();
+   if (mode != inherited::SVNoImplementation) {
+      if (source.bfImplementation.isZero())
+         isDivisionByZero = true;
+      bfImplementation.divAssign(source.bfImplementation, params);
+      params.clear();
+   };
+   if (mode != inherited::SVNoReal) {
+      if (source.brReal.isZero())
+         isDivisionByZero = true;
+      brReal.divAssign(source.brReal, params);
+      params.clear();
+   };
+   if (isDivisionByZero)
+      inherited::notifyForDivisionByZero(*this);
+   dValue /= source.dValue;
+   inherited::notifyForCompare(*this);
+   return *this;
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+int
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::asInt() const {
+   int result;
+   auto& params = inherited::nearestParams();
+   auto mode = inherited::getMode();
+   if (mode == inherited::SVNone) {
+      int implementationResult;
+      {  typename TypeBuiltDouble::IntConversion conversion;
+         bfImplementation.retrieveInteger(conversion.setSigned(), params);
+         params.clear();
+         implementationResult = conversion.asInt();
+      };
+      int realResult;
+      {  typename BuiltReal::IntConversion conversion;
+         brReal.retrieveInteger(conversion.setSigned(), params);
+         params.clear();
+         realResult = conversion.asInt();
+      };
+      if (implementationResult == realResult)
+         result = realResult;
+      else {
+         if (inherited::getThenBranch(implementationResult < realResult, implementationResult > realResult))
+            result = implementationResult < realResult ? implementationResult : realResult;
+         else
+            result = implementationResult > realResult ? implementationResult : realResult;
+         inherited::notifyForBranchCompare(*this);
+      };
+   }
+   else if (mode == inherited::SVNoImplementation) {
+      typename BuiltReal::IntConversion conversion;
+      brReal.retrieveInteger(conversion.setSigned(), params);
+      params.clear();
+      result = conversion.asInt();
+   }
+   else {
+      AssumeCondition(mode == inherited::SVNoReal)
+      typename TypeBuiltDouble::IntConversion conversion;
+      bfImplementation.retrieveInteger(conversion.setSigned(), params);
+      params.clear();
+      result = conversion.asInt();
+   };
+   return result;
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+unsigned
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::asUnsigned() const {
+   unsigned result;
+   auto& params = inherited::nearestParams();
+   auto mode = inherited::getMode();
+   if (mode == inherited::SVNone) {
+      unsigned implementationResult;
+      {  typename TypeBuiltDouble::IntConversion conversion;
+         bfImplementation.retrieveInteger(conversion.setUnsigned(), params);
+         params.clear();
+         implementationResult = conversion.asUnsignedInt();
+      };
+      unsigned realResult;
+      {  typename BuiltReal::IntConversion conversion;
+         brReal.retrieveInteger(conversion.setUnsigned(), params);
+         params.clear();
+         realResult = conversion.asUnsignedInt();
+      };
+      if (implementationResult == realResult)
+         result = realResult;
+      else {
+         if (inherited::getThenBranch(implementationResult < realResult, implementationResult > realResult))
+            result = implementationResult < realResult ? implementationResult : realResult;
+         else
+            result = implementationResult > realResult ? implementationResult : realResult;
+         inherited::notifyForBranchCompare(*this);
+      };
+   }
+   else if (mode == inherited::SVNoImplementation) {
+      typename BuiltReal::IntConversion conversion;
+      brReal.retrieveInteger(conversion.setUnsigned(), params);
+      params.clear();
+      result = conversion.asUnsignedInt();
+   }
+   else {
+      AssumeCondition(mode == inherited::SVNoReal)
+      typename TypeBuiltDouble::IntConversion conversion;
+      bfImplementation.retrieveInteger(conversion.setUnsigned(), params);
+      params.clear();
+      result = conversion.asUnsignedInt();
+   };
+   return result;
+}
+
+static const double PI = 3.141592653589793238;
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+void
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::sinAssign() {
+   dValue = ::sin(dValue);
+   auto mode = inherited::getMode();
+   if (mode != inherited::SVNoImplementation)
+      DDoubleExact::DefineFillContent(bfImplementation, dValue);
+   if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble conversion;
+      DDoubleExact::DefineFillContent(conversion, dValue);
+      retrieveReal(conversion, brReal);
+   }
+   inherited::notifyForCompare(*this);
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+void
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::cosAssign() {
+   dValue = ::cos(dValue);
+   auto mode = inherited::getMode();
+   if (mode != inherited::SVNoImplementation)
+      DDoubleExact::DefineFillContent(bfImplementation, dValue);
+   if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble conversion;
+      DDoubleExact::DefineFillContent(conversion, dValue);
+      retrieveReal(conversion, brReal);
+   }
+   inherited::notifyForCompare(*this);
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+void
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::asinAssign() {
+   dValue = ::asin(dValue);
+   auto mode = inherited::getMode();
+   if (mode != inherited::SVNoImplementation)
+      DDoubleExact::DefineFillContent(bfImplementation, dValue);
+   if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble conversion;
+      DDoubleExact::DefineFillContent(conversion, dValue);
+      retrieveReal(conversion, brReal);
+   }
+   inherited::notifyForCompare(*this);
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+void
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::acosAssign() {
+   dValue = ::acos(dValue);
+   auto mode = inherited::getMode();
+   if (mode != inherited::SVNoImplementation)
+      DDoubleExact::DefineFillContent(bfImplementation, dValue);
+   if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble conversion;
+      DDoubleExact::DefineFillContent(conversion, dValue);
+      retrieveReal(conversion, brReal);
+   }
+   inherited::notifyForCompare(*this);
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+void
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::tanAssign() {
+   dValue = ::tan(dValue);
+   auto mode = inherited::getMode();
+   if (mode != inherited::SVNoImplementation)
+      DDoubleExact::DefineFillContent(bfImplementation, dValue);
+   if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble conversion;
+      DDoubleExact::DefineFillContent(conversion, dValue);
+      retrieveReal(conversion, brReal);
+   }
+   inherited::notifyForCompare(*this);
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+void
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::atanAssign() {
+   dValue = ::atan(dValue);
+   auto mode = inherited::getMode();
+   if (mode != inherited::SVNoImplementation)
+      DDoubleExact::DefineFillContent(bfImplementation, dValue);
+   if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble conversion;
+      DDoubleExact::DefineFillContent(conversion, dValue);
+      retrieveReal(conversion, brReal);
+   }
+   inherited::notifyForCompare(*this);
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+void
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::expAssign() {
+   dValue = ::exp(dValue);
+   auto& params = inherited::nearestParams();
+   auto mode = inherited::getMode();
+   if (mode != inherited::SVNoImplementation) {
+      typename TypeBuiltDouble::BaseDouble errorMin, errorMax;
+      bfImplementation.expAssign(errorMin, errorMax, params);
+      params.clear();
+   };
+   if (mode != inherited::SVNoReal) {
+      typename BuiltReal::BaseDouble errorMin, errorMax;
+      brReal.expAssign(errorMin, errorMax, params);
+      params.clear();
+   };
+   inherited::notifyForCompare(*this);
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+void
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::logAssign() {
+   dValue = ::log(dValue);
+   auto& params = inherited::nearestParams();
+   auto mode = inherited::getMode();
+   bool isNegativeOrNulLog = false;
+   if (mode != inherited::SVNoImplementation) {
+      isNegativeOrNulLog = (bfImplementation.isNegative() || bfImplementation.isZero());
+      typename TypeBuiltDouble::BaseDouble errorMin, errorMax;
+      bfImplementation.logAssign(errorMin, errorMax, params);
+      params.clear();
+   };
+   if (mode != inherited::SVNoReal) {
+      isNegativeOrNulLog = isNegativeOrNulLog || (brReal.isNegative() || brReal.isZero());
+      typename BuiltReal::BaseDouble errorMin, errorMax;
+      brReal.logAssign(errorMin, errorMax, params);
+      params.clear();
+   };
+   if (isNegativeOrNulLog)
+      inherited::notifyForNegativeOrNulLog(*this);
+   inherited::notifyForCompare(*this);
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+void
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::log10Assign() {
+   bool isNegativeOrNulLog = (dValue <= 0);
+   dValue = ::log10(dValue);
+   auto mode = inherited::getMode();
+   if (mode != inherited::SVNoImplementation)
+      DDoubleExact::DefineFillContent(bfImplementation, dValue);
+   if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble conversion;
+      DDoubleExact::DefineFillContent(conversion, dValue);
+      retrieveReal(conversion, brReal);
+   }
+   if (isNegativeOrNulLog)
+      inherited::notifyForNegativeOrNulLog(*this);
+   inherited::notifyForCompare(*this);
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+void
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::powAssign(const thisType& value) {
+   bool isNegativePow = (dValue <= 0);
+   dValue = ::pow(dValue, value.dValue);
+   auto mode = inherited::getMode();
+   if (mode != inherited::SVNoImplementation)
+      DDoubleExact::DefineFillContent(bfImplementation, dValue);
+   if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble conversion;
+      DDoubleExact::DefineFillContent(conversion, dValue);
+      retrieveReal(conversion, brReal);
+   }
+   if (isNegativePow)
+      inherited::notifyForNegativePow(*this);
+   inherited::notifyForCompare(*this);
+}
+
+} // end of namespace DDoubleExact
+
+#undef DefineCompareFloatExact
+#undef DefineSizeofBaseTypeInBits
+#undef DefineFillContent
+#undef DefineBaseType
+

@@ -1,0 +1,865 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat à l'énergie atomique et aux énergies              */
+/*         alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Concrete collections
+// File      : SortedAVL.inch
+// Description :
+//   Definition of AVLs as concrete sorted collections.
+//
+
+/*****************************************************************************/
+/* DefTypeBinaryParent                 : AVL implementation with parent edge */
+/*****************************************************************************/
+
+#ifndef DefTypeBinaryParent
+#define DefGenericAVL GenericAVL
+#define DefImplBinaryTree ImplBinaryTree
+#define DefGenericAVLCursor GenericAVLCursor
+#else
+#define DefGenericAVL GenericParentAVL
+#define DefImplBinaryTree ImplParentBinaryTree
+#define DefGenericAVLCursor GenericParentAVLCursor
+#endif
+
+#define DefTypeVirtualInheritedCollection VirtualSortedCollection
+#define DefTypeVirtualInheritedCursor VirtualSortedCollectionCursor
+#define DefTypeCollection DefGenericAVL
+#define DefTypeCursor DefGenericAVLCursor
+#define DefTypeSorted
+
+class DefGenericAVLCursor;
+class DefGenericAVL : public VirtualSortedCollection, private DefImplBinaryTree {
+  private:
+   typedef DefGenericAVL thisType;
+   typedef VirtualSortedCollection inherited;
+   typedef DefImplBinaryTree inheritedImplementation;
+   typedef DefGenericAVLCursor thisCursorType;
+   friend class DefGenericAVLCursor;
+
+  public:
+   typedef inheritedImplementation::Node Node;
+   typedef TInitialValues<Node, SimpleCast> InitialValues;
+   typedef TInitialNewValues<Node, SimpleCast> InitialNewValues;
+
+  private:
+   void setCursor(inheritedImplementation::Cursor& implCursor, RelativePosition pos,
+      inheritedImplementation::Cursor* sourceCursor);
+   void setCursor(inheritedImplementation::Cursor& implCursor, RelativePosition pos);
+
+   class InsertionNotification;
+   class SuppressionNotification;
+   class ReplaceNotification;
+
+   static inheritedImplementation::Cursor& getImplementation(thisCursorType& cursor);
+   friend class InsertionNotification;
+   friend class SuppressionNotification;
+   friend class ReplaceNotification;
+
+  protected:
+   virtual bool acceptElement(const EnhancedObject& source) const override { return true; }
+
+   virtual ComparisonResult _compare(const EnhancedObject& source) const override
+      {  return VirtualSortedCollection::_compare(source); }
+   virtual void _fullAssign(const VirtualCollection& source, const ExtendedReplaceParameters& parameters) override
+      {  VirtualCollection::pfullAssign(source, parameters); }
+   void _fullAssign(const thisType& source, const ExtendedReplaceParameters& parameters);
+
+   static const DefGenericAVL& castFromImplementation(const CustomImplBinaryTree& tree)
+      {  return (const DefGenericAVL&) tree; }
+
+   template <class TypeLocate>
+   struct ImplementationTemplateLocate : public TypeLocate {
+     public:
+      typedef typename TypeLocate::KeyType KeyType;
+      typedef typename TypeLocate::ElementType ElementType;
+      typedef typename TypeLocate::TabType TabType;
+      typedef typename TypeLocate::TabImplementation TabImplementation;
+      typedef typename TypeLocate::Cast Cast;
+      typedef inheritedImplementation::Node TypeNode;
+      typedef inheritedImplementation::Cursor TypeCursor;
+
+      KeyType key;
+      TypeCursor& cursor;
+
+      ImplementationTemplateLocate(TypeLocate typeLocate, KeyType keySource, TypeCursor& cursorSource)
+         : TypeLocate(typeLocate), key(keySource), cursor(cursorSource) {}
+      // static ComparisonResult compare(KeyType fst, KeyType snd) {  return TypeLocate::compare(fst, snd); }
+   };
+
+   template <class TypeLocate> LocationResult tlocate(TypeLocate locate) const;
+   struct GenericTemplateLocate {
+     public:
+      typedef const EnhancedObject& KeyType;
+      typedef EnhancedObject ElementType;
+      typedef thisType TabType;
+      typedef inheritedImplementation TabImplementation;
+      typedef SimpleCast Cast;
+
+      KeyType key;
+      const ExtendedLocateParameters& parameters;
+      thisCursorType* cursor;
+      const thisCursorType* start;
+      const thisCursorType* end;
+
+      GenericTemplateLocate(const EnhancedObject& keySource, const ExtendedLocateParameters& parametersSource,
+         VirtualSortedCollectionCursor* cursorSource, const VirtualSortedCollectionCursor* startSource,
+         const VirtualSortedCollectionCursor* endSource)
+         :  key(keySource), parameters(parametersSource), cursor((thisCursorType*) cursorSource),
+            start((thisCursorType*) startSource), end((thisCursorType*) endSource) {}
+      static ComparisonResult compare(KeyType fst, KeyType snd) {  return fst.compare(snd); }
+   };
+   virtual LocationResult _locateKey(const EnhancedObject& source, const ExtendedLocateParameters& parameters,
+         VirtualSortedCollectionCursor* cursor=nullptr, const VirtualSortedCollectionCursor* start=nullptr,
+         const VirtualSortedCollectionCursor* end=nullptr) const override
+      {  return tlocate(GenericTemplateLocate(source, parameters, cursor, start, end)); }
+
+   // insertion methods
+   virtual void _add(EnhancedObject* anObject, const ExtendedInsertionParameters& parameters,
+         VirtualCollectionCursor* cursor) override
+      { _add((Node*) anObject, parameters, (thisCursorType*) cursor); }
+   void _add(Node* newElement, const ExtendedInsertionParameters& parameters, thisCursorType* cursor=nullptr);
+   virtual void _addAll(const VirtualCollection& source, const ExtendedInsertionParameters& parameters,
+         VirtualCollectionCursor* cursor, const VirtualCollectionCursor* start, const VirtualCollectionCursor* end) override
+      {  VirtualCollection::paddAll(source, parameters, cursor, start, end); }
+   void _addAll(const thisType& source, const ExtendedInsertionParameters& parameters,
+         thisCursorType* cursor=nullptr, const thisCursorType* start=nullptr, const thisCursorType* end=nullptr);
+
+   // move methods
+   virtual void _moveTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+         VirtualCollectionCursor* cursor=nullptr, VirtualCollectionCursor* destinationCursor=nullptr) override
+      {  VirtualSortedCollection::pmoveTo(destination, parameters, cursor, destinationCursor); }
+   virtual void _moveAllTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+         const VirtualCollectionCursor* startCursor=nullptr, const VirtualCollectionCursor* endCursor=nullptr,
+         VirtualCollectionCursor* destinationCursor=nullptr) override
+      {  VirtualCollection::pmoveAllTo(destination, parameters, startCursor, endCursor, destinationCursor); }
+   void _moveAllTo(thisType& destination, const ExtendedReplaceParameters& parameters,
+         const thisCursorType* startCursor=nullptr, const thisCursorType* endCursor=nullptr,
+         thisCursorType* destinationCursor=nullptr);
+   virtual void _swap(VirtualCollection& source) override
+      {  InvalidateNotification invalidation;
+         notifyCursorUpdate(invalidation);
+         ((thisType&) source).notifyCursorUpdate(invalidation);
+         inheritedImplementation::swap((thisType&) source);
+      }
+
+   // suppression methods
+   virtual void _remove(const ExtendedSuppressParameters& parameters, VirtualCollectionCursor* cursor) override
+      {  _remove(parameters, (thisCursorType*) cursor); }
+   void _remove(const ExtendedSuppressParameters& parameters, thisCursorType* cursor=nullptr);
+   virtual void _removeAll(const ExtendedSuppressParameters& parameters,
+         const VirtualCollectionCursor* start, const VirtualCollectionCursor* end=nullptr) override
+      {  _removeAll(parameters, (thisCursorType*) start, (thisCursorType*) end); }
+   void _removeAll(const ExtendedSuppressParameters& parameters,
+         const thisCursorType* start=nullptr, const thisCursorType* end=nullptr);
+
+   // replace methods
+   virtual void _replace(EnhancedObject* anObject, const ExtendedReplaceParameters& parameters,
+         VirtualCollectionCursor* cursor) override
+      {  _replace((Node*) anObject, parameters, (thisCursorType*) cursor); }
+   void _replace(Node* element, const ExtendedReplaceParameters& parameters,
+         thisCursorType* cursor=nullptr);
+
+   // query methods
+   virtual int _queryCount(const ExtendedLocateParameters& parameters,
+      const VirtualCollectionCursor* start, const VirtualCollectionCursor* end) const override;
+   int _queryCount(const ExtendedLocateParameters& parameters,
+      const thisCursorType* start=nullptr, const thisCursorType* end=nullptr) const;
+   virtual EnhancedObject* _getElement(const ExtendedLocateParameters& parameters,
+         const VirtualCollectionCursor* cursor) const override
+      {  return _getElement(parameters, (thisCursorType*) cursor); }
+   Node* _getElement(const ExtendedLocateParameters& parameters,
+         const thisCursorType* cursor=nullptr) const;
+
+   const inheritedImplementation& getImplementation() const { return (const inheritedImplementation&) *this; }
+
+   friend class CustomImplBinaryTree;
+   virtual const EnhancedObject& key(const EnhancedObject& element) const override { return element; }
+   const Node& keyFromCell(const Node& element) const { return (const Node&) key(element); }
+
+  public:
+   DefGenericAVL() {}
+   DefGenericAVL(const InitialValues& initialValues)
+      {  TInsertInitialValue<DefGenericAVL, Node, SimpleCast> insertInitialValue(*this);
+         initialValues.foreachDo(insertInitialValue);
+      }
+   DefGenericAVL(const InitialNewValues& initialValues)
+      {  TInsertInitialNewValue<DefGenericAVL, Node, SimpleCast> insertInitialValue(*this);
+         initialValues.foreachDo(insertInitialValue);
+      }
+   DefGenericAVL(const DefGenericAVL& source, AddMode mode=AMNoDuplicate,
+         const VirtualCast* retrieveRegistrationFromCopy=nullptr)
+      :  VirtualSortedCollection(source, mode),
+         inheritedImplementation(source, mode==AMDuplicate, retrieveRegistrationFromCopy) {}
+
+   DefGenericAVL& operator=(const DefGenericAVL& source)
+      {  thisType::_fullAssign(source, ExtendedReplaceParameters()); return *this; }
+#ifndef DefTypeBinaryParent
+   DefineCopy(GenericAVL)
+   DDefineAssign(GenericAVL)
+   StaticInheritConversions(GenericAVL, VirtualSortedCollection)
+   DefineCollectionForAbstractCollect(GenericAVL, GenericAVLCursor)
+#else
+   DefineCopy(GenericParentAVL)
+   DDefineAssign(GenericParentAVL)
+   StaticInheritConversions(GenericParentAVL, VirtualSortedCollection)
+   DefineCollectionForAbstractCollect(GenericParentAVL, GenericParentAVLCursor)
+#endif
+   virtual bool isValid() const override
+      { return VirtualSortedCollection::isValid() && inheritedImplementation::isValid(); }
+
+   #define DefJustDeclare
+   #define DefTypeElement inheritedImplementation::Node
+   #define DefTypeCastToCollectHandler(pdteElement) pdteElement
+   #define DefTypeCCastToCollectHandler(pdteElement) pdteElement
+   #include "Collection/ELMCollection.inch"
+   #undef DefTypeCastToCollectHandler
+   #undef DefTypeCCastToCollectHandler
+   #undef DefTypeElement
+   #undef DefJustDeclare
+};
+
+/* Definition of inline methods of the class DefGenericAVL */
+
+inline void
+DefGenericAVL::setCursor(inheritedImplementation::Cursor& implCursor, RelativePosition pos,
+      inheritedImplementation::Cursor* sourceCursor) {
+   if (sourceCursor) {
+      implCursor = *sourceCursor;
+      if (pos == RPBefore)
+         implCursor.setToPrevious(*this);
+      else if (pos == RPAfter)
+         implCursor.setToNext(*this);
+   }
+   else if (pos == RPBefore)
+      implCursor.setToLast(*this);
+   else if (pos == RPAfter)
+      implCursor.setToFirst(*this);
+   else if (pos == RPUndefined)
+      implCursor.setToInnerDepth(*this);
+   else
+      { AssumeUncalled };
+}
+
+inline void
+DefGenericAVL::setCursor(inheritedImplementation::Cursor& implCursor, RelativePosition pos) {
+   if (pos == RPBefore)
+      implCursor.setToPrevious(*this);
+   else if (pos == RPAfter)
+      implCursor.setToNext(*this);
+}
+
+/********************************************/
+/* Definition of the class GenericAVLCursor */
+/********************************************/
+
+class DefGenericAVLCursor : public VirtualSortedCollectionCursor {
+  private:
+   typedef DefImplBinaryTree SupportImplementation;
+   typedef DefImplBinaryTree::Cursor CursorImplementation;
+   typedef VirtualSortedCollectionCursor inherited;
+   typedef DefGenericAVLCursor thisType;
+   CursorImplementation ciPosition;
+
+  protected:
+   CursorImplementation& getImplementation() { return ciPosition; }
+   const CursorImplementation& getImplementation() const { return ciPosition; }
+
+   virtual ComparisonResult _compare(const EnhancedObject& asource) const override
+      {  ComparisonResult result = inherited::_compare(asource);
+         const thisType& source = (const thisType&) castFromCopyHandler(asource);
+         if (result == CREqual)
+            result = ciPosition.compare(source.ciPosition);
+         return result;
+      }
+
+   virtual bool _isPositionned(const ExtendedLocateParameters& pos,
+         const VirtualCollectionCursor* cursor=nullptr) const override;
+   virtual bool _position(const Position& pos) override;
+   virtual EnhancedObject* _getSElement() const override { return ciPosition.elementAt(); }
+   virtual bool _isEqual(const AbstractCursor& cursor) const override
+      {  return AbstractCursor::isEqual(cursor)
+            && (ciPosition.elementAt() == ((const thisType&) cursor).ciPosition.elementAt());
+      }
+#ifdef DefTypeBinaryParent
+   virtual void _gotoReference(const EnhancedObject& element) override
+      {  _gotoReference((const DefImplBinaryTree::Node&) element); }
+   void _gotoReference(const DefImplBinaryTree::Node& element)
+      {  ciPosition.setToReference(const_cast<DefImplBinaryTree::Node*>(&element)); }
+#endif
+
+  public:
+   DefGenericAVLCursor(const DefGenericAVL& support) : inherited(support), ciPosition(support) {}
+   DefGenericAVLCursor(const DefGenericAVLCursor& source) = default;
+#ifndef DefTypeBinaryParent
+   DefineCopy(GenericAVLCursor)
+   DDefineAssign(GenericAVLCursor)
+   DefineCursorForAbstractCollect(GenericAVL, GenericAVLCursor)
+#else
+   DefineCopy(GenericParentAVLCursor)
+   DDefineAssign(GenericParentAVLCursor)
+   DefineCursorForAbstractCollect(GenericParentAVL, GenericParentAVLCursor)
+#endif
+   void swap(thisType& source)
+      {  inherited::swap(source);
+         ciPosition.swap(source.ciPosition);
+      }
+
+   virtual bool isValid() const override
+      { return inherited::isValid() && ciPosition.isValid(); }
+
+#define DefCursor
+#define DefTypeFinal DefTypeCursor::
+#define DefTypeElement DefImplBinaryTree::Node
+#define DefTypeCastToCollectHandler(pdteElement) pdteElement
+#define DefTypeCCastToCollectHandler(pdteElement) pdteElement
+   #include "Collection/ELMCollection.inch"
+#undef DefTypeCastToCollectHandler
+#undef DefTypeCCastToCollectHandler
+#undef DefTypeElement
+#undef DefTypeFinal
+#undef DefCursor
+};
+
+inline int
+DefGenericAVL::_queryCount(const ExtendedLocateParameters& parameters,
+      const thisCursorType* start, const thisCursorType* end) const {
+   return (!start && !end) ? inheritedImplementation::count()
+      : VirtualCollection::pqueryCount(parameters, start, end);
+}
+
+inline int
+DefGenericAVL::_queryCount(const ExtendedLocateParameters& parameters,
+   const VirtualCollectionCursor* start, const VirtualCollectionCursor* end) const
+   {  return _queryCount(parameters, (thisCursorType*) start, (thisCursorType*) end); }
+
+inline DefImplBinaryTree::Cursor&
+DefGenericAVL::getImplementation(DefGenericAVLCursor& cursor) { return cursor.getImplementation(); }
+
+#define DefJustInline
+#define DefTypeElement DefImplBinaryTree::Node
+#define DefTypeCastToCollectHandler(element) element
+#define DefTypeCCastToCollectHandler(element) element
+#include "Collection/ELMCollection.inch"
+#undef DefTypeCastToCollectHandler
+#undef DefTypeCCastToCollectHandler
+#undef DefTypeElement
+#undef DefJustInline
+
+#undef DefTypeVirtualInheritedCollection
+#undef DefTypeVirtualInheritedCursor
+#undef DefTypeCollection
+#undef DefTypeCursor
+#undef DefTypeSorted
+
+#ifndef DefTypeBinaryParent
+class DefGenericAVL::InsertionNotification
+   : public DefGenericAVL::CursorNotification, public DefImplBinaryTree::InsertionNotification {
+  private:
+   typedef DefImplBinaryTree::InsertionNotification inheritedImplementation;
+   typedef CursorNotification inherited;
+
+  protected:
+   virtual ComparisonResult _compare(const EnhancedObject& source) const override
+      {  return inherited::_compare(source); }
+   void update(DefGenericAVLCursor& cursor) { inheritedImplementation::apply(getImplementation(cursor)); }
+
+  public:
+   InsertionNotification() {}
+   InsertionNotification(const InsertionNotification& source) = default;
+   DDefineAssign(InsertionNotification)
+   DefineCursorNotificationMethods(InsertionNotification, DefGenericAVLCursor)
+   virtual bool isValid() const override
+      {  return inherited::isValid() && inheritedImplementation::isValid(); }
+};
+#endif // DefTypeBinaryParent
+
+class DefGenericAVL::SuppressionNotification
+      : public DefGenericAVL::CursorNotification, public DefImplBinaryTree::SuppressionNotification {
+  private:
+   typedef DefImplBinaryTree::SuppressionNotification inheritedImplementation;
+   typedef CursorNotification inherited;
+
+  protected:
+   virtual ComparisonResult _compare(const EnhancedObject& source) const override
+      {  return inherited::_compare(source); }
+   void update(DefGenericAVLCursor& cursor)
+      {  inheritedImplementation::apply(getImplementation(cursor)); }
+
+  public:
+   SuppressionNotification() {}
+   SuppressionNotification(const SuppressionNotification& source) = default;
+   DDefineAssign(SuppressionNotification)
+   DefineCursorNotificationMethods(SuppressionNotification, DefGenericAVLCursor)
+   virtual bool isValid() const override
+      {  return inherited::isValid() && inheritedImplementation::isValid(); }
+};
+
+class DefGenericAVL::ReplaceNotification
+      : public DefGenericAVL::CursorNotification, public DefImplBinaryTree::ReplaceNotification {
+  private:
+   typedef DefImplBinaryTree::ReplaceNotification inheritedImplementation;
+   typedef CursorNotification inherited;
+
+  protected:
+   virtual ComparisonResult _compare(const EnhancedObject& source) const override
+      {  return inherited::_compare(source); }
+   void update(DefGenericAVLCursor& cursor) { inheritedImplementation::apply(getImplementation(cursor)); }
+
+  public:
+   ReplaceNotification() {}
+   ReplaceNotification(const ReplaceNotification& source) = default;
+   DDefineAssign(ReplaceNotification)
+   DefineCursorNotificationMethods(ReplaceNotification, DefGenericAVLCursor)
+   virtual bool isValid() const override
+      {  return inherited::isValid() && inheritedImplementation::isValid(); }
+};
+
+#ifndef DefTypeBinaryParent
+InlineCollectionForAbstractCollect(GenericAVL, GenericAVLCursor)
+#else
+InlineCollectionForAbstractCollect(GenericParentAVL, GenericParentAVLCursor)
+#endif
+
+#ifndef DefTypeBinaryParent
+#define DefSortedAVL SortedAVL
+#define DefSortedAVLCursor SortedAVLCursor
+#define DefSimpleAVLCast SimpleAVLCast
+#else
+#define DefSortedAVL SortedParentAVL
+#define DefSortedAVLCursor SortedParentAVLCursor
+#define DefSimpleAVLCast SimpleParentAVLCast
+#endif
+
+/**********************************************/
+/* Definition of the template class SortedAVL */
+/**********************************************/
+
+template<class TypeElement, class Key, class Cast>
+class DefSortedAVLCursor;
+
+class DefSimpleAVLCast {
+  public:
+   typedef DefImplBinaryTree::Node Base;
+   static DefImplBinaryTree::Node* castFrom(DefImplBinaryTree::Node* source) { return source; }
+   static const DefImplBinaryTree::Node* castFrom(const DefImplBinaryTree::Node* source) { return source; }
+   static DefImplBinaryTree::Node& castFrom(DefImplBinaryTree::Node& source) { return source; }
+   static const DefImplBinaryTree::Node& castFrom(const DefImplBinaryTree::Node& source) { return source; }
+
+   static DefImplBinaryTree::Node* castTo(DefImplBinaryTree::Node* source) { return source; }
+   static const DefImplBinaryTree::Node* castTo(const DefImplBinaryTree::Node* source) { return source; }
+   static DefImplBinaryTree::Node& castTo(DefImplBinaryTree::Node& source) { return source; }
+   static const DefImplBinaryTree::Node& castTo(const DefImplBinaryTree::Node& source) { return source; }
+};
+
+template<class Element, class TKey=VirtualSortedCollection::SimpleKey, class Cast=DefSimpleAVLCast>
+class DefSortedAVL : public DefGenericAVL {
+  public:
+   typedef TKey Key;
+   typedef LightCopyKeyTraits<typename TKey::TypeOfKey> KeyTraits;
+   typedef Element Node;
+   typedef TInitialValues<Element, Cast> InitialValues;
+   typedef TInitialNewValues<Element, Cast> InitialNewValues;
+
+  private:
+   typedef DefSortedAVL<Element, TKey, Cast> thisType;
+   typedef DefSortedAVLCursor<Element, TKey, Cast> thisCursorType;
+   typedef DefGenericAVL inherited;
+   typedef typename Key::TypeOfKey TypeOfKey;
+
+   virtual LocationResult _locateKey(const EnhancedObject& source, const ExtendedLocateParameters& parameters,
+         VirtualSortedCollectionCursor* cursor, const VirtualSortedCollectionCursor* start,
+         const VirtualSortedCollectionCursor* end) const override
+      {  return DefGenericAVL::_locateKey(source, parameters, cursor, start, end); }
+
+  protected:
+   virtual bool acceptElement(const EnhancedObject& source) const override { return true; }
+   LocationResult _locateKey(typename Key::KeyType key, const ExtendedLocateParameters& parameters,
+         DefSortedAVLCursor<Element, Key, Cast>* cursor=nullptr, const DefSortedAVLCursor<Element, Key, Cast>* start=nullptr,
+         const DefSortedAVLCursor<Element, Key, Cast>* end=nullptr) const
+      {  return DefGenericAVL::_locateKey(TypeOfKey::castToCopyHandler(key), parameters,
+            cursor, start, end);
+      }
+   typename Key::KeyType _queryKey(const ExtendedLocateParameters& parameters,
+         const thisCursorType* cursor=nullptr) const
+      {  return Key::key(getElement(parameters, cursor)); }
+   virtual EnhancedObject* _getElement(const ExtendedLocateParameters& parameters,
+         const VirtualCollectionCursor* cursor) const override
+      {  return Cast::castTo(_getElement(parameters, (thisCursorType*) cursor)); }
+   Element* _getElement(const ExtendedLocateParameters& parameters,
+         const thisCursorType* cursor=nullptr) const
+      {  return tgetElement(TemplateQueryParameters<thisType, inherited, Element, KeyTraits, Cast>(),
+            parameters, cursor);
+      }
+   Element* getInheritedElement(const ExtendedLocateParameters& parameters,
+         const thisCursorType* cursor=nullptr) const
+      {  return (Element*) Cast::castFrom(inherited::_getElement(parameters, cursor)); }
+   friend class VirtualCollection::TemplateQueryParameters<thisType, inherited, Element, KeyTraits, Cast>;
+
+  public:
+   DefSortedAVL() {}
+   DefSortedAVL(const InitialValues& initialValues)
+      {  VirtualCollection::TInsertInitialValue<thisType, Element, Cast> insertInitialValue(*this);
+         initialValues.foreachDo(insertInitialValue);
+      }
+   DefSortedAVL(const InitialNewValues& initialValues)
+      {  VirtualCollection::TInsertInitialNewValue<thisType, Element, Cast> insertInitialValue(*this);
+         initialValues.foreachDo(insertInitialValue);
+      }
+   DefSortedAVL(const thisType& source, AddMode mode=AMNoDuplicate,
+         const VirtualCast* retrieveRegistrationFromCopy=nullptr)
+      :  DefGenericAVL(source, mode, retrieveRegistrationFromCopy) {}
+#ifndef DefTypeBinaryParent
+   Template3DefineCopy(SortedAVL, Element, Key, Cast)
+   Template3DefineCollectionForAbstractCollect(SortedAVL, SortedAVLCursor, Element, Key, Cast)
+#else
+   Template3DefineCopy(SortedParentAVL, Element, Key, Cast)
+   Template3DefineCollectionForAbstractCollect(SortedParentAVL, SortedParentAVLCursor, Element, Key, Cast)
+#endif
+
+   virtual const EnhancedObject& key(const EnhancedObject& element) const override
+      {  return TypeOfKey::castToCopyHandler(Key::key((const Element&)
+               Cast::castFrom((const inherited::Node&) element)));
+      }
+   const EnhancedObject& keyFromCell(const Node& element) const { return key(element); }
+
+#define DefTypeElement Element
+#define DefTypeCollection DefSortedAVL<Element, Key, Cast>
+#define DefTypeCastToCollectHandler Cast::castTo
+#define DefTypeCCastToCollectHandler Cast::castTo
+#define DefTypeCastFromCollectHandler (Element*) Cast::castFrom
+#define DefTypeCCastFromCollectHandler (const Element*) Cast::castFrom
+#define DefTypeCursor DefSortedAVLCursor<Element, Key, Cast>
+#define DefTypeSorted
+#define DefTypeFinal DefSortedAVL<Element, Key, Cast>::
+#define DefTypeKey typename Key::KeyType
+#define DefMapInterface
+   #include "Collection/ELMCollection.inch"
+#undef DefMapInterface
+#undef DefTypeFinal
+#undef DefTypeKey
+#undef DefTypeSorted
+#undef DefTypeCursor
+#undef DefTypeCastToCollectHandler
+#undef DefTypeCCastToCollectHandler
+#undef DefTypeCastFromCollectHandler
+#undef DefTypeCCastFromCollectHandler
+#undef DefTypeCollection
+#undef DefTypeElement
+
+   bool foreachDo(std::function<bool (const Element&)> function) const
+      {  return DefGenericAVL::foreachDo(TemplateElementCastParameters<Element, Cast>(), function); }
+   bool foreachSDo(std::function<bool (Element&)> function) const
+      {  return DefGenericAVL::foreachDo(TemplateElementCastParameters<Element, Cast>(), function); }
+   template <class Execute> bool foreachDo(Execute& function) const
+      {  return DefGenericAVL::foreachDo(TemplateElementCastParameters<Element, Cast>(), function, ExtendedLocateParameters()); }
+   template <class Execute> bool foreachDo(Execute& function, const ExtendedLocateParameters& parameters,
+         const Cursor* start, const Cursor* end) const
+      {  return DefGenericAVL::foreachDo(TemplateElementCastParameters<Element, Cast>(), function,
+            parameters, start, end);
+      }
+   bool foreachReverseDo(std::function<bool (const Element&)> function) const
+      {  return DefGenericAVL::foreachReverseDo(TemplateElementCastParameters<Element, Cast>(), function); }
+   bool foreachSReverseDo(std::function<bool (Element&)> function) const
+      {  return DefGenericAVL::foreachReverseDo(TemplateElementCastParameters<Element, Cast>(), function); }
+   template <class Execute> bool foreachReverseDo(Execute& function) const
+      {  return DefGenericAVL::foreachReverseDo(TemplateElementCastParameters<Element, Cast>(), function, ExtendedLocateParameters()); }
+   template <class Execute> bool foreachReverseDo(Execute& function, const ExtendedLocateParameters& parameters,
+         const Cursor* start, const Cursor* end) const
+      {  return DefGenericAVL::foreachReverseDo(TemplateElementCastParameters<Element, Cast>(), function,
+            parameters, start, end);
+      }
+   DeclareCollectionIteratorForConcreteCollect
+};
+
+/****************************************/
+/* Définition du patron SortedAVLCursor */
+/****************************************/
+
+template<class TypeElement, class Key=VirtualSortedCollection::SimpleKey, class Cast=DefSimpleAVLCast>
+class DefSortedAVLCursor : public DefGenericAVLCursor {
+  public:
+   DefSortedAVLCursor(const DefSortedAVL<TypeElement, Key, Cast>& lSupport) : DefGenericAVLCursor(lSupport) {}
+   DefSortedAVLCursor(const DefSortedAVLCursor<TypeElement, Key, Cast>& lcSource) : DefGenericAVLCursor(lcSource) {}
+#ifndef DefTypeBinaryParent
+   Template3DefineCopy(SortedAVLCursor, TypeElement, Key, Cast)
+   Template3DefineCursorForAbstractCollect(SortedAVL, DefSortedAVLCursor, TypeElement, Key, Cast)
+#else
+   Template3DefineCopy(SortedParentAVLCursor, TypeElement, Key, Cast)
+   Template3DefineCursorForAbstractCollect(SortedParentAVL, SortedParentAVLCursor, TypeElement, Key, Cast)
+#endif
+
+   TypeElement* getSElement() const
+      {  return (TypeElement*) Cast::castFrom((DefImplBinaryTree::Node*)
+            DefGenericAVLCursor::_getSElement());
+      }
+   const TypeElement* getElement() const { return getSElement(); }
+   const TypeElement& elementAt() const { return *getSElement(); }
+   TypeElement& elementSAt() const { return *getSElement(); }
+
+   bool gotoElement(const TypeElement& eElement) { return getSupport().gotoAny(*this, eElement); }
+   typename Key::KeyType queryKey() const { return Key::key(elementAt()); }
+};
+
+Template3InlineCollectionForAbstractCollect(DefSortedAVL, DefSortedAVLCursor, TypeElement, Key, Cast)
+Template2InlineCollectionIteratorForConcreteCollect(DefSortedAVL, TypeElement, Key, Cast)
+
+/***********************************************/
+/* Definition of the template class TSortedAVL */
+/***********************************************/
+
+#undef DefSortedAVL
+#undef DefSortedAVLCursor
+
+#ifndef DefTypeBinaryParent
+#define DefTSortedAVL TSortedAVL
+#define DefTSortedAVLCursor TSortedAVLCursor
+#else
+#define DefTSortedAVL TSortedParentAVL
+#define DefTSortedAVLCursor TSortedParentAVLCursor
+#endif
+
+template<class TypeElement, class Key, class Cast>
+class DefTSortedAVLCursor;
+
+template<class Element, class TKey=VirtualSortedCollection::SimpleKey, class TypeCast=DefSimpleAVLCast>
+class DefTSortedAVL : public DefGenericAVL {
+  public:
+   typedef TKey Key;
+   typedef SimpleKeyTraits<typename TKey::KeyType> KeyTraits;
+   static typename Key::KeyType key(const Element& element) { return Key::key(element); }
+   static typename Key::KeyType keyFromCell(const DefGenericAVL::Node& node)
+      {  return key((const Element&) TypeCast::castFrom(node)); }
+   typedef TInitialValues<Element, TypeCast> InitialValues;
+   typedef TInitialNewValues<Element, TypeCast> InitialNewValues;
+
+  private:
+   typedef DefTSortedAVL<Element, TKey, TypeCast> thisType;
+   typedef DefTSortedAVLCursor<Element, TKey, TypeCast> thisCursorType;
+   typedef DefGenericAVL inherited;
+
+   virtual const EnhancedObject& key(const EnhancedObject& element) const override
+      {  return inherited::key(element); }
+   virtual inherited::LocationResult _locateKey(const EnhancedObject& source, const ExtendedLocateParameters& parameters,
+         VirtualSortedCollectionCursor* cursor, const VirtualSortedCollectionCursor* start,
+         const VirtualSortedCollectionCursor* end) const override
+      {  return inherited::_locateKey(source, parameters, cursor, start, end); }
+
+  protected:
+   virtual bool acceptElement(const EnhancedObject& source) const override { return true; }
+   virtual ComparisonResult _compareElement(const EnhancedObject& fst, const EnhancedObject& snd) const override
+      {  return Key(*this).compare(key((const Element&) TypeCast::castFrom((const inherited::Node&) fst)),
+            key((const Element&) TypeCast::castFrom((const inherited::Node&) snd)));
+      }
+
+#ifdef _MSC_VER
+  public:
+#endif
+   struct GenericKeyTemplateLocate {
+     public:
+      typedef typename Key::KeyType KeyType;
+      typedef Element ElementType;
+      typedef thisType TabType;
+      typedef COL::DefImplBinaryTree TabImplementation;
+      typedef TypeCast Cast;
+
+      KeyType key;
+      const ExtendedLocateParameters& parameters;
+      DefGenericAVLCursor* cursor;
+      const DefGenericAVLCursor* start;
+      const DefGenericAVLCursor* end;
+      const DefTSortedAVL<Element, TKey, TypeCast>* support;
+
+      GenericKeyTemplateLocate(const DefTSortedAVL<Element, TKey, TypeCast>& supportSource,
+            KeyType keySource, const ExtendedLocateParameters& parametersSource,
+            VirtualSortedCollectionCursor* cursorSource=nullptr, const VirtualSortedCollectionCursor* startSource=nullptr,
+            const VirtualSortedCollectionCursor* endSource=nullptr)
+         :  key(keySource), parameters(parametersSource), cursor((DefGenericAVLCursor*) cursorSource),
+            start((DefGenericAVLCursor*) startSource), end((DefGenericAVLCursor*) endSource), support(&supportSource) {}
+      ComparisonResult compare(KeyType fst, KeyType snd) { return TKey(*support).compare(fst, snd); }
+   };
+
+#ifdef _MSC_VER
+  protected:
+#endif
+   LocationResult _locateKey(typename Key::KeyType key, const ExtendedLocateParameters& parameters,
+         Cursor* cursor=nullptr, const Cursor* start=nullptr, const Cursor* end=nullptr) const
+      {  return tlocate(GenericKeyTemplateLocate(*this, key, parameters, cursor, start, end)); }
+   virtual LocationResult _locate(const EnhancedObject& source, const ExtendedLocateParameters& parameters,
+         VirtualSortedCollectionCursor* cursor=nullptr, const VirtualSortedCollectionCursor* start=nullptr,
+         const VirtualSortedCollectionCursor* end=nullptr) const override
+      {  return _locateKey(key((const Element&) TypeCast::castFrom((const inherited::Node&) source)), parameters,
+            (Cursor*) cursor, (Cursor*) start, (Cursor*) end);
+      }
+   typename Key::KeyType _queryKey(const ExtendedLocateParameters& parameters,
+         const thisCursorType* cursor=nullptr) const
+      {  return Key::key(getElement(parameters, cursor)); }
+   virtual EnhancedObject* _getElement(const ExtendedLocateParameters& parameters,
+         const VirtualCollectionCursor* cursor) const override
+      {  return TypeCast::castTo(_getElement(parameters, (thisCursorType*) cursor)); }
+   Element* _getElement(const ExtendedLocateParameters& parameters,
+         const thisCursorType* cursor=nullptr) const
+      {  return tgetElement(TemplateQueryParameters<thisType, inherited, Element, KeyTraits, TypeCast>(),
+            parameters, cursor);
+      }
+   Element* getInheritedElement(const ExtendedLocateParameters& parameters,
+         const thisCursorType* cursor=nullptr) const
+      {  return (Element*) TypeCast::castFrom(inherited::_getElement(parameters, cursor)); }
+   friend class VirtualCollection::TemplateQueryParameters<thisType, inherited, Element, KeyTraits, TypeCast>;
+
+  public:
+   typedef Element Node;
+
+   DefTSortedAVL() {}
+   DefTSortedAVL(const InitialValues& initialValues)
+      {  VirtualCollection::TInsertInitialValue<thisType, Element, TypeCast> insertInitialValue(*this);
+         initialValues.foreachDo(insertInitialValue);
+      }
+   DefTSortedAVL(const InitialNewValues& initialValues)
+      {  VirtualCollection::TInsertInitialNewValue<thisType, Element, TypeCast> insertInitialValue(*this);
+         initialValues.foreachDo(insertInitialValue);
+      }
+   DefTSortedAVL(const DefTSortedAVL<Element, Key, TypeCast>& source, AddMode mode=AMNoDuplicate,
+         const VirtualCast* retrieveRegistrationFromCopy=nullptr)
+      :  DefGenericAVL(source, mode, retrieveRegistrationFromCopy) {}
+#ifndef DefTypeBinaryParent
+   Template3DefineCopy(TSortedAVL, Element, Key, TypeCast)
+   Template3DefineCollectionForAbstractCollect(TSortedAVL, TSortedAVLCursor, Element, Key, TypeCast)
+#else
+   Template3DefineCopy(TSortedParentAVL, Element, Key, TypeCast)
+   Template3DefineCollectionForAbstractCollect(TSortedParentAVL, TSortedParentAVLCursor, Element, Key, TypeCast)
+#endif
+
+#define DefTypeElement Element
+#define DefTypeCollection DefTSortedAVL<Element, Key, TypeCast>
+#define DefTypeCastToCollectHandler TypeCast::castTo
+#define DefTypeCCastToCollectHandler TypeCast::castTo
+#define DefTypeCastFromCollectHandler (Element*) TypeCast::castFrom
+#define DefTypeCCastFromCollectHandler (const Element*) TypeCast::castFrom
+#define DefTypeFinal DefTSortedAVL<Element, Key, TypeCast>::
+#define DefTypeCursor DefTSortedAVLCursor<Element, Key, TypeCast>
+#define DefTypeSorted
+#define DefTypeKey typename Key::KeyType
+#define DefMapInterface
+   #include "Collection/ELMCollection.inch"
+#undef DefMapInterface
+#undef DefTypeKey
+#undef DefTypeSorted
+#undef DefTypeElement
+#undef DefTypeCollection
+#undef DefTypeCastToCollectHandler
+#undef DefTypeCCastToCollectHandler
+#undef DefTypeCastFromCollectHandler
+#undef DefTypeCCastFromCollectHandler
+#undef DefTypeFinal
+#undef DefTypeCursor
+
+   bool foreachDo(std::function<bool (const Element&)> function) const
+      {  return DefGenericAVL::foreachDo(TemplateElementCastParameters<Element, TypeCast>(), function); }
+   bool foreachSDo(std::function<bool (Element&)> function) const
+      {  return DefGenericAVL::foreachDo(TemplateElementCastParameters<Element, TypeCast>(), function); }
+   template <class Execute> bool foreachDo(Execute& function) const
+      {  return DefGenericAVL::foreachDo(TemplateElementCastParameters<Element, TypeCast>(), function); }
+   template <class Execute> bool foreachDo(Execute& function, const ExtendedLocateParameters& parameters,
+      const Cursor* start, const Cursor* end) const
+      {  return DefGenericAVL::foreachDo(TemplateElementCastParameters<Element, TypeCast>(), function,
+            parameters, start, end);
+      }
+   bool foreachReverseDo(std::function<bool (const Element&)> function) const
+      {  return DefGenericAVL::foreachReverseDo(TemplateElementCastParameters<Element, TypeCast>(), function); }
+   bool foreachSReverseDo(std::function<bool (Element&)> function) const
+      {  return DefGenericAVL::foreachReverseDo(TemplateElementCastParameters<Element, TypeCast>(), function); }
+   template <class Execute> bool foreachReverseDo(Execute& function) const
+      {  return DefGenericAVL::foreachReverseDo(TemplateElementCastParameters<Element, TypeCast>(), function); }
+   template <class Execute> bool foreachReverseDo(Execute& function, const ExtendedLocateParameters& parameters,
+      const Cursor* start, const Cursor* end) const
+      {  return DefGenericAVL::foreachReverseDo(TemplateElementCastParameters<Element, TypeCast>(), function,
+            parameters, start, end);
+      }
+   DeclareCollectionIteratorForConcreteCollect
+};
+
+/*****************************************************/
+/* Definition of the template class TSortedAVLCursor */
+/*****************************************************/
+
+template<class TypeElement, class Key=VirtualSortedCollection::SimpleKey, class TypeCast=DefSimpleAVLCast>
+class DefTSortedAVLCursor : public DefGenericAVLCursor {
+  private:
+   static TypeElement* castFromCollectHandler(EnhancedObject* element)
+      {  return (TypeElement*) TypeCast::castFrom((DefImplBinaryTree::Node*) element); }
+   static const TypeElement* castFromCollectHandler(const EnhancedObject* element)
+      {  return (const TypeElement*) TypeCast::castFrom((const DefImplBinaryTree::Node*) element); }
+
+  public:
+   DefTSortedAVLCursor(const DefTSortedAVL<TypeElement, Key, TypeCast>& support) : DefGenericAVLCursor(support) {}
+   DefTSortedAVLCursor(const DefTSortedAVLCursor<TypeElement, Key, TypeCast>& source) : DefGenericAVLCursor(source) {}
+#ifndef DefTypeBinaryParent
+   Template3DefineCopy(TSortedAVLCursor, TypeElement, Key, TypeCast)
+   Template3DefineCursorForAbstractCollect(TSortedAVL, TSortedAVLCursor, TypeElement, Key, TypeCast)
+#else
+   Template3DefineCopy(TSortedParentAVLCursor, TypeElement, Key, TypeCast)
+   Template3DefineCursorForAbstractCollect(TSortedParentAVL, TSortedParentAVLCursor, TypeElement, Key, TypeCast)
+#endif
+
+   bool gotoElement(const TypeElement& element) { return getSupport().gotoAny(*this, element); }
+
+#define DefCursor
+#define DefTypeElement TypeElement
+#define DefTypeCollection DefTSortedAVL<TypeElement, Key, TypeCast>
+#define DefTypeCastFromCollectHandler castFromCollectHandler
+#define DefTypeCCastFromCollectHandler castFromCollectHandler
+#define DefTypeCastToCollectHandler TypeCast::castTo
+#define DefTypeCCastToCollectHandler TypeCast::castTo
+#define DefTypeFinal DefTSortedAVLCursor<TypeElement, Key, TypeCast>::
+#define DefTypeCursor DefTSortedAVLCursor<TypeElement, Key, TypeCast>
+#define DefTypeSorted
+#define DefTypeKey typename Key::KeyType
+   #include "Collection/ELMCollection.inch"
+#undef DefTypeKey
+#undef DefTypeSorted
+#undef DefTypeElement
+#undef DefTypeCollection
+#undef DefTypeCastFromCollectHandler
+#undef DefTypeCCastFromCollectHandler
+#undef DefTypeCastToCollectHandler
+#undef DefTypeCCastToCollectHandler
+#undef DefTypeFinal
+#undef DefTypeCursor
+#undef DefCursor
+
+   typename Key::KeyType queryKey() const { return Key::key(elementAt()); }
+};
+
+Template3InlineCollectionForAbstractCollect(DefTSortedAVL, DefTSortedAVLCursor, TypeElement, Key, TypeCast)
+Template2InlineCollectionIteratorForConcreteCollect(DefTSortedAVL, TypeElement, Key, TypeCast)
+
+#undef DefTSortedAVL
+#undef DefTSortedAVLCursor
+#undef DefSimpleAVLCast
+
+#undef DefImplBinaryTree
+#undef DefGenericAVL
+#undef DefGenericAVLCursor
+

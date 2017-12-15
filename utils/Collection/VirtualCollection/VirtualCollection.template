@@ -1,0 +1,166 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2014-2017                                               */
+/*    CEA (Commissariat à l'énergie atomique et aux énergies              */
+/*         alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Librairie   : Collection
+// Module      : Abstract collections
+// Fichier     : VirtualCollection.template
+// Description :
+//   Définition of the template methods of the class VirtualCollection.
+//
+
+#include "Collection/VirtualCollection/VirtualCollection.h"
+
+namespace COL {
+
+template <class Execute, class TemplateParameters>
+bool
+VirtualCollection::foreachDo(TemplateParameters, Execute& fun,
+      const ExtendedLocateParameters& parameters, const VirtualCollectionCursor* start,
+      const VirtualCollectionCursor* end) const {
+   typedef typename TemplateParameters::Element TypeElement;
+   typedef typename TemplateParameters::Cast Cast;
+
+   if (!normalize(start, end))
+      return true;
+   PPCursor cursor = newCursor();
+   if (start) {
+      *cursor = *start;
+      if (parameters.isFirstExcluded()) {
+         if (end && cursor->isEqual(*end))
+            return true;
+         if (!cursor->setToNext())
+            return true;
+      };
+   }
+   else if (!cursor->setToFirst())
+      return true;
+   bool result = true, doesContinue = (!end || !cursor->isEqual(*end));
+   while (doesContinue && ((result = fun((TypeElement&) Cast::castFrom(
+         (typename Cast::Base&) cursor->elementSAt()))) != false))
+      doesContinue = cursor->setToNext() && (!end || !cursor->isEqual(*end));
+   if (end && result && cursor->isEqual(*end) && !parameters.isLastExcluded())
+      result = fun((TypeElement&) Cast::castFrom(
+         (typename Cast::Base&) cursor->elementSAt()));
+   return result;
+}
+
+template <class Execute, class TemplateParameters>
+bool
+VirtualCollection::foreachSDo(TemplateParameters, Execute& fun,
+      const ExtendedLocateParameters& parameters,
+      const typename TemplateParameters::TypeCursor* start,
+      const typename TemplateParameters::TypeCursor* end) const {
+   typedef typename TemplateParameters::TypeElement TypeElement;
+   typedef typename TemplateParameters::TypeCursor TypeCursor;
+   typedef typename TemplateParameters::TypeCast Cast;
+
+   if (start && !start->TypeCursor::isValid()) start = nullptr;
+   if (end && !end->TypeCursor::isValid()) end = nullptr;
+   TypeCursor cursor(*this, TypeCursor::Init());
+
+   if (start && start->isValid()) {
+      cursor = *start;
+      if (parameters.isFirstExcluded()) {
+         if (end && cursor.isEqual(*end))
+            return true;
+         if (!cursor.setToNext())
+            return true;
+      };
+   }
+   else if (!cursor.setToFirst())
+      return true;
+   bool result = true, doesContinue = true;
+   while (doesContinue && (result = fun((TypeElement&) Cast::castFrom(cursor.TypeCursor::elementAt()))))
+      doesContinue = cursor->setToNext() && (!end || !cursor.TypeCursor::isEqual(*end));
+   if (end && result && cursor.isEqual(*end) && !parameters.isLastExcluded())
+      result = fun((TypeElement&) Cast::castFrom(cursor.TypeCursor::elementAt()));
+   return result;
+}
+
+template <class Execute, class TemplateParameters>
+bool
+VirtualCollection::foreachReverseDo(TemplateParameters, Execute& fun,
+      const ExtendedLocateParameters& parameters, const VirtualCollectionCursor* start,
+      const VirtualCollectionCursor* end) const {
+   typedef typename TemplateParameters::Element TypeElement;
+   typedef typename TemplateParameters::Cast Cast;
+
+   if (!normalizeReverse(start, end))
+      return true;
+   PPCursor cursor = newCursor();
+   if (start) {
+      *cursor = *start;
+      if (parameters.isFirstExcluded()) {
+         if (end && cursor->isEqual(*end))
+            return true;
+         if (!cursor->setToPrevious())
+            return true;
+      };
+   }
+   else if (!cursor->setToLast())
+      return true;
+   bool result = true, doesContinue = (!end || !cursor->isEqual(*end));
+   while (doesContinue && ((result = fun((TypeElement&) Cast::castFrom(
+         (typename Cast::Base&) cursor->elementSAt()))) != false))
+      doesContinue = cursor->setToPrevious() && (!end || !cursor->isEqual(*end));
+   if (end && result && cursor->isEqual(*end) && !parameters.isLastExcluded())
+      result = fun((TypeElement&) Cast::castFrom(
+         (typename Cast::Base&) cursor->elementSAt()));
+   return result;
+}
+
+template <class Execute, class TemplateParameters>
+bool
+VirtualCollection::foreachSReverseDo(TemplateParameters, Execute& fun,
+      const ExtendedLocateParameters& parameters,
+      const typename TemplateParameters::TypeCursor* start,
+      const typename TemplateParameters::TypeCursor* end) const {
+   typedef typename TemplateParameters::TypeElement TypeElement;
+   typedef typename TemplateParameters::TypeCursor TypeCursor;
+   typedef typename TemplateParameters::TypeCast Cast;
+
+   if (start && !start->TypeCursor::isValid()) start = nullptr;
+   if (end && !end->TypeCursor::isValid()) end = nullptr;
+   TypeCursor cursor(*this, TypeCursor::Init());
+
+   if (start && start->isValid()) {
+      cursor = *start;
+      if (parameters.isFirstExcluded()) {
+         if (end && cursor.isEqual(*end))
+            return true;
+         if (!cursor.setToPrevious())
+            return true;
+      };
+   }
+   else if (!cursor.setToLast())
+      return true;
+   bool result = true, doesContinue = true;
+   while (doesContinue && (result = fun((TypeElement&) Cast::castFrom(cursor.TypeCursor::elementAt()))))
+      doesContinue = cursor->setToPrevious() && (!end || !cursor.TypeCursor::isEqual(*end));
+   if (end && result && cursor.isEqual(*end) && !parameters.isLastExcluded())
+      result = fun((TypeElement&) Cast::castFrom(cursor.TypeCursor::elementAt()));
+   return result;
+}
+
+} // end of namespace COL

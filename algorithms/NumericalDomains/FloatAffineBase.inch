@@ -1,0 +1,1142 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2011-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : NumericalDomains
+// Unit      : Affine relationships
+// File      : FloatAffineBase.inch
+// Description :
+//   Definition of a class of affine relations.
+//
+
+#ifndef DefineGeneric
+
+#define DefineSingleTemplateParameters(RealBitsNumber)               \
+   <RealBitsNumber>
+#define DefineBuiltDoubleTraits BuiltDoubleTraits
+#define DefineBuiltReal TBuiltReal
+#define DefineReadDouble TReadDouble
+#define DefineBuiltDouble TBuiltDouble
+#define DefineRealMantissaExponentTemplateParameters(RealBitsNumber, SizeMantissa, SizeExponent) \
+   <RealBitsNumber, SizeMantissa, SizeExponent>
+#define DefineSizeofBaseTypeInBits                                   \
+   (sizeof(unsigned int)*8)
+#define DefineEquationTemplateHeader(RealBitsNumber)                 \
+   template <int RealBitsNumber, class TypeBaseFloatAffine>
+#define DefineSEquationTemplateHeader(RealBitsNumber)                \
+   template <int RealBitsNumber, class TypeBaseFloatAffine>
+#define DefineEquationTemplateParameters(RealBitsNumber)             \
+   <RealBitsNumber, TypeBaseFloatAffine>
+#define DefineEquation TEquation
+#define DefineConstraint TConstraint
+#define DefineConstraintsSet TConstraintsSet
+#define DefineBaseFloatZonotope TBaseFloatZonotope
+#define DefineBaseFloatZonotopeWithSymbolic TBaseFloatZonotopeWithSymbolic
+#define DefineBasicFloatZonotopeTemplateHeader(RealBitsNumber, SizeMantissa, SizeExponent) \
+   template <int RealBitsNumber, class TypeBaseFloatAffine, int SizeMantissa, int SizeExponent, typename TypeImplementation>
+#define DefineBasicFloatZonotope TBasicFloatZonotope
+#define DefineBasicFloatZonotopeTemplateParameters(RealBitsNumber, SizeMantissa, SizeExponent) \
+   <RealBitsNumber, TypeBaseFloatAffine, SizeMantissa, SizeExponent, TypeImplementation>
+
+#else
+
+#define DefineSingleTemplateParameters(RealBitsNumber)               \
+   <BaseStoreTraits, RealBitsNumber>
+#define DefineBuiltDoubleTraits GBuiltDoubleTraits
+#define DefineBuiltReal TGBuiltReal
+#define DefineReadDouble TGReadDouble
+#define DefineBuiltDouble TGBuiltDouble
+#define DefineRealMantissaExponentTemplateParameters(RealBitsNumber, SizeMantissa, SizeExponent) \
+   <BaseStoreTraits, RealBitsNumber, SizeMantissa, SizeExponent>
+#define DefineSizeofBaseTypeInBits                                   \
+   BaseStoreTraits::sizeBaseInBits()
+#define DefineEquationTemplateHeader(RealBitsNumber)                 \
+   template <class BaseStoreTraits, int RealBitsNumber, class TypeBaseFloatAffine>
+#define DefineSEquationTemplateHeader(RealBitsNumber)                \
+   template <class TBaseStoreTraits, int RealBitsNumber, class TypeBaseFloatAffine>
+#define DefineEquationTemplateParameters(RealBitsNumber)             \
+   <BaseStoreTraits, RealBitsNumber, TypeBaseFloatAffine>
+#define DefineEquation TGEquation
+#define DefineConstraint TGConstraint
+#define DefineConstraintsSet TGConstraintsSet
+#define DefineBaseFloatZonotope TGBaseFloatZonotope
+#define DefineBaseFloatZonotopeWithSymbolic TGBaseFloatZonotopeWithSymbolic
+#define DefineBasicFloatZonotopeTemplateHeader(RealBitsNumber, SizeMantissa, SizeExponent) \
+   template <class BaseStoreTraits, int RealBitsNumber, class TypeBaseFloatAffine, int SizeMantissa, int SizeExponent, typename TypeImplementation>
+#define DefineBasicFloatZonotope TGBasicFloatZonotope
+#define DefineBasicFloatZonotopeTemplateParameters(RealBitsNumber, SizeMantissa, SizeExponent) \
+   <BaseStoreTraits, RealBitsNumber, TypeBaseFloatAffine, SizeMantissa, SizeExponent, TypeImplementation>
+
+#endif
+
+namespace DAffine {
+
+DefineSEquationTemplateHeader(URealBitsNumber)
+class DefineBaseFloatZonotope : public TypeBaseFloatAffine {
+#ifdef DefineGeneric
+  private:
+   typedef TBaseStoreTraits BaseStoreTraits;
+#endif
+
+  public:
+   typedef DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber) BuiltReal;
+   typedef DefineEquation DefineEquationTemplateParameters(URealBitsNumber) Equation;
+   typedef DefineConstraint DefineEquationTemplateParameters(URealBitsNumber) Constraint;
+   typedef DefineConstraintsSet DefineEquationTemplateParameters(URealBitsNumber) ConstraintsSet;
+   typedef typename Equation::TemplateTraits TemplateTraits;
+   typedef typename TypeBaseFloatAffine::EquationHolder EquationHolder;
+
+  protected:
+   enum SpecialValue
+      {  SVNone, SVNoReal, SVTopReal, SVNoError, SVNoErrorNoReal, SVNoErrorTopReal,
+         SVTopError, SVNoRealTopError, SVTopErrorTopReal
+      };
+   enum LocalState { LSNone, LSTopReal, LSTopError, LSTopErrorTopReal };
+   // SpecialValue getSpecialValue() const
+   //    {  Mode mode = inherited::getMode();
+   //       mode == MRealAndImplementation & LSNone -> SVNone
+   //       mode == MOnlyImplementation & LSNone -> SVNoReal
+   //       mode == MOnlyReal & LSNone -> SVNoError
+   //       mode == MRealAndImplementation & LSTopReal -> SVTopReal
+   //       mode == MOnlyImplementation & LSTopReal -> SVNoReal
+   //       mode == MOnlyReal & LSTopReal -> SVNoErrorTopReal
+   //       mode == MRealAndImplementation & LSTopError -> SVTopError
+   //       mode == MOnlyImplementation & LSTopError -> SVNoRealTopError
+   //       mode == MOnlyReal & LSTopError -> SVNoError
+   //       mode == MRealAndImplementation & LSTopErrorTopReal -> SVTopErrorTopReal
+   //       mode == MOnlyImplementation & LSTopErrorTopReal -> SVNoRealTopError
+   //       mode == MOnlyReal & LSTopErrorTopReal -> SVNoErrorTopReal
+   //    }
+
+  private:
+   typedef TypeBaseFloatAffine inherited;
+   typedef DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber) thisType;
+   EquationHolder eRealDomain;
+   EquationHolder eError;
+   SpecialValue svSpecial;
+
+   static void updateLocalState(Equation& realDomain, Equation& error, SpecialValue& special,
+         typename inherited::Mode mode, SymbolsManager& symbolsManager,
+         Equation* copyRealDomain=nullptr, Equation* copyError=nullptr)
+      {  if (mode == TypeBaseFloatAffine::MRealAndImplementation) {
+            AssumeCondition((special % 3 != SVNoReal)
+               && (special < SVNoError || special > SVNoErrorTopReal))
+            if (copyRealDomain)
+               *copyRealDomain = realDomain;
+            if (copyError)
+               *copyError = error;
+         }
+         else if (mode == TypeBaseFloatAffine::MOnlyImplementation) {
+            AssumeCondition(special < SVNoError || special > SVNoErrorTopReal)
+            if (copyError)
+               *copyError = error;
+            if (special % 3 != SVNoReal) {
+               if (special % 3 == SVNone) {
+                  if (copyError)
+                     copyError->plusAssign(realDomain, Equation::PCSourceRValue, symbolsManager);
+                  else {
+                     error.plusAssign(realDomain, Equation::PCSourceXValue, symbolsManager);
+                     realDomain.clear(&symbolsManager);
+                  };
+               }
+               special = (SpecialValue) ((special / 3)*3 + SVNoReal);
+            };
+            if (special % 3 == SVNone) {
+               if (!copyRealDomain)
+                  realDomain.clear(&symbolsManager);
+            };
+            AssumeCondition(special % 3 == SVNoReal
+               && (special < SVNoError || special > SVNoErrorTopReal))
+         }
+         else if (mode == TypeBaseFloatAffine::MOnlyReal) {
+            AssumeCondition(special % 3 != SVNoReal)
+            if (copyRealDomain)
+               *copyRealDomain = realDomain;
+            if (special < SVNoError) {
+               special = (SpecialValue) (special + SVNoError);
+               if (!copyError)
+                  error.clear(&symbolsManager);
+            }
+            else if (special > SVNoErrorTopReal)
+               special = (SpecialValue) (special - SVTopError + SVNoError);
+            AssumeCondition((special % 3 != SVNoReal)
+               && (special >= SVNoError && special <= SVNoErrorTopReal))
+         }
+      }
+
+  public:
+   class GuardStateZonotope {
+     private:
+      Equation eInitialRealDomain;
+      Equation eInitialError;
+      SpecialValue svInitialSpecial;
+      DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)& sSource;
+      bool fMayUpdateResult;
+      bool fMayUpdateState;
+      SymbolsManager& sSymbolsManager;
+
+     public:
+      GuardStateZonotope(const DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)& source,
+            bool isConstRValue=false, bool isXValue=false)
+         :  svInitialSpecial(source.svSpecial),
+            sSource(const_cast<DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)&>(source)),
+            fMayUpdateResult(false), fMayUpdateState(false), sSymbolsManager(source.symbolsManager())
+         {  if (isXValue)
+               updateLocalState(sSource.eRealDomain, sSource.eError, sSource.svSpecial,
+                     sSource.getMode(), sSymbolsManager);
+            else if (isConstRValue) {
+               fMayUpdateResult = sSource.shouldChangeLocalState();
+               fMayUpdateState = true;
+               if (fMayUpdateResult) {
+                  eInitialRealDomain = source.eRealDomain;
+                  eInitialError = source.eError;
+                  updateLocalState(sSource.eRealDomain, sSource.eError, sSource.svSpecial,
+                        sSource.getMode(), sSymbolsManager);
+               }
+               else {
+                  updateLocalState(sSource.eRealDomain, sSource.eError, sSource.svSpecial,
+                        sSource.getMode(), sSymbolsManager, &eInitialRealDomain, &eInitialError);
+                  eInitialRealDomain.swap(sSource.eRealDomain);
+                  eInitialError.swap(sSource.eError);
+               };
+            }
+            else {
+               eInitialRealDomain = source.eRealDomain;
+               eInitialError = source.eError;
+               fMayUpdateResult = true;
+               fMayUpdateState = true;
+               updateLocalState(sSource.eRealDomain, sSource.eError, sSource.svSpecial,
+                     sSource.getMode(), sSymbolsManager);
+            };
+         }
+      ~GuardStateZonotope()
+         {  if (fMayUpdateResult) {
+               Equation copyDomain, copyError;
+               SpecialValue special = svInitialSpecial;
+               updateLocalState(eInitialRealDomain, eInitialError, special, sSource.getMode(),
+                     sSymbolsManager, &copyDomain, &copyError);
+               if (special == sSource.svSpecial) {
+                  BuiltReal minReal, maxReal, minRefReal, maxRefReal,
+                            minError, maxError, minRefError, maxRefError;
+                  sSource.eRealDomain.retrieveBound(minReal, maxReal, false /* hasExternalCoefficient */);
+                  copyDomain.retrieveBound(minRefReal, maxRefReal, false /* hasExternalCoefficient */);
+                  sSource.eError.retrieveBound(minError, maxError, false /* hasExternalCoefficient */);
+                  copyError.retrieveBound(minRefError, maxRefError, false /* hasExternalCoefficient */);
+                  // copyDomain.minusAssign(sSource.eRealDomain, Equation::PCSourceRValue, sSymbolsManager);
+                  // copyError.minusAssign(sSource.eError, Equation::PCSourceRValue, sSymbolsManager);
+                  // if (copyDomain.getCentral().isZero() && copyDomain.isAtomic()
+                  //       && copyError.getCentral().isZero() && copyError.isAtomic())
+                  if (minReal == minRefReal && maxReal == maxRefReal
+                        && minError == minRefError && maxError == maxRefError) // [TODO] to improve
+                  {  sSource.eRealDomain.swap(eInitialRealDomain);
+                     sSource.eError.swap(eInitialError);
+                     sSource.svSpecial = svInitialSpecial;
+                  };
+               };
+            }
+            else if (fMayUpdateState) // isConstRValue
+               sSource.svSpecial = svInitialSpecial;
+         }
+   };
+
+  protected:
+   LocalState getLocalState() const
+      {  typename inherited::Mode mode = inherited::getMode();
+         if (mode == inherited::MRealAndImplementation) {
+            AssumeCondition((svSpecial % 3 != SVNoReal)
+               && (svSpecial < SVNoError || svSpecial > SVNoErrorTopReal))
+            return (svSpecial == SVNone) ? LSNone
+                : ((svSpecial == SVTopReal) ? LSTopReal
+                : ((svSpecial == SVTopError) ? LSTopError
+                : LSTopErrorTopReal));
+         }
+         if (mode == inherited::MOnlyImplementation) {
+            AssumeCondition((svSpecial % 3 == SVNoReal)
+               && (svSpecial < SVNoError || svSpecial > SVNoErrorTopReal))
+            return (svSpecial == SVNoReal) ? LSNone : LSTopError;
+         }
+         AssumeCondition(mode == inherited::MOnlyReal)
+         AssumeCondition((svSpecial % 3 != SVNoReal)
+            && (svSpecial >= SVNoError && svSpecial <= SVNoErrorTopReal))
+         return (svSpecial == SVNoError) ? LSNone : LSTopReal;
+      }
+   void updateLocalState()
+      {  updateLocalState(eRealDomain, eError, svSpecial, inherited::getMode(), symbolsManager()); }
+   bool shouldChangeLocalState() const
+      {  typename inherited::Mode mode = inherited::getMode();
+         bool result = false;
+         if (mode == inherited::MOnlyImplementation) {
+            if (svSpecial % 3 != SVNoReal) {
+               if (svSpecial % 3 == SVNone)
+                  result = true;
+            }
+         };
+         return result;
+      }
+
+   bool isValidState() const
+      {  typename inherited::Mode mode = inherited::getMode();
+         if (mode == inherited::MRealAndImplementation)
+            return (svSpecial % 3 != SVNoReal)
+               && (svSpecial < SVNoError || svSpecial > SVNoErrorTopReal);
+         if (mode == inherited::MOnlyImplementation)
+            return (svSpecial % 3 == SVNoReal)
+               && (svSpecial < SVNoError || svSpecial > SVNoErrorTopReal);
+         if (mode == inherited::MOnlyReal)
+            return (svSpecial % 3 != SVNoReal)
+               && (svSpecial >= SVNoError && svSpecial <= SVNoErrorTopReal);
+         return false;
+      }
+         
+   // bool doesComputeReal() const
+   //    {  return inherited::getMode() != MOnlyImplementation && (svSpecial & SVTopReal == 0); }
+   bool doesComputeReal() const {  return (svSpecial % 3 == SVNone); }
+   // bool doesComputeError() const
+   //    {  return inherited::getMode() != MOnlyReal && (svSpecial & SVTopError == 0); }
+   bool doesComputeError() const { return (svSpecial <= SVTopReal); }
+
+  public:
+   bool hasNoReal() const
+      {  return (svSpecial % 3 == SVNoReal); }
+   bool hasTopReal() const
+      {  return (svSpecial % 3 == SVTopReal); }
+   bool hasNoError() const
+      {  return svSpecial >= SVNoError && svSpecial <= SVNoErrorTopReal; }
+   bool hasTopError() const
+      {  return svSpecial >= SVTopError; }
+
+  protected:
+   void mergeNoReal()
+      {  bool hasReal = doesComputeReal();
+         if (hasReal || hasTopReal()) {
+            if (doesComputeError() && hasReal)
+               eError.plusAssign(eRealDomain, Equation::PCSourceXValue, symbolsManager());
+            svSpecial = (SpecialValue) ((svSpecial / 3)*3 + SVNoReal);
+            if (hasReal)
+               eRealDomain.clear(&symbolsManager());
+         };
+      }
+   void mergeTopReal()
+      {  if (doesComputeReal()) {
+            if (doesComputeError())
+               eError.plusAssign(eRealDomain, Equation::PCSourceXValue, symbolsManager());
+            eRealDomain.clear(&symbolsManager());
+            svSpecial = (SpecialValue) ((svSpecial / 3)*3 + SVTopReal);
+         };
+      }
+   void mergeNoError()
+      {  bool hasError = doesComputeError();
+         if (hasError || hasTopError()) {
+            svSpecial = (SpecialValue) (SVNoError + (svSpecial % 3));
+            if (hasError)
+               eError.clear(&symbolsManager());
+         };
+      }
+
+   void mergeTopError()
+      {  if (doesComputeError()) {
+            if (doesComputeReal())
+               eError.clear(&symbolsManager());
+            svSpecial = (SpecialValue) (SVTopError + (svSpecial % 3));
+         };
+      }
+   void mergeComputeReal()
+      {  AssumeCondition(hasNoReal())
+         svSpecial = (SpecialValue) (svSpecial - (svSpecial % 3));
+      }
+   void mergeComputeError()
+      {  AssumeCondition(hasNoError())
+         svSpecial = (SpecialValue) (svSpecial - SVNoError);
+      }
+  public:
+   void mergeComputeRealIfNeeded()
+      {  if (hasNoReal())
+            svSpecial = (SpecialValue) (svSpecial - (svSpecial % 3));
+      }
+   void mergeComputeErrorIfNeeded()
+      {  if (hasNoError())
+            svSpecial = (SpecialValue) (svSpecial - SVNoError);
+      }
+  protected:
+   void mergeComputeReal(const thisType& source)
+      {  if (svSpecial != source.svSpecial) {
+            if (!hasNoReal()) {
+               if (source.hasNoReal())
+                  mergeNoReal();
+               else if (source.hasTopReal())
+                  mergeTopReal();
+            }
+         }
+      }
+   void mergeComputeError(const thisType& source)
+      {  if (svSpecial != source.svSpecial) {
+            if (!hasNoError()) {
+               if (source.hasNoError())
+                  mergeNoError();
+               else if (source.hasTopError())
+                  mergeTopError();
+            }
+         }
+      }
+   void optimizeUnstableForRealFlow(const thisType& source, bool isRealLess, bool& hasThisIntervalConstraint,
+         bool& hasSourceIntervalConstraint, BuiltReal& newMin, BuiltReal& newMax,
+         BuiltReal& newSourceMin, BuiltReal& newSourceMax) const;
+   void optimizeUnstableForRealFlowWithInterval(const thisType& source, bool hasThisIntervalConstraint,
+         bool hasSourceIntervalConstraint, const BuiltReal& newMin, const BuiltReal& newMax,
+         const BuiltReal& newSourceMin, const BuiltReal& newSourceMax) const;
+   void optimizeUnstableForImplementationFlow(
+         const thisType& source, bool isImplementationLess, bool& hasThisIntervalConstraint,
+         bool& hasSourceIntervalConstraint, BuiltReal& newMinError, BuiltReal& newMaxError,
+         BuiltReal& newSourceMinError, BuiltReal& newSourceMaxError) const;
+   void optimizeUnstableForImplementationFlowWithInterval(
+         const thisType& source, bool hasThisIntervalConstraint,
+         bool hasSourceIntervalConstraint, const BuiltReal& newMinError, const BuiltReal& newMaxError,
+         const BuiltReal& newSourceMinError, const BuiltReal& newSourceMaxError) const;
+
+  protected:
+   SymbolsManager& symbolsManager() const { return inherited::symbolsManager(); }
+   ConstraintsSet& constraints() const { return inherited::constraints(); }
+
+   EquationHolder& getSRealDomain() { return eRealDomain; }
+   const EquationHolder& getRealDomain() const { return eRealDomain; }
+   EquationHolder& getSError() { return eError; }
+   const EquationHolder& getError() const { return eError; }
+
+   void assumeZonotope(STG::IOObject::ISBase& in) const
+      {  in.assume("r=[");
+         typename Equation::ReadParameters defaultParams(symbolsManager());
+         eRealDomain.assume(in, defaultParams);
+         in.assume("], e=[");
+         eError.assume(in, defaultParams);
+         in.assume(']');
+      }
+   void assumeInterval(STG::IOObject::ISBase& in) const
+      {  in.assume("r=[");
+         typename Equation::ReadParameters intervalParams(symbolsManager());
+         intervalParams.setInterval();
+         eRealDomain.assume(in, intervalParams);
+         in.assume("], e=[");
+         eError.assume(in, intervalParams);
+         in.assume(']');
+      }
+  public:
+   void writeZonotope(STG::IOObject::OSBase& out) const
+      {  out.writesome("r=[");
+         eRealDomain.write(out, typename BuiltReal::WriteParameters().setDecimal());
+         out.writesome("], e=[");
+         eError.write(out, typename BuiltReal::WriteParameters().setDecimal());
+         out.put(']');
+      }
+   void writeInterval(STG::IOObject::OSBase& out) const
+      {  out.writesome("r=[");
+         typename Equation::WriteParameters intervalParams;
+         intervalParams.setInterval();
+         eRealDomain.write(out, intervalParams);
+         out.writesome("], e=[");
+         eError.write(out, intervalParams);
+         out.put(']');
+      }
+
+  public:
+   DefineBaseFloatZonotope() : svSpecial(SVNone) {}
+   DefineBaseFloatZonotope(const thisType& source) = default;
+   DefineBaseFloatZonotope(thisType&& source) = default; // [TODO] keep symbolic for constraints
+   virtual ~DefineBaseFloatZonotope()
+      {  eRealDomain.clear(&symbolsManager());
+         eError.clear(&symbolsManager());
+      }
+
+   thisType& operator=(const thisType& source) = default;
+   thisType& operator=(thisType&& source) = default; // [TODO] keep symbolic for constraints
+   void mergeWith(const thisType& source)
+      {  eRealDomain.spatialMergeWith(source.eRealDomain, symbolsManager());
+         eError.spatialMergeWith(source.eError, symbolsManager());
+         mergeComputeReal(source);
+         mergeComputeError(source);
+      }
+
+   thisType& setCentral(const BuiltReal& value)
+      {  eRealDomain.setCentral(value);
+         svSpecial = SVNone;
+         return *this;
+      }
+   thisType& setErrorInterval(const BuiltReal& minError, const BuiltReal& maxError)
+      {  eError.setInterval(minError, maxError, symbolsManager());
+         return *this;
+      }
+   thisType& setInputInterval(const BuiltReal& min, const BuiltReal& max)
+      {  eRealDomain.setInputInterval(min, max, symbolsManager());
+         svSpecial = SVNone;
+         return *this;
+      }
+   thisType& setInterval(const BuiltReal& min, const BuiltReal& max)
+      {  eRealDomain.setInterval(min, max, symbolsManager());
+         svSpecial = SVNone;
+         return *this;
+      }
+   thisType& setIntervalWithHighLevel(const BuiltReal& min, const BuiltReal& max)
+      {  eRealDomain.setIntervalWithHighLevel(min, max, symbolsManager());
+         svSpecial = SVNone;
+         return *this;
+      }
+
+   bool isZero() const
+      {  return getRealDomain().isAtomic() && getError().isAtomic()
+            && getRealDomain().getCentral().isZero() && getError().getCentral().isZero();
+      }
+   bool isOne() const
+      {  return getRealDomain().isAtomic() && getError().isAtomic()
+            && getRealDomain().getCentral().isOne() && getError().getCentral().isZero();
+      }
+   bool isTwoPower() const
+      {  return getRealDomain().isAtomic() && getError().isAtomic()
+            && getRealDomain().getCentral().isTwoPower() && getError().getCentral().isZero();
+      }
+   bool isFourPower() const
+      {  return getRealDomain().isAtomic() && getError().isAtomic()
+            && getRealDomain().getCentral().isFourPower() && getError().getCentral().isZero();
+      }
+
+   bool isLessThan(const thisType& source, bool& hasMultiple, bool executionResult,
+         bool doesAssumeErrorValue=false, bool errorValue=false) const;
+   bool isLessOrEqualThan(const thisType& source, bool& hasMultiple, bool executionResult,
+         bool doesAssumeErrorValue=false, bool errorValue=false) const;
+   bool isGreaterOrEqualThan(const thisType& source, bool& hasMultiple, bool executionResult,
+         bool doesAssumeErrorValue=false, bool errorValue=false) const;
+   bool isGreaterThan(const thisType& source, bool& hasMultiple, bool executionResult,
+         bool doesAssumeErrorValue=false, bool errorValue=false) const;
+
+   bool operator<(const thisType& source) const
+      {  bool hasMultiple = false;
+         GuardStateZonotope thisGuard(*this), sourceGuard(source);
+         // const_cast<thisType&>(*this).updateLocalState();
+         // const_cast<thisType&>(source).updateLocalState();
+         return isLessThan(source, hasMultiple, true);
+      }
+   bool operator<=(const thisType& source) const
+      {  bool hasMultiple = false;
+         GuardStateZonotope thisGuard(*this), sourceGuard(source);
+         // const_cast<thisType&>(*this).updateLocalState();
+         // const_cast<thisType&>(source).updateLocalState();
+         return isLessOrEqualThan(source, hasMultiple, true);
+      }
+   bool operator==(const thisType& source) const
+      {  bool hasMultiple = false;
+         GuardStateZonotope thisGuard(*this), sourceGuard(source);
+         // const_cast<thisType&>(*this).updateLocalState();
+         // const_cast<thisType&>(source).updateLocalState();
+         return isLessOrEqualThan(source, hasMultiple, true)
+               && isGreaterOrEqualThan(source, hasMultiple, true);
+      }
+   bool operator!=(const thisType& source) const
+      {  bool hasMultiple = false;
+         GuardStateZonotope thisGuard(*this), sourceGuard(source);
+         // const_cast<thisType&>(*this).updateLocalState();
+         // const_cast<thisType&>(source).updateLocalState();
+         return isLessThan(source, hasMultiple, true)
+               || isGreaterThan(source, hasMultiple, true);
+      }
+   bool operator>=(const thisType& source) const
+      {  bool hasMultiple = false;
+         GuardStateZonotope thisGuard(*this), sourceGuard(source);
+         // const_cast<thisType&>(*this).updateLocalState();
+         // const_cast<thisType&>(source).updateLocalState();
+         return isGreaterOrEqualThan(source, hasMultiple, true);
+      }
+   bool operator>(const thisType& source) const
+      {  bool hasMultiple = false;
+         GuardStateZonotope thisGuard(*this), sourceGuard(source);
+         // const_cast<thisType&>(*this).updateLocalState();
+         // const_cast<thisType&>(source).updateLocalState();
+         return isGreaterThan(source, hasMultiple, true);
+      }
+
+   thisType& plusAssign(const thisType& source, typename Equation::PolicyCall policyCall)
+      {  updateLocalState();
+         GuardStateZonotope sourceGuard(source, true /* isConstEquation*/, policyCall == Equation::PCSourceXValue);
+         // const_cast<thisType&>(source).updateLocalState();
+         if (doesComputeReal() && source.doesComputeReal())
+            eRealDomain.plusAssign(source.eRealDomain, policyCall, symbolsManager());
+         else
+            mergeComputeReal(source);
+         if (doesComputeError() && source.doesComputeError()) {
+            if (source.doesComputeReal() && !doesComputeReal())
+               eError.plusAssign(source.eRealDomain, policyCall, symbolsManager());
+            eError.plusAssign(source.eError, policyCall, symbolsManager());
+         }
+         else
+            mergeComputeError(source);
+         return *this;
+      }
+   thisType& operator+=(const thisType& source)
+      {  return plusAssign(source, Equation::PCSourceRValue); }
+   thisType& operator+=(thisType&& source)
+      {  return plusAssign(source, Equation::PCSourceXValue); }
+   thisType& minusAssign(const thisType& source, typename Equation::PolicyCall policyCall)
+      {  updateLocalState();
+         GuardStateZonotope sourceGuard(source, true /* isConstEquation*/, policyCall == Equation::PCSourceXValue);
+         // const_cast<thisType&>(source).updateLocalState();
+         if (doesComputeReal() && source.doesComputeReal())
+            eRealDomain.minusAssign(source.eRealDomain, policyCall, symbolsManager());
+         else
+            mergeComputeReal(source);
+         if (doesComputeError() && source.doesComputeError()) {
+            if (source.doesComputeReal() && !doesComputeReal())
+               eError.minusAssign(source.eRealDomain, policyCall, symbolsManager());
+            eError.minusAssign(source.eError, policyCall, symbolsManager());
+         }
+         else
+            mergeComputeError(source);
+         return *this;
+      }
+   thisType& operator-=(const thisType& source)
+      {  return minusAssign(source, Equation::PCSourceRValue); }
+   thisType& operator-=(thisType&& source)
+      {  return minusAssign(source, Equation::PCSourceXValue); }
+   thisType& multAssign(const thisType& source, typename Equation::PolicyCall policyCall)
+      {  if (this == &source) {
+            thisType sourceCopy(source);
+            return multAssign(sourceCopy, Equation::PCSourceXValue);
+         }
+         updateLocalState();
+         GuardStateZonotope sourceGuard(source, true /* isConstEquation*/, policyCall == Equation::PCSourceXValue);
+         // const_cast<thisType&>(source).updateLocalState();
+         bool hasReal = doesComputeReal() && source.doesComputeReal();
+         if (!hasReal)
+            mergeComputeReal(source);
+         if (doesComputeError() && source.doesComputeError()) {
+            if (hasReal) {
+               Equation error(eError);
+               error.multAssign(source.eError, Equation::PCSourceRValue,
+                     symbolsManager(), TypeBaseFloatAffine::doesAbsorbHighLevel());
+               eError.multAssign(source.eRealDomain, Equation::PCSourceRValue, symbolsManager());
+               eError.plusAssign(error, Equation::PCSourceXValue, symbolsManager());
+               if (policyCall == Equation::PCSourceXValue)
+                  error.swap(const_cast<EquationHolder&>(source.eError));
+               else
+                  error = source.eError;
+               error.multAssign(eRealDomain, Equation::PCSourceRValue, symbolsManager());
+               eError.plusAssign(error, Equation::PCSourceXValue, symbolsManager());
+            }
+            else if (source.doesComputeReal()) {
+               Equation error(source.eRealDomain);
+               error.plusAssign(source.eError, policyCall, symbolsManager());
+               eError.multAssign(error, Equation::PCSourceXValue, symbolsManager());
+            }
+            else
+               eError.multAssign(source.eError, policyCall, symbolsManager());
+         }
+         else
+            mergeComputeError(source);
+         if (hasReal)
+            eRealDomain.multAssign(source.eRealDomain, policyCall, symbolsManager());
+         return *this;
+      }
+   thisType& operator*=(const thisType& source)
+      {  return multAssign(source, Equation::PCSourceRValue); }
+   thisType& operator*=(thisType&& source)
+      {  return multAssign(source, Equation::PCSourceXValue); }
+   thisType& divAssign(const thisType& source, typename Equation::PolicyCall policyCall)
+      {  if (this == &source) {
+            thisType sourceCopy(source);
+            return divAssign(sourceCopy, Equation::PCSourceXValue);
+         }
+         updateLocalState();
+         GuardStateZonotope sourceGuard(source, true /* isConstEquation*/, policyCall == Equation::PCSourceXValue);
+         // const_cast<thisType&>(source).updateLocalState();
+         bool hasReal = doesComputeReal() && source.doesComputeReal();
+         if (!hasReal)
+            mergeComputeReal(source);
+         auto& symbolsManager = thisType::symbolsManager();
+         if (doesComputeError() && source.doesComputeError()) {
+            if (hasTopReal() || source.hasTopReal())
+               mergeTopError();
+            else if (hasReal) {
+               // (x+e)/(y+e') = x/y + (e*y-x*e')/y*(y+e')
+               Equation error(source.eError);
+               error.multAssign(eRealDomain, Equation::PCSourceRValue, symbolsManager);
+               eError.multAssign(source.eRealDomain, Equation::PCSourceRValue, symbolsManager);
+               eError.minusAssign(error, Equation::PCSourceXValue, symbolsManager);
+               if (!eError.divAssign(source.eRealDomain, Equation::PCSourceRValue, symbolsManager))
+                  mergeTopError();
+               else {
+                  Equation divide(source.eRealDomain);
+                  divide.plusAssign(source.eError, policyCall, symbolsManager);
+                  if (!eError.divAssign(divide, Equation::PCSourceXValue, symbolsManager))
+                     mergeTopError();
+               };
+            }
+            else if (source.doesComputeReal()) {
+               Equation error(source.eRealDomain);
+               error.plusAssign(source.eError, policyCall, symbolsManager);
+               if (!eError.divAssign(error, Equation::PCSourceXValue, symbolsManager))
+                  mergeTopError();
+            }
+            else {
+               if (!eError.divAssign(source.eError, policyCall, symbolsManager))
+                  mergeTopError();
+            };
+         }
+         else
+            mergeComputeError(source);
+         if (hasReal) {
+            if (!eRealDomain.divAssign(source.eRealDomain, policyCall, symbolsManager))
+               mergeTopReal();
+         };
+         return *this;
+      }
+   void inverseAssign()
+      {  updateLocalState();
+         bool hasReal = doesComputeReal();
+         auto& symbolsManager = thisType::symbolsManager();
+         if (doesComputeError()) {
+            if (hasReal) {
+               // 1/(x+e) = 1/x - e/x*(x+e)
+               eError.oppositeAssign();
+               Equation divide(eRealDomain);
+               divide.minusAssign(eError, Equation::PCSourceRValue, symbolsManager);
+               if (!eError.divAssign(eRealDomain, Equation::PCSourceRValue, symbolsManager))
+                  mergeTopError();
+               else if (!eError.divAssign(divide, Equation::PCSourceXValue, symbolsManager))
+                  mergeTopError();
+            }
+            else if (hasNoReal()) {
+               if (!eError.inverseAssign(symbolsManager))
+                  mergeTopError();
+            }
+            else
+               mergeTopError();
+         };
+         if (hasReal) {
+            if (!eRealDomain.inverseAssign(symbolsManager))
+               mergeTopReal();
+         };
+      }
+   thisType& operator/=(const thisType& source)
+      {  return divAssign(source, Equation::PCSourceRValue); }
+   thisType& operator/=(thisType&& source)
+      {  return divAssign(source, Equation::PCSourceXValue); }
+
+   void oppositeAssign()
+      {  updateLocalState();
+         if (doesComputeReal())
+            eRealDomain.oppositeAssign();
+         if (doesComputeError())
+            eError.oppositeAssign();
+      }
+
+   void sqrtAssign();
+   void sinAssign();
+   void cosAssign();
+   void asinAssign();
+   void acosAssign();
+   void tanAssign()
+      {  thisType cosValue(*this);
+         sinAssign();
+         cosValue.cosAssign();
+         divAssign(cosValue, Equation::PCSourceXValue);
+      }
+   void atanAssign();
+   void expAssign();
+   void logAssign();
+   void log10Assign()
+      {  BuiltReal log10Value(10U);
+         typename BuiltReal::BaseDouble errorMin, errorMax;
+         log10Value.logAssign(errorMin, errorMax, TypeBaseFloatAffine::nearestParams());
+         TypeBaseFloatAffine::nearestParams().clear();
+         logAssign();
+         if (doesComputeReal())
+            eRealDomain.divAssign(log10Value, symbolsManager());
+         if (doesComputeError())
+            eError.divAssign(log10Value, symbolsManager());
+      }
+   void powAssign(const thisType& value, typename Equation::PolicyCall policyCall)
+      {  logAssign();
+         multAssign(value, policyCall);
+         expAssign();
+      }
+   void atan2Assign(const thisType& value, typename Equation::PolicyCall policyCall);
+};
+
+DefineEquationTemplateHeader(URealBitsNumber)
+class DefineBaseFloatZonotopeWithSymbolic
+   :  public DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber),
+      public PNT::MngElement {
+  private:
+   enum CodeOperation
+      {  COIdentity, COPlus, COMinus, COMult, CODiv, COOpposite, COSqrt, COSin, COCos,
+         COAsin, COAcos, COTan, COAtan, COExp, COLog, COLog10, COPow
+      };
+
+   typedef DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber) inherited;
+   typedef DefineBaseFloatZonotopeWithSymbolic DefineEquationTemplateParameters(URealBitsNumber) thisType;
+   PNT::MngPointer pspFst;
+   PNT::MngPointer pspSnd;
+   CodeOperation coCodeOperation;
+   
+  public:
+   DefineBaseFloatZonotopeWithSymbolic() {}
+   DefineBaseFloatZonotopeWithSymbolic(const thisType& source) = default;
+   DefineBaseFloatZonotopeWithSymbolic(thisType&& source) = default; // [TODO] keep symbolic for constraints
+   thisType& operator=(const thisType& source) = default;
+   thisType& operator=(thisType&& source) = default; // [TODO] keep symbolic for constraints
+
+   bool operator<(const thisType& source) const;
+   bool operator<=(const thisType& source) const;
+   bool operator==(const thisType& source) const;
+   bool operator!=(const thisType& source) const;
+   bool operator>=(const thisType& source) const;
+   bool operator>(const thisType& source) const;
+
+   thisType& operator+=(const thisType& source);
+   thisType& operator-=(const thisType& source);
+   thisType& operator*=(const thisType& source);
+   thisType& operator/=(const thisType& source);
+
+   void oppositeAssign();
+   int asInt() const;
+   short int asShortInt() const { return (short int) asInt(); }
+   unsigned asUnsigned() const;
+   short unsigned asShortUnsigned() const { return (short unsigned) asUnsigned(); }
+   long int asLongInt() const { return asInt(); }
+   unsigned long asUnsignedLong() const { return asUnsigned(); }
+
+   void sqrtAssign();
+   void sinAssign();
+   void cosAssign();
+   void asinAssign();
+   void acosAssign();
+   void tanAssign();
+   void atanAssign();
+   void expAssign();
+   void logAssign();
+   void log10Assign();
+   void powAssign(const thisType& value);
+   void atan2Assign(const thisType& value);
+};
+
+DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
+class DefineBasicFloatZonotope : public DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)
+                           /* DefineBaseFloatZonotopeWithSymbolic DefineEquationTemplateParameters(URealBitsNumber) */ {
+  public:
+   typedef Numerics::DefineReadDouble<
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent) >,
+         Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, USizeMantissa+5, USizeExponent) > > BuiltDouble;
+
+  private:
+   typedef DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber) inherited;
+   typedef DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent) thisType;
+
+   TypeImplementation dValue;
+   BuiltDouble bfMin;
+   BuiltDouble bfMax; // [bfMin, bfMax] = eError + eRealDomain
+   BuiltDouble bfMinRelativeError;
+   BuiltDouble bfMaxRelativeError; // [bfMinRelativeError, bfMaxRelativeError] = eError/eRealDomain
+
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   void buildImplementationFrom(const DefineBasicFloatZonotope
+#ifndef DefineGeneric
+         <URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&
+#else
+         <BaseStoreTraits, URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&
+#endif
+      source);
+
+  public:
+   typedef DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber) BuiltReal;
+   typedef DefineEquation DefineEquationTemplateParameters(URealBitsNumber) Equation;
+
+   void mergeWith(const thisType& source)
+      {  inherited::mergeWith(source);
+         dValue = source.dValue;
+         if (bfMin > source.bfMin)
+            bfMin = source.bfMin;
+         if (bfMax < source.bfMax)
+            bfMax = source.bfMax;
+         if (bfMinRelativeError > source.bfMinRelativeError)
+            bfMinRelativeError = source.bfMinRelativeError;
+         if (bfMaxRelativeError < source.bfMaxRelativeError)
+            bfMaxRelativeError = source.bfMaxRelativeError;
+      }
+   void initFrom(TypeImplementation value);
+   void initFromAtomic(TypeImplementation value);
+   void computeRelativeError();
+   void computeImplementation();
+   void computeError();
+   bool restrictImplementationFromRealAndError();
+   void restrictRealFromErrorAndImplementation();
+   void restrictRelativeErrorFromRealAndError();
+   void restrictErrorFromRealAndImplementation();
+   void restrictRealFromErrorAndRelativeError();
+   void restrictErrorFromRealAndRelativeError();
+   void addSemiUlpToError(bool isBeforeValidImplementation=false);
+   void addSemiUlp(BuiltReal& real) const;
+   void subSemiUlp(BuiltReal& real) const;
+   void addSemiUlpToRelativeError();
+
+   void assumeZonotope(STG::IOObject::ISBase& in) const;
+   void writeZonotope(STG::IOObject::OSBase& out) const;
+   void assumeInterval(STG::IOObject::ISBase& in) const;
+   void writeInterval(STG::IOObject::OSBase& out) const;
+   void retrieveRelativeError(BuiltReal& result) const;
+
+   bool optimizeUnstableConversionForImplementationFlow(unsigned result, unsigned realResult,
+            bool hasMultiple, typename TypeBaseFloatAffine::Mode mode,
+            Numerics::DDouble::Access::ReadParameters& minParams,
+            Numerics::DDouble::Access::ReadParameters& maxParams) const;
+   bool optimizeUnstableConversionForRealFlow(unsigned result, unsigned implementationResult,
+            bool hasMultiple, typename TypeBaseFloatAffine::Mode mode,
+            Numerics::DDouble::Access::ReadParameters& minParams,
+            Numerics::DDouble::Access::ReadParameters& maxParams) const;
+
+#ifndef DefineGeneric
+   template <int RealBitsNumber, class TypeBaseFloatAffineArgument, int SizeMantissa, int SizeExponent, typename TypeImplementationArgument>
+#else
+   template <class TBaseStoreTraits, int RealBitsNumber, class TypeBaseFloatAffineArgument, int SizeMantissa, int SizeExponent, typename TypeImplementationArgument>
+#endif
+   friend class DefineBasicFloatZonotope;
+
+   typename inherited::EquationHolder& getSRealDomain() { return inherited::getSRealDomain(); }
+   const typename inherited::EquationHolder& getRealDomain() const { return inherited::getRealDomain(); }
+   typename inherited::EquationHolder& getSError() { return inherited::getSError(); }
+   const typename inherited::EquationHolder& getError() const { return inherited::getError(); }
+
+   SymbolsManager& symbolsManager() const { return inherited::symbolsManager(); }
+   typedef DefineConstraintsSet DefineEquationTemplateParameters(URealBitsNumber) ConstraintsSet;
+   ConstraintsSet& constraints() const { return inherited::constraints(); }
+
+  public:
+   DefineBasicFloatZonotope() = default;
+   DefineBasicFloatZonotope(TypeImplementation min, TypeImplementation max);
+   DefineBasicFloatZonotope(int value);
+   DefineBasicFloatZonotope(long int value);
+   DefineBasicFloatZonotope(unsigned value);
+   DefineBasicFloatZonotope(unsigned long value);
+   DefineBasicFloatZonotope(const thisType& source) = default;
+   DefineBasicFloatZonotope(thisType&& source) = default; // [TODO] keep symbolic for constraints
+   DefineBasicFloatZonotope& operator=(const thisType& source) = default;
+   DefineBasicFloatZonotope& operator=(thisType&& source) = default; // [TODO] keep symbolic for constraints
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   DefineBasicFloatZonotope(const DefineBasicFloatZonotope
+#ifndef DefineGeneric
+         <URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&
+#else
+         <BaseStoreTraits, URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&
+#endif
+      source);
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   DefineBasicFloatZonotope(DefineBasicFloatZonotope
+#ifndef DefineGeneric
+         <URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&&
+#else
+         <BaseStoreTraits, URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&&
+#endif
+      source);
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   thisType& operator=(const DefineBasicFloatZonotope
+#ifndef DefineGeneric
+            <URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&
+#else
+            <BaseStoreTraits, URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&
+#endif
+         source)
+      {  return operator=(thisType(source)); }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   thisType& operator=(DefineBasicFloatZonotope
+#ifndef DefineGeneric
+            <URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&&
+#else
+            <BaseStoreTraits, URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&&
+#endif
+         source)
+      {  return operator=(thisType(source)); }
+
+   void setError(TypeImplementation errmin, TypeImplementation errmax);
+   bool operator<(const thisType& source) const;
+   bool operator<=(const thisType& source) const;
+   bool operator==(const thisType& source) const;
+   bool operator!=(const thisType& source) const;
+   bool operator>=(const thisType& source) const;
+   bool operator>(const thisType& source) const;
+
+   void plusAssign(const thisType& source, typename Equation::PolicyCall policyCall);
+   void minusAssign(const thisType& source, typename Equation::PolicyCall policyCall);
+   void multAssign(const thisType& source, typename Equation::PolicyCall policyCall);
+   void divAssign(const thisType& source, typename Equation::PolicyCall policyCall);
+
+   void oppositeAssign()
+      {  inherited::oppositeAssign();
+         dValue = -dValue;
+         bfMin.swap(bfMax);
+         bfMin.opposite();
+         bfMax.opposite();
+         bfMinRelativeError.opposite();
+         bfMaxRelativeError.opposite();
+         TypeBaseFloatAffine::notifyForCompare(*this);
+      }
+
+   typedef TypeImplementation ImplementationType;
+   TypeImplementation asImplementation() const { return dValue; }
+   int asInt() const;
+   unsigned asUnsigned() const;
+   long int asLong() const { return asInt(); }
+   unsigned long asUnsignedLong() const { return asUnsigned(); }
+
+   const BuiltDouble& getMinImplementation() const { return bfMin; }
+   const BuiltDouble& getMaxImplementation() const { return bfMax; }
+   BuiltDouble& getSMinImplementation() { return bfMin; }
+   BuiltDouble& getSMaxImplementation() { return bfMax; }
+   const BuiltDouble& getMinRelativeError() const { return bfMinRelativeError; }
+   const BuiltDouble& getMaxRelativeError() const { return bfMaxRelativeError; }
+
+   void sqrtAssign();
+   void sinAssign();
+   void cosAssign();
+   void asinAssign();
+   void acosAssign();
+   void tanAssign();
+   void atanAssign();
+   void expAssign();
+   void logAssign();
+   void log10Assign();
+   void powAssign(const thisType& value, typename Equation::PolicyCall policyCall);
+   void atan2Assign(const thisType& value, typename Equation::PolicyCall policyCall);
+};
+
+DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
+template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+inline void
+DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
+      ::buildImplementationFrom(const DefineBasicFloatZonotope
+#ifndef DefineGeneric
+         <URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&
+#else
+         <BaseStoreTraits, URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&
+#endif
+      source) {
+   auto& nearestParams = TypeBaseFloatAffine::nearestParams();
+   typename DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber)::FloatConversion conversion;
+   conversion.setSizeMantissa(source.bfMin.bitSizeMantissa()).setSizeExponent(source.bfMin.bitSizeExponent());
+   int sizeMantissa = (source.bfMin.bitSizeMantissa() + DefineSizeofBaseTypeInBits - 1)/(DefineSizeofBaseTypeInBits);
+   for (int index = 0; index < sizeMantissa; ++index)
+      conversion.mantissa()[index] = source.bfMin.getMantissa()[index];
+   int sizeExponent = (source.bfMin.bitSizeExponent() + DefineSizeofBaseTypeInBits - 1)/(DefineSizeofBaseTypeInBits);
+   for (int index = 0; index < sizeExponent; ++index)
+      conversion.exponent()[index] = source.bfMin.getBasicExponent()[index];
+   conversion.setNegative(source.bfMin.isNegative());
+   bfMin.setFloat(conversion, nearestParams);
+   nearestParams.clear();
+   for (int index = 0; index < sizeMantissa; ++index)
+      conversion.mantissa()[index] = source.bfMax.getMantissa()[index];
+   for (int index = 0; index < sizeExponent; ++index)
+      conversion.exponent()[index] = source.bfMax.getBasicExponent()[index];
+   conversion.setNegative(source.bfMax.isNegative());
+   bfMax.setFloat(conversion, nearestParams);
+   nearestParams.clear();
+
+   if (USizeMantissa < USizeMantissaArgument) {
+      if (inherited::getRealDomain().isAtomic()) {
+         computeError();
+         computeRelativeError();
+      }
+      else {
+         addSemiUlpToError();
+
+         auto& minParams = TypeBaseFloatAffine::minParams();
+         auto& maxParams = TypeBaseFloatAffine::maxParams();
+         typename DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber)::FloatConversion conversion;
+         conversion.setSizeMantissa(source.bfMinRelativeError.bitSizeMantissa())
+               .setSizeExponent(source.bfMinRelativeError.bitSizeExponent());
+         int sizeMantissa = (source.bfMinRelativeError.bitSizeMantissa() + DefineSizeofBaseTypeInBits - 1)/(DefineSizeofBaseTypeInBits);
+         for (int index = 0; index < sizeMantissa; ++index)
+            conversion.mantissa()[index] = source.bfMinRelativeError.getMantissa()[index];
+         int sizeExponent = (source.bfMinRelativeError.bitSizeExponent() + DefineSizeofBaseTypeInBits - 1)/(DefineSizeofBaseTypeInBits);
+         for (int index = 0; index < sizeExponent; ++index)
+            conversion.exponent()[index] = source.bfMinRelativeError.getBasicExponent()[index];
+         conversion.setNegative(source.bfMinRelativeError.isNegative());
+         bfMinRelativeError.setFloat(conversion, minParams);
+         minParams.clear();
+         for (int index = 0; index < sizeMantissa; ++index)
+            conversion.mantissa()[index] = source.bfMaxRelativeError.getMantissa()[index];
+         for (int index = 0; index < sizeExponent; ++index)
+            conversion.exponent()[index] = source.bfMaxRelativeError.getBasicExponent()[index];
+         conversion.setNegative(source.bfMaxRelativeError.isNegative());
+         bfMaxRelativeError.setFloat(conversion, maxParams);
+         maxParams.clear();
+         addSemiUlpToRelativeError();
+      };
+   };
+   TypeBaseFloatAffine::notifyForCompare(*this);
+}
+
+DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
+template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+inline
+DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)::DefineBasicFloatZonotope(
+      const DefineBasicFloatZonotope
+#ifndef DefineGeneric
+            <URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&
+#else
+            <BaseStoreTraits, URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&
+#endif
+         source)
+   :  inherited(source), dValue(source.dValue)
+   {  buildImplementationFrom(source); }
+
+DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
+template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+inline
+DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)::DefineBasicFloatZonotope(
+      DefineBasicFloatZonotope
+#ifndef DefineGeneric
+            <URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&&
+#else
+            <BaseStoreTraits, URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&&
+#endif
+         source)
+   :  inherited(source), dValue(source.dValue)
+   {  buildImplementationFrom(source); }
+
+} // end of namespace DAffine
+
+#undef DefineSingleTemplateParameters
+#undef DefineBuiltReal
+#undef DefineReadDouble
+#undef DefineBuiltDoubleTraits
+#undef DefineBuiltDouble
+#undef DefineRealMantissaExponentTemplateParameters
+#undef DefineSizeofBaseTypeInBits
+#undef DefineEquationTemplateHeader
+#undef DefineSEquationTemplateHeader
+#undef DefineEquationTemplateParameters
+#undef DefineEquation
+#undef DefineConstraint
+#undef DefineConstraintsSet
+#undef DefineBaseFloatZonotope
+#undef DefineBaseFloatZonotopeWithSymbolic
+#undef DefineBasicFloatZonotopeTemplateHeader
+#undef DefineBasicFloatZonotope
+#undef DefineBasicFloatZonotopeTemplateParameters
+

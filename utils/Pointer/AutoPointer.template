@@ -1,0 +1,106 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2013-2017                                               */
+/*    CEA (Commissariat a l'Energie Atomique et aux Energies              */
+/*         Alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Pointer
+// Unit      : Basic pointers
+// File      : AutoPointer.template
+// Description :
+//   Implementation of the template AutoPointer to hold control on the pointed element.
+//
+
+#ifndef PNT_AutoPointerTemplate
+#define PNT_AutoPointerTemplate
+
+#include "Pointer/Pointer.hpp"
+// #include "Pointer/AutoPointer.h"
+
+namespace PNT {
+
+/****************************************/
+/* template TAutoPointer implementation */
+/****************************************/
+
+template <class Element>
+TAutoPointer<Element>&
+TAutoPointer<Element>::operator=(const TAutoPointer<Element>& source) {
+   if (this != &source) {
+      if (peElement)
+         delete peElement;
+      peElement = nullptr;
+      if (source.peElement)
+         peElement = source.peElement->createSCopy();
+   };
+   return *this;
+}
+
+template <class Element>
+ComparisonResult
+TAutoPointer<Element>::_compare(const EnhancedObject& asource) const {
+   ComparisonResult result = EnhancedObject::_compare(asource);
+   if (result == CREqual) {
+      const TAutoPointer<Element>& source = (const TAutoPointer<Element>&) asource;
+      result = peElement->compare(*source.peElement);
+   };
+   return result;
+}
+
+template <class Element>
+void
+TAutoPointer<Element>::assign(Element* newElement, Init) {
+   if (newElement == peElement)
+      return *this;
+
+   if (peElement)
+      delete peElement;
+   peElement = nullptr;
+   if (newElement)
+      peElement = newElement;
+   return *this;
+}
+
+template <class Element>
+TAutoPointer<Element>::TAutoPointer(const Element& element) : peElement(element.createSCopy()) {}
+
+template <class Element>
+TAutoPointer<Element>::TAutoPointer(const TAutoPointer<Element>& source)
+   : peElement(source.peElement ? source.peElement->createSCopy() : nullptr) {}
+
+template <class Element>
+TAutoPointer<Element>::~TAutoPointer()
+   { if (peElement) delete peElement; }
+
+template <class Element>
+void
+TAutoPointer<Element>::release() { if (peElement) delete peElement; peElement = nullptr; }
+
+template <class Element>
+inline void
+TAutoPointer<Element>::setElement(const Element& element) {
+   if (peElement) delete peElement;
+   peElement = element.createSCopy();
+}
+
+} // end of namespace PNT
+
+#endif // PNT_AutoPointerTemplate

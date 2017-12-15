@@ -1,0 +1,504 @@
+/**************************************************************************/
+/*                                                                        */
+/*  This file is part of FLDLib                                           */
+/*                                                                        */
+/*  Copyright (C) 2013-2017                                               */
+/*    CEA (Commissariat à l'énergie atomique et aux énergies              */
+/*         alternatives)                                                  */
+/*                                                                        */
+/*  you can redistribute it and/or modify it under the terms of the GNU   */
+/*  Lesser General Public License as published by the Free Software       */
+/*  Foundation, version 2.1.                                              */
+/*                                                                        */
+/*  It is distributed in the hope that it will be useful,                 */
+/*  but WITHOUT ANY WARRANTY; without even the implied warranty of        */
+/*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         */
+/*  GNU Lesser General Public License for more details.                   */
+/*                                                                        */
+/*  See the GNU Lesser General Public License version 2.1                 */
+/*  for more details (enclosed in the file LICENSE).                      */
+/*                                                                        */
+/**************************************************************************/
+
+/////////////////////////////////
+//
+// Library   : Collection
+// Unit      : Low level implementation
+// File      : Binary.incc
+// Description :
+//   Implementation of a partial template for balanced binary trees.
+//
+
+/* DefineTypeNode                   : type de noeud                                 */
+/* DefineTypeBinaryTree             : type d'arbre binaire                          */
+/* DefineUninheritsEnhancedObject   : les noeuds n'héritent pas de EnhancedObject   */
+/* DefineTypeBinaryParent           : noeuds avec parent                            */
+
+/**********************************************/
+/* Implementation of template TImplBinaryTree */
+/**********************************************/
+
+#ifndef DefineTemplate
+#define DefineTemplate 
+#define HasDefinedTemplate
+#define Typename 
+#else
+#define Typename typename
+#endif
+
+DefineTemplate
+bool 
+DefineTypeBinaryTree::Cursor::setToInnerDepth(const DefineTypeBinaryTree& tree) {
+   bool result = setToRoot(tree);
+   while (setToSon(getBalance(*elementAt())));
+   return result;
+}
+
+/* Definition of global methods */
+
+DefineTemplate
+void
+DefineTypeBinaryTree::duplicate(const DefineTypeBinaryTree& source,
+      const VirtualCast* retrieveRegistrationFromCopy) {
+   if (this != &source) {
+      if (root())
+         freeAll();
+      RouteCopyAction copy(*this, source, retrieveRegistrationFromCopy);
+      source.CustomImplBinaryTree::foreachNodeDo<RouteCopyAction, Node, DefineTypeBinaryTree, Cursor>(copy);
+      CustomImplBinaryTree::count() = source.count();
+#ifndef DefineTypeBinaryParent
+      height() = source.height();
+#endif // DefineTypeBinaryParent
+   };
+}
+
+DefineTemplate
+void
+DefineTypeBinaryTree::freeAll() {
+   RouteFreeAction free(*this);
+   foreachNodeDo<RouteFreeAction, Node, DefineTypeBinaryTree, Cursor>(free);
+   CustomImplBinaryTree::count() = 0;
+   height() = 0;
+}
+
+DefineTemplate
+void
+DefineTypeBinaryTree::removeAll() {
+   RouteRemoveAction remove(*this);
+   foreachNodeDo<RouteRemoveAction, Node, DefineTypeBinaryTree, Cursor>(remove);
+   CustomImplBinaryTree::count() = 0;
+   height() = 0;
+}
+
+DefineTemplate
+bool
+DefineTypeBinaryTree::isValid() const {
+   RouteValidityAction valid(*this);
+   return foreachNodeDo<RouteValidityAction, Node, DefineTypeBinaryTree, Cursor>(valid);
+}
+
+#ifdef HasDefinedTemplate
+#undef DefineTemplate 
+#undef HasDefinedTemplate
+#endif
+
+/* Definition of balance methods */
+
+#include "Pointer/BinaryBalance.incc"
+
+/* Definition of local methods */
+
+#ifndef DefineTemplate
+#define DefineTemplate 
+#define HasDefinedTemplate
+#define Typename 
+#else
+#define Typename typename
+#endif
+
+#ifndef DefineTypeBinaryParent
+DefineTemplate
+void
+DefineTypeBinaryTree::addAsFirst(Node* node, InsertionNotification* notification) {
+   AssumeAllocation(node)
+   AssumeCondition(node->isSingleton())
+   Cursor cursor(root(), height()+1);
+   cursor.setToFirst(root());
+   if (cursor.isValid()) {
+      Node* parentNode = (Node*) cursor.getReference();
+      if (notification)
+         notification->setStart(cursor.depth());
+      if (parentNode->setLeft(node)) {
+         cursor.setToSon(node);
+         if (balanceAfterInsertion(cursor, notification ? &notification->notifications() : nullptr))
+            height()++;
+      };
+   }
+   else {
+      setRoot(node);
+      height()++;
+   };
+   CustomImplBinaryTree::count()++;
+}
+#else // DefineTypeBinaryParent
+DefineTemplate
+void
+DefineTypeBinaryTree::addAsFirst(Node* node) {
+   AssumeAllocation(node)
+   AssumeCondition(node->isSingleton())
+   Cursor cursor;
+   cursor.setToFirst(root());
+   if (cursor.isValid()) {
+      Node* parentNode = (Node*) cursor.getReference();
+      // AssumeCondition(*node < *parentNode);
+      if (parentNode->setLeft(node)) {
+         cursor.setToSon(node);
+         balanceAfterInsertion(cursor);
+      };
+   }
+   else
+      setRoot(node);
+   CustomImplBinaryTree::count()++;
+}
+#endif // DefineTypeBinaryParent
+
+#ifndef DefineTypeBinaryParent
+DefineTemplate
+void
+DefineTypeBinaryTree::addAsLast(Node* node, InsertionNotification* notification) {
+   AssumeAllocation(node)
+   AssumeCondition(node->isSingleton())
+   Cursor cursor(root(), height()+1);
+   cursor.setToLast(root());
+   if (cursor.isValid()) {
+      Node* parentNode = (Node*) cursor.getReference();
+      if (notification)
+         notification->setStart(cursor.depth());
+      if (parentNode->setRight(node)) {
+         cursor.setToSon(node);
+         if (balanceAfterInsertion(cursor, notification ? &notification->notifications() : nullptr))
+            height()++;
+      };
+   }
+   else {
+      setRoot(node);
+      height()++;
+   };
+   CustomImplBinaryTree::count()++;
+}
+#else // DefineTypeBinaryParent
+DefineTemplate
+void
+DefineTypeBinaryTree::addAsLast(Node* node) {
+   AssumeAllocation(node)
+   AssumeCondition(node->isSingleton())
+   Cursor cursor;
+   cursor.setToLast(root());
+   if (cursor.isValid()) {
+      Node* parentNode = (Node*) cursor.getReference();
+      // AssumeCondition(*node > *parentNode);
+      if (parentNode->setRight(node)) {
+         cursor.setToSon(node);
+         balanceAfterInsertion(cursor);
+      };
+   }
+   else
+      setRoot(node);
+   CustomImplBinaryTree::count()++;
+}
+#endif // DefineTypeBinaryParent
+
+#ifndef DefineTypeBinaryParent
+DefineTemplate
+void
+DefineTypeBinaryTree::addAsSon(Node* node, Cursor& cursor, Typename Node::Balance balance, InsertionNotification* notification) {
+   AssumeAllocation(node)
+   AssumeCondition(node->isSingleton())
+   if (cursor.isValid()) {
+      Node* parentNode = (Node*) cursor.getReference();
+      if (balance == Node::BEqual)
+         return;
+      AssumeCondition((balance == Node::BLeft) || (balance == Node::BRight))
+      CustomImplBinaryTree::count()++;
+      if (notification)
+         notification->setStart(cursor.depth());
+      if ((balance == Node::BLeft) ? parentNode->setLeft(node) : parentNode->setRight(node)) {
+         cursor.setToSon(node);
+         if (balanceAfterInsertion(cursor, notification ? &notification->notifications() : nullptr))
+            height()++;
+      }
+      else
+         cursor.setToSon(node);
+   }
+   else {
+      AssumeCondition(root() == nullptr)
+      setRoot(node);
+      height() = CustomImplBinaryTree::count() = 1;
+      cursor.setToRoot(*this);
+   };
+}
+#else // DefineTypeBinaryParent
+DefineTemplate
+void
+DefineTypeBinaryTree::addAsSon(Node* node, Cursor& cursor, Typename Node::Balance balance) {
+   AssumeAllocation(node)
+   AssumeCondition(node->isSingleton())
+   if (cursor.isValid()) {
+      Node* parentNode = (Node*) cursor.getReference();
+      if (balance == Node::BEqual)
+         return;
+      AssumeCondition((balance == Node::BLeft) || (balance == Node::BRight))
+      CustomImplBinaryTree::count()++;
+      if ((balance == Node::BLeft) ? parentNode->setLeft(node) : parentNode->setRight(node)) {
+         cursor.setToSon(node);
+         balanceAfterInsertion(cursor);
+      }
+      else
+         cursor.setToSon(node);
+   }
+   else {
+      AssumeCondition(root() == nullptr)
+      setRoot(node);
+      CustomImplBinaryTree::count() = 1;
+      cursor.setToRoot(*this);
+   };
+}
+#endif // DefineTypeBinaryParent
+
+#ifndef DefineTypeBinaryParent
+DefineTemplate
+bool
+DefineTypeBinaryTree::add(Node* node, InsertionNotification* notification) {
+   AssumeAllocation(node)
+   AssumeCondition(node->isSingleton())
+   Cursor cursor(root(), height()+1);
+   Typename Node::Balance balance = locateBefore(*node, cursor);
+   if (cursor.isValid()) {
+      if (balance == Node::BEqual)
+         return false;
+      Node* parentNode = (Node*) cursor.getReference();
+      CustomImplBinaryTree::count()++;
+      if (notification)
+         notification->setStart(cursor.depth());
+      if (balance == Node::BLeft ? parentNode->setLeft(node) : parentNode->setRight(node)) {
+         cursor.setToSon(node);
+         if (balanceAfterInsertion(cursor, notification ? &notification->notifications() : nullptr))
+            height()++;
+      };
+   }
+   else {
+      AssumeCondition(root() == nullptr)
+      setRoot(node);
+      CustomImplBinaryTree::count()++;
+      height()++;
+   };
+   return true;
+}
+#else // DefineTypeBinaryParent
+DefineTemplate
+bool
+DefineTypeBinaryTree::add(Node* node) {
+   AssumeAllocation(node)
+   AssumeCondition(node->isSingleton())
+   Cursor cursor;
+   Node::Balance balance = locateBefore(*node, cursor);
+   if (cursor.isValid()) {
+      if (balance == Node::BEqual)
+         return false;
+      Node* parentNode = (Node*) cursor.getReference();
+      CustomImplBinaryTree::count()++;
+      if (balance == Node::BLeft ? parentNode->setLeft(node) : parentNode->setRight(node)) {
+         cursor.setToSon(node);
+         balanceAfterInsertion(cursor);
+      };
+   }
+   else {
+      AssumeCondition(root() == nullptr)
+      setRoot(node);
+      CustomImplBinaryTree::count()++;
+   };
+   return true;
+}
+#endif // DefineTypeBinaryParent
+
+#ifndef DefineTypeBinaryParent
+DefineTemplate
+Typename DefineTypeBinaryTree::CursorMove
+DefineTypeBinaryTree::removeAt(Cursor& cursor, SuppressionNotification* notification) {
+   AssumeCondition(cursor.isValid())
+   CursorMove result = CMUndefined;
+   Node* removedNode = cursor.getReference();
+   Node* parentRemovedNode = nullptr;
+   if (cursor.depth() > 1)
+      parentRemovedNode = cursor[cursor.depth()-2];
+
+   if (!removedNode->left() || !removedNode->right()) { // Suppression directe
+      if (notification)
+         notification->setStart(removedNode, cursor.depth()-1);
+      cursor.setToParent();
+   }
+   else if (removedNode->isLeftBalanced()) {
+      result = CMBefore;
+      int removedIndex = cursor.depth()-1;
+      cursor.setToLeft();
+      while (cursor.setToRight());
+      Node* mountNode = cursor.getReference();
+      cursor.setToParent();
+      Node* parentMountNode = cursor.getReference();
+      Node::swap(removedNode, mountNode, parentRemovedNode, parentMountNode, CustomImplBinaryTree::root());
+      cursor[removedIndex] = mountNode;
+      if (notification)
+         notification->setStart(removedNode, cursor.depth(), mountNode, removedIndex);
+   }
+   else { // We look on the left
+      result = CMAfter;
+      int removedIndex = cursor.depth()-1;
+      cursor.setToRight();
+      while (cursor.setToLeft());
+      Node* mountNode = cursor.getReference();
+      cursor.setToParent();
+      Node* parentMountNode = cursor.getReference();
+      Node::swap(removedNode, mountNode, parentRemovedNode, parentMountNode, CustomImplBinaryTree::root());
+      cursor[removedIndex] = mountNode;
+      if (notification)
+         notification->setStart(removedNode, cursor.depth(), mountNode, removedIndex);
+   };
+
+   if (parentRemovedNode) {
+      Typename Node::Balance balance;
+      if (parentRemovedNode->left() == removedNode) {
+         balance = Node::BLeft;
+         result = (result == CMUndefined) ? CMAfter : ((result == CMBefore)
+            ? result : CMDblAfter);
+      }
+      else {
+         balance = Node::BRight;
+         result = (result == CMUndefined) ? CMBefore : ((result == CMAfter)
+            ? result : CMDblBefore);
+      };
+      CustomImplBinaryTree::count()--;
+      parentRemovedNode->removeSon(balance);
+      if (balanceAfterSuppression(cursor, balance, notification ? &notification->notifications() : nullptr))
+         height()--;
+   }
+   else {
+      if (removedNode->left() || removedNode->right()) {
+         AssumeCondition(count() == 2)
+         if (removedNode->left()) {
+            setRoot(removedNode->left());
+            result = CMAfter;
+         }
+         else {
+            setRoot(removedNode->right());
+            result = CMBefore;
+         };
+         cursor.setToRoot(*this);
+         CustomImplBinaryTree::count() = height() = 1;
+      }
+      else {
+         AssumeCondition((count() == height()) && (height() == 1))
+         setRoot(nullptr);
+         CustomImplBinaryTree::count() = height() = 0;
+         result = CMInvalid;
+         cursor.invalidate();
+      };
+      removedNode->disconnect();
+   };
+   return result;
+}
+#else // DefineTypeBinaryParent
+DefineTemplate
+Typename DefineTypeBinaryTree::CursorMove
+DefineTypeBinaryTree::removeAt(Cursor& cursor, SuppressionNotification* notification) {
+   AssumeCondition(cursor.isValid())
+   Node* removedNode = cursor.getReference();
+   CursorMove result = CMUndefined;
+
+   if (removedNode->left() && removedNode->right()) { // Suppression indirecte
+      if (removedNode->isLeftBalanced()) {
+         cursor.setToLeft();
+         while (cursor.setToRight());
+         Node* mountNode = cursor.getReference();
+         Node::swap(removedNode, mountNode, CustomImplBinaryTree::root());
+      }
+      else { // On pioche à droite
+         cursor.setToRight();
+         while (cursor.setToLeft());
+         Node* mountNode = cursor.getReference();
+         Node::swap(removedNode, mountNode, CustomImplBinaryTree::root());
+      };
+   };
+   if (notification)
+      notification->setStart(removedNode);
+
+   if (removedNode->parent()) {
+      cursor.setToReference(removedNode->parent());
+      Node::Balance balance;
+      if (removedNode->parent()->left() == removedNode) {
+         balance = Node::BLeft;
+         result = CMAfter;
+      }
+      else {
+         balance = Node::BRight;
+         result = CMBefore;
+      };
+      CustomImplBinaryTree::count()--;
+      removedNode->parent()->removeSon(balance);
+      balanceAfterSuppression(cursor, balance);
+   }
+   else {
+      if (removedNode->left() || removedNode->right()) {
+         AssumeCondition(count() == 2)
+         if (removedNode->left()) {
+            setRoot(removedNode->left());
+            result = CMAfter;
+         }
+         else {
+            setRoot(removedNode->right());
+            result = CMBefore;
+         };
+         cursor.setToReference((Node*) root());
+         CustomImplBinaryTree::count() = 1;
+      }
+      else {
+         AssumeCondition(count() == 1)
+         setRoot(nullptr);
+         CustomImplBinaryTree::count() = 0;
+         cursor.invalidate();
+      };
+      removedNode->disconnect();
+   };
+   return result;
+}
+#endif // DefineTypeBinaryParent
+
+#ifndef DefineTypeBinaryParent
+DefineTemplate
+void
+DefineTypeBinaryTree::replaceAt(Cursor& cursor, Node* node, ReplaceNotification* notification) {
+   AssumeAllocation(node)
+   AssumeCondition(!node->left() && !node->right() && cursor.isValid())
+   Node::swapNew(cursor.getReference(), node, cursor.getParent(), CustomImplBinaryTree::root());
+   if (notification)
+      notification->setStart(cursor.depth()-1, cursor.getReference(), node);
+   cursor[cursor.depth()-1] = node;
+}
+#else // DefineTypeBinaryParent
+DefineTemplate
+void
+DefineTypeBinaryTree::replaceAt(Cursor& cursor, Node* node, ReplaceNotification* notification) {
+   AssumeAllocation(node)
+   AssumeCondition(!node->left() && !node->right() && cursor.isValid())
+   Node::swapNew(cursor.getReference(), node, CustomImplBinaryTree::root());
+   if (notification)
+      notification->setStart(cursor.getReference(), node);
+   cursor.setToReference(node);
+}
+#endif // DefineTypeBinaryParent
+
+#ifdef HasDefinedTemplate
+#undef DefineTemplate
+#undef HasDefinedTemplate
+#endif
+#undef Typename
+

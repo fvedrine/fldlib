@@ -1,0 +1,119 @@
+SOURCES =                                                                     \
+   @top_srcdir@/tests/absorption.c @top_srcdir@/tests/exp.c                   \
+   @top_srcdir@/tests/interpolation_table3.c @top_srcdir@/tests/nboroptimise.c\
+   @top_srcdir@/tests/simple3.c @top_srcdir@/tests/testnormalisation2.c       \
+   @top_srcdir@/tests/associativite.c @top_srcdir@/tests/filter.c             \
+   @top_srcdir@/tests/interpolation_table.c @top_srcdir@/tests/patriot.c      \
+   @top_srcdir@/tests/simple.c @top_srcdir@/tests/triangle.c                  \
+   @top_srcdir@/tests/comparison2.c @top_srcdir@/tests/interpolateur2.c       \
+   @top_srcdir@/tests/intersect.c @top_srcdir@/tests/polynome.c               \
+   @top_srcdir@/tests/sin.c @top_srcdir@/tests/unstable.c                     \
+   @top_srcdir@/tests/comparison.c @top_srcdir@/tests/comparison3.c           \
+   @top_srcdir@/tests/interpolateur.c @top_srcdir@/tests/comparison4.c        \
+   @top_srcdir@/tests/comparison5.c @top_srcdir@/tests/comparison6.c          \
+   @top_srcdir@/tests/comparison7.c @top_srcdir@/tests/intersect_linear.c     \
+   @top_srcdir@/tests/relative.c @top_srcdir@/tests/sqrt3.c                   \
+   @top_srcdir@/tests/x2.c @top_srcdir@/tests/doublemax2.c                    \
+   @top_srcdir@/tests/interpolateur_m.c @top_srcdir@/tests/kahanmuller.c      \
+   @top_srcdir@/tests/rump.c @top_srcdir@/tests/sqrt.c                        \
+   @top_srcdir@/tests/zero_sept.c @top_srcdir@/tests/doublemax.c              \
+   @top_srcdir@/tests/interpolation_table2.c @top_srcdir@/tests/nbornaif.c    \
+   @top_srcdir@/tests/simple2.c @top_srcdir@/tests/sqrtfonct.c                \
+   @top_srcdir@/tests/comparison8.c @top_srcdir@/tests/comparison_robustness.c
+
+EXE = $(patsubst @top_srcdir@/tests/%.c,%.exe,$(SOURCES))
+FLUCTUAT_DIR = $(patsubst @top_srcdir@/tests/%.c,%_fluctuat,$(SOURCES))
+FLUCTUAT_DONE = $(patsubst @top_srcdir@/tests/%.c,%.fluctuat_done,$(SOURCES))
+DIAGNOSIS_EXACT_DONE = $(patsubst @top_srcdir@/tests/%.c,%.diagnosis_exact_done,$(SOURCES))
+DIAGNOSIS_INTERVAL_DONE = $(patsubst @top_srcdir@/tests/%.c,%.diagnosis_interval_done,$(SOURCES))
+DIAGNOSIS_AFFINE_DONE = $(patsubst @top_srcdir@/tests/%.c,%.diagnosis_affine_done,$(SOURCES))
+DIAGNOSIS_AFFINE_SCENARIO_DONE = $(patsubst @top_srcdir@/tests/%.c,%.diagnosis_affine_scenario_done,$(SOURCES))
+
+# ifdef FLOATDIAGNOSISHOME
+# DIAGNOSIS_INCLUDE_DIR=$(FLOATDIAGNOSISHOME)/include/@PACKAGE@
+# DIAGNOSIS_LIB_DIR=$(FLOATDIAGNOSISHOME)/lib/@PACKAGE@
+# else
+DIAGNOSIS_INCLUDE_DIR=@top_srcdir@
+DIAGNOSIS_LIB_DIR=@top_builddir@/.libs
+# endif
+
+srcdir=@srcdir@
+
+.SECONDARY:
+
+all : analysis
+exe : $(EXE)
+fluctuat : $(FLUCTUAT_DONE)
+diagnosis_exact : $(DIAGNOSIS_EXACT_DONE)
+diagnosis_interval : $(DIAGNOSIS_INTERVAL_DONE)
+diagnosis_affine : $(DIAGNOSIS_AFFINE_DONE)
+diagnosis_affine_scenario : $(DIAGNOSIS_AFFINE_SCENARIO_DONE)
+analysis : diagnosis_exact diagnosis_interval diagnosis_affine diagnosis_affine_scenario
+
+%.exe: %.c @top_srcdir@/tests/std_header.h
+	gcc -I$(DIAGNOSIS_INCLUDE_DIR) -include @top_srcdir@/tests/std_header.h -o $@ $< -lm
+
+%.instr_diagnosis_exact: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/libFloatDiagnosis.a
+	-AUTOTEST=1 ./comp_float_diagnosis.sh -exact -optim @FLOAT_ALLOW_INTERFACE@ -atomic -loop $< -o $@
+
+%.instr_diagnosis_interval: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/libFloatDiagnosis.a
+	-AUTOTEST=1 ./comp_float_diagnosis.sh -interval -optim @FLOAT_ALLOW_INTERFACE@ -atomic -loop $< -o $@
+
+%.instr_diagnosis_affine: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/libFloatDiagnosis.a
+	-AUTOTEST=1 ./comp_float_diagnosis.sh -affine -optim @FLOAT_ALLOW_INTERFACE@ -atomic -loop $< -o $@
+
+%.instr_diagnosis_affine_scenario: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/libFloatDiagnosis.a
+	-AUTOTEST=1 ./comp_float_diagnosis.sh -affine -optim @FLOAT_ALLOW_INTERFACE@ -atomic -loop -scenario $< -o $@
+
+%.fluctuat.ii: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h
+	gcc -I$(FLUCTUATHOME)/ABSINT/two_include -I$(DIAGNOSIS_INCLUDE_DIR) -D_TWO_TOOL -include @top_srcdir@/tests/std_header.h -E -o $@ $<
+
+%.fluctuat_done: %.fluctuat.ii
+	rm -rf $(patsubst %.fluctuat.ii,%_fluctuat,$<)
+	mkdir $(patsubst %.fluctuat.ii,%_fluctuat,$<)
+	$(eval CUR := $(CURDIR))
+	-cd $(patsubst %.fluctuat.ii,%_fluctuat,$<)                                \
+      && two_analyzer -c $(CUR)/fluctuat_project.rc $(CUR)/$< && touch $(CUR)/$@
+
+%.fluctuat_spec_done: %.fluctuat.ii
+	rm -rf $(patsubst %.fluctuat.ii,%_fluctuat_s,$<)
+	mkdir $(patsubst %.fluctuat.ii,%_fluctuat_s,$<)
+	$(eval CUR := $(CURDIR))
+	ifneq ("$(wildcard $<.rc)","")                                             \
+	   cp $<.rc $(patsubst %.fluctuat.ii,%_fluctuat_s,$<)/project.rc           \
+	else                                                                       \
+	   cp $(CUR)/fluctuat_project.rc $(patsubst %.fluctuat.ii,%_fluctuat_s,$<)/project.rc \
+	endif
+	-cd $(patsubst %.fluctuat.ii,%_fluctuat_s,$<)                              \
+      && two_analyzer -c project.rc $(CUR)/$< && touch $(CUR)/$@
+
+%.diagnosis_exact_done: %.instr_diagnosis_exact
+	-./$< && touch $@
+
+%.diagnosis_interval_done: %.instr_diagnosis_interval
+	-./$< && touch $@
+
+%.diagnosis_affine_done: %.instr_diagnosis_affine
+	-./$< && touch $@
+
+%.diagnosis_affine_scenario_done: %.instr_diagnosis_affine_scenario
+	-./$< && touch $@
+
+create_accuracy_table: $(srcdir)/jsonprinter.ml
+	ocamlc -I $(shell ocamlfind query biniou) -I $(shell ocamlfind query yojson) -I $(shell ocamlfind query easy-format) \
+      easy_format.cma biniou.cma yojson.cma -o create_accuracy_table $(srcdir)/jsonprinter.ml
+
+accuracy_table.json: *_done
+	$(srcdir)/scan_accuracy_directory.py $(srcdir)
+
+table.txt: accuracy_table.json create_accuracy_table
+	./create_accuracy_table accuracy_table.json > table.txt
+
+clean:
+	rm -f *.exe
+	rm -f *.instr_diagnosis_*
+	rm -rf Fluctuat_*
+	rm -f *_done
+	rm -f *_out
+	rm -f *_in
+	rm -f table.txt
