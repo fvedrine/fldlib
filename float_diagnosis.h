@@ -420,11 +420,14 @@ inline double middle_of_double(double x, double y) { return (x+y)/2.0; }
 
 #ifdef FLOAT_DIAGNOSIS
 #ifdef FLOAT_AFFINE
-  NumericalDomains::FloatZonotope::Initialization init(FLOAT_HEADER_INIT"_aff");
+  NumericalDomains::FloatZonotope::Initialization init;
+  init.setResultFile(FLOAT_HEADER_INIT"_aff");
 #elif defined(FLOAT_INTERVAL)
-  NumericalDomains::FloatInterval::Initialization init(FLOAT_HEADER_INIT"_int");
+  NumericalDomains::FloatInterval::Initialization init;
+  init.setResultFile(FLOAT_HEADER_INIT"_int");
 #else
-  NumericalDomains::FloatExact::Initialization init(FLOAT_HEADER_INIT"_exact");
+  NumericalDomains::FloatExact::Initialization init;
+  init.setResultFile(FLOAT_HEADER_INIT"_exact");
 #endif // FLOAT_AFFINE
 #if !defined(FLOAT_INTERVAL)
   try {
