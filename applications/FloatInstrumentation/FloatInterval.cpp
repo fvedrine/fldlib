@@ -59,6 +59,12 @@ template void TBaseFloatInterval<ExecutionPath>::assumeInterval<TCompareFloatInt
 template void TBaseFloatInterval<ExecutionPath>::writeInterval<TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 23, 8>, float> >(TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 23, 8>, float> const&) const;
 template void TBaseFloatInterval<ExecutionPath>::writeInterval<TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 52, 11>, double> >(TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 52, 11>, double> const&) const;
 template void TBaseFloatInterval<ExecutionPath>::writeInterval<TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 80, 15>, long double> >(TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 80, 15>, long double> const&) const;
+template void TBaseFloatInterval<ExecutionPath>::assumeInterval<TInstrumentedFloatInterval<BuiltFloat, float> >(TInstrumentedFloatInterval<BuiltFloat, float> const&) const;
+template void TBaseFloatInterval<ExecutionPath>::assumeInterval<TInstrumentedFloatInterval<BuiltDouble, double> >(TInstrumentedFloatInterval<BuiltDouble, double> const&) const;
+template void TBaseFloatInterval<ExecutionPath>::assumeInterval<TInstrumentedFloatInterval<BuiltLongDouble, long double> >(TInstrumentedFloatInterval<BuiltLongDouble, long double> const&) const;
+template void TBaseFloatInterval<ExecutionPath>::writeInterval<TInstrumentedFloatInterval<BuiltFloat, float> >(TInstrumentedFloatInterval<BuiltFloat, float> const&) const;
+template void TBaseFloatInterval<ExecutionPath>::writeInterval<TInstrumentedFloatInterval<BuiltDouble, double> >(TInstrumentedFloatInterval<BuiltDouble, double> const&) const;
+template void TBaseFloatInterval<ExecutionPath>::writeInterval<TInstrumentedFloatInterval<BuiltLongDouble, long double> >(TInstrumentedFloatInterval<BuiltLongDouble, long double> const&) const;
 
 template class TFloatInterval<ExecutionPath, BuiltFloat, float>;
 template class TFloatInterval<ExecutionPath, BuiltDouble, double>;
