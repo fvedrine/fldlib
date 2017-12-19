@@ -1119,7 +1119,7 @@ class ExecutionPath::EquationHolder : public ExecutionPath::Equation {
    DefineCopy(EquationHolder)
    DDefineAssign(EquationHolder)
 
-   virtual bool isStoredVariable() const { return ExecutionPath::fSupportUnstableInLoop; }
+   virtual bool isStoredVariable() const override { return ExecutionPath::fSupportUnstableInLoop; }
    void setHolder(PathExplorer* holder) {  peHolder = holder; }
    void clearHolder() { peHolder = nullptr; }
    PathExplorer* getHolder() const { return peHolder; }

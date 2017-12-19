@@ -415,8 +415,8 @@ class SymbolsManager : public EnhancedObject {
       }
    template <class TypeTraits>
    void recordDefinedSymbol(TypeTraits traits, Symbol* symbol)
-      {  typedef typename TypeTraits::DefinedSymbol DefinedSymbol;
-         AssumeCondition(dynamic_cast<const DefinedSymbol*>(symbol) && !symbol->hasOrder())
+      {  AssumeCondition(dynamic_cast<const typename TypeTraits::DefinedSymbol*>(symbol)
+               && !symbol->hasOrder())
          lsDefinedSymbols.insertNewAtEnd(symbol);
          symbol->setOrder(lsDefinedSymbols.count());
       }

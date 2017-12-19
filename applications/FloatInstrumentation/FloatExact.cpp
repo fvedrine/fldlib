@@ -60,10 +60,22 @@ namespace NumericalDomains { namespace DDoubleExact {
 template class TCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltFloat, float>;
 template class TCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltDouble, double>;
 template class TCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltLongDouble, long double>;
+template void TBaseFloatExact<ExecutionPath>::writeCompare<TCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltFloat, float> >(TCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltFloat, float> const&, BuiltReal const&) const;
+template void TBaseFloatExact<ExecutionPath>::writeCompare<TCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltDouble, double> >(TCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltDouble, double> const&, BuiltReal const&) const;
+template void TBaseFloatExact<ExecutionPath>::writeCompare<TCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltLongDouble, long double> >(TCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltLongDouble, long double> const&, BuiltReal const&) const;
+template void TBaseFloatExact<ExecutionPath>::writeBranchCompare<TCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltFloat, float> >(TCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltFloat, float> const&, BuiltReal const&) const;
+template void TBaseFloatExact<ExecutionPath>::writeBranchCompare<TCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltDouble, double> >(TCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltDouble, double> const&, BuiltReal const&) const;
+template void TBaseFloatExact<ExecutionPath>::writeBranchCompare<TCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltLongDouble, long double> >(TCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltLongDouble, long double> const&, BuiltReal const&) const;
 #else
 template class TGCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltFloat, float>;
 template class TGCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltDouble, double>;
 template class TGCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltLongDouble, long double>;
+template void TBaseFloatExact<ExecutionPath>::writeCompare<TGCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltFloat, float> >(TGCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltFloat, float> const&, BuiltReal const&) const;
+template void TBaseFloatExact<ExecutionPath>::writeCompare<TGCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltDouble, double> >(TGCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltDouble, double> const&, BuiltReal const&) const;
+template void TBaseFloatExact<ExecutionPath>::writeCompare<TGCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltLongDouble, long double> >(TGCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltLongDouble, long double> const&, BuiltReal const&) const;
+template void TBaseFloatExact<ExecutionPath>::writeBranchCompare<TGCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltFloat, float> >(TGCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltFloat, float> const&, BuiltReal const&) const;
+template void TBaseFloatExact<ExecutionPath>::writeBranchCompare<TGCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltDouble, double> >(TGCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltDouble, double> const&, BuiltReal const&) const;
+template void TBaseFloatExact<ExecutionPath>::writeBranchCompare<TGCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltLongDouble, long double> >(TGCompareFloatExact<FLOAT_REAL_BITS_NUMBER, TBaseFloatExact<ExecutionPath>, BuiltLongDouble, long double> const&, BuiltReal const&) const;
 #endif
 
 template void TBaseFloatExact<ExecutionPath>::assumeCompare<TInstrumentedFloat<BuiltFloat, float> >(TInstrumentedFloat<BuiltFloat, float> const&, BuiltReal const&) const;
