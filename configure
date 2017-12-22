@@ -17513,6 +17513,7 @@ main ()
 
   #ifdef __GNUC__
   int ok;
+  (void)ok;
   #else
   choke me
   #endif
@@ -17552,6 +17553,7 @@ main ()
 
   #ifdef __clang__
   int ok;
+  (void)ok;
   #else
   choke me
   #endif
