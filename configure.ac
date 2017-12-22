@@ -56,6 +56,10 @@ AC_CHECK_FUNCS([fesetround floor memmove memset pow rint sqrt])
 
 # AX_CHECK_COMPILE_FLAG([-std=c++11], [CXXFLAGS="$CXXFLAGS -std=c++11"])
 
+# Checks for compiler vendor
+AC_CHECK_DEFINE(__GNUC__, AC_SUBST([HAVE_GNUC],[1]), AC_SUBST([HAVE_GNUC],[0]))
+AC_CHECK_DEFINE(__clang__, AC_SUBST([HAVE_CLANG],[1]), AC_SUBST([HAVE_CLANG],[0]))
+
 AC_HEADER_ASSERT
 AC_ARG_ENABLE([interface],
    [AS_HELP_STRING([--enable-interface], [use a simplified interface])],

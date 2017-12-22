@@ -667,6 +667,8 @@ FLOAT_LIB_INTERFACE_TRUE
 limitsymbolabsorption
 triggerpercent
 realbitsnumber
+HAVE_CLANG
+HAVE_GNUC
 LIBOBJS
 HAVE_CXXABI
 LIBTOOL_DEPS
@@ -17494,6 +17496,86 @@ done
 
 
 # AX_CHECK_COMPILE_FLAG([-std=c++11], [CXXFLAGS="$CXXFLAGS -std=c++11"])
+
+# Checks for compiler vendor
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __GNUC__ defined" >&5
+$as_echo_n "checking for __GNUC__ defined... " >&6; }
+if ${ac_cv_defined___GNUC__+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  #ifdef __GNUC__
+  int ok;
+  #else
+  choke me
+  #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ac_cv_defined___GNUC__=yes
+else
+  ac_cv_defined___GNUC__=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___GNUC__" >&5
+$as_echo "$ac_cv_defined___GNUC__" >&6; }
+if test $ac_cv_defined___GNUC__ != "no"; then :
+  HAVE_GNUC=1
+
+else
+  HAVE_GNUC=0
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __clang__ defined" >&5
+$as_echo_n "checking for __clang__ defined... " >&6; }
+if ${ac_cv_defined___clang__+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  #ifdef __clang__
+  int ok;
+  #else
+  choke me
+  #endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ac_cv_defined___clang__=yes
+else
+  ac_cv_defined___clang__=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_defined___clang__" >&5
+$as_echo "$ac_cv_defined___clang__" >&6; }
+if test $ac_cv_defined___clang__ != "no"; then :
+  HAVE_CLANG=1
+
+else
+  HAVE_CLANG=0
+
+fi
 
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable assertions" >&5

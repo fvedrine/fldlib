@@ -158,6 +158,7 @@ am__libFloatDiagnosis_la_SOURCES_DIST =  \
 	utils/Collection/ConcreteCollection/Array.cpp \
 	utils/Collection/ConcreteCollection/SortedArray.cpp \
 	algorithms/Numerics/Integer.cpp \
+	applications/NumericalAnalysis/FloatCommonTypes.cpp \
 	applications/NumericalAnalysis/FloatExactTypes.cpp \
 	applications/NumericalAnalysis/FloatIntervalTypes.cpp \
 	applications/NumericalAnalysis/FloatAffineTypes.cpp \
@@ -181,6 +182,7 @@ am__objects_1 =  \
 	utils/Collection/ConcreteCollection/libFloatDiagnosis_la-Array.lo \
 	utils/Collection/ConcreteCollection/libFloatDiagnosis_la-SortedArray.lo \
 	algorithms/Numerics/libFloatDiagnosis_la-Integer.lo \
+	applications/NumericalAnalysis/libFloatDiagnosis_la-FloatCommonTypes.lo \
 	applications/NumericalAnalysis/libFloatDiagnosis_la-FloatExactTypes.lo \
 	applications/NumericalAnalysis/libFloatDiagnosis_la-FloatIntervalTypes.lo \
 	applications/NumericalAnalysis/libFloatDiagnosis_la-FloatAffineTypes.lo \
@@ -215,6 +217,7 @@ am__libFloatDiagnosisCore_la_SOURCES_DIST =  \
 	utils/Collection/ConcreteCollection/Array.cpp \
 	utils/Collection/ConcreteCollection/SortedArray.cpp \
 	algorithms/Numerics/Integer.cpp \
+	applications/NumericalAnalysis/FloatCommonTypes.cpp \
 	applications/NumericalAnalysis/FloatExactTypes.cpp \
 	applications/NumericalAnalysis/FloatIntervalTypes.cpp \
 	applications/NumericalAnalysis/FloatAffineTypes.cpp \
@@ -233,6 +236,7 @@ am__objects_3 = utils/StandardClasses/libFloatDiagnosisCore_la-StandardClasses.l
 	utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-Array.lo \
 	utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-SortedArray.lo \
 	algorithms/Numerics/libFloatDiagnosisCore_la-Integer.lo \
+	applications/NumericalAnalysis/libFloatDiagnosisCore_la-FloatCommonTypes.lo \
 	applications/NumericalAnalysis/libFloatDiagnosisCore_la-FloatExactTypes.lo \
 	applications/NumericalAnalysis/libFloatDiagnosisCore_la-FloatIntervalTypes.lo \
 	applications/NumericalAnalysis/libFloatDiagnosisCore_la-FloatAffineTypes.lo \
@@ -526,6 +530,7 @@ FLOAT_ZONOTOPE_DOES_ABSORB_HIGH_LEVEL = @FLOAT_ZONOTOPE_DOES_ABSORB_HIGH_LEVEL@
 FLOAT_ZONOTOPE_DOES_EXCLUDE_CONSTANT_FROM_SYMBOL_ABSORPTION = @FLOAT_ZONOTOPE_DOES_EXCLUDE_CONSTANT_FROM_SYMBOL_ABSORPTION@
 FLOAT_ZONOTOPE_LIMIT_SYMBOL_ABSORPTION = @FLOAT_ZONOTOPE_LIMIT_SYMBOL_ABSORPTION@
 GREP = @GREP@
+HAVE_CLANG = @HAVE_CLANG@
 HAVE_CXX11 = @HAVE_CXX11@
 HAVE_CXXABI = @HAVE_CXXABI@
 HAVE_FLOAT_ALLOW_INTERFACE = @HAVE_FLOAT_ALLOW_INTERFACE@
@@ -540,6 +545,7 @@ HAVE_FLOAT_ZONOTOPE_ALLOW_SIMPLEX = @HAVE_FLOAT_ZONOTOPE_ALLOW_SIMPLEX@
 HAVE_FLOAT_ZONOTOPE_DOES_ABSORB_HIGH_LEVEL = @HAVE_FLOAT_ZONOTOPE_DOES_ABSORB_HIGH_LEVEL@
 HAVE_FLOAT_ZONOTOPE_DOES_EXCLUDE_CONSTANT_FROM_SYMBOL_ABSORPTION = @HAVE_FLOAT_ZONOTOPE_DOES_EXCLUDE_CONSTANT_FROM_SYMBOL_ABSORPTION@
 HAVE_FLOAT_ZONOTOPE_LIMIT_SYMBOL_ABSORPTION = @HAVE_FLOAT_ZONOTOPE_LIMIT_SYMBOL_ABSORPTION@
+HAVE_GNUC = @HAVE_GNUC@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -792,6 +798,7 @@ SOURCES = \
    utils/Collection/ConcreteCollection/Array.cpp                  \
    utils/Collection/ConcreteCollection/SortedArray.cpp            \
    algorithms/Numerics/Integer.cpp                                \
+   applications/NumericalAnalysis/FloatCommonTypes.cpp            \
    applications/NumericalAnalysis/FloatExactTypes.cpp             \
    applications/NumericalAnalysis/FloatIntervalTypes.cpp          \
    applications/NumericalAnalysis/FloatAffineTypes.cpp            \
@@ -1054,6 +1061,9 @@ applications/NumericalAnalysis/$(am__dirstamp):
 applications/NumericalAnalysis/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) applications/NumericalAnalysis/$(DEPDIR)
 	@: > applications/NumericalAnalysis/$(DEPDIR)/$(am__dirstamp)
+applications/NumericalAnalysis/libFloatDiagnosis_la-FloatCommonTypes.lo:  \
+	applications/NumericalAnalysis/$(am__dirstamp) \
+	applications/NumericalAnalysis/$(DEPDIR)/$(am__dirstamp)
 applications/NumericalAnalysis/libFloatDiagnosis_la-FloatExactTypes.lo:  \
 	applications/NumericalAnalysis/$(am__dirstamp) \
 	applications/NumericalAnalysis/$(DEPDIR)/$(am__dirstamp)
@@ -1126,6 +1136,9 @@ utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-SortedArray.lo:  \
 algorithms/Numerics/libFloatDiagnosisCore_la-Integer.lo:  \
 	algorithms/Numerics/$(am__dirstamp) \
 	algorithms/Numerics/$(DEPDIR)/$(am__dirstamp)
+applications/NumericalAnalysis/libFloatDiagnosisCore_la-FloatCommonTypes.lo:  \
+	applications/NumericalAnalysis/$(am__dirstamp) \
+	applications/NumericalAnalysis/$(DEPDIR)/$(am__dirstamp)
 applications/NumericalAnalysis/libFloatDiagnosisCore_la-FloatExactTypes.lo:  \
 	applications/NumericalAnalysis/$(am__dirstamp) \
 	applications/NumericalAnalysis/$(DEPDIR)/$(am__dirstamp)
@@ -1277,9 +1290,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@applications/FloatInstrumentation/$(DEPDIR)/libFloatDiagnosis_la-FloatExact.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@applications/FloatInstrumentation/$(DEPDIR)/libFloatDiagnosis_la-FloatInterval.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosisCore_la-FloatAffineTypes.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosisCore_la-FloatCommonTypes.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosisCore_la-FloatExactTypes.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosisCore_la-FloatIntervalTypes.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosis_la-FloatAffineTypes.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosis_la-FloatCommonTypes.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosis_la-FloatExactTypes.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosis_la-FloatIntervalTypes.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/Collection/ConcreteCollection/$(DEPDIR)/libFloatDiagnosisCore_la-Array.Plo@am__quote@
@@ -1431,6 +1446,13 @@ algorithms/Numerics/libFloatDiagnosis_la-Integer.lo: algorithms/Numerics/Integer
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosis_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosis_la_CXXFLAGS) $(CXXFLAGS) -c -o algorithms/Numerics/libFloatDiagnosis_la-Integer.lo `test -f 'algorithms/Numerics/Integer.cpp' || echo '$(srcdir)/'`algorithms/Numerics/Integer.cpp
 
+applications/NumericalAnalysis/libFloatDiagnosis_la-FloatCommonTypes.lo: applications/NumericalAnalysis/FloatCommonTypes.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosis_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosis_la_CXXFLAGS) $(CXXFLAGS) -MT applications/NumericalAnalysis/libFloatDiagnosis_la-FloatCommonTypes.lo -MD -MP -MF applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosis_la-FloatCommonTypes.Tpo -c -o applications/NumericalAnalysis/libFloatDiagnosis_la-FloatCommonTypes.lo `test -f 'applications/NumericalAnalysis/FloatCommonTypes.cpp' || echo '$(srcdir)/'`applications/NumericalAnalysis/FloatCommonTypes.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosis_la-FloatCommonTypes.Tpo applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosis_la-FloatCommonTypes.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='applications/NumericalAnalysis/FloatCommonTypes.cpp' object='applications/NumericalAnalysis/libFloatDiagnosis_la-FloatCommonTypes.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosis_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosis_la_CXXFLAGS) $(CXXFLAGS) -c -o applications/NumericalAnalysis/libFloatDiagnosis_la-FloatCommonTypes.lo `test -f 'applications/NumericalAnalysis/FloatCommonTypes.cpp' || echo '$(srcdir)/'`applications/NumericalAnalysis/FloatCommonTypes.cpp
+
 applications/NumericalAnalysis/libFloatDiagnosis_la-FloatExactTypes.lo: applications/NumericalAnalysis/FloatExactTypes.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosis_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosis_la_CXXFLAGS) $(CXXFLAGS) -MT applications/NumericalAnalysis/libFloatDiagnosis_la-FloatExactTypes.lo -MD -MP -MF applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosis_la-FloatExactTypes.Tpo -c -o applications/NumericalAnalysis/libFloatDiagnosis_la-FloatExactTypes.lo `test -f 'applications/NumericalAnalysis/FloatExactTypes.cpp' || echo '$(srcdir)/'`applications/NumericalAnalysis/FloatExactTypes.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosis_la-FloatExactTypes.Tpo applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosis_la-FloatExactTypes.Plo
@@ -1577,6 +1599,13 @@ algorithms/Numerics/libFloatDiagnosisCore_la-Integer.lo: algorithms/Numerics/Int
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='algorithms/Numerics/Integer.cpp' object='algorithms/Numerics/libFloatDiagnosisCore_la-Integer.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosisCore_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosisCore_la_CXXFLAGS) $(CXXFLAGS) -c -o algorithms/Numerics/libFloatDiagnosisCore_la-Integer.lo `test -f 'algorithms/Numerics/Integer.cpp' || echo '$(srcdir)/'`algorithms/Numerics/Integer.cpp
+
+applications/NumericalAnalysis/libFloatDiagnosisCore_la-FloatCommonTypes.lo: applications/NumericalAnalysis/FloatCommonTypes.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosisCore_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosisCore_la_CXXFLAGS) $(CXXFLAGS) -MT applications/NumericalAnalysis/libFloatDiagnosisCore_la-FloatCommonTypes.lo -MD -MP -MF applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosisCore_la-FloatCommonTypes.Tpo -c -o applications/NumericalAnalysis/libFloatDiagnosisCore_la-FloatCommonTypes.lo `test -f 'applications/NumericalAnalysis/FloatCommonTypes.cpp' || echo '$(srcdir)/'`applications/NumericalAnalysis/FloatCommonTypes.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosisCore_la-FloatCommonTypes.Tpo applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosisCore_la-FloatCommonTypes.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='applications/NumericalAnalysis/FloatCommonTypes.cpp' object='applications/NumericalAnalysis/libFloatDiagnosisCore_la-FloatCommonTypes.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosisCore_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosisCore_la_CXXFLAGS) $(CXXFLAGS) -c -o applications/NumericalAnalysis/libFloatDiagnosisCore_la-FloatCommonTypes.lo `test -f 'applications/NumericalAnalysis/FloatCommonTypes.cpp' || echo '$(srcdir)/'`applications/NumericalAnalysis/FloatCommonTypes.cpp
 
 applications/NumericalAnalysis/libFloatDiagnosisCore_la-FloatExactTypes.lo: applications/NumericalAnalysis/FloatExactTypes.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosisCore_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosisCore_la_CXXFLAGS) $(CXXFLAGS) -MT applications/NumericalAnalysis/libFloatDiagnosisCore_la-FloatExactTypes.lo -MD -MP -MF applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosisCore_la-FloatExactTypes.Tpo -c -o applications/NumericalAnalysis/libFloatDiagnosisCore_la-FloatExactTypes.lo `test -f 'applications/NumericalAnalysis/FloatExactTypes.cpp' || echo '$(srcdir)/'`applications/NumericalAnalysis/FloatExactTypes.cpp

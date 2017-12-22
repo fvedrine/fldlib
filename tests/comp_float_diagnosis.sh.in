@@ -113,8 +113,17 @@ then
 fi
 if [ ${optim} = 1 ]
 then
-  cxxflags+=" -O3 -DDefineDebugLevel=1 -Wall -Wno-unused-but-set-variable \
-           -Wno-unused-local-typedefs -Wno-unused-variable -Woverloaded-virtual -fmessage-length=0"
+  if [ @HAVE_CLANG@ -ne 0 ]
+  then
+    cxxflags+=" -O3 -DDefineDebugLevel=1 -x c++ -Wall \
+             -Wno-unused-local-typedefs -Wno-unused-variable -Woverloaded-virtual -fmessage-length=0"
+  elif [ @HAVE_GNUC@ -ne 0 ]
+  then
+    cxxflags+=" -O3 -DDefineDebugLevel=1 -Wall -Wno-unused-but-set-variable \
+             -Wno-unused-local-typedefs -Wno-unused-variable -Woverloaded-virtual -fmessage-length=0"
+  else
+    cxxflags+=" -O3 -DDefineDebugLevel=1"
+  fi
 else
   cxxflags+=" -g -O0 -D_GLIBCXX_USE_CXX11_ABI=0"
 fi
