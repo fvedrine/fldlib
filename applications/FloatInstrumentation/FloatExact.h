@@ -321,6 +321,29 @@ powf(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, T
       return result;
    }
 
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
+atan2(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source,
+      const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& value)
+   {  auto result(std::move(source)); result.atan2Assign(value); return result; }
+
+template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
+inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
+atan2(TypeFst source, const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& value)
+   {  NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> result(source);
+      result.atan2Assign(value);
+      return result;
+   }
+
+template <typename TypeSnd, class TypeBuiltDouble, typename TypeImplementation>
+inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
+atan2(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source,
+      TypeSnd value)
+   {  auto result(std::move(source));
+      result.atan2Assign(NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>(value));
+      return result;
+   }
+
 template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
 inline bool
 operator<(TypeFst fst, const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& snd)

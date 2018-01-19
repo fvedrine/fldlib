@@ -194,6 +194,7 @@ class DefineCompareFloatExact : public TypeBaseFloatExact {
    void logAssign();
    void log10Assign();
    void powAssign(const thisType& value);
+   void atan2Assign(const thisType& value);
    void absAssign();
    void maxAssign(const thisType& source);
    void minAssign(const thisType& source);

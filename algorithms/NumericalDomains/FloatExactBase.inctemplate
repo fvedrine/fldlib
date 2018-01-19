@@ -35,6 +35,7 @@
 #define DefineSizeofBaseTypeInBits                                   \
    (sizeof(unsigned int)*8)
 #define DefineFillContent fillContent
+#define DefineSetContent setContent
 #define DefineBaseType                                               \
    unsigned int
 
@@ -44,6 +45,7 @@
 #define DefineSizeofBaseTypeInBits                                   \
    BaseStoreTraits::sizeBaseInBits()
 #define DefineFillContent gfillContent
+#define DefineSetContent gsetContent
 #define DefineBaseType                                               \
    typename BaseStoreTraits::BaseType
 
@@ -512,8 +514,14 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
    if (mode != inherited::SVNoImplementation)
       DDoubleExact::DefineFillContent(bfImplementation, dValue);
    if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble realInImplementation;
+      retrieveImplementation(brReal, realInImplementation);
+
+      double real = 0;
+      DefineSetContent(real, realInImplementation /*, false isUpper */);
+      real = ::sin(real);
       TypeBuiltDouble conversion;
-      DDoubleExact::DefineFillContent(conversion, dValue);
+      DDoubleExact::DefineFillContent(conversion, real);
       retrieveReal(conversion, brReal);
    }
    inherited::notifyForCompare(*this);
@@ -527,8 +535,14 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
    if (mode != inherited::SVNoImplementation)
       DDoubleExact::DefineFillContent(bfImplementation, dValue);
    if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble realInImplementation;
+      retrieveImplementation(brReal, realInImplementation);
+
+      double real = 0;
+      DefineSetContent(real, realInImplementation /*, false isUpper */);
+      real = ::cos(real);
       TypeBuiltDouble conversion;
-      DDoubleExact::DefineFillContent(conversion, dValue);
+      DDoubleExact::DefineFillContent(conversion, real);
       retrieveReal(conversion, brReal);
    }
    inherited::notifyForCompare(*this);
@@ -542,8 +556,14 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
    if (mode != inherited::SVNoImplementation)
       DDoubleExact::DefineFillContent(bfImplementation, dValue);
    if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble realInImplementation;
+      retrieveImplementation(brReal, realInImplementation);
+
+      double real = 0;
+      DefineSetContent(real, realInImplementation /*, false isUpper */);
+      real = ::asin(real);
       TypeBuiltDouble conversion;
-      DDoubleExact::DefineFillContent(conversion, dValue);
+      DDoubleExact::DefineFillContent(conversion, real);
       retrieveReal(conversion, brReal);
    }
    inherited::notifyForCompare(*this);
@@ -557,8 +577,14 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
    if (mode != inherited::SVNoImplementation)
       DDoubleExact::DefineFillContent(bfImplementation, dValue);
    if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble realInImplementation;
+      retrieveImplementation(brReal, realInImplementation);
+
+      double real = 0;
+      DefineSetContent(real, realInImplementation /*, false isUpper */);
+      real = ::acos(real);
       TypeBuiltDouble conversion;
-      DDoubleExact::DefineFillContent(conversion, dValue);
+      DDoubleExact::DefineFillContent(conversion, real);
       retrieveReal(conversion, brReal);
    }
    inherited::notifyForCompare(*this);
@@ -572,8 +598,14 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
    if (mode != inherited::SVNoImplementation)
       DDoubleExact::DefineFillContent(bfImplementation, dValue);
    if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble realInImplementation;
+      retrieveImplementation(brReal, realInImplementation);
+
+      double real = 0;
+      DefineSetContent(real, realInImplementation /*, false isUpper */);
+      real = ::tan(real);
       TypeBuiltDouble conversion;
-      DDoubleExact::DefineFillContent(conversion, dValue);
+      DDoubleExact::DefineFillContent(conversion, real);
       retrieveReal(conversion, brReal);
    }
    inherited::notifyForCompare(*this);
@@ -587,8 +619,14 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
    if (mode != inherited::SVNoImplementation)
       DDoubleExact::DefineFillContent(bfImplementation, dValue);
    if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble realInImplementation;
+      retrieveImplementation(brReal, realInImplementation);
+
+      double real = 0;
+      DefineSetContent(real, realInImplementation /*, false isUpper */);
+      real = ::atan(real);
       TypeBuiltDouble conversion;
-      DDoubleExact::DefineFillContent(conversion, dValue);
+      DDoubleExact::DefineFillContent(conversion, real);
       retrieveReal(conversion, brReal);
    }
    inherited::notifyForCompare(*this);
@@ -646,8 +684,14 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
    if (mode != inherited::SVNoImplementation)
       DDoubleExact::DefineFillContent(bfImplementation, dValue);
    if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble realInImplementation;
+      retrieveImplementation(brReal, realInImplementation);
+
+      double real = 0;
+      DefineSetContent(real, realInImplementation /*, false isUpper */);
+      real = ::log10(real);
       TypeBuiltDouble conversion;
-      DDoubleExact::DefineFillContent(conversion, dValue);
+      DDoubleExact::DefineFillContent(conversion, real);
       retrieveReal(conversion, brReal);
    }
    if (isNegativeOrNulLog)
@@ -659,17 +703,53 @@ template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, 
 void
 DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::powAssign(const thisType& value) {
    bool isNegativePow = (dValue <= 0);
+   if (isNegativePow) {
+      int exponent = value.dValue;
+      if (value.dValue == exponent)
+         isNegativePow = false;
+   }
    dValue = ::pow(dValue, value.dValue);
    auto mode = inherited::getMode();
    if (mode != inherited::SVNoImplementation)
       DDoubleExact::DefineFillContent(bfImplementation, dValue);
    if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble realInImplementation, sourceRealInImplementation;
+      retrieveImplementation(brReal, realInImplementation);
+      retrieveImplementation(value.brReal, sourceRealInImplementation);
+
+      double real = 0, sourceReal = 0;
+      DefineSetContent(real, realInImplementation /*, false isUpper */);
+      DefineSetContent(sourceReal, sourceRealInImplementation /*, false isUpper */);
+      real = ::pow(real, sourceReal);
       TypeBuiltDouble conversion;
-      DDoubleExact::DefineFillContent(conversion, dValue);
+      DDoubleExact::DefineFillContent(conversion, real);
       retrieveReal(conversion, brReal);
    }
    if (isNegativePow)
       inherited::notifyForNegativePow(*this);
+   inherited::notifyForCompare(*this);
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+void
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::atan2Assign(const thisType& value) {
+   dValue = ::atan2(dValue, value.dValue);
+   auto mode = inherited::getMode();
+   if (mode != inherited::SVNoImplementation)
+      DDoubleExact::DefineFillContent(bfImplementation, dValue);
+   if (mode != inherited::SVNoReal) {
+      TypeBuiltDouble realInImplementation, sourceRealInImplementation;
+      retrieveImplementation(brReal, realInImplementation);
+      retrieveImplementation(value.brReal, sourceRealInImplementation);
+
+      double real = 0, sourceReal = 0;
+      DefineSetContent(real, realInImplementation /*, false isUpper */);
+      DefineSetContent(sourceReal, sourceRealInImplementation /*, false isUpper */);
+      real = ::atan2(real, sourceReal);
+      TypeBuiltDouble conversion;
+      DDoubleExact::DefineFillContent(conversion, real);
+      retrieveReal(conversion, brReal);
+   }
    inherited::notifyForCompare(*this);
 }
 
