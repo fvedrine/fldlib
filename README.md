@@ -1,6 +1,9 @@
+FLDLib -- An instrumentation library based on affine forms for accuracy analysis
+================================================================================
+
 # Context
 
-Th instrumentation library FLDLib replaces the floating-point types 
+The instrumentation library FLDLib replaces the floating-point types 
 in the C, C++ source code by a comparison between an ideal
 computation and the effective computation.
 

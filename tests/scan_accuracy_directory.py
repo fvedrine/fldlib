@@ -216,7 +216,7 @@ def find_diagnosis_results(variables, subdir, file_diagnosis_done, variables_res
         for cur_line in cur_file:
             if cur_line.startswith("unstable test:"):
                 continue
-            found = re.search(pattern, cur_line)
+            found = re.match(pattern, cur_line)
             if found:
                 var_name = found.group("var_name")
                 cur_val_min = convert_value(found.group("val_min"))
