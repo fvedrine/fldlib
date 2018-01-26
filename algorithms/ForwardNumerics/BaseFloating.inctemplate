@@ -2317,7 +2317,7 @@ DefineBuiltDouble<TypeTraits>::multAssignND(const thisType& source, const MultPa
    };
    int lastCellIndex = biMantissa.lastCellIndex();
    for (int index = 0; index <= lastCellIndex; ++index)
-      biMantissa[index] = (unsigned) aresult[index];
+      biMantissa[index] = (DefineBaseType) aresult[index];
    biMantissa.normalizeLastCell();
 
    if (isExponentHasCarry || biExponent.isZero()) {
@@ -2908,7 +2908,7 @@ DefineBuiltDouble<TypeTraits>::divAssign(DefineBaseTypeConstReference value, Rea
       mantissa <<= shift;
       mantissa[0] |= leftQuotient;
 #ifndef DefineGeneric
-      if (biExponent.isAtomic() && (biExponent.getValue() <= (unsigned) shift))
+      if (biExponent.isAtomic() && (biExponent.getValue() <= (DefineBaseType) shift))
 #else
       Exponent shiftExponent(typename Exponent::Basic(), bitSizeExponent(), shift);
       if (biExponent <= shiftExponent)
@@ -3378,7 +3378,7 @@ DefineBuiltDouble<TypeTraits>::divAssignDD(const thisType& source, ReadParameter
 
    int lastCellIndex = biMantissa.lastCellIndex();
    for (int index = 0; index <= lastCellIndex; ++index)
-      biMantissa[index] = (unsigned) result.quotient()[index];
+      biMantissa[index] = (DefineBaseType) result.quotient()[index];
    biExponent = TypeTraits::getZeroExponent(biExponent);
    if (result.comma() > 0)
       biExponent.add(result.comma());
