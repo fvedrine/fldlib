@@ -156,7 +156,8 @@ def locate_c_file_in_results(list_dir_result, subdir, c_base_file):
             return result
     return None
 
-def find_variables_in_file(subdir, c_base_file, file_done, find_variable_results, list_dir_result, cur_dir, srcdir):
+def find_variables_in_file(subdir, c_base_file, file_done, find_variable_results,
+        list_dir_result, cur_dir, srcdir):
     c_file = os.path.join(srcdir, subdir, c_base_file)
     if os.path.isfile(c_file):
         variables = find_print(c_file)
@@ -204,13 +205,13 @@ def find_diagnosis_results(variables, subdir, file_diagnosis_done, variables_res
     if os.path.isfile(file_name):
         pattern = re.compile(r"""(?P<var_name>[a-zA-Z0-9_][^:]*)\s*:
             \s+i=\[(?P<val_min>[-+]?((\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)|([-+]?oo)|([-+]?NaN))\s*,
-               \s*(?P<val_max>[-+]?((\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)|([-+]?oo)|([-+]?NaN))\s*\]\s*,
+               \s*(?P<val_max>[-+]?((\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)|([-+]?oo)|([-+]?NaN))\s*\](\{[^\}]*\})?\s*,
             \s+r=\[(?P<real_min>[-+]?((\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)|([-+]?oo)|([-+]?NaN))\s*,
                \s*(?P<real_max>[-+]?((\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)|([-+]?oo)|([-+]?NaN))\s*\]({[^}]*})?\s*,
             \s+e=\[(?P<err_min>[-+]?((\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)|([-+]?oo)|([-+]?NaN))\s*,
                \s*(?P<err_max>[-+]?((\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)|([-+]?oo)|([-+]?NaN))\s*\]({[^}]*})?\s*,
             \s+re=\[(?P<relerr_min>[-+]?((\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)|([-+]?oo)|([-+]?NaN))\s*,
-               \s*(?P<relerr_max>[-+]?((\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)|([-+]?oo)|([-+]?NaN))\s*\]
+               \s*(?P<relerr_max>[-+]?((\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)|([-+]?oo)|([-+]?NaN))\s*\](\{[^\}]*\})?
             """, re.VERBOSE)
         cur_file = open(file_name, "r")
         for cur_line in cur_file:

@@ -32,8 +32,7 @@ cxxflags=" -DFLOAT_DIAGNOSIS -I${FLOATDIAGNOSIS_INCLUDE} \
    @FLOAT_ZONOTOPE_ALLOW_SIMPLEX@ @FLOAT_ZONOTOPE_DOES_ABSORB_HIGH_LEVEL@ \
    @FLOAT_ZONOTOPE_DOES_EXCLUDE_CONSTANT_FROM_SYMBOL_ABSORPTION@ @FLOAT_ZONOTOPE_LIMIT_SYMBOL_ABSORPTION@
    ${FLOATDIAGNOSIS_ICONFIG_INCLUDE} -I${FLOATDIAGNOSIS_INCLUDE}/utils -I${FLOATDIAGNOSIS_INCLUDE}/algorithms \
-   -I${FLOATDIAGNOSIS_INCLUDE}/applications \
-   -include ${FLOATDIAGNOSIS_TESTS_INCLUDE}/std_header.h"
+   -I${FLOATDIAGNOSIS_INCLUDE}/applications "
 
 opt_params_count=0
 
@@ -42,13 +41,29 @@ optim=0
 verbose=0
 analysis=0
 interface=0
+has_include=0
+has_progname=0
 
 for param in "$@"
 do
-  if [ "${param:0:1}" == "-" ]
+  if [ ${has_include} -ne 0 ]
   then
     ((opt_params_count++))
-    if [ "${param}" == "-interval" ]
+    cxxflags+=${param}
+    has_include=0
+  elif [ "${param:0:1}" == "-" ]
+  then
+    ((opt_params_count++))
+    if [ "${param}" == "-include" ]
+    then
+      cxxflags+=" -include "
+      has_include=1
+    elif [ "${param}" == "-progname" ]
+    then
+      cxxflags+=" -DPROG_NAME="
+      has_include=1
+      has_progname=1
+    elif [ "${param}" == "-interval" ]
     then
       analysis=2
     elif [ "${param}" == "-exact" ]
@@ -93,6 +108,8 @@ do
     break
   fi
 done
+
+cxxflags+=" -include ${FLOATDIAGNOSIS_TESTS_INCLUDE}/std_header.h"
 
 if [ ${analysis} -eq 0 ]
 then
@@ -144,11 +161,17 @@ ldflags+=" @LDFLAGS@"
 
 shift ${opt_params_count}
 
-basefile=${1##*/}
-basefile=${basefile%.c} 
-if [ "${basefile}" == "" ]
+if [ ${has_progname} -eq 0 ]
 then
-  basefile=progname
+  basefile=${1##*/}
+  basefile=${basefile%.c} 
+  if [ "${basefile}" == "" ]
+  then
+    basefile=progname
+  elif [ "${basefile:0:1}" == "-" ]
+  then
+    basefile=progname
+  fi
 fi
 
 for param in "$@"
@@ -159,6 +182,11 @@ do
   fi
 done
 
-echo @CXX@ -DPROG_NAME="$basefile" ${cxxflags} $* ${ldflags}
-@CXX@ -DPROG_NAME="$basefile" ${cxxflags} $* ${ldflags}
-
+if [ ${has_progname} -eq 0 ]
+then
+  echo @CXX@ -DPROG_NAME="$basefile" ${cxxflags} $* ${ldflags}
+  @CXX@ -DPROG_NAME="$basefile" ${cxxflags} $* ${ldflags}
+else
+  echo @CXX@ ${cxxflags} $* ${ldflags}
+  @CXX@ ${cxxflags} $* ${ldflags}
+fi

@@ -3,6 +3,10 @@ LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status libtool
 
+dist_bin_SCRIPTS = tests/scan_accuracy_directory.py 
+bin_SCRIPTS = tests/comp_float_diagnosis.sh
+CLEANFILES = $(bin_SCRIPTS)
+ 
 if FLOAT_LIB_INTERFACE
 nobase_pkginclude_HEADERS =                                       \
    applications/FloatInstrumentation/ExactTypesSize.h             \
@@ -132,15 +136,6 @@ nobase_pkginclude_HEADERS =                                       \
    applications/NumericalAnalysis/FloatIntervalExecutionPath.template\
    applications/NumericalAnalysis/FloatAffineExecutionPath.template\
    config.h
-
-#  utils/Collection/ConcreteCollection/Array.incc                 \
-#  utils/Collection/VirtualCollection/VirtualCollection.incc      \
-#  utils/Collection/ELMCollection.incc                            \
-#  utils/Pointer/Binary.incc                                      \
-#  utils/StandardClasses/IOStreamMethods.incc                     \
-#  applications/FloatInstrumentation/FloatExact.incc              \
-#  applications/FloatInstrumentation/FloatInterval.incc           \
-#  applications/FloatInstrumentation/FloatAffine.incc
 endif
 
 SOURCES =                                                         \
@@ -181,41 +176,7 @@ else
 pkglib_LTLIBRARIES = libFloatDiagnosis.la
 endif
 
-myincludesubdir=$(pkgincludedir)/subdir
 pkginclude_HEADERS = float_diagnosis.h tests/std_header.h tests/feature.h
-
-#    libFloatAtomicThresholdLUnstableOptimVerbose.la \
-#    libFloatAtomicThresholdLUnstableOptim.la \
-#    libFloatAtomicThresholdLUnstableVerbose.la \
-#    libFloatAtomicThresholdLUnstable.la \
-#    libFloatAtomicThresholdOptimVerbose.la \
-#    libFloatAtomicThresholdOptim.la \
-#    libFloatAtomicThresholdVerbose.la \
-#    libFloatAtomicThreshold.la \
-#    libFloatAtomicLUnstableOptimVerbose.la \
-#    libFloatAtomicLUnstableOptim.la \
-#    libFloatAtomicLUnstableVerbose.la \
-#    libFloatAtomicLUnstable.la \
-#    libFloatAtomicOptimVerbose.la \
-#    libFloatAtomicOptim.la \
-#    libFloatAtomicVerbose.la \
-#    libFloatAtomic.la \
-#    libFloatThresholdLUnstableOptimVerbose.la \
-#    libFloatThresholdLUnstableOptim.la \
-#    libFloatThresholdLUnstableVerbose.la \
-#    libFloatThresholdLUnstable.la \
-#    libFloatThresholdOptimVerbose.la \
-#    libFloatThresholdOptim.la \
-#    libFloatThresholdVerbose.la \
-#    libFloatThreshold.la \
-#    libFloatLUnstableOptimVerbose.la \
-#    libFloatLUnstableOptim.la \
-#    libFloatLUnstableVerbose.la \
-#    libFloatLUnstable.la \
-#    libFloatOptimVerbose.la \
-#    libFloatOptim.la \
-#    libFloatVerbose.la \
-#    libFloat.la
 
 if FLOAT_LIB_INTERFACE
 libFloatDiagnosisCore_la_SOURCES = $(SOURCES)
@@ -224,8 +185,7 @@ libFloatDiagnosisCore_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
 
 noinst_bin_PROGRAMS = TypesSizes$(EXEEXT)
 noinst_bindir = $(top_buildir)
-dist_bin_SCRIPTS = tests/comp_float_diagnosis.sh
- 
+
 TypesSizes_SOURCES = applications/FloatInstrumentation/TypesSizes.cpp
 TypesSizes_CPPFLAGS = -I@top_srcdir@/utils -I@top_srcdir@/algorithms -I@top_srcdir@/applications
 TypesSizes_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
@@ -235,9 +195,6 @@ BUILT_SOURCES =                                                   \
    applications/FloatInstrumentation/ExactTypesSize.h             \
    applications/FloatInstrumentation/IntervalTypesSize.h          \
    applications/FloatInstrumentation/AffineTypesSize.h
-
-#applications/FloatInstrumentation/TypesSizes.exe: applications/FloatInstrumentation/TypesSizes.cpp Makefile .libs/libFloatDiagnosisCore.la
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosisInterface_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosisInterface_la_CXXFLAGS) $(CXXFLAGS) -o applications/FloatInstrumentation/TypesSizes.exe $< -L .libs $(LDFLAGS) $(AM_LDFLAGS) -lFloatDiagnosisCore
 
 applications/FloatInstrumentation/ExactTypesSize.h: TypesSizes$(EXEEXT)
 	./TypesSizes$(EXEEXT)
@@ -259,133 +216,3 @@ libFloatDiagnosis_la_CPPFLAGS = -I@top_srcdir@/utils -I@top_srcdir@/algorithms -
 libFloatDiagnosis_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
 endif
 
-#  tests:
-#     cd tests; ...
-
-#  libFloatAtomicThresholdLUnstableOptimVerbose_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatAtomicThresholdLUnstableOptimVerbose_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatAtomicThresholdLUnstableOptimVerbose_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatAtomicThresholdLUnstableOptim_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatAtomicThresholdLUnstableOptim_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatAtomicThresholdLUnstableOptim_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatAtomicThresholdLUnstableVerbose_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatAtomicThresholdLUnstableVerbose_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatAtomicThresholdLUnstableVerbose_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatAtomicThresholdLUnstable_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatAtomicThresholdLUnstable_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatAtomicThresholdLUnstable_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatAtomicThresholdOptimVerbose_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatAtomicThresholdOptimVerbose_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatAtomicThresholdOptimVerbose_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatAtomicThresholdOptim_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatAtomicThresholdOptim_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatAtomicThresholdOptim_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatAtomicThresholdVerbose_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatAtomicThresholdVerbose_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatAtomicThresholdVerbose_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatAtomicThreshold_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatAtomicThreshold_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatAtomicThreshold_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatAtomicLUnstableOptimVerbose_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatAtomicLUnstableOptimVerbose_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatAtomicLUnstableOptimVerbose_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatAtomicLUnstableOptim_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatAtomicLUnstableOptim_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatAtomicLUnstableOptim_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatAtomicLUnstableVerbose_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatAtomicLUnstableVerbose_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatAtomicLUnstableVerbose_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatAtomicLUnstable_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatAtomicLUnstable_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatAtomicLUnstable_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatAtomicOptimVerbose_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatAtomicOptimVerbose_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatAtomicOptimVerbose_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatAtomicOptim_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatAtomicOptim_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatAtomicOptim_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatAtomicVerbose_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatAtomicVerbose_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatAtomicVerbose_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatAtomic_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatAtomic_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatAtomic_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatThresholdLUnstableOptimVerbose_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatThresholdLUnstableOptimVerbose_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatThresholdLUnstableOptimVerbose_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatThresholdLUnstableOptim_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatThresholdLUnstableOptim_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatThresholdLUnstableOptim_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatThresholdLUnstableVerbose_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatThresholdLUnstableVerbose_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatThresholdLUnstableVerbose_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatThresholdLUnstable_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatThresholdLUnstable_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatThresholdLUnstable_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatThresholdOptimVerbose_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatThresholdOptimVerbose_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatThresholdOptimVerbose_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatThresholdOptim_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatThresholdOptim_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatThresholdOptim_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatThresholdVerbose_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatThresholdVerbose_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatThresholdVerbose_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatThreshold_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatThreshold_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatThreshold_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatLUnstableOptimVerbose_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatLUnstableOptimVerbose_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatLUnstableOptimVerbose_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatLUnstableOptim_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatLUnstableOptim_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatLUnstableOptim_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatLUnstableVerbose_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatLUnstableVerbose_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatLUnstableVerbose_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatLUnstable_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatLUnstable_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatLUnstable_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatOptimVerbose_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatOptimVerbose_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatOptimVerbose_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatOptim_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatOptim_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatOptim_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloatVerbose_la_SOURCES = $(SOURCES_OPEN)
-#  libFloatVerbose_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloatVerbose_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
-
-#  libFloat_la_SOURCES = $(SOURCES_OPEN)
-#  libFloat_la_CPPFLAGS = -Iutils -Ialgorithms -Iapplications
-#  libFloat_la_CXXFLAGS = -Woverloaded-virtual -fmessage-length=0
