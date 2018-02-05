@@ -814,12 +814,14 @@ class DefineBaseFloatZonotopeWithSymbolic
    thisType& operator/=(const thisType& source);
 
    void oppositeAssign();
-   int asInt() const;
-   short int asShortInt() const { return (short int) asInt(); }
-   unsigned asUnsigned() const;
-   short unsigned asShortUnsigned() const { return (short unsigned) asUnsigned(); }
-   long int asLongInt() const { return asInt(); }
-   unsigned long asUnsignedLong() const { return asUnsigned(); }
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
+   // roundMode=RMZero for C conversions, roundMode=RMNearest for Ada conversions, roundMode=RMLowest for floor
+   int asInt(ReadParametersBase::RoundMode roundMode=ReadParametersBase::RMZero) const;
+   unsigned asUnsigned(ReadParametersBase::RoundMode roundMode=ReadParametersBase::RMLowest) const;
+   long int asLongInt(ReadParametersBase::RoundMode roundMode=ReadParametersBase::RMZero) const
+      {  return asInt(roundMode); }
+   unsigned long asUnsignedLong(ReadParametersBase::RoundMode roundMode=ReadParametersBase::RMLowest) const
+      {  return asUnsigned(roundMode); }
 
    void sqrtAssign();
    void sinAssign();
@@ -902,14 +904,17 @@ class DefineBasicFloatZonotope : public DefineBaseFloatZonotope DefineEquationTe
    void writeInterval(STG::IOObject::OSBase& out) const;
    void retrieveRelativeError(BuiltReal& result) const;
 
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
    bool optimizeUnstableConversionForImplementationFlow(unsigned result, unsigned realResult,
             bool hasMultiple, typename TypeBaseFloatAffine::Mode mode,
             Numerics::DDouble::Access::ReadParameters& minParams,
-            Numerics::DDouble::Access::ReadParameters& maxParams) const;
+            Numerics::DDouble::Access::ReadParameters& maxParams,
+            ReadParametersBase::RoundMode roundMode) const;
    bool optimizeUnstableConversionForRealFlow(unsigned result, unsigned implementationResult,
             bool hasMultiple, typename TypeBaseFloatAffine::Mode mode,
             Numerics::DDouble::Access::ReadParameters& minParams,
-            Numerics::DDouble::Access::ReadParameters& maxParams) const;
+            Numerics::DDouble::Access::ReadParameters& maxParams,
+            ReadParametersBase::RoundMode roundMode) const;
 
 #ifndef DefineGeneric
    template <int RealBitsNumber, class TypeBaseFloatAffineArgument, int SizeMantissa, int SizeExponent, typename TypeImplementationArgument>
@@ -999,10 +1004,13 @@ class DefineBasicFloatZonotope : public DefineBaseFloatZonotope DefineEquationTe
 
    typedef TypeImplementation ImplementationType;
    TypeImplementation asImplementation() const { return dValue; }
-   int asInt() const;
-   unsigned asUnsigned() const;
-   long int asLong() const { return asInt(); }
-   unsigned long asUnsignedLong() const { return asUnsigned(); }
+   // roundMode=RMZero for C conversions, roundMode=RMNearest for Ada conversions, roundMode=RMLowest for floor
+   int asInt(ReadParametersBase::RoundMode roundMode=ReadParametersBase::RMZero) const;
+   unsigned asUnsigned(ReadParametersBase::RoundMode roundMode=ReadParametersBase::RMLowest) const;
+   long int asLong(ReadParametersBase::RoundMode roundMode=ReadParametersBase::RMZero) const
+      {  return asInt(roundMode); }
+   unsigned long asUnsignedLong(ReadParametersBase::RoundMode roundMode=ReadParametersBase::RMLowest) const
+      {  return asUnsigned(roundMode); }
 
    const BuiltDouble& getMinImplementation() const { return bfMin; }
    const BuiltDouble& getMaxImplementation() const { return bfMax; }

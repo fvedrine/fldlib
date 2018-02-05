@@ -178,10 +178,14 @@ class DefineCompareFloatExact : public TypeBaseFloatExact {
 
    typedef TypeImplementation ImplementationType;
    TypeImplementation asImplementation() const { return dValue; }
-   int asInt() const;
-   unsigned asUnsigned() const;
-   long int asLongInt() const { return asInt(); }
-   unsigned long asUnsignedLong() const { return asUnsigned(); }
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
+   // roundMode=RMZero for C conversions, roundMode=RMNearest for Ada conversions, roundMode=RMLowest for floor
+   int asInt(ReadParametersBase::RoundMode roundMode=ReadParametersBase::RMZero) const;
+   unsigned asUnsigned(ReadParametersBase::RoundMode roundMode=ReadParametersBase::RMLowest) const;
+   long int asLongInt(ReadParametersBase::RoundMode roundMode=ReadParametersBase::RMZero) const
+      {  return asInt(roundMode); }
+   unsigned long asUnsignedLong(ReadParametersBase::RoundMode roundMode=ReadParametersBase::RMLowest) const
+      {  return asUnsigned(roundMode); }
 
    void sqrtAssign();
    void sinAssign();

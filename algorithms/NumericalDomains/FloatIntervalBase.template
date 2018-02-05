@@ -493,20 +493,23 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
 template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
 int
 TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
-      ::asInt() const {
+      ::asInt(ReadParametersBase::RoundMode roundMode) const {
    int resultMin, resultMax;
    auto& minParams = inherited::minParams();
-   Numerics::DDouble::Access::ReadParameters nearestParams(minParams);
-   nearestParams.setNearestRound().setRoundToEven();
+   Numerics::DDouble::Access::ReadParameters roundParams(minParams);
+   if (roundMode != ReadParametersBase::RMNearest)
+      roundParams.setRoundMode(roundMode);
+   else
+      roundParams.setNearestRound().setRoundToEven();
 
    {  typename TypeBuiltDouble::IntConversion conversion;
-      bfMin.retrieveInteger(conversion.setSigned(), nearestParams);
-      nearestParams.clear();
+      bfMin.retrieveInteger(conversion.setSigned(), roundParams);
+      roundParams.clear();
       resultMin = conversion.asInt();
    };
    {  typename TypeBuiltDouble::IntConversion conversion;
-      bfMax.retrieveInteger(conversion.setSigned(), nearestParams);
-      nearestParams.clear();
+      bfMax.retrieveInteger(conversion.setSigned(), roundParams);
+      roundParams.clear();
       resultMax = conversion.asInt();
    };
 
@@ -518,37 +521,57 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
 
    int result = resultMin + inherited::getConversionBranch(resultMax-resultMin, (int) dValue - resultMin);
    if (result < resultMax) {
+      // roundMode == RMZero && result >= 0 => *this <= result+1
+      // roundMode == RMZero && result < 0 => *this <= result
+      // roundMode == RMNearest => *this <= result+0.5
+      // roundMode == RMLowest => *this <= result+1
+      // roundMode == RMHighest => *this <= result
       auto& maxParams = inherited::maxParams();
       typename TypeBuiltDouble::IntConversion conversion;
       conversion.setSigned();
       conversion.assign(result);
       const_cast<thisType&>(*this).bfMax.setInteger(conversion, maxParams);
       maxParams.clear();
-      if (bfMax.isPositive()) {
+      if ((roundMode != ReadParametersBase::RMHighest) // && [TODO] towards infty
+            && (result >= 0 || roundMode == ReadParametersBase::RMNearest
+                || roundMode == ReadParametersBase::RMLowest)) {
          TypeBuiltDouble one;
          one.setOne();
+         if (roundMode == ReadParametersBase::RMNearest)
+            one.getSBasicExponent().dec();
          const_cast<thisType&>(*this).bfMax.plusAssign(one, maxParams);
          maxParams.clear();
-         const_cast<thisType&>(*this).bfMax.setToPrevious();
+         if (roundMode != ReadParametersBase::RMNearest)
+            const_cast<thisType&>(*this).bfMax.setToPrevious();
       }
-      else
-         const_cast<thisType&>(*this).bfMax.setToNext();
+      // else // result < 0 && roundMode == ReadParametersBase::RMZero || ReadParametersBase::RMHighest
+      //    const_cast<thisType&>(*this).bfMax.setToNext();
    };
    if (result > resultMin) {
+      // roundMode == RMZero && result > 0 => *this >= result
+      // roundMode == RMZero && result <= 0 => *this >= result-1
+      // roundMode == RMNearest => *this >= result-0.5
+      // roundMode == RMLowest => *this >= result
+      // roundMode == RMHighest => *this >= result-1
       typename TypeBuiltDouble::IntConversion conversion;
       conversion.setSigned();
       conversion.assign(result);
       const_cast<thisType&>(*this).bfMin.setInteger(conversion, minParams);
       minParams.clear();
-      if (bfMin.isPositive())
-         const_cast<thisType&>(*this).bfMin.setToPrevious();
-      else {
+      if ((roundMode != ReadParametersBase::RMLowest) // && [TODO] towards infty
+            && (result <= 0 || roundMode == ReadParametersBase::RMNearest
+               || roundMode == ReadParametersBase::RMHighest)) {
          TypeBuiltDouble one;
          one.setOne();
-         const_cast<thisType&>(*this).bfMax.minusAssign(one, minParams);
+         if (roundMode == ReadParametersBase::RMNearest)
+            one.getSBasicExponent().dec();
+         const_cast<thisType&>(*this).bfMin.minusAssign(one, minParams);
          minParams.clear();
-         const_cast<thisType&>(*this).bfMax.setToNext();
-      };
+         if (roundMode != ReadParametersBase::RMNearest)
+            const_cast<thisType&>(*this).bfMin.setToNext();
+      }
+      // else // bfMin.isNegative() && roundMode == ReadParametersBase::RMLowest
+      //    const_cast<thisType&>(*this).bfMin.setToPrevious();
    };
    inherited::notifyForBranchCompare(*this);
    return result;
@@ -557,20 +580,23 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
 template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
 unsigned
 TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>
-      ::asUnsigned() const {
+      ::asUnsigned(ReadParametersBase::RoundMode roundMode) const {
    auto& minParams = inherited::minParams();
-   Numerics::DDouble::Access::ReadParameters nearestParams(minParams);
-   nearestParams.setNearestRound().setRoundToEven();
+   Numerics::DDouble::Access::ReadParameters roundParams(minParams);
+   if (roundMode != ReadParametersBase::RMNearest)
+      roundParams.setRoundMode(roundMode);
+   else
+      roundParams.setNearestRound().setRoundToEven();
 
    unsigned resultMin, resultMax;
    {  typename TypeBuiltDouble::IntConversion conversion;
-      bfMin.retrieveInteger(conversion.setUnsigned(), nearestParams);
-      nearestParams.clear();
+      bfMin.retrieveInteger(conversion.setUnsigned(), roundParams);
+      roundParams.clear();
       resultMin = conversion.asUnsignedInt();
    };
    {  typename TypeBuiltDouble::IntConversion conversion;
-      bfMax.retrieveInteger(conversion.setUnsigned(), nearestParams);
-      nearestParams.clear();
+      bfMax.retrieveInteger(conversion.setUnsigned(), roundParams);
+      roundParams.clear();
       resultMax = conversion.asUnsignedInt();
    };
 
@@ -588,11 +614,18 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
       conversion.assign(result);
       const_cast<thisType&>(*this).bfMax.setInteger(conversion, maxParams);
       maxParams.clear();
-      TypeBuiltDouble one;
-      one.setOne();
-      const_cast<thisType&>(*this).bfMax.plusAssign(one, maxParams);
-      maxParams.clear();
-      const_cast<thisType&>(*this).bfMax.setToPrevious();
+      if ((roundMode != ReadParametersBase::RMHighest)) { // && [TODO] towards infty
+         TypeBuiltDouble one;
+         one.setOne();
+         if (roundMode == ReadParametersBase::RMNearest)
+            one.getSBasicExponent().dec();
+         const_cast<thisType&>(*this).bfMax.plusAssign(one, maxParams);
+         maxParams.clear();
+         if (roundMode != ReadParametersBase::RMNearest)
+            const_cast<thisType&>(*this).bfMax.setToPrevious();
+      }
+      // else // roundMode == ReadParametersBase::RMHighest
+      //    const_cast<thisType&>(*this).bfMax.setToNext();
    };
    if (result > resultMin) {
       typename TypeBuiltDouble::IntConversion conversion;
@@ -600,7 +633,18 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
       conversion.assign(result);
       const_cast<thisType&>(*this).bfMin.setInteger(conversion, minParams);
       minParams.clear();
-      const_cast<thisType&>(*this).bfMin.setToPrevious();
+      if ((roundMode != ReadParametersBase::RMLowest)) { // && [TODO] towards infty
+         TypeBuiltDouble one;
+         one.setOne();
+         if (roundMode == ReadParametersBase::RMNearest)
+            one.getSBasicExponent().dec();
+         const_cast<thisType&>(*this).bfMin.minusAssign(one, minParams);
+         minParams.clear();
+         if (roundMode != ReadParametersBase::RMNearest)
+            const_cast<thisType&>(*this).bfMin.setToNext();
+      }
+      // else // bfMin.isNegative() && roundMode == ReadParametersBase::RMLowest
+      //    const_cast<thisType&>(*this).bfMin.setToPrevious();
    };
    inherited::notifyForBranchCompare(*this);
    return result;

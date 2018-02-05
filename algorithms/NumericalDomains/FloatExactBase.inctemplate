@@ -416,21 +416,24 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
 
 template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
 int
-DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::asInt() const {
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>
+      ::asInt(ReadParametersBase::RoundMode roundMode) const {
    int result;
-   auto& params = inherited::nearestParams();
+   auto roundParams = inherited::nearestParams();
+   if (roundMode != ReadParametersBase::RMNearest)
+      roundParams.setRoundMode(roundMode);
    auto mode = inherited::getMode();
    if (mode == inherited::SVNone) {
       int implementationResult;
       {  typename TypeBuiltDouble::IntConversion conversion;
-         bfImplementation.retrieveInteger(conversion.setSigned(), params);
-         params.clear();
+         bfImplementation.retrieveInteger(conversion.setSigned(), roundParams);
+         roundParams.clear();
          implementationResult = conversion.asInt();
       };
       int realResult;
       {  typename BuiltReal::IntConversion conversion;
-         brReal.retrieveInteger(conversion.setSigned(), params);
-         params.clear();
+         brReal.retrieveInteger(conversion.setSigned(), roundParams);
+         roundParams.clear();
          realResult = conversion.asInt();
       };
       if (implementationResult == realResult)
@@ -445,15 +448,15 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
    }
    else if (mode == inherited::SVNoImplementation) {
       typename BuiltReal::IntConversion conversion;
-      brReal.retrieveInteger(conversion.setSigned(), params);
-      params.clear();
+      brReal.retrieveInteger(conversion.setSigned(), roundParams);
+      roundParams.clear();
       result = conversion.asInt();
    }
    else {
       AssumeCondition(mode == inherited::SVNoReal)
       typename TypeBuiltDouble::IntConversion conversion;
-      bfImplementation.retrieveInteger(conversion.setSigned(), params);
-      params.clear();
+      bfImplementation.retrieveInteger(conversion.setSigned(), roundParams);
+      roundParams.clear();
       result = conversion.asInt();
    };
    return result;
@@ -461,21 +464,24 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
 
 template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
 unsigned
-DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::asUnsigned() const {
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>
+      ::asUnsigned(ReadParametersBase::RoundMode roundMode) const {
    unsigned result;
-   auto& params = inherited::nearestParams();
+   auto roundParams = inherited::nearestParams();
+   if (roundParams.getRoundMode() != ReadParametersBase::RMNearest)
+      roundParams.setRoundMode(roundMode);
    auto mode = inherited::getMode();
    if (mode == inherited::SVNone) {
       unsigned implementationResult;
       {  typename TypeBuiltDouble::IntConversion conversion;
-         bfImplementation.retrieveInteger(conversion.setUnsigned(), params);
-         params.clear();
+         bfImplementation.retrieveInteger(conversion.setUnsigned(), roundParams);
+         roundParams.clear();
          implementationResult = conversion.asUnsignedInt();
       };
       unsigned realResult;
       {  typename BuiltReal::IntConversion conversion;
-         brReal.retrieveInteger(conversion.setUnsigned(), params);
-         params.clear();
+         brReal.retrieveInteger(conversion.setUnsigned(), roundParams);
+         roundParams.clear();
          realResult = conversion.asUnsignedInt();
       };
       if (implementationResult == realResult)
@@ -490,15 +496,15 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
    }
    else if (mode == inherited::SVNoImplementation) {
       typename BuiltReal::IntConversion conversion;
-      brReal.retrieveInteger(conversion.setUnsigned(), params);
-      params.clear();
+      brReal.retrieveInteger(conversion.setUnsigned(), roundParams);
+      roundParams.clear();
       result = conversion.asUnsignedInt();
    }
    else {
       AssumeCondition(mode == inherited::SVNoReal)
       typename TypeBuiltDouble::IntConversion conversion;
-      bfImplementation.retrieveInteger(conversion.setUnsigned(), params);
-      params.clear();
+      bfImplementation.retrieveInteger(conversion.setUnsigned(), roundParams);
+      roundParams.clear();
       result = conversion.asUnsignedInt();
    };
    return result;

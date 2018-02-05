@@ -139,6 +139,7 @@ class Access : public DInteger::Access {
       bool acceptMinusZero() const { return !hasRefuseMinusZeroField(); }
 
       // dynamic read parameters
+      ReadParameters& setRoundMode(RoundMode mode) { setRoundField(mode); return *this; }
       ReadParameters& setNearestRound()   { setRoundField(RMNearest); return *this; }
       ReadParameters& setHighestRound()   { setRoundField(RMHighest); return *this; }
       ReadParameters& setLowestRound()    { setRoundField(RMLowest); return *this; }
@@ -148,6 +149,7 @@ class Access : public DInteger::Access {
       bool isNearestRound() const { return queryRoundField() == RMNearest; }
       bool isHighestRound() const { return queryRoundField() == RMHighest; }
       bool isZeroRound() const { return queryRoundField() == RMZero; }
+      RoundMode getRoundMode() const { return (RoundMode) queryRoundField(); }
 
       ReadParameters& setKeepSignalingConversion() { mergeKeepSignalingConversionField(1); return *this; }
       ReadParameters& clearKeepSignalingConversion() { clearKeepSignalingConversionField(); return *this; }
@@ -358,6 +360,7 @@ class Access : public DInteger::Access {
       bool acceptMinusZero() const { return !fRefuseMinusZero; }
 
       // dynamic read parameters
+      ReadParameters& setRoundMode(RoundMode mode) { rmRoundMode = mode; return *this; }
       ReadParameters& setNearestRound()   { rmRoundMode = RMNearest; return *this; }
       ReadParameters& setHighestRound()   { rmRoundMode = RMHighest; return *this; }
       ReadParameters& setLowestRound()    { rmRoundMode = RMLowest; return *this; }
