@@ -577,37 +577,37 @@ TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::operator TypeImpl
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::operator int() const {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
-   return reinterpret_cast<const Implementation*>(content)->asInt();
+   return reinterpret_cast<const Implementation*>(content)->asInt(ReadParametersBase::RMZero);
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::operator short int() const {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
-   return reinterpret_cast<const Implementation*>(content)->asInt();
+   return reinterpret_cast<const Implementation*>(content)->asInt(ReadParametersBase::RMZero);
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::operator unsigned() const {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
-   return reinterpret_cast<const Implementation*>(content)->asUnsigned();
+   return reinterpret_cast<const Implementation*>(content)->asUnsigned(ReadParametersBase::RMZero);
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::operator short unsigned() const {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
-   return reinterpret_cast<const Implementation*>(content)->asUnsigned();
+   return reinterpret_cast<const Implementation*>(content)->asUnsigned(ReadParametersBase::RMZero);
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::operator long int() const {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
-   return reinterpret_cast<const Implementation*>(content)->asLongInt();
+   return reinterpret_cast<const Implementation*>(content)->asLongInt(ReadParametersBase::RMZero);
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::operator unsigned long() const {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
-   return reinterpret_cast<const Implementation*>(content)->asUnsignedLong();
+   return reinterpret_cast<const Implementation*>(content)->asUnsignedLong(ReadParametersBase::RMZero);
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>

@@ -593,43 +593,110 @@ template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 inline NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>
 floor(const NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>& fst)
 {  typedef NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(fst.operator int());
+   return thisType(fst.asInt(ReadParametersBase::RMLowest));
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 inline NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>
 floor(NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
 {  typedef NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(fst.operator int());
+   return thisType(fst.asInt(ReadParametersBase::RMLowest));
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline int
+inline NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>
+ceil(const NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>& fst)
+{  typedef NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+   return thisType(fst.asInt(ReadParametersBase::RMHighest));
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>
+ceil(NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
+{  typedef NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+   return thisType(fst.asInt(ReadParametersBase::RMHighest));
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>
+trunc(const NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>& fst)
+{  typedef NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+   return thisType(fst.asInt(ReadParametersBase::RMZero));
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>
+trunc(NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
+{  typedef NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+   return thisType(fst.asInt(ReadParametersBase::RMZero));
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>
+round(const NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>& fst)
+{  typedef NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+   return thisType(fst.asInt(ReadParametersBase::RMNearest));
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>
+round(NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
+{  typedef NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+   return thisType(fst.asInt(ReadParametersBase::RMNearest));
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>
 rintf(const NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  return fst.operator int(); }
+{  typedef NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+   return thisType(fst.asInt(ReadParametersBase::RMNearest /* fegetround */));
+}
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline int
+inline NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>
 rintf(NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  return fst.operator int(); }
+{  typedef NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+   return thisType(fst.asInt(ReadParametersBase::RMNearest /* fegetround */));
+}
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline int
+inline NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>
 rint(const NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  return fst.operator int(); }
+{  typedef NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+   return thisType(fst.asInt(ReadParametersBase::RMNearest /* fegetround */));
+}
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline int
+inline NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>
 rint(NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  return fst.operator int(); }
+{  typedef NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+   return thisType(fst.asInt(ReadParametersBase::RMNearest /* fegetround */));
+}
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 inline NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>
 fabs(const NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>& fst)
 {  typedef NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation> thisType;
    thisType result = fst;
-   if (result < 0)
-      result.oppositeAssign();
+
+   // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+   auto* oldPathExplorer = NumericalDomains::DDoubleInterval::ExecutionPath::getCurrentPathExplorer();
+   bool oldDoesFollow = NumericalDomains::DDoubleInterval::ExecutionPath::doesFollowFlow();
+   NumericalDomains::DDoubleInterval::ExecutionPath::clearFollowFlow();
+   auto* oldInputTraceFile = NumericalDomains::DDoubleInterval::ExecutionPath::inputTraceFile();
+   NumericalDomains::DDoubleInterval::PathExplorer pathExplorer;
+   NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+   auto mergeMemory = NumericalDomains::DDoubleInterval::MergeMemory() >> result;
+   auto saveMemory = NumericalDomains::DDoubleInterval::SaveMemory() << result;
+   do {
+      if (result < 0)
+         result.oppositeAssign();
+      NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow();
+   } while ((mergeMemory << result)
+         && !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> result));
+   NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
+   NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+
    return result;
 }
 
@@ -638,8 +705,25 @@ inline NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa,
 fabs(NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
 {  typedef NumericalDomains::DDoubleIntervalInterface::TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation> thisType;
    thisType result(std::forward<thisType>(fst));
-   if (result < 0)
-      result.oppositeAssign();
+
+   // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+   auto* oldPathExplorer = NumericalDomains::DDoubleInterval::ExecutionPath::getCurrentPathExplorer();
+   bool oldDoesFollow = NumericalDomains::DDoubleInterval::ExecutionPath::doesFollowFlow();
+   NumericalDomains::DDoubleInterval::ExecutionPath::clearFollowFlow();
+   auto* oldInputTraceFile = NumericalDomains::DDoubleInterval::ExecutionPath::inputTraceFile();
+   NumericalDomains::DDoubleInterval::PathExplorer pathExplorer;
+   NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+   auto mergeMemory = NumericalDomains::DDoubleInterval::MergeMemory() >> result;
+   auto saveMemory = NumericalDomains::DDoubleInterval::SaveMemory() << result;
+   do {
+      if (result < 0)
+         result.oppositeAssign();
+      NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow();
+   } while ((mergeMemory << result)
+         && !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> result));
+   NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
+   NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+
    return result;
 }
 

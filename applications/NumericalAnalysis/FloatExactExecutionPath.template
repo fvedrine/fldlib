@@ -373,8 +373,7 @@ TBaseFloatExact<TypeExecutionPath>::writeBranchCompare(const TFloatExact& source
 template <class TypeExecutionPath, class TypeBuiltDouble, typename TypeImplementation>
 const char*
 TFloatExact<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>::queryDebugValue() const {
-   static typename TypeExecutionPath::DebugStream out;
-   out.clear();
+   typename TypeExecutionPath::DebugStream out;
    auto mode = inherited::getMode();
    if (mode == BaseExecutionPath::SVNone) {
       auto& nearestParams = inherited::nearestParams();
@@ -417,7 +416,9 @@ TFloatExact<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>::queryDebugV
       };
       out.put('\n');
    };
-   return out.content();
+   static std::string result;
+   result = out.content();
+   return result.c_str();
 }
 
 template <class TypeExecutionPath, class TypeBuiltDouble, typename TypeImplementation>

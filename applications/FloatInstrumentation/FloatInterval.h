@@ -243,12 +243,18 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    thisType operator/(TypeImplementation source) const { return operator/(thisType(source)); }
 
    explicit operator TypeImplementation() const { return inherited::asImplementation(); }
-   explicit operator int() const { return inherited::asInt(); }
-   explicit operator short int() const { return inherited::asInt(); }
-   explicit operator unsigned() const { return inherited::asUnsigned(); }
-   explicit operator short unsigned() const { return inherited::asUnsigned(); }
-   explicit operator long int() const { return inherited::asLongInt(); }
-   explicit operator unsigned long() const { return inherited::asUnsignedLong(); }
+   explicit operator int() const
+      {  return inherited::asInt(inherited::ReadParametersBase::RMZero); }
+   explicit operator short int() const
+      {  return inherited::asInt(inherited::ReadParametersBase::RMZero); }
+   explicit operator unsigned() const
+      {  return inherited::asUnsigned(inherited::ReadParametersBase::RMZero); }
+   explicit operator short unsigned() const
+      {  return inherited::asUnsigned(inherited::ReadParametersBase::RMZero); }
+   explicit operator long int() const
+      {  return inherited::asLongInt(inherited::ReadParametersBase::RMZero); }
+   explicit operator unsigned long() const
+      { return inherited::asUnsignedLong(inherited::ReadParametersBase::RMZero); }
 
    thisType abs() const
       {  if (*this < 0)
@@ -525,43 +531,110 @@ template <class TypeBuiltDouble, typename TypeImplementation>
 inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
 floor(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& fst)
 {  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-   return thisType(fst.operator int());
+   return thisType(fst.asInt(thisType::ReadParametersBase::RMLowest));
 }
 
 template <class TypeBuiltDouble, typename TypeImplementation>
 inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
 floor(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>&& fst)
 {  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-   return thisType(fst.operator int());
+   return thisType(fst.asInt(thisType::ReadParametersBase::RMLowest));
 }
 
 template <class TypeBuiltDouble, typename TypeImplementation>
-inline int
+inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
+ceil(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& fst)
+{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
+   return thisType(fst.asInt(thisType::ReadParametersBase::RMHighest));
+}
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
+ceil(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>&& fst)
+{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
+   return thisType(fst.asInt(thisType::ReadParametersBase::RMHighest));
+}
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
+trunc(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& fst)
+{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
+   return thisType(fst.asInt(thisType::ReadParametersBase::RMZero));
+}
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
+trunc(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>&& fst)
+{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
+   return thisType(fst.asInt(thisType::ReadParametersBase::RMZero));
+}
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
+round(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& fst)
+{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
+   return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest));
+}
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
+round(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>&& fst)
+{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
+   return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest));
+}
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
 rintf(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& fst)
-{  return fst.operator int(); }
+{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
+   return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
+}
 
 template <class TypeBuiltDouble, typename TypeImplementation>
-inline int
+inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
 rintf(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>&& fst)
-{  return fst.operator int(); }
+{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
+   return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
+}
 
 template <class TypeBuiltDouble, typename TypeImplementation>
-inline int
+inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
 rint(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& fst)
-{  return fst.operator int(); }
+{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
+   return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
+}
 
 template <class TypeBuiltDouble, typename TypeImplementation>
-inline int
+inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
 rint(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>&& fst)
-{  return fst.operator int(); }
+{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
+   return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
+}
 
 template <class TypeBuiltDouble, typename TypeImplementation>
 inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
 fabs(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& fst)
 {  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
    thisType result = fst;
-   if (result < 0)
-      result.oppositeAssign();
+
+   // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+   auto* oldPathExplorer = NumericalDomains::DDoubleInterval::ExecutionPath::getCurrentPathExplorer();
+   bool oldDoesFollow = NumericalDomains::DDoubleInterval::ExecutionPath::doesFollowFlow();
+   NumericalDomains::DDoubleInterval::ExecutionPath::clearFollowFlow();
+   auto* oldInputTraceFile = NumericalDomains::DDoubleInterval::ExecutionPath::inputTraceFile();
+   NumericalDomains::DDoubleInterval::PathExplorer pathExplorer;
+   NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+   auto mergeMemory = NumericalDomains::DDoubleInterval::MergeMemory() >> result;
+   auto saveMemory = NumericalDomains::DDoubleInterval::SaveMemory() << result;
+   do {
+      if (result < 0)
+         result.oppositeAssign();
+      NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow();
+   } while ((mergeMemory << result)
+         && !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> result));
+   NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
+   NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+
    return result;
 }
 
@@ -570,8 +643,25 @@ inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDo
 fabs(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>&& fst)
 {  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
    thisType result(std::forward<thisType>(fst));
-   if (result < 0)
-      result.oppositeAssign();
+
+   // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+   auto* oldPathExplorer = NumericalDomains::DDoubleInterval::ExecutionPath::getCurrentPathExplorer();
+   bool oldDoesFollow = NumericalDomains::DDoubleInterval::ExecutionPath::doesFollowFlow();
+   NumericalDomains::DDoubleInterval::ExecutionPath::clearFollowFlow();
+   auto* oldInputTraceFile = NumericalDomains::DDoubleInterval::ExecutionPath::inputTraceFile();
+   NumericalDomains::DDoubleInterval::PathExplorer pathExplorer;
+   NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+   auto mergeMemory = NumericalDomains::DDoubleInterval::MergeMemory() >> result;
+   auto saveMemory = NumericalDomains::DDoubleInterval::SaveMemory() << result;
+   do {
+      if (result < 0)
+         result.oppositeAssign();
+      NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow();
+   } while ((mergeMemory << result)
+         && !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> result));
+   NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
+   NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+
    return result;
 }
 

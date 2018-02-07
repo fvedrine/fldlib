@@ -88,7 +88,7 @@ class ExecutionPath::DebugStream : public STG::IOObject::OSBase {
 
    bool isValid() const { return true; }
    void clear() { ssOut.str(""); ssOut.clear(); }
-   const char* content() const { return ssOut.str().c_str(); }
+   std::string content() const { return ssOut.str(); }
 
    #define DefineDeclareOMethods
    #include "StandardClasses/IOStreamMethods.inch"

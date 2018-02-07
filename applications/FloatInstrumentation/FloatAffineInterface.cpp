@@ -978,7 +978,7 @@ template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::operator int() const {
    try {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
-   return reinterpret_cast<const Implementation*>(content)->asInt();
+   return reinterpret_cast<const Implementation*>(content)->asInt(ReadParametersBase::RMZero);
    }
    catch (DAffine::ExecutionPath::anticipated_termination) {
       throw DAffineInterface::ExecutionPath::anticipated_termination();
@@ -989,7 +989,7 @@ template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::operator short int() const {
    try {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
-   return reinterpret_cast<const Implementation*>(content)->asInt();
+   return reinterpret_cast<const Implementation*>(content)->asInt(ReadParametersBase::RMZero);
    }
    catch (DAffine::ExecutionPath::anticipated_termination) {
       throw DAffineInterface::ExecutionPath::anticipated_termination();
@@ -1000,7 +1000,7 @@ template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::operator unsigned() const {
    try {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
-   return reinterpret_cast<const Implementation*>(content)->asUnsigned();
+   return reinterpret_cast<const Implementation*>(content)->asUnsigned(ReadParametersBase::RMZero);
    }
    catch (DAffine::ExecutionPath::anticipated_termination) {
       throw DAffineInterface::ExecutionPath::anticipated_termination();
@@ -1011,7 +1011,7 @@ template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::operator short unsigned() const {
    try {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
-   return reinterpret_cast<const Implementation*>(content)->asUnsigned();
+   return reinterpret_cast<const Implementation*>(content)->asUnsigned(ReadParametersBase::RMZero);
    }
    catch (DAffine::ExecutionPath::anticipated_termination) {
       throw DAffineInterface::ExecutionPath::anticipated_termination();
@@ -1022,7 +1022,7 @@ template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::operator long int() const {
    try {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
-   return reinterpret_cast<const Implementation*>(content)->asLong();
+   return reinterpret_cast<const Implementation*>(content)->asLong(ReadParametersBase::RMZero);
    }
    catch (DAffine::ExecutionPath::anticipated_termination) {
       throw DAffineInterface::ExecutionPath::anticipated_termination();
@@ -1033,7 +1033,7 @@ template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::operator unsigned long() const {
    try {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
-   return reinterpret_cast<const Implementation*>(content)->asUnsignedLong();
+   return reinterpret_cast<const Implementation*>(content)->asUnsignedLong(ReadParametersBase::RMZero);
    }
    catch (DAffine::ExecutionPath::anticipated_termination) {
       throw DAffineInterface::ExecutionPath::anticipated_termination();

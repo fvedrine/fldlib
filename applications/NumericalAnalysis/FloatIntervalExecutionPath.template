@@ -346,14 +346,16 @@ TBaseFloatInterval<TypeExecutionPath>::getConversionBranch(unsigned diff, unsign
 template <class TypeExecutionPath, class TypeBuiltDouble, typename TypeImplementation>
 const char*
 TFloatInterval<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>::queryDebugValue() const {
-   static typename TypeExecutionPath::DebugStream out;
+   typename TypeExecutionPath::DebugStream out;
    out.clear();
    out.put('[');
    inherited::min().write(out, typename TypeBuiltDouble::WriteParameters().setDecimal());
    out.put(',');
    inherited::max().write(out, typename TypeBuiltDouble::WriteParameters().setDecimal());
    out.put(']');
-   return out.content();
+   static std::string result;
+   result = out.content();
+   return result.c_str();
 }
 
 template <class TypeExecutionPath, class TypeBuiltDouble, typename TypeImplementation>

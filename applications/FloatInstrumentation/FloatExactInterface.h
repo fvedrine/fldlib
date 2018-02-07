@@ -483,35 +483,85 @@ template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
 floor(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& fst)
    {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-      return thisType(fst.operator int());
+      return thisType(fst.asInt(ReadParametersBase::RMLowest));
    }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
 floor(NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
    {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-      return thisType(fst.operator int());
+      return thisType(fst.asInt(ReadParametersBase::RMLowest));
    }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline int
+inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
+ceil(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& fst)
+   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+      return thisType(fst.asInt(ReadParametersBase::RMHighest));
+   }
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
+ceil(NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
+   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+      return thisType(fst.asInt(ReadParametersBase::RMHighest));
+   }
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
+trunc(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& fst)
+   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+      return thisType(fst.asInt(ReadParametersBase::RMZero));
+   }
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
+trunc(NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
+   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+      return thisType(fst.asInt(ReadParametersBase::RMZero));
+   }
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
+round(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& fst)
+   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+      return thisType(fst.asInt(ReadParametersBase::RMNearest));
+   }
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
+round(NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
+   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+      return thisType(fst.asInt(ReadParametersBase::RMNearest));
+   }
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
 rintf(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-   {  return fst.operator int(); }
+   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+      return thisType(fst.asInt(ReadParametersBase::RMNearest /* fegetround */));
+   }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline int
+inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
 rintf(NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-   {  return fst.operator int(); }
+   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+      return thisType(fst.asInt(ReadParametersBase::RMNearest /* fegetround */));
+   }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline int
+inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
 rint(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-   {  return fst.operator int(); }
+   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+      return thisType(fst.asInt(ReadParametersBase::RMNearest /* fegetround */));
+   }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline int
+inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
 rint(NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-   {  return fst.operator int(); }
+   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+      return thisType(fst.asInt(ReadParametersBase::RMNearest /* fegetround */));
+   }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>

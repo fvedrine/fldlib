@@ -173,12 +173,18 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    thisType operator/(TypeImplementation source) const { return operator/(thisType(source)); }
 
    explicit operator TypeImplementation() const { return inherited::asImplementation(); }
-   explicit operator int() const { return inherited::asInt(); }
-   explicit operator short int() const { return inherited::asInt(); }
-   explicit operator unsigned() const { return inherited::asUnsigned(); }
-   explicit operator short unsigned() const { return inherited::asUnsigned(); }
-   explicit operator long int() const { return inherited::asLongInt(); }
-   explicit operator unsigned long() const { return inherited::asUnsignedLong(); }
+   explicit operator int() const
+      {  return inherited::asInt(inherited::ReadParametersBase::RMZero); }
+   explicit operator short int() const
+      {  return inherited::asInt(inherited::ReadParametersBase::RMZero); }
+   explicit operator unsigned() const
+      {  return inherited::asUnsigned(inherited::ReadParametersBase::RMZero); }
+   explicit operator short unsigned() const
+      {  return inherited::asUnsigned(inherited::ReadParametersBase::RMZero); }
+   explicit operator long int() const
+      {  return inherited::asLongInt(inherited::ReadParametersBase::RMZero); }
+   explicit operator unsigned long() const
+      {  return inherited::asUnsignedLong(inherited::ReadParametersBase::RMZero); }
 
    thisType abs() const
       {  auto result(*this); result.absAssign(); return result; }
@@ -398,28 +404,70 @@ template <class TypeBuiltDouble, typename TypeImplementation>
 inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
 floor(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& fst)
    {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
-      return thisType(std::forward<thisType>(thisType(fst)).operator int());
+      return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMLowest));
    }
 
 template <class TypeBuiltDouble, typename TypeImplementation>
 inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
 floor(NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>&& fst)
    {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
-      return thisType(std::forward<thisType>(thisType(fst)).operator int());
+      return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMLowest));
    }
 
 template <class TypeBuiltDouble, typename TypeImplementation>
-inline int
+inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
+ceil(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& fst)
+   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
+      return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMHighest));
+   }
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
+ceil(NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>&& fst)
+   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
+      return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMHighest));
+   }
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
+trunc(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& fst)
+   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
+      return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMZero));
+   }
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
+trunc(NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>&& fst)
+   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
+      return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMZero));
+   }
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
+round(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& fst)
+   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
+      return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest));
+   }
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
+round(NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>&& fst)
+   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
+      return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest));
+   }
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
 rint(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& fst)
-   {  // typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
-      return fst.operator int();
+   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
+      return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
    }
 
 template <class TypeBuiltDouble, typename TypeImplementation>
-inline int
+inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
 rintf(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& fst)
-   {  // typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
-      return fst.operator int();
+   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
+      return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
    }
 
 template <class TypeBuiltDouble, typename TypeImplementation>

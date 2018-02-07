@@ -550,12 +550,18 @@ class TInstrumentedFloatZonotope : public TFloatZonotope<ExecutionPath, USizeMan
       }
 
    explicit operator TypeImplementation() const { return inherited::asImplementation(); }
-   explicit operator int() const { return inherited::asInt(); }
-   explicit operator short int() const { return inherited::asInt(); }
-   explicit operator unsigned() const { return inherited::asUnsigned(); }
-   explicit operator short unsigned() const { return inherited::asUnsigned(); }
-   explicit operator long int() const { return inherited::asLong(); }
-   explicit operator unsigned long() const { return inherited::asUnsignedLong(); }
+   explicit operator int() const
+      {  return inherited::asInt(inherited::ReadParametersBase::RMZero); }
+   explicit operator short int() const
+      {  return inherited::asInt(inherited::ReadParametersBase::RMZero); }
+   explicit operator unsigned() const
+      {  return inherited::asUnsigned(inherited::ReadParametersBase::RMZero); }
+   explicit operator short unsigned() const
+      {  return inherited::asUnsigned(inherited::ReadParametersBase::RMZero); }
+   explicit operator long int() const
+      {  return inherited::asLong(inherited::ReadParametersBase::RMZero); }
+   explicit operator unsigned long() const
+      {  return inherited::asUnsignedLong(inherited::ReadParametersBase::RMZero); }
 
    thisType abs() const
       {  if (*this < 0)
@@ -1254,42 +1260,84 @@ template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
 floor(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
 {  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).operator int());
+   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMLowest));
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
 floor(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
 {  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).operator int());
+   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMLowest));
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline int
+inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
+ceil(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
+{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMHighest));
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
+ceil(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
+{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMHighest));
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
+trunc(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
+{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMZero));
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
+trunc(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
+{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMZero));
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
+round(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
+{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest));
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
+round(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
+{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
+   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest));
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
 rintf(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
 {  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return std::forward<thisType>(thisType(fst)).operator int();
+   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline int
+inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
 rintf(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
 {  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return std::forward<thisType>(thisType(fst)).operator int();
+   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline int
+inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
 rint(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
 {  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return std::forward<thisType>(thisType(fst)).operator int();
+   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline int
+inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
 rint(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
 {  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return std::forward<thisType>(thisType(fst)).operator int();
+   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
@@ -1297,8 +1345,51 @@ inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USiz
 fabs(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
 {  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
    thisType result = fst;
-   if (result < 0)
-      result.oppositeAssign();
+
+   // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+   auto* oldPathExplorer = NumericalDomains::DAffine::ExecutionPath::getCurrentPathExplorer();
+   bool oldDoesFollow = NumericalDomains::DAffine::ExecutionPath::doesFollowFlow();
+   NumericalDomains::DAffine::ExecutionPath::clearFollowFlow();
+   auto* oldInputTraceFile = NumericalDomains::DAffine::ExecutionPath::inputTraceFile();
+   const char* oldSynchronisationFile = NumericalDomains::DAffine::ExecutionPath::synchronisationFile();
+   int oldSynchronisationLine = NumericalDomains::DAffine::ExecutionPath::synchronisationLine();
+   bool isCompleteFlow = true;
+   NumericalDomains::DAffine::PathExplorer pathExplorer(
+        NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer));
+   NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+   auto mergeMemory = NumericalDomains::DAffine::MergeMemory() >> result;
+   auto saveMemory = NumericalDomains::DAffine::SaveMemory() << result;
+   const char* sourceFile = __FILE__;
+   int sourceLine = __LINE__;
+   do {
+      try {
+         NumericalDomains::DAffine::BaseFloatAffine::splitBranches(sourceFile, sourceLine);
+
+         if (result < 0)
+            result.oppositeAssign();
+
+         isCompleteFlow = NumericalDomains::DAffine::MergeBranches(sourceFile, sourceLine) << result;
+      } 
+      catch (typename thisType::anticipated_termination&) {
+         isCompleteFlow = false;
+         NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();
+      }
+      catch (STG::EReadError& error) {
+         if (const char* message = error.getMessage())
+            std::cerr << "error: " << message << std::endl;
+         else
+            std::cerr << "error while reading input file!" << std::endl;
+         isCompleteFlow = false;
+         NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();
+      }
+      NumericalDomains::DAffine::ExecutionPath::setFollowFlow();
+   } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result)
+         && !(saveMemory.setCurrentResult(pathExplorer.isFinished(NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer))) >> result));
+   NumericalDomains::DAffine::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
+         oldSynchronisationFile, oldSynchronisationLine);
+   NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+   if (mergeMemory.isFirst())
+      NumericalDomains::DAffine::ExecutionPath::throwEmptyBranch(true);
    return result;
 }
 
@@ -1307,8 +1398,51 @@ inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USiz
 fabs(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
 {  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
    thisType result(std::forward<thisType>(fst));
-   if (result < 0)
-      result.oppositeAssign();
+
+   // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+   auto* oldPathExplorer = NumericalDomains::DAffine::ExecutionPath::getCurrentPathExplorer();
+   bool oldDoesFollow = NumericalDomains::DAffine::ExecutionPath::doesFollowFlow();
+   NumericalDomains::DAffine::ExecutionPath::clearFollowFlow();
+   auto* oldInputTraceFile = NumericalDomains::DAffine::ExecutionPath::inputTraceFile();
+   const char* oldSynchronisationFile = NumericalDomains::DAffine::ExecutionPath::synchronisationFile();
+   int oldSynchronisationLine = NumericalDomains::DAffine::ExecutionPath::synchronisationLine();
+   bool isCompleteFlow = true;
+   NumericalDomains::DAffine::PathExplorer pathExplorer(
+        NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer));
+   NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+   auto mergeMemory = NumericalDomains::DAffine::MergeMemory() >> result;
+   auto saveMemory = NumericalDomains::DAffine::SaveMemory() << result;
+   const char* sourceFile = __FILE__;
+   int sourceLine = __LINE__;
+   do {
+      try {
+         NumericalDomains::DAffine::BaseFloatAffine::splitBranches(sourceFile, sourceLine);
+
+         if (result < 0)
+            result.oppositeAssign();
+
+         isCompleteFlow = NumericalDomains::DAffine::MergeBranches(sourceFile, sourceLine) << result;
+      } 
+      catch (typename thisType::anticipated_termination&) {
+         isCompleteFlow = false;
+         NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();
+      }
+      catch (STG::EReadError& error) {
+         if (const char* message = error.getMessage())
+            std::cerr << "error: " << message << std::endl;
+         else
+            std::cerr << "error while reading input file!" << std::endl;
+         isCompleteFlow = false;
+         NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();
+      }
+      NumericalDomains::DAffine::ExecutionPath::setFollowFlow();
+   } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result)
+         && !(saveMemory.setCurrentResult(pathExplorer.isFinished(NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer))) >> result));
+   NumericalDomains::DAffine::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
+         oldSynchronisationFile, oldSynchronisationLine);
+   NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+   if (mergeMemory.isFirst())
+      NumericalDomains::DAffine::ExecutionPath::throwEmptyBranch(true);
    return result;
 }
 
