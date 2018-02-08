@@ -11,11 +11,12 @@ int main() {
 
   double in = DBETWEEN(0, 10);
   double out, out1;
+  double in2 = in;
 
-  FLOAT_SPLIT_ALL(1, in >> out >> double::end(), in << double::end())
+  FLOAT_SPLIT_ALL(1, out >> in >> double::end(), in << double::end())
 
   int index = (int) in;
-  DPRINT(in);
+  DPRINT(in); in.flushOut();
   if (index < 0)
     out = y[0];
   else if (index >= 9)
@@ -26,8 +27,8 @@ int main() {
 
   FLOAT_MERGE_ALL(1, out << in << double::end(), in >> double::end())
   DPRINT(out);
-  double in2 = in;
   DPRINT(in2);
+  in = in2;
 
   FLOAT_SPLIT_ALL(2, out1 >> double::end(), in << double::end())
 
