@@ -5341,25 +5341,35 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 bool
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::optimizeUnstableConversionForRealFlow(unsigned result, unsigned implementationResult,
-            bool hasMultiple, typename TypeBaseFloatAffine::Mode mode,
+            signed signedResult, int signedImplementationResult,
+            bool isSigned, bool hasMultiple, typename TypeBaseFloatAffine::Mode mode,
             Numerics::DDouble::Access::ReadParameters& minParams,
             Numerics::DDouble::Access::ReadParameters& maxParams,
             ReadParametersBase::RoundMode roundMode) const {
    BuiltReal errorMin, errorMax;
    getError().retrieveBound(errorMin, errorMax, false /* hasExternalCoefficient */);
-   
-   if (implementationResult < result) {
+
+   if (isSigned ? (signedImplementationResult < signedResult)
+                : (implementationResult < result)) {
       bool isStrictGreater = false;
       int unitSub = 1;
-      if (roundMode == ReadParametersBase::RMZero && (implementationResult < 0) && (0 < result))
+      if (roundMode == ReadParametersBase::RMZero
+            && (isSigned && (signedImplementationResult < 0) && (0 < signedResult)))
          unitSub = 0;
-      if ((roundMode == ReadParametersBase::RMZero && (implementationResult >= 0))
+      if ((roundMode == ReadParametersBase::RMZero
+               && (!isSigned || (signedImplementationResult >= 0)))
             || roundMode == ReadParametersBase::RMLowest)
          isStrictGreater = true;
 
       typename BuiltReal::IntConversion conversion;
-      conversion.setSigned();
-      conversion.assign((int) (result-implementationResult-unitSub));
+      if (isSigned) {
+         conversion.setSigned();
+         conversion.assign((int) (signedResult-signedImplementationResult-unitSub));
+      }
+      else {
+         conversion.setUnsigned();
+         conversion.assign((unsigned) (result-implementationResult-unitSub));
+      };
       BuiltReal errorBound;
       errorBound.setInteger(conversion, maxParams);
       maxParams.clear();
@@ -5389,12 +5399,15 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
 
       // getSRealDomain() <= implementation+1-error
       if (roundMode == ReadParametersBase::RMZero)
-         isStrictGreater = (implementationResult >= 0);
+         isStrictGreater = !isSigned || (signedImplementationResult >= 0);
       else
          isStrictGreater = (roundMode == ReadParametersBase::RMLowest);
       unitSub = isStrictGreater ? 1 : 0;
       Equation constraint(getRealDomain());
-      conversion.assign((int) (implementationResult));
+      if (isSigned)
+         conversion.assign(signedImplementationResult);
+      else
+         conversion.assign(implementationResult);
       BuiltReal max;
       max.setInteger(conversion, maxParams);
       maxParams.clear();
@@ -5424,14 +5437,22 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    else { // implementationResult > result
       int unitSub=1;
       bool isStrictGreater=false;
-      if (roundMode == ReadParametersBase::RMZero && (result < 0 && 0 < implementationResult))
+      if (roundMode == ReadParametersBase::RMZero
+            && (isSigned && signedResult < 0 && 0 < signedImplementationResult))
          unitSub = 0;
-      if ((roundMode == ReadParametersBase::RMZero && (implementationResult <= 0))
+      if ((roundMode == ReadParametersBase::RMZero
+               && (!isSigned || signedImplementationResult <= 0))
             || (roundMode == ReadParametersBase::RMHighest))
          isStrictGreater=true;
       typename BuiltReal::IntConversion conversion;
-      conversion.setSigned();
-      conversion.assign((int) (implementationResult-result-unitSub));
+      if (isSigned) {
+         conversion.setSigned();
+         conversion.assign((int) (signedImplementationResult-signedResult-unitSub));
+      }
+      else {
+         conversion.setUnsigned();
+         conversion.assign((unsigned) (implementationResult-result-unitSub));
+      };
       BuiltReal errorBound;
       errorBound.setInteger(conversion, maxParams);
       maxParams.clear();
@@ -5460,11 +5481,15 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       };
 
       // getSRealDomain() >= implementation-error
-      isStrictGreater = (roundMode == ReadParametersBase::RMZero && implementationResult <= 0)
+      isStrictGreater = (roundMode == ReadParametersBase::RMZero
+               && (!isSigned || signedImplementationResult <= 0))
             || (roundMode == ReadParametersBase::RMHighest);
       unitSub = isStrictGreater ? 1 : 0;
       Equation constraint(getRealDomain());
-      conversion.assign((int) implementationResult);
+      if (isSigned)
+         conversion.assign(signedImplementationResult);
+      else
+         conversion.assign(implementationResult);
       BuiltReal max;
       max.setInteger(conversion, maxParams);
       maxParams.clear();
@@ -5568,6 +5593,7 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 bool
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::optimizeUnstableConversionForImplementationFlow(unsigned result, unsigned realResult,
+            int signedResult, int signedRealResult, bool isSigned,
             bool hasMultiple, typename TypeBaseFloatAffine::Mode mode,
             Numerics::DDouble::Access::ReadParameters& minParams,
             Numerics::DDouble::Access::ReadParameters& maxParams,
@@ -5575,17 +5601,24 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    BuiltReal errorMin, errorMax;
    getError().retrieveBound(errorMin, errorMax, false /* hasExternalCoefficient */);
    
-   if (realResult > result) {
+   if (isSigned ? (signedRealResult > signedResult) : (realResult > result)) {
       bool isStrictGreater = false;
       int unitSub = 1;
-      if (roundMode == ReadParametersBase::RMZero && (result < 0) && (0 < realResult))
+      if (roundMode == ReadParametersBase::RMZero
+            && isSigned && (signedResult < 0) && (0 < signedRealResult))
          unitSub = 0;
-      if ((roundMode == ReadParametersBase::RMZero && (result >= 0))
+      if ((roundMode == ReadParametersBase::RMZero && (!isSigned || signedResult >= 0))
             || roundMode == ReadParametersBase::RMLowest)
          isStrictGreater = true;
       typename BuiltReal::IntConversion conversion;
-      conversion.setSigned();
-      conversion.assign((int) (realResult-result-unitSub));
+      if (isSigned) {
+         conversion.setSigned();
+         conversion.assign((int) (signedRealResult-signedResult-unitSub));
+      }
+      else {
+         conversion.setUnsigned();
+         conversion.assign((int) (realResult-result-unitSub));
+      };
       BuiltReal errorBound;
       errorBound.setInteger(conversion, maxParams);
       maxParams.clear();
@@ -5599,11 +5632,14 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       };
 
       if (roundMode == ReadParametersBase::RMZero)
-         unitSub = (realResult <= 0) ? 1 : 0;
+         unitSub = (isSigned && signedRealResult <= 0) ? 1 : 0;
       else
          unitSub = (roundMode == ReadParametersBase::RMHighest) ? 1 : 0;
       Equation constraint(getRealDomain());
-      conversion.assign((int) (realResult));
+      if (isSigned)
+         conversion.assign(signedRealResult);
+      else
+         conversion.assign(realResult);
       BuiltReal max;
       max.setInteger(conversion, maxParams);
       maxParams.clear();
@@ -5630,14 +5666,21 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    else { // realResult < result
       int unitSub=1;
       bool isStrictGreater=false;
-      if (roundMode == ReadParametersBase::RMZero && (realResult < 0 && 0 < result))
+      if (roundMode == ReadParametersBase::RMZero
+            && (isSigned && signedRealResult < 0 && 0 < signedResult))
          unitSub = 0;
-      if ((roundMode == ReadParametersBase::RMZero && (result <= 0))
+      if ((roundMode == ReadParametersBase::RMZero && (isSigned && signedResult <= 0))
             || (roundMode == ReadParametersBase::RMHighest))
          isStrictGreater=true;
       typename BuiltReal::IntConversion conversion;
-      conversion.setSigned();
-      conversion.assign((int) (result-realResult-unitSub));
+      if (isSigned) {
+         conversion.setSigned();
+         conversion.assign((int) (signedResult-signedRealResult-unitSub));
+      }
+      else {
+         conversion.setUnsigned();
+         conversion.assign((unsigned) (result-realResult-unitSub));
+      };
       BuiltReal errorBound;
       errorBound.setInteger(conversion, maxParams);
       maxParams.clear();
@@ -5650,10 +5693,14 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       };
 
       // getSRealDomain() <= realResult+1
-      unitSub = ((roundMode == ReadParametersBase::RMZero && realResult >= 0)
+      unitSub = ((roundMode == ReadParametersBase::RMZero
+               && (!isSigned || signedRealResult >= 0))
             || (roundMode == ReadParametersBase::RMHighest)) ? 1 : 0;
       Equation constraint(getRealDomain());
-      conversion.assign((int) realResult);
+      if (isSigned)
+         conversion.assign(signedRealResult);
+      else
+         conversion.assign(realResult);
       BuiltReal max;
       max.setInteger(conversion, maxParams);
       maxParams.clear();
@@ -5780,7 +5827,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       if (!implementationChoice) {
          AssumeCondition(ualternativeResult != ~0U && alternativeResult != result)
          if (inherited::doesComputeError()) {
-            if (!optimizeUnstableConversionForRealFlow(result, ualternativeResult,
+            if (!optimizeUnstableConversionForRealFlow(result, alternativeResult,
+                     result, alternativeResult, true /* isSigned */,
                      casesNumber > 1, mode, minParams, maxParams, roundMode))
                return result;
             const_cast<thisType*>(this)->mergeNoError();
@@ -5831,7 +5879,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       if (!realChoice) {
          AssumeCondition(ualternativeResult != ~0U && alternativeResult != result)
          if (inherited::doesComputeError()) {
-            if (!optimizeUnstableConversionForImplementationFlow(result, alternativeResult, casesNumber > 1,
+            if (!optimizeUnstableConversionForImplementationFlow(result, alternativeResult,
+                     result, alternativeResult, true /* isSigned */, casesNumber > 1,
                      mode, minParams, maxParams, roundMode))
                return result;
             const_cast<thisType*>(this)->mergeNoReal();
@@ -6025,7 +6074,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       if (!implementationChoice) {
          AssumeCondition(alternativeResult != ~0U && alternativeResult != result)
          if (inherited::doesComputeError()) {
-            if (!optimizeUnstableConversionForRealFlow(result, alternativeResult,
+            if (!optimizeUnstableConversionForRealFlow(result, alternativeResult, 0, 0, false /* isSigned */,
                      casesNumber > 1, mode, minParams, maxParams, roundMode))
                return result;
             const_cast<thisType*>(this)->mergeNoError();
@@ -6076,7 +6125,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       if (!realChoice) {
          AssumeCondition(alternativeResult != ~0U && alternativeResult != result)
          if (inherited::doesComputeError()) {
-            if (!optimizeUnstableConversionForImplementationFlow(result, alternativeResult, casesNumber > 1,
+            if (!optimizeUnstableConversionForImplementationFlow(result, alternativeResult,
+                     0, 0, false /* isSigned */, casesNumber > 1,
                      mode, minParams, maxParams, roundMode))
                return result;
             const_cast<thisType*>(this)->mergeNoReal();

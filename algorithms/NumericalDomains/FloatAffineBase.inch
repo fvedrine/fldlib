@@ -906,15 +906,17 @@ class DefineBasicFloatZonotope : public DefineBaseFloatZonotope DefineEquationTe
 
    typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
    bool optimizeUnstableConversionForImplementationFlow(unsigned result, unsigned realResult,
-            bool hasMultiple, typename TypeBaseFloatAffine::Mode mode,
-            Numerics::DDouble::Access::ReadParameters& minParams,
-            Numerics::DDouble::Access::ReadParameters& maxParams,
-            ReadParametersBase::RoundMode roundMode) const;
+         int signedResult, int signedRealResult, bool isSigned,
+         bool hasMultiple, typename TypeBaseFloatAffine::Mode mode,
+         Numerics::DDouble::Access::ReadParameters& minParams,
+         Numerics::DDouble::Access::ReadParameters& maxParams,
+         ReadParametersBase::RoundMode roundMode) const;
    bool optimizeUnstableConversionForRealFlow(unsigned result, unsigned implementationResult,
-            bool hasMultiple, typename TypeBaseFloatAffine::Mode mode,
-            Numerics::DDouble::Access::ReadParameters& minParams,
-            Numerics::DDouble::Access::ReadParameters& maxParams,
-            ReadParametersBase::RoundMode roundMode) const;
+         int signedResult, int signedImplementationResult, bool isSigned,
+         bool hasMultiple, typename TypeBaseFloatAffine::Mode mode,
+         Numerics::DDouble::Access::ReadParameters& minParams,
+         Numerics::DDouble::Access::ReadParameters& maxParams,
+         ReadParametersBase::RoundMode roundMode) const;
 
 #ifndef DefineGeneric
    template <int RealBitsNumber, class TypeBaseFloatAffineArgument, int SizeMantissa, int SizeExponent, typename TypeImplementationArgument>
