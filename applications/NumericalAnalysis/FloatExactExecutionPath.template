@@ -449,9 +449,9 @@ TMergeBranches<TypeExecutionPath>::operator<<(TFloatExact<TypeExecutionPath, Typ
             value.retrieveReal(value.bfImplementation, value.brReal);
       }
 #if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
-      DDoubleExact::setContent(value.dValue, value.bfImplementation);
+      DDoubleExact::setContent(value.dValue, value.bfImplementation, DDoubleExact::FloatDigitsHelper());
 #else
-      DDoubleExact::gsetContent(value.dValue, value.bfImplementation);
+      DDoubleExact::gsetContent(value.dValue, value.bfImplementation, DDoubleExact::FloatDigitsHelper());
 #endif
    };
    inherited::writeSynchronizedValue(

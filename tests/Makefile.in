@@ -53,16 +53,16 @@ analysis : diagnosis_exact diagnosis_interval diagnosis_affine diagnosis_affine_
 %.exe: %.c @top_srcdir@/tests/std_header.h
 	gcc -I$(DIAGNOSIS_INCLUDE_DIR) -include @top_srcdir@/tests/std_header.h -o $@ $< -lm
 
-%.instr_diagnosis_exact: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/libFloatDiagnosis.a
+%.instr_diagnosis_exact: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/@FLOAT_LIB_NAME@
 	-AUTOTEST=1 ./comp_float_diagnosis.sh -exact -optim @FLOAT_ALLOW_INTERFACE@ -atomic -loop $< -o $@
 
-%.instr_diagnosis_interval: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/libFloatDiagnosis.a
+%.instr_diagnosis_interval: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/@FLOAT_LIB_NAME@
 	-AUTOTEST=1 ./comp_float_diagnosis.sh -interval -optim @FLOAT_ALLOW_INTERFACE@ -atomic -loop $< -o $@
 
-%.instr_diagnosis_affine: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/libFloatDiagnosis.a
+%.instr_diagnosis_affine: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/@FLOAT_LIB_NAME@
 	-AUTOTEST=1 ./comp_float_diagnosis.sh -affine -optim @FLOAT_ALLOW_INTERFACE@ -atomic -loop $< -o $@
 
-%.instr_diagnosis_affine_scenario: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/libFloatDiagnosis.a
+%.instr_diagnosis_affine_scenario: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/@FLOAT_LIB_NAME@
 	-AUTOTEST=1 ./comp_float_diagnosis.sh -affine -optim @FLOAT_ALLOW_INTERFACE@ -atomic -loop -scenario $< -o $@
 
 %.fluctuat.ii: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h

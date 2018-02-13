@@ -93,6 +93,10 @@
 
 namespace DDoubleExact {
 
+static const int URealBitSizeExponent
+   = (LDBL_MAX_EXP == (1 << (16-2))) ? 15 /* leading 1 bit */
+      : sizeof(long double)*8-LDBL_MANT_DIG;
+
 DefineSingleTemplateHeader(URealBitsNumber)
 class DefineFloatConversion : public DefineBuiltAccess
       ::TFloatConversion DefineMantissaExponentTemplateParameters(
@@ -170,19 +174,19 @@ DefineSingleTemplateHeader(URealBitsNumber)
 class DefineBuiltReal
    :  public Numerics::DefineReadDouble<
          Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
-            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) >,
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, URealBitSizeExponent) >,
          Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
-            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber+5, 15) > > {
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber+5, URealBitSizeExponent) > > {
   public:
    typedef Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
-         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) > BaseDouble;
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, URealBitSizeExponent) > BaseDouble;
 
   private:
    typedef Numerics::DefineReadDouble<
       Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
-         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) >,
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, URealBitSizeExponent) >,
       Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
-         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber+5, 15) > > inherited;
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber+5, URealBitSizeExponent) > > inherited;
    typedef DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber) thisType;
 
   protected:
@@ -199,7 +203,7 @@ class DefineBuiltReal
    DefineBuiltReal(const typename inherited::FloatConversion& value, ReadParameters& params) : inherited(value, params) {}
    DefineBuiltReal(const thisType& source) = default;
    DefineBuiltReal(const Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
-         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) >& source)
+         DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, URealBitSizeExponent) >& source)
       :  inherited(source) {}
 
    thisType& opposite() { return (thisType&) inherited::opposite(); }
@@ -237,16 +241,17 @@ DefineIsBigEndian() {
 #endif
 }
 
-template <class TypeBuiltDouble, typename TypeImplementation>
+template <class TypeBuiltDouble, typename TypeImplementation, class TypeFloatDigitsHelper>
 void
 DefineFillContent(TypeBuiltDouble& builtDouble,
-      const TypeImplementation& source/*, int sourceExponentSize, int sourceMantissaSize*/) {
+      const TypeImplementation& source/*, int sourceExponentSize, int sourceMantissaSize*/,
+      const TypeFloatDigitsHelper&) {
 #ifdef DefineGeneric
    typedef typename TypeBuiltDouble::BuiltDouble::BaseStoreTraits BaseStoreTraits;
 #endif
    // AssumeCondition(sizeof(source)*8 == sourceExponentSize+sourceMantissaSize+1)
    // AssumeCondition(builtDouble.bitSizeMantissa() >= sourceMantissaSize
-   //       && builtDouble.bitSizeExponent() >= sourceExponentSize)
+   //       && TypeBuiltDouble::TFloatDigits<TypeImplementation>::UBitFullSizeExponent >= sourceExponentSize)
    static const int sourceSizeInSizeofUnsigned
 #ifndef DefineGeneric
       = (sizeof(source) + sizeof(unsigned) - 1)/sizeof(unsigned);
@@ -292,8 +297,12 @@ DefineFillContent(TypeBuiltDouble& builtDouble,
    }
    {  unsigned char* mask = (unsigned char*) doubleContent;
       unsigned char* signedMask = mask;
+      typedef typename TypeFloatDigitsHelper::template TFloatDigits<TypeImplementation> FloatDigits;
       if (!DefineIsBigEndian()) {
-         signedMask += sizeof(source)-1;
+         int sourceSizeInBits = builtDouble.bitSizeMantissa()
+            + FloatDigits::UBitFullSizeExponent + 1;
+         AssumeCondition(sourceSizeInBits % 8 == 0)
+         signedMask += sourceSizeInBits/8-1;
          mask = signedMask;
       };
       builtDouble.setNegative((*signedMask) & 0x80);
@@ -301,7 +310,7 @@ DefineFillContent(TypeBuiltDouble& builtDouble,
       // AssumeCondition(sourceExponentSize <= DefineSizeofBaseTypeInBits) // not implemented
       DefineBaseType result = 0x0;
       // int shift = sourceExponentSize-7;
-      int shift = builtDouble.bitSizeExponent()-7;
+      int shift = FloatDigits::UBitSizeExponent-7;
       if (shift >= 0) {
 #ifndef DefineGeneric
          result |= (*mask & 0x7f) << shift;
@@ -337,8 +346,8 @@ DefineFillContent(TypeBuiltDouble& builtDouble,
          result |= BaseStoreTraits::getHighPart(*mask & 0x7f, -shift);
 #endif
       builtDouble.getSBasicExponent()[0] = result;
-      // int shiftExponent = (builtDouble.bitSizeExponent() - sourceExponentSize)
-      //       % DefineSizeofBaseTypeInBits;
+      // int shiftExponent = (FloatDigits::UBitSizeExponent
+      //       - sourceExponentSize) % DefineSizeofBaseTypeInBits;
       // if (shiftExponent > 0) {
       // #ifndef DefineGeneric
       //    if (result | (1U << (sourceExponentSize-1)))
@@ -355,9 +364,9 @@ DefineFillContent(TypeBuiltDouble& builtDouble,
    }
 }
 
-template <class TypeBuiltDouble, typename TypeImplementation>
+template <class TypeBuiltDouble, typename TypeImplementation, class TypeFloatDigitsHelper>
 void
-DefineSetContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble) {
+DefineSetContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble, const TypeFloatDigitsHelper&) {
 #ifndef DefineGeneric
    DefineBaseType doubleContent[(sizeof(result) + sizeof(unsigned) - 1)/sizeof(unsigned)];
    memset(doubleContent, 0, sizeof(unsigned)*((sizeof(result) + sizeof(unsigned) - 1)/sizeof(unsigned)));
@@ -368,15 +377,19 @@ DefineSetContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble)
          *((8*sizeof(result) + BaseStoreTraits::USizeBaseInBits - 1)/BaseStoreTraits::USizeBaseInBits));
 #endif
    {  unsigned char* mask = (unsigned char*) doubleContent;
-      if (!DefineIsBigEndian())
-         mask += sizeof(result)-1;
+      typedef typename TypeFloatDigitsHelper::template TFloatDigits<TypeImplementation> FloatDigits;
+      if (!DefineIsBigEndian()) {
+         int resultSizeInBits = builtDouble.bitSizeMantissa()+FloatDigits::UBitFullSizeExponent+1;
+         AssumeCondition(resultSizeInBits % 8 == 0)
+         mask += resultSizeInBits/8-1;
+      }
       if (builtDouble.isNegative())
          *mask |= 0x80;
-      int shift = builtDouble.bitSizeExponent()-7;
+      int shift = FloatDigits::UBitSizeExponent-7;
 
       DefineBaseType exponent = builtDouble.getBasicExponent()[0];
 #if defined(__GNUC__) && !defined(__clang__)
-      int shiftAssert = builtDouble.bitSizeExponent();
+      int shiftAssert = FloatDigits::UBitSizeExponent;
       AssumeCondition((shiftAssert >= (int) DefineSizeofBaseTypeInBits)
 #ifndef DefineGeneric
             || (((~0U << shiftAssert) & exponent) == 0)
@@ -390,18 +403,20 @@ DefineSetContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble)
 #pragma GCC diagnostic ignored "-Wshift-count-overflow"
 #endif
 
-      AssumeCondition(((int) builtDouble.bitSizeExponent() >= (int) DefineSizeofBaseTypeInBits)
+      AssumeCondition(((int) FloatDigits::UBitSizeExponent >= (int) DefineSizeofBaseTypeInBits)
 #ifndef DefineGeneric
-            || (((~0U << builtDouble.bitSizeExponent()) & exponent) == 0)
+            || (((~0U << FloatDigits::UBitSizeExponent) & exponent) == 0)
 #else
-            || BaseStoreTraits::isZeroValue(BaseStoreTraits::getHighPart(exponent, builtDouble.bitSizeExponent()))
+            || BaseStoreTraits::isZeroValue(BaseStoreTraits::getHighPart(exponent,
+                  FloatDigits::UBitSizeExponent))
 #endif
          )
       // AssumeCondition((TypeBuiltDouble::BitSizeExponent == DefineSizeofBaseTypeInBits)
       //    #ifndef DefineGeneric
       //       || (((~1U << (TypeBuiltDouble::BitSizeExponent-1)) & exponent) == 0)
       //    #else
-      //       || BaseStoreTraits::isZeroValue(BaseStoreTraits::getHighPart(exponent, builtDouble.bitSizeExponent()))
+      //       || BaseStoreTraits::isZeroValue(BaseStoreTraits::getHighPart(exponent,
+      //          FloatDigits::UBitSizeExponent))
       //    #endif
       //    )
 #if defined(__clang__)

@@ -42,59 +42,64 @@
 
 namespace NumericalDomains { namespace DAffine {
 
+#ifndef LDBL_EXPONENT_DIG
+#define LDBL_EXPONENT_DIG \
+      ((LDBL_MAX_EXP == (1 << (16-2))) ? 15 : sizeof(long double)*8-LDBL_MANT_DIG)
+#endif
+
 template class TInstrumentedFloatZonotope<23, 8, float>;
 template class TInstrumentedFloatZonotope<52, 11, double>;
-template class TInstrumentedFloatZonotope<80, 15, long double>;
+template class TInstrumentedFloatZonotope<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>;
 template class TBaseFloatAffine<ExecutionPath>;
 
 template void TBaseFloatAffine<ExecutionPath>::writeCompare<TInstrumentedFloatZonotope<23, 8, float> >(TInstrumentedFloatZonotope<23, 8, float> const&, bool) const;
 template void TBaseFloatAffine<ExecutionPath>::writeCompare<TInstrumentedFloatZonotope<52, 11, double> >(TInstrumentedFloatZonotope<52, 11, double> const&, bool) const;
-template void TBaseFloatAffine<ExecutionPath>::writeCompare<TInstrumentedFloatZonotope<80, 15, long double> >(TInstrumentedFloatZonotope<80, 15, long double> const&, bool) const;
+template void TBaseFloatAffine<ExecutionPath>::writeCompare<TInstrumentedFloatZonotope<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double> >(TInstrumentedFloatZonotope<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double> const&, bool) const;
 
 template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TInstrumentedFloatZonotope<23, 8, float> >(TInstrumentedFloatZonotope<23, 8, float> const&, bool) const;
 template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TInstrumentedFloatZonotope<52, 11, double> >(TInstrumentedFloatZonotope<52, 11, double> const&, bool) const;
-template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TInstrumentedFloatZonotope<80, 15, long double> >(TInstrumentedFloatZonotope<80, 15, long double> const&, bool) const;
+template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TInstrumentedFloatZonotope<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double> >(TInstrumentedFloatZonotope<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double> const&, bool) const;
 
 #if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
 template class TEquation<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> >;
 template class TEquationServices<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> >;
 template class TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float>;
 template class TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double>;
-template class TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double>;
+template class TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>;
 template void TBaseFloatAffine<ExecutionPath>::writeCompare<TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float> >(TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float> const&, bool) const;
 template void TBaseFloatAffine<ExecutionPath>::writeCompare<TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double> >(TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double> const&, bool) const;
-template void TBaseFloatAffine<ExecutionPath>::writeCompare<TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double> >(TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double> const&, bool) const;
+template void TBaseFloatAffine<ExecutionPath>::writeCompare<TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double> >(TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double> const&, bool) const;
 template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float> >(TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float> const&, bool) const;
 template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double> >(TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double> const&, bool) const;
-template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double> >(TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double> const&, bool) const;
+template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double> >(TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double> const&, bool) const;
 #elif defined(FLOAT_GENERIC_BASE_LONG)
 template class TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> >;
 template class TGEquationServices<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> >;
 template class TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float>;
 template class TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double>;
-template class TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double>;
+template class TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>;
 template void TBaseFloatAffine<ExecutionPath>::writeCompare<TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float> >(TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float> const&, bool) const;
 template void TBaseFloatAffine<ExecutionPath>::writeCompare<TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double> >(TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double> const&, bool) const;
-template void TBaseFloatAffine<ExecutionPath>::writeCompare<TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double> >(TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double> const&, bool) const;
+template void TBaseFloatAffine<ExecutionPath>::writeCompare<TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double> >(TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double> const&, bool) const;
 template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float> >(TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float> const&, bool) const;
 template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double> >(TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double> const&, bool) const;
-template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double> >(TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double> const&, bool) const;
+template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double> >(TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double> const&, bool) const;
 #else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
 template class TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> >;
 template class TGEquationServices<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> >;
 template class TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float>;
 template class TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double>;
-template class TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double>;
+template class TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>;
 template void TBaseFloatAffine<ExecutionPath>::writeCompare<TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float> >(TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float> const&, bool) const;
 template void TBaseFloatAffine<ExecutionPath>::writeCompare<TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double> >(TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double> const&, bool) const;
-template void TBaseFloatAffine<ExecutionPath>::writeCompare<TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double> >(TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double> const&, bool) const;
+template void TBaseFloatAffine<ExecutionPath>::writeCompare<TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double> >(TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double> const&, bool) const;
 template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float> >(TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 23, 8, float> const&, bool) const;
 template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double> >(TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 52, 11, double> const&, bool) const;
-template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double> >(TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , 80, 15, long double> const&, bool) const;
+template void TBaseFloatAffine<ExecutionPath>::assumeCompare<TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double> >(TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> , LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double> const&, bool) const;
 #endif
 template class TFloatZonotope<ExecutionPath, 23, 8, float>;
 template class TFloatZonotope<ExecutionPath, 52, 11, double>;
-template class TFloatZonotope<ExecutionPath, 80, 15, long double>;
+template class TFloatZonotope<ExecutionPath, LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>;
 
 template class TMergeBranches<ExecutionPath>;
 
@@ -107,7 +112,7 @@ template DAffine::TMergeBranches<DAffine::ExecutionPath>&
 DAffine::TMergeBranches<DAffine::ExecutionPath>::operator<<(DAffine::TFloatZonotope<ExecutionPath, 52, 11, double>&);
 
 template DAffine::TMergeBranches<DAffine::ExecutionPath>&
-DAffine::TMergeBranches<DAffine::ExecutionPath>::operator<<(DAffine::TFloatZonotope<ExecutionPath, 80, 15, long double>&);
+DAffine::TMergeBranches<DAffine::ExecutionPath>::operator<<(DAffine::TFloatZonotope<ExecutionPath, LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>&);
 
 } // end of namespace NumericalDomains
 

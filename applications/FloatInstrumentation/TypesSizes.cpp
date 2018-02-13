@@ -28,6 +28,10 @@ int main(int argc, char** argv) {
    std::string headerAffineFile = "./applications/FloatInstrumentation/AffineTypesSize.h";
    std::string headerIntervalFile = "./applications/FloatInstrumentation/IntervalTypesSize.h";
    std::string headerExactFile = "./applications/FloatInstrumentation/ExactTypesSize.h";
+   static const int LDBL_EXPONENT_DIG
+      = NumericalDomains::DDoubleExact::FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent;
+   // static const int LDBL_FULL_EXPONENT_DIG
+   //    = NumericalDomains::DDoubleExact::FloatDigitsHelper::TFloatDigits<long double>::UBitFullSizeExponent;
 
    {  std::ofstream fileAffine(headerAffineFile.c_str());
       fileAffine << "namespace NumericalDomains { namespace DAffineInterface {\n\n";
@@ -57,35 +61,41 @@ int main(int argc, char** argv) {
       //    + sizeZonotopeVariableExponent*((11+8*sizeCell-1)/(8*sizeCell))
       //    + sizeZonotopeVariableMantissa*((52+8*sizeCell-1)/(8*sizeCell))
       //    + sizeZonotopeRealMantissa*((FLOAT_REAL_BITS_NUMBER+8*sizeCell-1)/(8*sizeCell));
-      // sizeof(NumericalDomains::DAffine::TInstrumentedFloatZonotope<80, 15, long double>)
+      // sizeof(NumericalDomains::DAffine::TInstrumentedFloatZonotope<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>)
       //    = sizeZonotopeConstant + sizeof(long double)
-      //    + sizeZonotopeVariableExponent*((15+8*sizeCell-1)/(8*sizeCell))
-      //    + sizeZonotopeVariableMantissa*((80+8*sizeCell-1)/(8*sizeCell))
+      //    + sizeZonotopeVariableExponent*((LDBL_EXPONENT_DIG+8*sizeCell-1)/(8*sizeCell))
+      //    + sizeZonotopeVariableMantissa*((LDBL_MANT_DIG-1+8*sizeCell-1)/(8*sizeCell))
       //    + sizeZonotopeRealMantissa*((FLOAT_REAL_BITS_NUMBER+8*sizeCell-1)/(8*sizeCell));
 
+#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
+      typedef NumericalDomains::DAffine::TBaseFloatZonotope<FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > AlignType;
+#elif defined(FLOAT_GENERIC_BASE_LONG)
       typedef NumericalDomains::DAffine::TGBaseFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > AlignType;
-      int a0 = sizeof(NumericalDomains::DAffine::TInstrumentedFloatZonotope<23, 8, float>)
-         - sizeof(float)
-         + (alignof(float) < alignof(AlignType) ? sizeof(float) % alignof(AlignType) : 0)
-         - (alignof(float) > alignof(AlignType) ? (alignof(float) - sizeof(AlignType)%alignof(float))%alignof(float) : 0);
-      int b0 = ((8+8*sizeCell-1)/(8*sizeCell));
-      int c0 = ((23+8*sizeCell-1)/(8*sizeCell));
-      int a1 = sizeof(NumericalDomains::DAffine::TInstrumentedFloatZonotope<52, 11, double>)
-         - sizeof(double)
-         + (alignof(double) < alignof(AlignType) ? sizeof(double) % alignof(AlignType) : 0)
-         - (alignof(double) > alignof(AlignType) ? (alignof(double) - sizeof(AlignType)%alignof(double))%alignof(double) : 0);
-      int b1 = ((11+8*sizeCell-1)/(8*sizeCell));
-      int c1 = ((52+8*sizeCell-1)/(8*sizeCell));
-      int a2 = sizeof(NumericalDomains::DAffine::TInstrumentedFloatZonotope<80, 15, long double>)
-         - sizeof(long double)
-         + (alignof(long double) < alignof(AlignType) ? sizeof(long double) % alignof(AlignType) : 0)
-         - (alignof(long double) > alignof(AlignType) ? (alignof(long double) - sizeof(AlignType)%alignof(long double))%alignof(long double) : 0);
-      int b2 = ((15+8*sizeCell-1)/(8*sizeCell));
-      int c2 = ((80+8*sizeCell-1)/(8*sizeCell));
+#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
+      typedef NumericalDomains::DAffine::TGBaseFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > AlignType;
+#endif
+      int a0 = sizeof(NumericalDomains::DAffine::TInstrumentedFloatZonotope<23, 8, float>) // 288 - 4
+         - sizeof(float);
+      a0 += (alignof(float) < alignof(AlignType) ? sizeof(float) % alignof(AlignType) : 0); // (288-4) + 4
+      a0 -= (alignof(float) > alignof(AlignType) ? (alignof(float) - sizeof(AlignType)%alignof(float))%alignof(float) : 0);
+      int b0 = ((8+8*sizeCell-1)/(8*sizeCell));    // 1
+      int c0 = ((23+8*sizeCell-1)/(8*sizeCell));   // 1
+      int a1 = sizeof(NumericalDomains::DAffine::TInstrumentedFloatZonotope<52, 11, double>) // 296 - 8
+         - sizeof(double);
+      a1 += (alignof(double) < alignof(AlignType) ? sizeof(double) % alignof(AlignType) : 0);
+      a1 -= (alignof(double) > alignof(AlignType) ? (alignof(double) - sizeof(AlignType)%alignof(double))%alignof(double) : 0);
+      int b1 = ((11+8*sizeCell-1)/(8*sizeCell));   // 1
+      int c1 = ((52+8*sizeCell-1)/(8*sizeCell));   // 1
+      int a2 = sizeof(NumericalDomains::DAffine::TInstrumentedFloatZonotope<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>) // 304 - 16
+         - sizeof(long double);
+      a2 += (alignof(long double) < alignof(AlignType) ? sizeof(long double) % alignof(AlignType) : 0);
+      a2 -= (alignof(long double) > alignof(AlignType) ? (alignof(long double) - sizeof(AlignType)%alignof(long double))%alignof(long double) : 0);
+      int b2 = ((LDBL_EXPONENT_DIG+8*sizeCell-1)/(8*sizeCell));   // 1
+      int c2 = ((LDBL_MANT_DIG-1+8*sizeCell-1)/(8*sizeCell));     // 1
 
-      // a0 = sizeZonotopeConstant + sizeZonotopeVariableExponent*b0 + sizeZonotopeVariableMantissa*c0;
-      // a1 = sizeZonotopeConstant + sizeZonotopeVariableExponent*b1 + sizeZonotopeVariableMantissa*c1;
-      // a2 = sizeZonotopeConstant + sizeZonotopeVariableExponent*b2 + sizeZonotopeVariableMantissa*c2;
+      // a0 = 288 = sizeZonotopeConstant + sizeZonotopeVariableExponent*b0 + sizeZonotopeVariableMantissa*c0;
+      // a1 = 288 = sizeZonotopeConstant + sizeZonotopeVariableExponent*b1 + sizeZonotopeVariableMantissa*c1;
+      // a2 = 288 = sizeZonotopeConstant + sizeZonotopeVariableExponent*b2 + sizeZonotopeVariableMantissa*c2;
 
       // a1-a0 = sizeZonotopeVariableExponent*(b1-b0) + sizeZonotopeVariableMantissa*(c1-c0);
       // a2-a0 = sizeZonotopeVariableExponent*(b2-b0) + sizeZonotopeVariableMantissa*(c2-c0);
@@ -148,41 +158,41 @@ int main(int argc, char** argv) {
 //       static const int sizeCell = sizeof(Numerics::UnsignedBaseStoreTraits::BaseType);
 // #endif
 
-      // sizeof(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<NumericalDomains::DDoubleInterval::TBuiltFloat<81, 23, 8>, float>)
+      // sizeof(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<NumericalDomains::DDoubleInterval::TBuiltFloat<LDBL_MANT_DIG, 23, 8>, float>)
       //    = sizeIntervalConstant + sizeof(float)
       //    + sizeIntervalVariableExponent*((8+8*sizeCell-1)/(8*sizeCell))
       //    + sizeIntervalVariableMantissa*((23+8*sizeCell-1)/(8*sizeCell))
-      // sizeof(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<NumericalDomains::DDoubleInterval::TBuiltFloat<81, 52, 11>, double>)
+      // sizeof(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<NumericalDomains::DDoubleInterval::TBuiltFloat<LDBL_MANT_DIG, 52, 11>, double>)
       //    = sizeIntervalConstant + sizeof(double)
       //    + sizeIntervalVariableExponent*((11+8*sizeCell-1)/(8*sizeCell))
       //    + sizeIntervalVariableMantissa*((52+8*sizeCell-1)/(8*sizeCell))
-      // sizeof(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<NumericalDomains::DDoubleInterval::TBuiltFloat<81, 80, 15>, long double>)
+      // sizeof(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<NumericalDomains::DDoubleInterval::TBuiltFloat<LDBL_MANT_DIG, LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG>, long double>)
       //    = sizeIntervalConstant + sizeof(long double)
-      //    + sizeIntervalVariableExponent*((15+8*sizeCell-1)/(8*sizeCell))
-      //    + sizeIntervalVariableMantissa*((80+8*sizeCell-1)/(8*sizeCell))
+      //    + sizeIntervalVariableExponent*((LDBL_EXPONENT_DIG+8*sizeCell-1)/(8*sizeCell))
+      //    + sizeIntervalVariableMantissa*((LDBL_MANT_DIG-1+8*sizeCell-1)/(8*sizeCell))
 
       // typedef void* AlignType;
-      int a0 = sizeof(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<NumericalDomains::DDoubleInterval::TBuiltFloat<81, 23, 8>, float>);
+      int a0 = sizeof(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<NumericalDomains::DDoubleInterval::TBuiltFloat<LDBL_MANT_DIG, 23, 8>, float>);
       a0 +=
-         - sizeof(float) - 2*(((23 + 31) / 32) % 2 == 0 ? 8 : 4);
+         - sizeof(float) - 2*(((23 + 31) / 32) % 2 == 0 ? 8 : 4); // 28 - 4
 //       + (alignof(float) < alignof(AlignType) ? sizeof(float) % alignof(AlignType) : 0)
 //       - (alignof(float) > alignof(AlignType) ? (alignof(float) - sizeof(AlignType)%alignof(float))%alignof(float) : 0);
-      int b0 = ((8+8*sizeCell-1)/(8*sizeCell));
-      int c0 = ((23+8*sizeCell-1)/(8*sizeCell));
-      int a1 = sizeof(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<NumericalDomains::DDoubleInterval::TBuiltFloat<81, 52, 11>, double>);
+      int b0 = ((8+8*sizeCell-1)/(8*sizeCell));    // 1
+      int c0 = ((23+8*sizeCell-1)/(8*sizeCell));   // 1
+      int a1 = sizeof(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<NumericalDomains::DDoubleInterval::TBuiltFloat<LDBL_MANT_DIG, 52, 11>, double>);
       a1 +=
-         - sizeof(double) - 2*(((52 + 31) / 32) % 2 == 0 ? 8 : 4);
+         - sizeof(double) - 2*(((52 + 31) / 32) % 2 == 0 ? 8 : 4); // 40 - 8
 //       + (alignof(double) < alignof(AlignType) ? sizeof(double) % alignof(AlignType) : 0)
 //       - (alignof(double) > alignof(AlignType) ? (alignof(double) - sizeof(AlignType)%alignof(double))%alignof(double) : 0);
-      int b1 = ((11+8*sizeCell-1)/(8*sizeCell));
-      int c1 = ((52+8*sizeCell-1)/(8*sizeCell));
-      int a2 = sizeof(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<NumericalDomains::DDoubleInterval::TBuiltFloat<81, 80, 15>, long double>);
+      int b1 = ((11+8*sizeCell-1)/(8*sizeCell));   // 1
+      int c1 = ((52+8*sizeCell-1)/(8*sizeCell));   // 2
+      int a2 = sizeof(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<NumericalDomains::DDoubleInterval::TBuiltFloat<LDBL_MANT_DIG, LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG>, long double>);
       a2 +=
-         - sizeof(long double) - 2*(((80 + 31) / 32) % 2 == 0 ? 8 : 4);
+         - sizeof(long double) - 2*(((LDBL_MANT_DIG-1 + 31) / 32) % 2 == 0 ? 8 : 4); // 48 - 16
 //       + (alignof(long double) < alignof(AlignType) ? sizeof(long double) % alignof(AlignType) : 0)
 //       - (alignof(long double) > alignof(AlignType) ? (alignof(long double) - sizeof(AlignType)%alignof(long double))%alignof(long double) : 0);
-      int b2 = ((15+8*sizeCell-1)/(8*sizeCell));
-      int c2 = ((80+8*sizeCell-1)/(8*sizeCell));
+      int b2 = ((LDBL_EXPONENT_DIG+8*sizeCell-1)/(8*sizeCell)); // 1
+      int c2 = ((LDBL_MANT_DIG-1+8*sizeCell-1)/(8*sizeCell));   // 2
 
       // a0 = sizeIntervalConstant + sizeIntervalVariableExponent*b0 + sizeIntervalVariableMantissa*c0;
       // a1 = sizeIntervalConstant + sizeIntervalVariableExponent*b1 + sizeIntervalVariableMantissa*c1;
@@ -253,51 +263,55 @@ int main(int argc, char** argv) {
       typedef Numerics::UnsignedBaseStoreTraits::BaseType AlignType;
 #endif
 
-      // sizeof(NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::TBuiltFloat<81, 23, 8>, float>)
+      // sizeof(NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::TBuiltFloat<LDBL_MANT_DIG, 23, 8>, float>)
       //    = sizeExactConstant + sizeof(float)
       //    + sizeExactVariableExponent*((8+8*sizeCell-1)/(8*sizeCell))
       //    + sizeExactVariableMantissa*((23+8*sizeCell-1)/(8*sizeCell))
       //    + sizeExactRealMantissa*((FLOAT_REAL_BITS_NUMBER+8*sizeCell-1)/(8*sizeCell));
-      // sizeof(NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::TBuiltFloat<81, 52, 11>, double>)
+      // sizeof(NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::TBuiltFloat<LDBL_MANT_DIG, 52, 11>, double>)
       //    = sizeExactConstant + sizeof(double)
       //    + sizeExactVariableExponent*((11+8*sizeCell-1)/(8*sizeCell))
       //    + sizeExactVariableMantissa*((52+8*sizeCell-1)/(8*sizeCell))
       //    + sizeExactRealMantissa*((FLOAT_REAL_BITS_NUMBER+8*sizeCell-1)/(8*sizeCell));
-      // sizeof(NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::TBuiltFloat<81, 80, 15>, long double>)
+      // sizeof(NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::TBuiltFloat<LDBL_MANT_DIG, LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG>, long double>)
       //    = sizeExactConstant + sizeof(long double)
-      //    + sizeExactVariableExponent*((15+8*sizeCell-1)/(8*sizeCell))
-      //    + sizeExactVariableMantissa*((80+8*sizeCell-1)/(8*sizeCell))
+      //    + sizeExactVariableExponent*((LDBL_EXPONENT_DIG+8*sizeCell-1)/(8*sizeCell))
+      //    + sizeExactVariableMantissa*((LDBL_MANT_DIG-1+8*sizeCell-1)/(8*sizeCell))
       //    + sizeExactRealMantissa*((FLOAT_REAL_BITS_NUMBER+8*sizeCell-1)/(8*sizeCell));
 
-//    NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::BuiltFloat, float> t;
-//    NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::BuiltDouble, double> u;
-//    NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::BuiltLongDouble, long double> v;
-//    std::cout << t.asImplementation() << ' ' << u.asImplementation() << ' ' << v.asImplementation() << std::endl;
-//    std::cout << sizeof(t) << ' ' << sizeof(NumericalDomains::DDoubleExact::BuiltFloat) << std::endl;
-//    std::cout << sizeof(u) << ' ' << sizeof(NumericalDomains::DDoubleExact::BuiltDouble) << std::endl;
-//    std::cout << sizeof(v) << ' ' << sizeof(NumericalDomains::DDoubleExact::BuiltLongDouble) << std::endl;
+   // NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::BuiltFloat, float> t;
+   // NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::BuiltDouble, double> u;
+   // NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::BuiltLongDouble, long double> v;
+   // std::cout << t.asImplementation() << ' ' << u.asImplementation() << ' ' << v.asImplementation() << std::endl;
+   // std::cout << sizeof(t) << ' ' << sizeof(NumericalDomains::DDoubleExact::BuiltFloat) << std::endl;
+   // std::cout << sizeof(u) << ' ' << sizeof(NumericalDomains::DDoubleExact::BuiltDouble) << std::endl;
+   // std::cout << sizeof(v) << ' ' << sizeof(NumericalDomains::DDoubleExact::BuiltLongDouble) << std::endl;
+   // std::cout << alignof(float) << ' ' << alignof(double) << ' ' << alignof(long double) << ' ' <<  alignof(AlignType) << std::endl;
+      // &t = &t.dValue = 0x7fffffffd810     &t.bfImplementation = 0x7fffffffd818   &t.brReal = 0x7fffffffd830    &t+1 = 0x7fffffffd850
+      // &u = &u.dValue = 0x7fffffffd850     &u.bfImplementation = 0x7fffffffd858   &u.brReal = 0x7fffffffd870    &u+1 = 0x7fffffffd890
+      // &v = &v.dValue = 0x7fffffffd890     &v.bfImplementation = 0x7fffffffd8a0   &v.brReal = 0x7fffffffd8b8    &v+1 = 0x7fffffffd8e0
 
-      int a0 = sizeof(NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::BuiltFloat, float>);
+      int a0 = sizeof(NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::BuiltFloat, float>); // 64 - 4 - 4
       a0 +=
          - sizeof(float)
-         - (alignof(float) < alignof(AlignType) ? sizeof(float) % alignof(AlignType) : 0);
-//       - (alignof(float) > alignof(AlignType) ? (alignof(float) - sizeof(AlignType)%alignof(float))%alignof(float) : 0);
-      int b0 = ((8+8*sizeCell-1)/(8*sizeCell));
-      int c0 = ((23+8*sizeCell-1)/(8*sizeCell));
-      int a1 = sizeof(NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::BuiltDouble, double>);
+         - (alignof(float) < alignof(AlignType) ? sizeof(float) % alignof(AlignType) : 0)
+         - (alignof(float) > alignof(AlignType) ? (alignof(float) - sizeof(AlignType)%alignof(float))%alignof(float) : 0);
+      int b0 = ((8+8*sizeCell-1)/(8*sizeCell));    // 1
+      int c0 = ((23+8*sizeCell-1)/(8*sizeCell));   // 1
+      int a1 = sizeof(NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::BuiltDouble, double>); // 64 - 8
       a1 +=
          - sizeof(double)
-         - (alignof(double) < alignof(AlignType) ? sizeof(double) % alignof(AlignType) : 0);
-//       - (alignof(double) > alignof(AlignType) ? (alignof(double) - sizeof(AlignType)%alignof(double))%alignof(double) : 0);
-      int b1 = ((11+8*sizeCell-1)/(8*sizeCell));
-      int c1 = ((52+8*sizeCell-1)/(8*sizeCell));
-      int a2 = sizeof(NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::BuiltLongDouble, long double>);
+         - (alignof(double) < alignof(AlignType) ? sizeof(double) % alignof(AlignType) : 0)
+         - (alignof(double) > alignof(AlignType) ? (alignof(double) - sizeof(AlignType)%alignof(double))%alignof(double) : 0);
+      int b1 = ((11+8*sizeCell-1)/(8*sizeCell));   // 1
+      int c1 = ((52+8*sizeCell-1)/(8*sizeCell));   // 1
+      int a2 = sizeof(NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::BuiltLongDouble, long double>); // 80 - 16
       a2 +=
          - sizeof(long double)
-         - (alignof(long double) < alignof(AlignType) ? sizeof(long double) % alignof(AlignType) : 0);
-//       - (alignof(long double) > alignof(AlignType) ? (alignof(long double) - sizeof(AlignType)%alignof(long double))%alignof(long double) : 0);
-      int b2 = ((15+8*sizeCell-1)/(8*sizeCell));
-      int c2 = ((80+8*sizeCell-1)/(8*sizeCell));
+         - (alignof(long double) < alignof(AlignType) ? sizeof(long double) % alignof(AlignType) : 0)
+         - (alignof(long double) > alignof(AlignType) ? (alignof(long double) - sizeof(AlignType)%alignof(long double))%alignof(long double) : 0);
+      int b2 = ((LDBL_EXPONENT_DIG+8*sizeCell-1)/(8*sizeCell));   // 1
+      int c2 = ((LDBL_MANT_DIG-1+8*sizeCell-1)/(8*sizeCell));     // 1
 
       // a0 = sizeExactConstant + sizeExactVariableExponent*b0 + sizeExactVariableMantissa*c0;
       // a1 = sizeExactConstant + sizeExactVariableExponent*b1 + sizeExactVariableMantissa*c1;
@@ -334,12 +348,12 @@ int main(int argc, char** argv) {
                  << "   static const int USize = " << sizeExactConstant
                      << " + sizeof(TypeImplementation) /* warning: alignof */\n"
 //                   << " + (((USizeMantissa + 63) / 64) % 2 == 0 ? 16 : 8)\n"
-                     << "         + (alignof(TypeImplementation) < " << alignof(AlignType)
+                     << "         - (alignof(TypeImplementation) < " << alignof(AlignType)
                         << " ? sizeof(TypeImplementation) \% " << alignof(AlignType) << " : 0)\n"
-//                   << "         + (alignof(TypeImplementation) > " << alignof(AlignType)
-//                      << " ? (alignof(TypeImplementation)-1\n"
-//                      << "            - " << (sizeof(AlignType)-1)
-//                   << " \% alignof(TypeImplementation)) : 0)\n"
+                     << "         - (alignof(TypeImplementation) > " << alignof(AlignType)
+                        << " ? (alignof(TypeImplementation)\n"
+                        << "            - " << sizeof(AlignType)
+                     << " \% alignof(TypeImplementation)) : 0)\n"
                      << "         + " << sizeExactVariableExponent << " * ((USizeExponent+"
                            << 8*sizeCell-1 << ") / (" << 8*sizeCell << "))\n"
                      << "         + " << sizeExactVariableMantissa << " * ((USizeMantissa+"

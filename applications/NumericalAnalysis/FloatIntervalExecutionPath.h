@@ -32,14 +32,61 @@
 #ifndef FloatInstrumentation_FloatIntervalExecutionPathH
 #define FloatInstrumentation_FloatIntervalExecutionPathH
 
+#include <cfloat>
 #include "config.h"
 #include "NumericalDomains/FloatIntervalBase.h"
 
 namespace NumericalDomains { namespace DDoubleInterval {
 
-typedef TBuiltFloat<81, 23, 8> BuiltFloat;
-typedef TBuiltFloat<81, 52, 11> BuiltDouble;
-typedef TBuiltFloat<81, 80, 15> BuiltLongDouble;
+namespace DFloatDigitsHelper {
+   template <typename TypeImplementation>
+   class TFloatDigits {
+     public:
+      static const int UBitSizeMantissa=0;
+      static const int UBitSizeExponent=0;
+      static const int UBitFullSizeExponent=0;
+   };
+
+   template <>
+   class TFloatDigits<float> {
+     public:
+      static const int UBitSizeMantissa=FLT_MANT_DIG-1;
+      static const int UBitSizeExponent=sizeof(float)*8-FLT_MANT_DIG;
+      static const int UBitFullSizeExponent=UBitSizeExponent;
+   };
+
+   template <>
+   class TFloatDigits<double> {
+     public:
+      static const int UBitSizeMantissa=DBL_MANT_DIG-1;
+      static const int UBitSizeExponent=sizeof(double)*8-DBL_MANT_DIG;
+      static const int UBitFullSizeExponent=UBitSizeExponent;
+   };
+
+   template <>
+   class TFloatDigits<long double> {
+     public:
+      static const int UBitSizeMantissa=LDBL_MANT_DIG-1;
+      static const int UBitSizeExponent
+         = (LDBL_MAX_EXP == (1 << (16-2))) ? 15 /* leading 1 bit */
+            : sizeof(long double)*8-LDBL_MANT_DIG;
+      static const int UBitFullSizeExponent
+         = (LDBL_MAX_EXP == (1 << (16-2))) ? 16 /* leading 1 bit */
+            : sizeof(long double)*8-LDBL_MANT_DIG;
+   };
+};
+
+class FloatDigitsHelper {
+  public:
+   template <typename TypeImplementation>
+   class TFloatDigits : public DFloatDigitsHelper::TFloatDigits<TypeImplementation> {};
+};
+
+typedef TBuiltFloat<FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa+1, 23, 8> BuiltFloat;
+typedef TBuiltFloat<FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa+1, 52, 11> BuiltDouble;
+typedef TBuiltFloat<FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa+1,
+   FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa,
+   FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent> BuiltLongDouble;
 
 class BaseExecutionPath {
   protected:
@@ -55,6 +102,8 @@ class BaseExecutionPath {
    static Numerics::DDouble::Access::ReadParameters& minParams() { return rpMinParams; }
    static Numerics::DDouble::Access::ReadParameters& maxParams() { return rpMaxParams; }
    class end {};
+
+   typedef DDoubleInterval::FloatDigitsHelper FloatDigitsHelper;
 };
 
 class ExecutionPathContract : public BaseExecutionPath {
@@ -252,10 +301,14 @@ TBaseFloatInterval<TypeExecutionPath>::notifyForCompare(const TFloatInterval& so
 }
 
 template <class TypeExecutionPath, class TypeBuiltDouble, typename TypeImplementation>
-class TFloatInterval : public TCompareFloatInterval<81, TBaseFloatInterval<TypeExecutionPath>, TypeBuiltDouble, TypeImplementation> {
+class TFloatInterval : public TCompareFloatInterval<
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa+1,
+      TBaseFloatInterval<TypeExecutionPath>, TypeBuiltDouble, TypeImplementation> {
   private:
    typedef TFloatInterval<TypeExecutionPath, TypeBuiltDouble, TypeImplementation> thisType;
-   typedef TCompareFloatInterval<81, TBaseFloatInterval<TypeExecutionPath>, TypeBuiltDouble, TypeImplementation> inherited;
+   typedef TCompareFloatInterval<
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa+1,
+      TBaseFloatInterval<TypeExecutionPath>, TypeBuiltDouble, TypeImplementation> inherited;
 
   public:
    const char* queryDebugValue() const;

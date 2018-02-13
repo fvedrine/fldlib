@@ -255,16 +255,10 @@ class TInstrumentedFloatZonotope : public TFloatZonotope<ExecutionPath, USizeMan
          else
             inherited::initFromAtomic(value);
       }
-   TInstrumentedFloatZonotope(long double value)
-      {  if (!inherited::fSupportAtomic)
-            inherited::initFrom(value);
-         else
-            inherited::initFromAtomic(value);
-      }
+   TInstrumentedFloatZonotope(long double value);
    TInstrumentedFloatZonotope(TypeImplementation min, TypeImplementation max)
       :  inherited(min, max)
-      {
-         if (inherited::doesSupportUnstableInLoop())
+      {  if (inherited::doesSupportUnstableInLoop())
             inherited::getSRealDomain().setHolder(inherited::currentPathExplorer);
       }
    TInstrumentedFloatZonotope(TypeImplementation min, TypeImplementation max,
@@ -660,11 +654,28 @@ class TInstrumentedFloatZonotope : public TFloatZonotope<ExecutionPath, USizeMan
    void persist(const char* prefix) const { inherited::persist(*this, prefix); }
 };
 
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+inline
+TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
+      ::TInstrumentedFloatZonotope(long double value)
+{  typedef DAffine::FloatDigitsHelper::TFloatDigits<long double> FloatDigits;
+   TFloatZonotope<ExecutionPath, FloatDigits::UBitSizeMantissa,
+         FloatDigits::UBitSizeExponent, long double> receiver;
+   if (!inherited::fSupportAtomic)
+      receiver.initFrom(value);
+   else
+      receiver.initFromAtomic(value);
+   inherited::operator=(std::move(receiver));
+}
+
 } // end of namespace DAffine
+
+typedef DAffine::FloatDigitsHelper::TFloatDigits<long double> LongDoubleFloatDigits;
 
 typedef DAffine::TInstrumentedFloatZonotope<23, 8, float> FloatZonotope;
 typedef DAffine::TInstrumentedFloatZonotope<52, 11, double> DoubleZonotope;
-typedef DAffine::TInstrumentedFloatZonotope<80, 15, long double> LongDoubleZonotope;
+typedef DAffine::TInstrumentedFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa,
+        LongDoubleFloatDigits::UBitSizeExponent, long double> LongDoubleZonotope;
 
 } // end of namespace NumericalDomains
 

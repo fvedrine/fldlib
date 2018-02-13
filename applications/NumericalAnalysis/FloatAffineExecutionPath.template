@@ -197,11 +197,17 @@ TBaseFloatAffine<TypeExecutionPath>::queryDoubleZonotopeValueAsInterval(const TG
 template <class TypeExecutionPath>
 const char*
 #if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
-TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>& zonotope)
+TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent, long double>& zonotope)
 #elif defined(FLOAT_GENERIC_BASE_LONG)
-TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>& zonotope)
+TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent, long double>& zonotope)
 #else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
-TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>& zonotope)
+TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent, long double>& zonotope)
 #endif
 {  typename inherited::DebugStream out;
    zonotope.writeZonotope(out);
@@ -213,11 +219,17 @@ TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue(const TGBasicF
 template <class TypeExecutionPath>
 const char*
 #if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
-TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>& zonotope)
+TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent, long double>& zonotope)
 #elif defined(FLOAT_GENERIC_BASE_LONG)
-TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>& zonotope)
+TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent, long double>& zonotope)
 #else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
-TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>& zonotope)
+TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent, long double>& zonotope)
 #endif
 {  typename inherited::DebugStream out;
    zonotope.writeInterval(out);
@@ -667,9 +679,15 @@ const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryDoubleZonotopeValue)(co
 template <class TypeExecutionPath>
 const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryDoubleZonotopeValueAsInterval)(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 52, 11, double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryDoubleZonotopeValueAsInterval;
 template <class TypeExecutionPath>
-const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValue)(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue;
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValue)(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent, long double>&)
+   = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue;
 template <class TypeExecutionPath>
-const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValueAsInterval)(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval;
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValueAsInterval)(const TBasicFloatZonotope<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent, long double>&)
+   = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval;
 #elif defined(FLOAT_GENERIC_BASE_LONG)
 template <class TypeExecutionPath>
 const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryEquationValue)(const TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>&) = &TBaseFloatAffine<TypeExecutionPath>::queryEquationValue;
@@ -688,9 +706,15 @@ const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryDoubleZonotopeValue)(co
 template <class TypeExecutionPath>
 const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryDoubleZonotopeValueAsInterval)(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 52, 11, double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryDoubleZonotopeValueAsInterval;
 template <class TypeExecutionPath>
-const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValue)(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue;
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValue)(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent, long double>&)
+   = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue;
 template <class TypeExecutionPath>
-const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValueAsInterval)(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval;
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValueAsInterval)(const TGBasicFloatZonotope<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent, long double>&)
+   = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval;
 #else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
 template <class TypeExecutionPath>
 const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryEquationValue)(const TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>>&) = &TBaseFloatAffine<TypeExecutionPath>::queryEquationValue;
@@ -709,9 +733,15 @@ const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryDoubleZonotopeValue)(co
 template <class TypeExecutionPath>
 const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryDoubleZonotopeValueAsInterval)(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 52, 11, double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryDoubleZonotopeValueAsInterval;
 template <class TypeExecutionPath>
-const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValue)(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue;
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValue)(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent, long double>&)
+   = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValue;
 template <class TypeExecutionPath>
-const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValueAsInterval)(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>, 80, 15, long double>&) = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval;
+const char* (*TBaseFloatAffine<TypeExecutionPath>::pqueryLongDoubleZonotopeValueAsInterval)(const TGBasicFloatZonotope<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<TypeExecutionPath>,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent, long double>&)
+   = &TBaseFloatAffine<TypeExecutionPath>::queryLongDoubleZonotopeValueAsInterval;
 #endif
 
 template <class TypeExecutionPath>

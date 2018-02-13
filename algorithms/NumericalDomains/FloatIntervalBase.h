@@ -219,8 +219,8 @@ template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble
 inline void
 TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>::initFrom(TypeImplementation value) {
    dValue = value;
-   DDoubleInterval::fillContent(bfMin, value);
-   DDoubleInterval::fillContent(bfMax, value);
+   DDoubleInterval::fillContent(bfMin, value, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::fillContent(bfMax, value, typename TypeBaseFloatInterval::FloatDigitsHelper());
    adjustMinMax(value);
    inherited::notifyForCompare(*this);
 }
@@ -229,8 +229,8 @@ template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble
 inline void
 TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>::initFromAtomic(TypeImplementation value) {
    dValue = value;
-   DDoubleInterval::fillContent(bfMin, value);
-   DDoubleInterval::fillContent(bfMax, value);
+   DDoubleInterval::fillContent(bfMin, value, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::fillContent(bfMax, value, typename TypeBaseFloatInterval::FloatDigitsHelper());
    inherited::notifyForCompare(*this);
 }
 
@@ -315,8 +315,8 @@ inline
 TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>::TCompareFloatInterval(
       TypeImplementation min, TypeImplementation max)
    :  dValue((min + max)/2) {
-   DDoubleInterval::fillContent(bfMin, min);
-   DDoubleInterval::fillContent(bfMax, max);
+   DDoubleInterval::fillContent(bfMin, min, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::fillContent(bfMax, max, typename TypeBaseFloatInterval::FloatDigitsHelper());
    adjustMin(min);
    adjustMax(max);
    inherited::notifyForCompare(*this);
@@ -425,13 +425,13 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
    };
 
    TypeImplementation min, max;
-   DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
-   DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+   DDoubleInterval::setContent(min, bfMin, false /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::setContent(max, bfMax, true /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
    min = ::sqrt(min);
    max = ::sqrt(max);
 
-   DDoubleInterval::fillContent(bfMin, min);
-   DDoubleInterval::fillContent(bfMax, max);
+   DDoubleInterval::fillContent(bfMin, min, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::fillContent(bfMax, max, typename TypeBaseFloatInterval::FloatDigitsHelper());
    adjustMin(min);
    adjustMax(max);
    if (hasNegativeSqrt)

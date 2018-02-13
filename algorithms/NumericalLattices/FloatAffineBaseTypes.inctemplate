@@ -100,9 +100,9 @@ DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber)::expAssign(BaseD
       BaseDouble& errorMax, ReadParameters& params) {
    typedef Numerics::DefineTaylorDouble<
          Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
-            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) >,
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, URealBitSizeExponent) >,
          Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
-            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber+5, 15) >,
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber+5, URealBitSizeExponent) >,
          Numerics::BigInteger > TaylorDouble;
    TaylorDouble result(std::move(*this));
    result.expAssign(errorMin, errorMax, params);
@@ -115,9 +115,9 @@ DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber)::logAssign(BaseD
       BaseDouble& errorMax, ReadParameters& params) {
    typedef Numerics::DefineTaylorDouble<
          Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
-            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, 15) >,
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber, URealBitSizeExponent) >,
          Numerics::DefineBuiltDouble<DefineBuiltDoubleTraits
-            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber+5, 15) >,
+            DefineRealMantissaExponentTemplateParameters(URealBitsNumber, URealBitsNumber+5, URealBitSizeExponent) >,
          Numerics::BigInteger > TaylorDouble;
    TaylorDouble result(std::move(*this));
    result.logAssign(errorMin, errorMax, params);

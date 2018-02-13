@@ -45,23 +45,25 @@ BaseExecutionPath::rpMaxParams;
 
 }} // end of namespace NumericalDomains::DDoubleInterval
 
-template class Numerics::DInteger::TBigCellInt<Numerics::DInteger::TCellIntegerTraits<(81+8*sizeof(unsigned)-1)/(8*sizeof(unsigned))> >;
+typedef NumericalDomains::DDoubleInterval::FloatDigitsHelper::TFloatDigits<long double> LongDoubleFloatDigits;
 
-template class Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<81, 24, 8> >;
-template class Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<81, 53, 11> >;
-template class Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<81, 81, 15> >;
+template class Numerics::DInteger::TBigCellInt<Numerics::DInteger::TCellIntegerTraits<(LongDoubleFloatDigits::UBitSizeMantissa+1+8*sizeof(unsigned)-1)/(8*sizeof(unsigned))> >;
+
+template class Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<LongDoubleFloatDigits::UBitSizeMantissa+1, 24, 8> >;
+template class Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<LongDoubleFloatDigits::UBitSizeMantissa+1, 53, 11> >;
+template class Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<LongDoubleFloatDigits::UBitSizeMantissa+1, LongDoubleFloatDigits::UBitSizeMantissa+1, LongDoubleFloatDigits::UBitSizeExponent> >;
 
 template class Numerics::TReadDouble<
-   Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<81, 24, 8> >,
-   Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<81, 29, 8> > >;
+   Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<LongDoubleFloatDigits::UBitSizeMantissa+1, 24, 8> >,
+   Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<LongDoubleFloatDigits::UBitSizeMantissa+1, 29, 8> > >;
 template class Numerics::TReadDouble<
-   Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<81, 53, 11> >,
-   Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<81, 58, 11> > >;
+   Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<LongDoubleFloatDigits::UBitSizeMantissa+1, 53, 11> >,
+   Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<LongDoubleFloatDigits::UBitSizeMantissa+1, 58, 11> > >;
 template class Numerics::TReadDouble<
-   Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<81, 81, 15> >,
-   Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<81, 86, 15> > >;
+   Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<LongDoubleFloatDigits::UBitSizeMantissa+1, LongDoubleFloatDigits::UBitSizeMantissa+1, LongDoubleFloatDigits::UBitSizeExponent> >,
+   Numerics::TBuiltDouble<NumericalDomains::DDoubleInterval::BuiltDoubleTraits<LongDoubleFloatDigits::UBitSizeMantissa+1, LongDoubleFloatDigits::UBitSizeMantissa+6, LongDoubleFloatDigits::UBitSizeExponent> > >;
 
-template class NumericalDomains::DDoubleInterval::TBuiltFloat<81, 23, 8>;
-template class NumericalDomains::DDoubleInterval::TBuiltFloat<81, 52, 11>;
-template class NumericalDomains::DDoubleInterval::TBuiltFloat<81, 80, 15>;
+template class NumericalDomains::DDoubleInterval::TBuiltFloat<LongDoubleFloatDigits::UBitSizeMantissa+1, 23, 8>;
+template class NumericalDomains::DDoubleInterval::TBuiltFloat<LongDoubleFloatDigits::UBitSizeMantissa+1, 52, 11>;
+template class NumericalDomains::DDoubleInterval::TBuiltFloat<LongDoubleFloatDigits::UBitSizeMantissa+1, LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent>;
 

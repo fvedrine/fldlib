@@ -658,19 +658,19 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
       ::sinAssign() {
    dValue = ::sin(dValue);
    TypeImplementation min, max;
-   DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
-   DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+   DDoubleInterval::setContent(min, bfMin, false /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::setContent(max, bfMax, true /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
 
    if (max - min >= 2*PI) {
-      DDoubleInterval::fillContent(bfMin, -1.0);
-      DDoubleInterval::fillContent(bfMax, 1.0);
+      DDoubleInterval::fillContent(bfMin, -1.0, typename TypeBaseFloatInterval::FloatDigitsHelper());
+      DDoubleInterval::fillContent(bfMax, 1.0, typename TypeBaseFloatInterval::FloatDigitsHelper());
    }
    else if (min >= -PI/2 && max <= PI/2) {
       min = ::sin(min);
       max = ::sin(max);
 
-      DDoubleInterval::fillContent(bfMin, min);
-      DDoubleInterval::fillContent(bfMax, max);
+      DDoubleInterval::fillContent(bfMin, min, typename TypeBaseFloatInterval::FloatDigitsHelper());
+      DDoubleInterval::fillContent(bfMax, max, typename TypeBaseFloatInterval::FloatDigitsHelper());
       adjustMin(min);
       adjustMax(max);
    }
@@ -684,74 +684,74 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
       max -= PI * kmin * 2;
       if (min <= PI/2) {
          if (max <= PI/2) {
-            DDoubleInterval::fillContent(bfMin, sinmin);
-            DDoubleInterval::fillContent(bfMax, sinmax);
+            DDoubleInterval::fillContent(bfMin, sinmin, typename TypeBaseFloatInterval::FloatDigitsHelper());
+            DDoubleInterval::fillContent(bfMax, sinmax, typename TypeBaseFloatInterval::FloatDigitsHelper());
             adjustMin(sinmin);
             adjustMax(sinmax);
          }
          else if (max <= 3*PI/2) {
             if (sinmin <= sinmax) {
-               DDoubleInterval::fillContent(bfMin, sinmin);
-               DDoubleInterval::fillContent(bfMax, 1);
+               DDoubleInterval::fillContent(bfMin, sinmin, typename TypeBaseFloatInterval::FloatDigitsHelper());
+               DDoubleInterval::fillContent(bfMax, 1, typename TypeBaseFloatInterval::FloatDigitsHelper());
                adjustMin(sinmin);
             }
             else {
-               DDoubleInterval::fillContent(bfMin, sinmax);
-               DDoubleInterval::fillContent(bfMax, 1);
+               DDoubleInterval::fillContent(bfMin, sinmax, typename TypeBaseFloatInterval::FloatDigitsHelper());
+               DDoubleInterval::fillContent(bfMax, 1, typename TypeBaseFloatInterval::FloatDigitsHelper());
                adjustMin(sinmax);
             };
          }
          else {
-            DDoubleInterval::fillContent(bfMin, -1.0);
-            DDoubleInterval::fillContent(bfMax, 1.0);
+            DDoubleInterval::fillContent(bfMin, -1.0, typename TypeBaseFloatInterval::FloatDigitsHelper());
+            DDoubleInterval::fillContent(bfMax, 1.0, typename TypeBaseFloatInterval::FloatDigitsHelper());
          };
       }
       else if (min <= 3*PI/2) {
          if (max <= 3*PI/2) {
-            DDoubleInterval::fillContent(bfMin, sinmax);
-            DDoubleInterval::fillContent(bfMax, sinmin);
+            DDoubleInterval::fillContent(bfMin, sinmax, typename TypeBaseFloatInterval::FloatDigitsHelper());
+            DDoubleInterval::fillContent(bfMax, sinmin, typename TypeBaseFloatInterval::FloatDigitsHelper());
             adjustMin(sinmax);
             adjustMax(sinmin);
          }
          else if (max <= 5*PI/2) {
             if (sinmin <= sinmax) {
-               DDoubleInterval::fillContent(bfMin, -1);
-               DDoubleInterval::fillContent(bfMax, sinmax);
+               DDoubleInterval::fillContent(bfMin, -1, typename TypeBaseFloatInterval::FloatDigitsHelper());
+               DDoubleInterval::fillContent(bfMax, sinmax, typename TypeBaseFloatInterval::FloatDigitsHelper());
                adjustMax(sinmax);
             }
             else {
-               DDoubleInterval::fillContent(bfMin, -1);
-               DDoubleInterval::fillContent(bfMax, sinmin);
+               DDoubleInterval::fillContent(bfMin, -1, typename TypeBaseFloatInterval::FloatDigitsHelper());
+               DDoubleInterval::fillContent(bfMax, sinmin, typename TypeBaseFloatInterval::FloatDigitsHelper());
                adjustMax(sinmin);
             };
          }
          else {
-            DDoubleInterval::fillContent(bfMin, -1.0);
-            DDoubleInterval::fillContent(bfMax, 1.0);
+            DDoubleInterval::fillContent(bfMin, -1.0, typename TypeBaseFloatInterval::FloatDigitsHelper());
+            DDoubleInterval::fillContent(bfMax, 1.0, typename TypeBaseFloatInterval::FloatDigitsHelper());
          };
       }
       else { // 3*PI/2 < min <= 2*PI
          if (max <= 5*PI/2) {
-            DDoubleInterval::fillContent(bfMin, sinmin);
-            DDoubleInterval::fillContent(bfMax, sinmax);
+            DDoubleInterval::fillContent(bfMin, sinmin, typename TypeBaseFloatInterval::FloatDigitsHelper());
+            DDoubleInterval::fillContent(bfMax, sinmax, typename TypeBaseFloatInterval::FloatDigitsHelper());
             adjustMin(sinmin);
             adjustMax(sinmax);
          }
          else if (max <= 7*PI/2) {
             if (sinmin <= sinmax) {
-               DDoubleInterval::fillContent(bfMin, sinmin);
-               DDoubleInterval::fillContent(bfMax, 1);
+               DDoubleInterval::fillContent(bfMin, sinmin, typename TypeBaseFloatInterval::FloatDigitsHelper());
+               DDoubleInterval::fillContent(bfMax, 1, typename TypeBaseFloatInterval::FloatDigitsHelper());
                adjustMin(sinmin);
             }
             else {
-               DDoubleInterval::fillContent(bfMin, sinmax);
-               DDoubleInterval::fillContent(bfMax, 1);
+               DDoubleInterval::fillContent(bfMin, sinmax, typename TypeBaseFloatInterval::FloatDigitsHelper());
+               DDoubleInterval::fillContent(bfMax, 1, typename TypeBaseFloatInterval::FloatDigitsHelper());
                adjustMin(sinmax);
             };
          }
          else {
-            DDoubleInterval::fillContent(bfMin, -1.0);
-            DDoubleInterval::fillContent(bfMax, 1.0);
+            DDoubleInterval::fillContent(bfMin, -1.0, typename TypeBaseFloatInterval::FloatDigitsHelper());
+            DDoubleInterval::fillContent(bfMax, 1.0, typename TypeBaseFloatInterval::FloatDigitsHelper());
          };
       };
    };
@@ -765,19 +765,19 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
       ::cosAssign() {
    dValue = ::cos(dValue);
    TypeImplementation min, max;
-   DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
-   DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+   DDoubleInterval::setContent(min, bfMin, false /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::setContent(max, bfMax, true /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
 
    if (max - min >= 2*PI) {
-      DDoubleInterval::fillContent(bfMin, -1.0);
-      DDoubleInterval::fillContent(bfMax, 1.0);
+      DDoubleInterval::fillContent(bfMin, -1.0, typename TypeBaseFloatInterval::FloatDigitsHelper());
+      DDoubleInterval::fillContent(bfMax, 1.0, typename TypeBaseFloatInterval::FloatDigitsHelper());
    }
    else if (min >= 0 && max <= PI) {
       min = ::cos(min);
       max = ::cos(max);
 
-      DDoubleInterval::fillContent(bfMin, max);
-      DDoubleInterval::fillContent(bfMax, min);
+      DDoubleInterval::fillContent(bfMin, max, typename TypeBaseFloatInterval::FloatDigitsHelper());
+      DDoubleInterval::fillContent(bfMax, min, typename TypeBaseFloatInterval::FloatDigitsHelper());
       adjustMin(max);
       adjustMax(min);
    }
@@ -791,50 +791,50 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
       max -= PI * kmin * 2;
       if (min <= PI) {
          if (max <= PI) {
-            DDoubleInterval::fillContent(bfMin, cosmax);
-            DDoubleInterval::fillContent(bfMax, cosmin);
+            DDoubleInterval::fillContent(bfMin, cosmax, typename TypeBaseFloatInterval::FloatDigitsHelper());
+            DDoubleInterval::fillContent(bfMax, cosmin, typename TypeBaseFloatInterval::FloatDigitsHelper());
             adjustMin(cosmax);
             adjustMax(cosmin);
          }
          else if (max <= 2*PI) {
             if (cosmin <= cosmax) {
-               DDoubleInterval::fillContent(bfMin, -1);
-               DDoubleInterval::fillContent(bfMax, cosmax);
+               DDoubleInterval::fillContent(bfMin, -1, typename TypeBaseFloatInterval::FloatDigitsHelper());
+               DDoubleInterval::fillContent(bfMax, cosmax, typename TypeBaseFloatInterval::FloatDigitsHelper());
                adjustMax(cosmax);
             }
             else {
-               DDoubleInterval::fillContent(bfMin, -1);
-               DDoubleInterval::fillContent(bfMax, cosmin);
+               DDoubleInterval::fillContent(bfMin, -1, typename TypeBaseFloatInterval::FloatDigitsHelper());
+               DDoubleInterval::fillContent(bfMax, cosmin, typename TypeBaseFloatInterval::FloatDigitsHelper());
                adjustMax(cosmin);
             };
          }
          else {
-            DDoubleInterval::fillContent(bfMin, -1.0);
-            DDoubleInterval::fillContent(bfMax, 1.0);
+            DDoubleInterval::fillContent(bfMin, -1.0, typename TypeBaseFloatInterval::FloatDigitsHelper());
+            DDoubleInterval::fillContent(bfMax, 1.0, typename TypeBaseFloatInterval::FloatDigitsHelper());
          };
       }
       else { // PI < min <= 2*PI
          if (max <= 2*PI) {
-            DDoubleInterval::fillContent(bfMin, cosmin);
-            DDoubleInterval::fillContent(bfMax, cosmax);
+            DDoubleInterval::fillContent(bfMin, cosmin, typename TypeBaseFloatInterval::FloatDigitsHelper());
+            DDoubleInterval::fillContent(bfMax, cosmax, typename TypeBaseFloatInterval::FloatDigitsHelper());
             adjustMin(cosmin);
             adjustMax(cosmax);
          }
          else if (max <= 3*PI) {
             if (cosmin <= cosmax) {
-               DDoubleInterval::fillContent(bfMin, cosmin);
-               DDoubleInterval::fillContent(bfMax, 1);
+               DDoubleInterval::fillContent(bfMin, cosmin, typename TypeBaseFloatInterval::FloatDigitsHelper());
+               DDoubleInterval::fillContent(bfMax, 1, typename TypeBaseFloatInterval::FloatDigitsHelper());
                adjustMin(cosmin);
             }
             else {
-               DDoubleInterval::fillContent(bfMin, cosmax);
-               DDoubleInterval::fillContent(bfMax, 1);
+               DDoubleInterval::fillContent(bfMin, cosmax, typename TypeBaseFloatInterval::FloatDigitsHelper());
+               DDoubleInterval::fillContent(bfMax, 1, typename TypeBaseFloatInterval::FloatDigitsHelper());
                adjustMin(cosmax);
             };
          }
          else {
-            DDoubleInterval::fillContent(bfMin, -1.0);
-            DDoubleInterval::fillContent(bfMax, 1.0);
+            DDoubleInterval::fillContent(bfMin, -1.0, typename TypeBaseFloatInterval::FloatDigitsHelper());
+            DDoubleInterval::fillContent(bfMax, 1.0, typename TypeBaseFloatInterval::FloatDigitsHelper());
          };
       };
    };
@@ -848,13 +848,13 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
       ::asinAssign() {
    dValue = ::asin(dValue);
    TypeImplementation min, max;
-   NumericalDomains::DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
-   NumericalDomains::DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+   NumericalDomains::DDoubleInterval::setContent(min, bfMin, false /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   NumericalDomains::DDoubleInterval::setContent(max, bfMax, true /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
    min = ::asin(min);
    max = ::asin(max);
 
-   DDoubleInterval::fillContent(bfMin, min);
-   DDoubleInterval::fillContent(bfMax, max);
+   DDoubleInterval::fillContent(bfMin, min, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::fillContent(bfMax, max, typename TypeBaseFloatInterval::FloatDigitsHelper());
    adjustMin(min);
    adjustMax(max);
 
@@ -867,13 +867,13 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
       ::acosAssign() {
    dValue = ::acos(dValue);
    TypeImplementation min, max;
-   DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
-   DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+   DDoubleInterval::setContent(min, bfMin, false /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::setContent(max, bfMax, true /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
    min = ::acos(min);
    max = ::acos(max);
 
-   DDoubleInterval::fillContent(bfMin, max);
-   DDoubleInterval::fillContent(bfMax, min);
+   DDoubleInterval::fillContent(bfMin, max, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::fillContent(bfMax, min, typename TypeBaseFloatInterval::FloatDigitsHelper());
    adjustMin(max);
    adjustMax(min);
 
@@ -896,13 +896,13 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
       ::atanAssign() {
    dValue = ::atan(dValue);
    TypeImplementation min, max;
-   DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
-   DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+   DDoubleInterval::setContent(min, bfMin, false /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::setContent(max, bfMax, true /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
    min = ::atan(min);
    max = ::atan(max);
 
-   DDoubleInterval::fillContent(bfMin, min);
-   DDoubleInterval::fillContent(bfMax, max);
+   DDoubleInterval::fillContent(bfMin, min, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::fillContent(bfMax, max, typename TypeBaseFloatInterval::FloatDigitsHelper());
    adjustMin(min);
    adjustMax(max);
 
@@ -915,13 +915,13 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
       ::expAssign() {
    dValue = ::exp(dValue);
    TypeImplementation min, max;
-   DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
-   DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+   DDoubleInterval::setContent(min, bfMin, false /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::setContent(max, bfMax, true /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
    min = ::exp(min);
    max = ::exp(max);
 
-   DDoubleInterval::fillContent(bfMin, min);
-   DDoubleInterval::fillContent(bfMax, max);
+   DDoubleInterval::fillContent(bfMin, min, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::fillContent(bfMax, max, typename TypeBaseFloatInterval::FloatDigitsHelper());
    adjustMin(min);
    adjustMax(max);
 
@@ -942,13 +942,13 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
 
    dValue = ::log(dValue);
    TypeImplementation min, max;
-   DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
-   DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+   DDoubleInterval::setContent(min, bfMin, false /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::setContent(max, bfMax, true /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
    min = ::log(min);
    max = ::log(max);
 
-   DDoubleInterval::fillContent(bfMin, min);
-   DDoubleInterval::fillContent(bfMax, max);
+   DDoubleInterval::fillContent(bfMin, min, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::fillContent(bfMax, max, typename TypeBaseFloatInterval::FloatDigitsHelper());
    adjustMin(min);
    adjustMax(max);
 
@@ -971,13 +971,13 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
 
    dValue = ::log10(dValue);
    TypeImplementation min, max;
-   DDoubleInterval::setContent(min, bfMin, false /* isUpper */);
-   DDoubleInterval::setContent(max, bfMax, true /* isUpper */);
+   DDoubleInterval::setContent(min, bfMin, false /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::setContent(max, bfMax, true /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
    min = ::log10(min);
    max = ::log10(max);
 
-   DDoubleInterval::fillContent(bfMin, min);
-   DDoubleInterval::fillContent(bfMax, max);
+   DDoubleInterval::fillContent(bfMin, min, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::fillContent(bfMax, max, typename TypeBaseFloatInterval::FloatDigitsHelper());
    adjustMin(min);
    adjustMax(max);
 
@@ -1001,10 +1001,10 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
    dValue = ::pow(dValue, value.dValue);
    TypeImplementation thisMin, thisMax;
    TypeImplementation powMin, powMax;
-   DDoubleInterval::setContent(thisMin, bfMin, false /* isUpper */);
-   DDoubleInterval::setContent(thisMax, bfMax, true /* isUpper */);
-   DDoubleInterval::setContent(powMin, value.bfMin, false /* isUpper */);
-   DDoubleInterval::setContent(powMax, value.bfMax, true /* isUpper */);
+   DDoubleInterval::setContent(thisMin, bfMin, false /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::setContent(thisMax, bfMax, true /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::setContent(powMin, value.bfMin, false /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::setContent(powMax, value.bfMax, true /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
 
    TypeImplementation min, max;
    if (thisMin < 1 && thisMax <= 1) {
@@ -1020,8 +1020,8 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
       max = ::pow(thisMax, powMax);
    }
 
-   DDoubleInterval::fillContent(bfMin, min);
-   DDoubleInterval::fillContent(bfMax, max);
+   DDoubleInterval::fillContent(bfMin, min, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   DDoubleInterval::fillContent(bfMax, max, typename TypeBaseFloatInterval::FloatDigitsHelper());
    adjustMin(min);
    adjustMax(max);
 

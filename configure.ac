@@ -104,9 +104,11 @@ AM_CONDITIONAL([FLOAT_LIB_INTERFACE],[test "x$enable_interface" != "xno"])
 AS_IF([test "x$enable_interface" != "xno"], [
   AC_DEFINE([FLOAT_ALLOW_INTERFACE],[1],[Define to used a simplified interface file])
   AC_SUBST([FLOAT_ALLOW_INTERFACE],[-interface])
+  AC_SUBST([FLOAT_LIB_NAME],[libFloatDiagnosisInterface.a])
   AC_SUBST([HAVE_FLOAT_ALLOW_INTERFACE],[1])
 ],[
   AC_SUBST([FLOAT_ALLOW_INTERFACE],[])
+  AC_SUBST([FLOAT_LIB_NAME],[libFloatDiagnosis.a])
   AC_SUBST([HAVE_FLOAT_ALLOW_INTERFACE],[0])
 ])
 

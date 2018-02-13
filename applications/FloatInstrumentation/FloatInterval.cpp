@@ -42,9 +42,14 @@
 
 namespace NumericalDomains { namespace DDoubleInterval {
 
-template class TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, BuiltFloat, float>;
-template class TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, BuiltDouble, double>;
-template class TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, BuiltLongDouble, long double>;
+typedef FloatDigitsHelper::TFloatDigits<long double> LongDoubleFloatDigits;
+
+template class TCompareFloatInterval<LongDoubleFloatDigits::UBitSizeMantissa+1,
+         TBaseFloatInterval<ExecutionPath>, BuiltFloat, float>;
+template class TCompareFloatInterval<LongDoubleFloatDigits::UBitSizeMantissa+1,
+         TBaseFloatInterval<ExecutionPath>, BuiltDouble, double>;
+template class TCompareFloatInterval<LongDoubleFloatDigits::UBitSizeMantissa+1,
+         TBaseFloatInterval<ExecutionPath>, BuiltLongDouble, long double>;
 
 template class TInstrumentedFloatInterval<BuiltFloat, float>;
 template class TInstrumentedFloatInterval<BuiltDouble, double>;
@@ -53,12 +58,12 @@ template class TInstrumentedFloatInterval<BuiltLongDouble, long double>;
 // template class TBaseFloatInterval<TBaseFloatInterval<ExecutionPath> >;
 template class TBaseFloatInterval<ExecutionPath>;
 
-template void TBaseFloatInterval<ExecutionPath>::assumeInterval<TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 23, 8>, float> >(TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 23, 8>, float> const&) const;
-template void TBaseFloatInterval<ExecutionPath>::assumeInterval<TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 52, 11>, double> >(TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 52, 11>, double> const&) const;
-template void TBaseFloatInterval<ExecutionPath>::assumeInterval<TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 80, 15>, long double> >(TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 80, 15>, long double> const&) const;
-template void TBaseFloatInterval<ExecutionPath>::writeInterval<TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 23, 8>, float> >(TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 23, 8>, float> const&) const;
-template void TBaseFloatInterval<ExecutionPath>::writeInterval<TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 52, 11>, double> >(TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 52, 11>, double> const&) const;
-template void TBaseFloatInterval<ExecutionPath>::writeInterval<TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 80, 15>, long double> >(TCompareFloatInterval<81, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<81, 80, 15>, long double> const&) const;
+template void TBaseFloatInterval<ExecutionPath>::assumeInterval<TCompareFloatInterval<LongDoubleFloatDigits::UBitSizeMantissa+1, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<LongDoubleFloatDigits::UBitSizeMantissa+1, 23, 8>, float> >(TCompareFloatInterval<LongDoubleFloatDigits::UBitSizeMantissa+1, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<LongDoubleFloatDigits::UBitSizeMantissa+1, 23, 8>, float> const&) const;
+template void TBaseFloatInterval<ExecutionPath>::assumeInterval<TCompareFloatInterval<LongDoubleFloatDigits::UBitSizeMantissa+1, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<LongDoubleFloatDigits::UBitSizeMantissa+1, 52, 11>, double> >(TCompareFloatInterval<LongDoubleFloatDigits::UBitSizeMantissa+1, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<LongDoubleFloatDigits::UBitSizeMantissa+1, 52, 11>, double> const&) const;
+template void TBaseFloatInterval<ExecutionPath>::assumeInterval<TCompareFloatInterval<LongDoubleFloatDigits::UBitSizeMantissa+1, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<LongDoubleFloatDigits::UBitSizeMantissa+1, FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa, FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent>, long double> >(TCompareFloatInterval<LongDoubleFloatDigits::UBitSizeMantissa+1, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<LongDoubleFloatDigits::UBitSizeMantissa+1, FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa, FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent>, long double> const&) const;
+template void TBaseFloatInterval<ExecutionPath>::writeInterval<TCompareFloatInterval<LongDoubleFloatDigits::UBitSizeMantissa+1, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<LongDoubleFloatDigits::UBitSizeMantissa+1, 23, 8>, float> >(TCompareFloatInterval<LongDoubleFloatDigits::UBitSizeMantissa+1, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<LongDoubleFloatDigits::UBitSizeMantissa+1, 23, 8>, float> const&) const;
+template void TBaseFloatInterval<ExecutionPath>::writeInterval<TCompareFloatInterval<LongDoubleFloatDigits::UBitSizeMantissa+1, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<LongDoubleFloatDigits::UBitSizeMantissa+1, 52, 11>, double> >(TCompareFloatInterval<LongDoubleFloatDigits::UBitSizeMantissa+1, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<LongDoubleFloatDigits::UBitSizeMantissa+1, 52, 11>, double> const&) const;
+template void TBaseFloatInterval<ExecutionPath>::writeInterval<TCompareFloatInterval<LongDoubleFloatDigits::UBitSizeMantissa+1, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<LongDoubleFloatDigits::UBitSizeMantissa+1, FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa, FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent>, long double> >(TCompareFloatInterval<LongDoubleFloatDigits::UBitSizeMantissa+1, TBaseFloatInterval<ExecutionPath>, TBuiltFloat<LongDoubleFloatDigits::UBitSizeMantissa+1, FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa, FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent>, long double> const&) const;
 template void TBaseFloatInterval<ExecutionPath>::assumeInterval<TInstrumentedFloatInterval<BuiltFloat, float> >(TInstrumentedFloatInterval<BuiltFloat, float> const&) const;
 template void TBaseFloatInterval<ExecutionPath>::assumeInterval<TInstrumentedFloatInterval<BuiltDouble, double> >(TInstrumentedFloatInterval<BuiltDouble, double> const&) const;
 template void TBaseFloatInterval<ExecutionPath>::assumeInterval<TInstrumentedFloatInterval<BuiltLongDouble, long double> >(TInstrumentedFloatInterval<BuiltLongDouble, long double> const&) const;

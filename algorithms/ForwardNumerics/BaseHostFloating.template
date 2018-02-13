@@ -105,10 +105,13 @@ TFloatingBase<TypeTraits>::getBasicExponent() const {
    unsigned char doubleContent[UByteSizeImplementation];
    memcpy(doubleContent, &dDouble, UByteSizeImplementation);
    unsigned char* mask = (unsigned char*) doubleContent;
-   if (TypeTraits::isLittleEndian())
-      mask += UByteSizeImplementation-1;
+   if (TypeTraits::isLittleEndian()) {
+      int sizeInBits = UBitSizeMantissa + TypeTraits::UBitFullSizeExponent + 1;
+      AssumeCondition(sizeInBits % 8 == 0)
+      mask += sizeInBits/8-1;
+   }
    unsigned int result = 0;
-   int shift = TypeTraits::UBitSizeExponent-7;
+   int shift = TypeTraits::UBitFullSizeExponent-7;
    result |= (*mask & 0x7f) << shift;
    while ((shift -= 8) >= 0) {
       if (TypeTraits::isLittleEndian())
@@ -132,12 +135,15 @@ TFloatingBase<TypeTraits>::setBasicExponent(unsigned int exponent) {
    unsigned char doubleContent[UByteSizeImplementation];
    memcpy(doubleContent, &dDouble, UByteSizeImplementation);
    unsigned char* mask = (unsigned char*) doubleContent;
-   if (TypeTraits::isLittleEndian())
-      mask += UByteSizeImplementation-1;
-   int shift = TypeTraits::UBitSizeExponent-7;
+   if (TypeTraits::isLittleEndian()) {
+      int sizeInBits = UBitSizeMantissa + TypeTraits::UBitFullSizeExponent + 1;
+      AssumeCondition(sizeInBits % 8 == 0)
+      mask += sizeInBits/8-1;
+   }
+   int shift = TypeTraits::UBitFullSizeExponent-7;
 
 #if defined(__GNUC__) && !defined(__clang__)
-   int shiftAssert = TypeTraits::UBitSizeExponent;
+   int shiftAssert = TypeTraits::UBitFullSizeExponent;
    AssumeCondition((shiftAssert >= sizeof(unsigned int)*8)
          || (((~0U << shiftAssert) & exponent) == 0))
 #else
@@ -145,10 +151,10 @@ TFloatingBase<TypeTraits>::setBasicExponent(unsigned int exponent) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshift-count-overflow"
 #endif
-   AssumeCondition((TypeTraits::UBitSizeExponent >= sizeof(unsigned int)*8)
-         || (((~0U << TypeTraits::UBitSizeExponent) & exponent) == 0))
-   // AssumeCondition((TypeTraits::UBitSizeExponent == sizeof(unsigned int)*8)
-   //       || (((~1U << (TypeTraits::UBitSizeExponent-1)) & exponent) == 0))
+   AssumeCondition((TypeTraits::UBitFullSizeExponent >= sizeof(unsigned int)*8)
+         || (((~0U << TypeTraits::UBitFullSizeExponent) & exponent) == 0))
+   // AssumeCondition((TypeTraits::UBitFullSizeExponent == sizeof(unsigned int)*8)
+   //       || (((~1U << (TypeTraits::UBitFullSizeExponent-1)) & exponent) == 0))
 #if defined(__clang__)
 #pragma GCC diagnostic pop
 #endif

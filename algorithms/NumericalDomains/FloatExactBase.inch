@@ -212,7 +212,7 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
    AssumeCondition(brReal.bitSizeMantissa() >= bfImplementation.bitSizeMantissa()
          && brReal.bitSizeExponent() >= bfImplementation.bitSizeExponent());
    dValue = value;
-   DDoubleExact::DefineFillContent(bfImplementation, value);
+   DDoubleExact::DefineFillContent(bfImplementation, value, typename TypeBaseFloatExact::FloatDigitsHelper());
    auto mode = inherited::getMode();
    if (mode != inherited::SVNoReal) {
       retrieveReal(bfImplementation, brReal);

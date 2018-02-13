@@ -1639,8 +1639,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sinAs
       maxParams.clear();
 
       double min=0, max=0;
-      DAffine::DefineSetContent(min, minBuilt /*, false isUpper */);
-      DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */);
+      DAffine::DefineSetContent(min, minBuilt /*, false isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+      DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
       int kmin = 0, kmax = 0;
       bool isTop = false;
       if (min < -PI/2.0) {
@@ -1744,8 +1744,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sinAs
          max = +1.0;
       };
       AssumeCondition(min <= max)
-      DAffine::DefineFillContent(minBuilt, min);
-      DAffine::DefineFillContent(maxBuilt, max);
+      DAffine::DefineFillContent(minBuilt, min, typename TypeBaseFloatAffine::FloatDigitsHelper());
+      DAffine::DefineFillContent(maxBuilt, max, typename TypeBaseFloatAffine::FloatDigitsHelper());
 
       conversion.setSizeMantissa(52).setSizeExponent(11);
       sizeMantissa = (52 + DefineSizeofBaseTypeInBits - 1)/DefineSizeofBaseTypeInBits;
@@ -1803,8 +1803,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sinAs
          maxParams.clear();
 
          double min=0, max=0;
-         DAffine::DefineSetContent(min, minBuilt /*, false isUpper */);
-         DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */);
+         DAffine::DefineSetContent(min, minBuilt /*, false isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+         DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
          int kmin = 0, kmax = 0;
          bool isTop = false;
          if (min < -PI/2.0) {
@@ -1908,8 +1908,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sinAs
             max = +1.0;
          };
          AssumeCondition(min <= max)
-         DAffine::DefineFillContent(minBuilt, min);
-         DAffine::DefineFillContent(maxBuilt, max);
+         DAffine::DefineFillContent(minBuilt, min, typename TypeBaseFloatAffine::FloatDigitsHelper());
+         DAffine::DefineFillContent(maxBuilt, max, typename TypeBaseFloatAffine::FloatDigitsHelper());
 
          conversion.setSizeMantissa(52).setSizeExponent(11);
          sizeMantissa = (52 + DefineSizeofBaseTypeInBits - 1)/DefineSizeofBaseTypeInBits;
@@ -1966,8 +1966,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::cosAs
       maxParams.clear();
 
       double min=0, max=0;
-      DAffine::DefineSetContent(min, minBuilt /*, false isUpper */);
-      DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */);
+      DAffine::DefineSetContent(min, minBuilt /*, false isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+      DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
       int kmin = 0, kmax = 0;
       bool isTop = false;
       if (min < -PI/2) {
@@ -2082,8 +2082,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::cosAs
          max = +1.0;
       };
       AssumeCondition(min <= max)
-      DAffine::DefineFillContent(minBuilt, min);
-      DAffine::DefineFillContent(maxBuilt, max);
+      DAffine::DefineFillContent(minBuilt, min, typename TypeBaseFloatAffine::FloatDigitsHelper());
+      DAffine::DefineFillContent(maxBuilt, max, typename TypeBaseFloatAffine::FloatDigitsHelper());
 
       conversion.setSizeMantissa(52).setSizeExponent(11);
       sizeMantissa = (52 + DefineSizeofBaseTypeInBits - 1)/DefineSizeofBaseTypeInBits;
@@ -2141,8 +2141,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::cosAs
          maxParams.clear();
 
          double min=0, max=0;
-         DAffine::DefineSetContent(min, minBuilt /*, false isUpper */);
-         DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */);
+         DAffine::DefineSetContent(min, minBuilt /*, false isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+         DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
          int kmin = 0, kmax = 0;
          bool isTop = false;
          if (min < -PI/2) {
@@ -2257,8 +2257,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::cosAs
             max = +1.0;
          };
          AssumeCondition(min <= max)
-         DAffine::DefineFillContent(minBuilt, min);
-         DAffine::DefineFillContent(maxBuilt, max);
+         DAffine::DefineFillContent(minBuilt, min, typename TypeBaseFloatAffine::FloatDigitsHelper());
+         DAffine::DefineFillContent(maxBuilt, max, typename TypeBaseFloatAffine::FloatDigitsHelper());
 
          conversion.setSizeMantissa(52).setSizeExponent(11);
          sizeMantissa = (52 + DefineSizeofBaseTypeInBits - 1)/DefineSizeofBaseTypeInBits;
@@ -2315,8 +2315,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::asinA
       maxParams.clear();
 
       double min=0, max=0;
-      DAffine::DefineSetContent(min, minBuilt /*, false isUpper */);
-      DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */);
+      DAffine::DefineSetContent(min, minBuilt /*, false isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+      DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
       if (min <= -1.0)
          min = -PI/2;
       else if (min >= 1.0)
@@ -2330,8 +2330,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::asinA
       else
          max = ::asin(max);
       AssumeCondition(min <= max)
-      DAffine::DefineFillContent(minBuilt, min);
-      DAffine::DefineFillContent(maxBuilt, max);
+      DAffine::DefineFillContent(minBuilt, min, typename TypeBaseFloatAffine::FloatDigitsHelper());
+      DAffine::DefineFillContent(maxBuilt, max, typename TypeBaseFloatAffine::FloatDigitsHelper());
 
       conversion.setSizeMantissa(52).setSizeExponent(11);
       sizeMantissa = (52 + DefineSizeofBaseTypeInBits - 1)/DefineSizeofBaseTypeInBits;
@@ -2408,8 +2408,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::asinA
          maxParams.clear();
 
          double min=0, max=0;
-         DAffine::DefineSetContent(min, minBuilt /*, false isUpper */);
-         DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */);
+         DAffine::DefineSetContent(min, minBuilt /*, false isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+         DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
          if (min <= -1.0)
             min = -PI/2;
          else if (min >= 1.0)
@@ -2423,8 +2423,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::asinA
          else
             max = ::asin(max);
          AssumeCondition(min <= max)
-         DAffine::DefineFillContent(minBuilt, min);
-         DAffine::DefineFillContent(maxBuilt, max);
+         DAffine::DefineFillContent(minBuilt, min, typename TypeBaseFloatAffine::FloatDigitsHelper());
+         DAffine::DefineFillContent(maxBuilt, max, typename TypeBaseFloatAffine::FloatDigitsHelper());
 
          conversion.setSizeMantissa(52).setSizeExponent(11);
          sizeMantissa = (52 + DefineSizeofBaseTypeInBits - 1)/DefineSizeofBaseTypeInBits;
@@ -2481,8 +2481,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::acosA
       maxParams.clear();
 
       double min=0, max=0;
-      DAffine::DefineSetContent(min, minBuilt /*, false isUpper */);
-      DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */);
+      DAffine::DefineSetContent(min, minBuilt /*, false isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+      DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
       double temp;
       if (min <= -1.0)
          temp = 0;
@@ -2498,8 +2498,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::acosA
          min = ::acos(max);
       max = temp;
       AssumeCondition(min <= max)
-      DAffine::DefineFillContent(minBuilt, min);
-      DAffine::DefineFillContent(maxBuilt, max);
+      DAffine::DefineFillContent(minBuilt, min, typename TypeBaseFloatAffine::FloatDigitsHelper());
+      DAffine::DefineFillContent(maxBuilt, max, typename TypeBaseFloatAffine::FloatDigitsHelper());
 
       conversion.setSizeMantissa(52).setSizeExponent(11);
       sizeMantissa = (52 + DefineSizeofBaseTypeInBits - 1)/DefineSizeofBaseTypeInBits;
@@ -2576,8 +2576,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::acosA
          maxParams.clear();
 
          double min=0, max=0;
-         DAffine::DefineSetContent(min, minBuilt /*, false isUpper */);
-         DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */);
+         DAffine::DefineSetContent(min, minBuilt /*, false isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+         DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
          double temp;
          if (min <= -1.0)
             temp = 0;
@@ -2593,8 +2593,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::acosA
             min = ::acos(max);
          max = temp;
          AssumeCondition(min <= max)
-         DAffine::DefineFillContent(minBuilt, min);
-         DAffine::DefineFillContent(maxBuilt, max);
+         DAffine::DefineFillContent(minBuilt, min, typename TypeBaseFloatAffine::FloatDigitsHelper());
+         DAffine::DefineFillContent(maxBuilt, max, typename TypeBaseFloatAffine::FloatDigitsHelper());
 
          conversion.setSizeMantissa(52).setSizeExponent(11);
          sizeMantissa = (52 + DefineSizeofBaseTypeInBits - 1)/DefineSizeofBaseTypeInBits;
@@ -2651,13 +2651,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::atanA
       maxParams.clear();
 
       double min=0, max=0;
-      DAffine::DefineSetContent(min, minBuilt /*, false isUpper */);
-      DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */);
+      DAffine::DefineSetContent(min, minBuilt /*, false isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+      DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
       min = ::atan(min);
       max = ::atan(max);
       AssumeCondition(min <= max)
-      DAffine::DefineFillContent(minBuilt, min);
-      DAffine::DefineFillContent(maxBuilt, max);
+      DAffine::DefineFillContent(minBuilt, min, typename TypeBaseFloatAffine::FloatDigitsHelper());
+      DAffine::DefineFillContent(maxBuilt, max, typename TypeBaseFloatAffine::FloatDigitsHelper());
 
       conversion.setSizeMantissa(52).setSizeExponent(11);
       sizeMantissa = (52 + DefineSizeofBaseTypeInBits - 1)/DefineSizeofBaseTypeInBits;
@@ -2715,13 +2715,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::atanA
          maxParams.clear();
 
          double min=0, max=0;
-         DAffine::DefineSetContent(min, minBuilt /*, false isUpper */);
-         DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */);
+         DAffine::DefineSetContent(min, minBuilt /*, false isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+         DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
          min = ::atan(min);
          max = ::atan(max);
          AssumeCondition(min <= max)
-         DAffine::DefineFillContent(minBuilt, min);
-         DAffine::DefineFillContent(maxBuilt, max);
+         DAffine::DefineFillContent(minBuilt, min, typename TypeBaseFloatAffine::FloatDigitsHelper());
+         DAffine::DefineFillContent(maxBuilt, max, typename TypeBaseFloatAffine::FloatDigitsHelper());
 
          conversion.setSizeMantissa(52).setSizeExponent(11);
          sizeMantissa = (52 + DefineSizeofBaseTypeInBits - 1)/DefineSizeofBaseTypeInBits;
@@ -3067,10 +3067,10 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::atan2
       maxParams.clear();
 
       double min=0, max=0, minSource=0, maxSource=0;
-      DAffine::DefineSetContent(min, minBuilt /*, false isUpper */);
-      DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */);
-      DAffine::DefineSetContent(minSource, minSourceBuilt /*, false isUpper */);
-      DAffine::DefineSetContent(maxSource, maxSourceBuilt /*, true isUpper */);
+      DAffine::DefineSetContent(min, minBuilt /*, false isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+      DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+      DAffine::DefineSetContent(minSource, minSourceBuilt /*, false isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+      DAffine::DefineSetContent(maxSource, maxSourceBuilt /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
       // [TODO] not correct specification
       double newmax, newmin;
       newmax = newmin = ::atan2(min, minSource);
@@ -3090,8 +3090,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::atan2
       if (temp > newmax)
          newmax = temp;
       // AssumeCondition(min <= max)
-      DAffine::DefineFillContent(minBuilt, newmin);
-      DAffine::DefineFillContent(maxBuilt, newmax);
+      DAffine::DefineFillContent(minBuilt, newmin, typename TypeBaseFloatAffine::FloatDigitsHelper());
+      DAffine::DefineFillContent(maxBuilt, newmax, typename TypeBaseFloatAffine::FloatDigitsHelper());
 
       conversion.setSizeMantissa(52).setSizeExponent(11);
       sizeMantissa = (52 + DefineSizeofBaseTypeInBits - 1)/DefineSizeofBaseTypeInBits;
@@ -3164,10 +3164,10 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::atan2
          maxParams.clear();
 
          double min=0, max=0, minSource=0, maxSource=0;
-         DAffine::DefineSetContent(min, minBuilt /*, false isUpper */);
-         DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */);
-         DAffine::DefineSetContent(minSource, minSourceBuilt /*, false isUpper */);
-         DAffine::DefineSetContent(maxSource, maxSourceBuilt /*, true isUpper */);
+         DAffine::DefineSetContent(min, minBuilt /*, false isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+         DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+         DAffine::DefineSetContent(minSource, minSourceBuilt /*, false isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+         DAffine::DefineSetContent(maxSource, maxSourceBuilt /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
          // [TODO] not correct specification
          double newmax, newmin;
          newmax = newmin = ::atan2(min, minSource);
@@ -3187,8 +3187,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::atan2
          if (temp > newmax)
             newmax = temp;
          // AssumeCondition(min <= max)
-         DAffine::DefineFillContent(minBuilt, newmin);
-         DAffine::DefineFillContent(maxBuilt, newmax);
+         DAffine::DefineFillContent(minBuilt, newmin, typename TypeBaseFloatAffine::FloatDigitsHelper());
+         DAffine::DefineFillContent(maxBuilt, newmax, typename TypeBaseFloatAffine::FloatDigitsHelper());
 
          conversion.setSizeMantissa(52).setSizeExponent(11);
          sizeMantissa = (52 + DefineSizeofBaseTypeInBits - 1)/DefineSizeofBaseTypeInBits;
@@ -3739,8 +3739,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       ::initFrom(TypeImplementation value) {
    inherited::updateLocalState();
    dValue = value;
-   DAffine::DefineFillContent(bfMin, value);
-   DAffine::DefineFillContent(bfMax, value);
+   DAffine::DefineFillContent(bfMin, value, typename TypeBaseFloatAffine::FloatDigitsHelper());
+   DAffine::DefineFillContent(bfMax, value, typename TypeBaseFloatAffine::FloatDigitsHelper());
    if (value != 0 && !bfMin.isInfty()) {
       bool isApproximate;
       int limit = 4*sizeof(unsigned);
@@ -3847,8 +3847,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       ::initFromAtomic(TypeImplementation value) {
    inherited::updateLocalState();
    dValue = value;
-   DAffine::DefineFillContent(bfMin, value);
-   DAffine::DefineFillContent(bfMax, value);
+   DAffine::DefineFillContent(bfMin, value, typename TypeBaseFloatAffine::FloatDigitsHelper());
+   DAffine::DefineFillContent(bfMax, value, typename TypeBaseFloatAffine::FloatDigitsHelper());
    if (value != 0 && !bfMin.isInfty()) {
       typename BuiltReal::FloatConversion conversion;
       conversion.setSizeMantissa(USizeMantissa).setSizeExponent(USizeExponent);
@@ -4012,8 +4012,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       ::DefineBasicFloatZonotope(TypeImplementation min, TypeImplementation max)
    :  dValue((min + max)/2) {
    inherited::updateLocalState();
-   DAffine::DefineFillContent(bfMin, min);
-   DAffine::DefineFillContent(bfMax, max);
+   DAffine::DefineFillContent(bfMin, min, typename TypeBaseFloatAffine::FloatDigitsHelper());
+   DAffine::DefineFillContent(bfMax, max, typename TypeBaseFloatAffine::FloatDigitsHelper());
    BuiltReal rmin, rmax;
    typename BuiltReal::FloatConversion conversion;
    conversion.setSizeMantissa(USizeMantissa).setSizeExponent(USizeExponent);
@@ -4051,8 +4051,8 @@ void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::setError(TypeImplementation aerrmin, TypeImplementation aerrmax) {
    BuiltDouble errmin, errmax;
-   DAffine::DefineFillContent(errmin, aerrmin);
-   DAffine::DefineFillContent(errmax, aerrmax);
+   DAffine::DefineFillContent(errmin, aerrmin, typename TypeBaseFloatAffine::FloatDigitsHelper());
+   DAffine::DefineFillContent(errmax, aerrmax, typename TypeBaseFloatAffine::FloatDigitsHelper());
    BuiltReal rmin, rmax;
    typename BuiltReal::FloatConversion conversion;
    conversion.setSizeMantissa(USizeMantissa).setSizeExponent(USizeExponent);

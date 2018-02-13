@@ -165,13 +165,14 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
          else
             inherited::initFromAtomic(value);
       }
-   TInstrumentedFloatInterval(long double value)
-      {
-         if (!inherited::fSupportAtomic)
+   TInstrumentedFloatInterval(long double value);
+/*
+      {  if (!inherited::fSupportAtomic)
             inherited::initFrom(value);
          else
             inherited::initFromAtomic(value);
       }
+*/
    TInstrumentedFloatInterval(TypeImplementation min, TypeImplementation max) : inherited(min, max) {}
    TInstrumentedFloatInterval(TypeImplementation min, TypeImplementation max,
          TypeImplementation errmin, TypeImplementation errmax)
@@ -353,6 +354,18 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
 
    void persist(const char* prefix) { inherited::notifyForPersistence(*this, prefix); }
 };
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline
+TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>::TInstrumentedFloatInterval(
+      long double value) {
+   TFloatInterval<BaseFloatInterval, DDoubleInterval::BuiltLongDouble, long double> receiver;
+   if (!inherited::fSupportAtomic)
+      receiver.initFrom(value);
+   else
+      receiver.initFromAtomic(value);
+   inherited::operator=(std::move(receiver));
+}
 
 } // end of namespace DDoubleInterval
 

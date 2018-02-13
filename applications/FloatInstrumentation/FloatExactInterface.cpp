@@ -237,12 +237,25 @@ TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::TFloatExact(doubl
    reinterpret_cast<Implementation*>(content)->operator+=(addition);
 }
 
+/*
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::TFloatExact(long double value) {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
    AssumeCondition(sizeof(Implementation) <= UFloatExactSize*sizeof(AlignType))
    new (content) Implementation();
    reinterpret_cast<Implementation*>(content)->initFrom(value);
+}
+*/
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::TFloatExact(long double value) {
+   typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   AssumeCondition(sizeof(Implementation) <= UFloatExactSize*sizeof(AlignType))
+   new (content) Implementation();
+
+   DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::BuiltLongDouble, long double> receiver;
+   receiver.initFrom(value);
+   reinterpret_cast<Implementation*>(content)->operator=(std::move(receiver));
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
@@ -577,36 +590,42 @@ TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::operator TypeImpl
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::operator int() const {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
    return reinterpret_cast<const Implementation*>(content)->asInt(ReadParametersBase::RMZero);
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::operator short int() const {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
    return reinterpret_cast<const Implementation*>(content)->asInt(ReadParametersBase::RMZero);
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::operator unsigned() const {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
    return reinterpret_cast<const Implementation*>(content)->asUnsigned(ReadParametersBase::RMZero);
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::operator short unsigned() const {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
    return reinterpret_cast<const Implementation*>(content)->asUnsigned(ReadParametersBase::RMZero);
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::operator long int() const {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
    return reinterpret_cast<const Implementation*>(content)->asLongInt(ReadParametersBase::RMZero);
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::operator unsigned long() const {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
    return reinterpret_cast<const Implementation*>(content)->asUnsignedLong(ReadParametersBase::RMZero);
 }
 
@@ -730,25 +749,31 @@ TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::medianAssign(cons
 
 template class TFloatExact<23, 8, float>;
 template class TFloatExact<52, 11, double>;
-template class TFloatExact<80, 15, long double>;
+
+#ifndef LDBL_EXPONENT_DIG
+#define LDBL_EXPONENT_DIG \
+      ((LDBL_MAX_EXP == (1 << (16-2))) ? 15 : sizeof(long double)*8-LDBL_MANT_DIG)
+#endif
+
+template class TFloatExact<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>;
 
 template TFloatExact<23, 8, float>::TFloatExact(const TFloatExact<52, 11, double>&);
-template TFloatExact<23, 8, float>::TFloatExact(const TFloatExact<80, 15, long double>&);
+template TFloatExact<23, 8, float>::TFloatExact(const TFloatExact<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>&);
 template TFloatExact<52, 11, double>::TFloatExact(const TFloatExact<23, 8, float>&);
-template TFloatExact<52, 11, double>::TFloatExact(const TFloatExact<80, 15, long double>&);
-template TFloatExact<80, 15, long double>::TFloatExact(const TFloatExact<23, 8, float>&);
-template TFloatExact<80, 15, long double>::TFloatExact(const TFloatExact<52, 11, double>&);
+template TFloatExact<52, 11, double>::TFloatExact(const TFloatExact<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>&);
+template TFloatExact<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>::TFloatExact(const TFloatExact<23, 8, float>&);
+template TFloatExact<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>::TFloatExact(const TFloatExact<52, 11, double>&);
 
 template TFloatExact<23, 8, float>& TFloatExact<23, 8, float>::operator=(const TFloatExact<52, 11, double>&);
-template TFloatExact<23, 8, float>& TFloatExact<23, 8, float>::operator=(const TFloatExact<80, 15, long double>&);
+template TFloatExact<23, 8, float>& TFloatExact<23, 8, float>::operator=(const TFloatExact<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>&);
 template TFloatExact<52, 11, double>& TFloatExact<52, 11, double>::operator=(const TFloatExact<23, 8, float>&);
-template TFloatExact<52, 11, double>& TFloatExact<52, 11, double>::operator=(const TFloatExact<80, 15, long double>&);
-template TFloatExact<80, 15, long double>& TFloatExact<80, 15, long double>::operator=(const TFloatExact<23, 8, float>&);
-template TFloatExact<80, 15, long double>& TFloatExact<80, 15, long double>::operator=(const TFloatExact<52, 11, double>&);
+template TFloatExact<52, 11, double>& TFloatExact<52, 11, double>::operator=(const TFloatExact<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>&);
+template TFloatExact<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>& TFloatExact<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>::operator=(const TFloatExact<23, 8, float>&);
+template TFloatExact<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>& TFloatExact<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>::operator=(const TFloatExact<52, 11, double>&);
 
 template MergeBranches& MergeBranches::operator<<(TFloatExact<23, 8, float>&);
 template MergeBranches& MergeBranches::operator<<(TFloatExact<52, 11, double>&);
-template MergeBranches& MergeBranches::operator<<(TFloatExact<80, 15, long double>&);
+template MergeBranches& MergeBranches::operator<<(TFloatExact<LDBL_MANT_DIG-1, LDBL_EXPONENT_DIG, long double>&);
 
 }} // end of namespace NumericalDomains::DDoubleExactInterface
 

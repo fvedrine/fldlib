@@ -332,6 +332,7 @@ TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope
       reinterpret_cast<Implementation*>(content)->initFromAtomic(value);
 }
 
+/*
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope(long double value) {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
@@ -341,6 +342,23 @@ TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope
       reinterpret_cast<Implementation*>(content)->initFrom(value);
    else
       reinterpret_cast<Implementation*>(content)->initFromAtomic(value);
+}
+*/
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope(long double value) {
+   typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   AssumeCondition(sizeof(Implementation) <= UFloatZonotopeSize*sizeof(AlignType))
+   new (content) Implementation();
+
+   typedef DAffine::FloatDigitsHelper::TFloatDigits<long double> FloatDigits;
+   DAffine::TFloatZonotope<DAffine::ExecutionPath, FloatDigits::UBitSizeMantissa,
+         FloatDigits::UBitSizeExponent, long double> receiver;
+   if (!DAffine::ExecutionPath::doesSupportAtomic())
+      receiver.initFrom(value);
+   else
+      receiver.initFromAtomic(value);
+   reinterpret_cast<Implementation*>(content)->operator=(std::move(receiver));
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
@@ -978,6 +996,7 @@ template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::operator int() const {
    try {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
    return reinterpret_cast<const Implementation*>(content)->asInt(ReadParametersBase::RMZero);
    }
    catch (DAffine::ExecutionPath::anticipated_termination) {
@@ -989,6 +1008,7 @@ template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::operator short int() const {
    try {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
    return reinterpret_cast<const Implementation*>(content)->asInt(ReadParametersBase::RMZero);
    }
    catch (DAffine::ExecutionPath::anticipated_termination) {
@@ -1000,6 +1020,7 @@ template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::operator unsigned() const {
    try {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
    return reinterpret_cast<const Implementation*>(content)->asUnsigned(ReadParametersBase::RMZero);
    }
    catch (DAffine::ExecutionPath::anticipated_termination) {
@@ -1011,6 +1032,7 @@ template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::operator short unsigned() const {
    try {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
    return reinterpret_cast<const Implementation*>(content)->asUnsigned(ReadParametersBase::RMZero);
    }
    catch (DAffine::ExecutionPath::anticipated_termination) {
@@ -1022,6 +1044,7 @@ template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::operator long int() const {
    try {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
    return reinterpret_cast<const Implementation*>(content)->asLong(ReadParametersBase::RMZero);
    }
    catch (DAffine::ExecutionPath::anticipated_termination) {
@@ -1033,6 +1056,7 @@ template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::operator unsigned long() const {
    try {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
    return reinterpret_cast<const Implementation*>(content)->asUnsignedLong(ReadParametersBase::RMZero);
    }
    catch (DAffine::ExecutionPath::anticipated_termination) {
@@ -1165,34 +1189,36 @@ TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::atan2Assign(th
          *reinterpret_cast<const Implementation*>(value.content), DAffine::Equation::PCSourceXValue);
 }
 
+typedef DAffine::FloatDigitsHelper::TFloatDigits<long double> LongDoubleFloatDigits;
+
 template class TFloatZonotope<23, 8, float>;
 template class TFloatZonotope<52, 11, double>;
-template class TFloatZonotope<80, 15, long double>;
+template class TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>;
 
 template TFloatZonotope<23, 8, float>::TFloatZonotope(const TFloatZonotope<52, 11, double>&);
-template TFloatZonotope<23, 8, float>::TFloatZonotope(const TFloatZonotope<80, 15, long double>&);
+template TFloatZonotope<23, 8, float>::TFloatZonotope(const TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>&);
 template TFloatZonotope<52, 11, double>::TFloatZonotope(const TFloatZonotope<23, 8, float>&);
-template TFloatZonotope<52, 11, double>::TFloatZonotope(const TFloatZonotope<80, 15, long double>&);
-template TFloatZonotope<80, 15, long double>::TFloatZonotope(const TFloatZonotope<23, 8, float>&);
-template TFloatZonotope<80, 15, long double>::TFloatZonotope(const TFloatZonotope<52, 11, double>&);
+template TFloatZonotope<52, 11, double>::TFloatZonotope(const TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>&);
+template TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>::TFloatZonotope(const TFloatZonotope<23, 8, float>&);
+template TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>::TFloatZonotope(const TFloatZonotope<52, 11, double>&);
 
 template TFloatZonotope<23, 8, float>& TFloatZonotope<23, 8, float>::operator=(const TFloatZonotope<52, 11, double>&);
-template TFloatZonotope<23, 8, float>& TFloatZonotope<23, 8, float>::operator=(const TFloatZonotope<80, 15, long double>&);
+template TFloatZonotope<23, 8, float>& TFloatZonotope<23, 8, float>::operator=(const TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>&);
 template TFloatZonotope<52, 11, double>& TFloatZonotope<52, 11, double>::operator=(const TFloatZonotope<23, 8, float>&);
-template TFloatZonotope<52, 11, double>& TFloatZonotope<52, 11, double>::operator=(const TFloatZonotope<80, 15, long double>&);
-template TFloatZonotope<80, 15, long double>& TFloatZonotope<80, 15, long double>::operator=(const TFloatZonotope<23, 8, float>&);
-template TFloatZonotope<80, 15, long double>& TFloatZonotope<80, 15, long double>::operator=(const TFloatZonotope<52, 11, double>&);
+template TFloatZonotope<52, 11, double>& TFloatZonotope<52, 11, double>::operator=(const TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>&);
+template TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>& TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>::operator=(const TFloatZonotope<23, 8, float>&);
+template TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>& TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>::operator=(const TFloatZonotope<52, 11, double>&);
 
 template TFloatZonotope<23, 8, float>& TFloatZonotope<23, 8, float>::operator=(TFloatZonotope<52, 11, double>&&);
-template TFloatZonotope<23, 8, float>& TFloatZonotope<23, 8, float>::operator=(TFloatZonotope<80, 15, long double>&&);
+template TFloatZonotope<23, 8, float>& TFloatZonotope<23, 8, float>::operator=(TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>&&);
 template TFloatZonotope<52, 11, double>& TFloatZonotope<52, 11, double>::operator=(TFloatZonotope<23, 8, float>&&);
-template TFloatZonotope<52, 11, double>& TFloatZonotope<52, 11, double>::operator=(TFloatZonotope<80, 15, long double>&&);
-template TFloatZonotope<80, 15, long double>& TFloatZonotope<80, 15, long double>::operator=(TFloatZonotope<23, 8, float>&&);
-template TFloatZonotope<80, 15, long double>& TFloatZonotope<80, 15, long double>::operator=(TFloatZonotope<52, 11, double>&&);
+template TFloatZonotope<52, 11, double>& TFloatZonotope<52, 11, double>::operator=(TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>&&);
+template TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>& TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>::operator=(TFloatZonotope<23, 8, float>&&);
+template TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>& TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>::operator=(TFloatZonotope<52, 11, double>&&);
 
 template MergeBranches& MergeBranches::operator<<(TFloatZonotope<23, 8, float>&);
 template MergeBranches& MergeBranches::operator<<(TFloatZonotope<52, 11, double>&);
-template MergeBranches& MergeBranches::operator<<(TFloatZonotope<80, 15, long double>&);
+template MergeBranches& MergeBranches::operator<<(TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>&);
 
 }} // end of namespace NumericalDomains::DAffineInterface
 

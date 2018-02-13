@@ -108,9 +108,9 @@ isBigEndian() {
 #endif
 }
 
-template <class TypeBuiltDouble, typename TypeImplementation>
+template <class TypeBuiltDouble, typename TypeImplementation, class TypeFloatDigitsHelper>
 void
-fillContent(TypeBuiltDouble& builtDouble, const TypeImplementation& source) {
+fillContent(TypeBuiltDouble& builtDouble, const TypeImplementation& source, const TypeFloatDigitsHelper&) {
    int sourceSizeInSizeofUnsigned = (sizeof(source) + sizeof(unsigned) - 1)/sizeof(unsigned);
    unsigned doubleContent[sourceSizeInSizeofUnsigned];
    doubleContent[sourceSizeInSizeofUnsigned-1] = 0;
@@ -137,14 +137,17 @@ fillContent(TypeBuiltDouble& builtDouble, const TypeImplementation& source) {
    }
    {  unsigned char* mask = (unsigned char*) doubleContent;
       unsigned char* signedMask = mask;
+      typedef typename TypeFloatDigitsHelper::template TFloatDigits<TypeImplementation> FloatDigits;
       if (!isBigEndian()) {
-         signedMask += sizeof(source)-1;
+         int sourceSizeInBits = builtDouble.bitSizeMantissa()+FloatDigits::UBitFullSizeExponent+1;
+         AssumeCondition((sourceSizeInBits-1) % 8 == 0)
+         signedMask += (sourceSizeInBits-1)/8-1;
          mask = signedMask;
       };
       builtDouble.setNegative((*signedMask) & 0x80);
 
       unsigned result = 0;
-      int shift = builtDouble.bitSizeExponent()-7;
+      int shift = FloatDigits::UBitSizeExponent-7;
       result |= (*mask & 0x7f) << shift;
       while ((shift -= 8) >= 0) {
          if (!isBigEndian())
@@ -163,21 +166,25 @@ fillContent(TypeBuiltDouble& builtDouble, const TypeImplementation& source) {
    }
 }
 
-template <class TypeBuiltDouble, typename TypeImplementation>
+template <class TypeBuiltDouble, typename TypeImplementation, class TypeFloatDigitsHelper>
 void
-setContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble, bool isUpper) {
+setContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble, bool isUpper, const TypeFloatDigitsHelper&) {
    unsigned doubleContent[(sizeof(result) + sizeof(unsigned) - 1)/sizeof(unsigned)];
    memset(doubleContent, 0, sizeof(unsigned)*((sizeof(result) + sizeof(unsigned) - 1)/sizeof(unsigned)));
    {  unsigned char* mask = (unsigned char*) doubleContent;
-      if (!isBigEndian())
-         mask += sizeof(result)-1;
+      typedef typename TypeFloatDigitsHelper::template TFloatDigits<TypeImplementation> FloatDigits;
+      if (!isBigEndian()) {
+         int resultSizeInBits = builtDouble.bitSizeMantissa()+FloatDigits::UBitFullSizeExponent+1;
+         AssumeCondition((resultSizeInBits-1) % 8 == 0)
+         mask += (resultSizeInBits-1)/8-1;
+      }
       if (builtDouble.isNegative())
          *mask |= 0x80;
-      int shift = builtDouble.bitSizeExponent()-7;
+      int shift = FloatDigits::UBitSizeExponent-7;
 
       unsigned exponent = builtDouble.getBasicExponent()[0];
 #if defined(__GNUC__) && !defined(__clang__)
-      int shiftAssert = builtDouble.bitSizeExponent();
+      int shiftAssert = FloatDigits::UBitSizeExponent;
       AssumeCondition((shiftAssert >= (int) sizeof(unsigned int)*8)
             || (((~0U << shiftAssert) & exponent) == 0))
 #else
@@ -186,10 +193,10 @@ setContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble, bool 
 #pragma GCC diagnostic ignored "-Wshift-count-overflow"
 #endif
 
-      AssumeCondition((builtDouble.bitSizeExponent() >= sizeof(unsigned int)*8)
-            || (((~0U << builtDouble.bitSizeExponent()) & exponent) == 0))
-      // AssumeCondition((TypeBuiltDouble::BitSizeExponent == sizeof(unsigned int)*8)
-      //       || (((~1U << (TypeBuiltDouble::BitSizeExponent-1)) & exponent) == 0))
+      AssumeCondition((FloatDigits::UBitSizeExponent >= sizeof(unsigned int)*8)
+            || (((~0U << FloatDigits::UBitSizeExponent) & exponent) == 0))
+      // AssumeCondition((FloatDigits::UBitSizeExponent == sizeof(unsigned int)*8)
+      //       || (((~1U << (FloatDigits::UBitSizeExponent-1)) & exponent) == 0))
 #if defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
@@ -221,7 +228,7 @@ setContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble, bool 
       unsigned int* mask = (unsigned int*) doubleContent;
       if (isBigEndian())
          mask += ((sizeof(result)-1)/sizeof(unsigned int));
-      int lastCellIndex = (builtDouble.bitSizeMantissa() - 2)/(8*sizeof(unsigned));
+      int lastCellIndex = (builtDouble.bitSizeMantissa() - 2)/(8*sizeof(unsigned int));
       int mantissaIndex = lastCellIndex-((sizeof(result)-1)/sizeof(unsigned int));
       if (mantissaIndex < 0)
          mantissaIndex = 0;

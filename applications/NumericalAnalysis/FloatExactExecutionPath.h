@@ -32,6 +32,8 @@
 #ifndef NumericalAnalysis_FloatExactExecutionPathH
 #define NumericalAnalysis_FloatExactExecutionPathH
 
+#include <cfloat>
+
 #include "config.h"
 #if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
 #include "NumericalDomains/FloatExactBase.h"
@@ -44,6 +46,50 @@ namespace NumericalDomains {
 
 namespace DDoubleExact {
 
+namespace DFloatDigitsHelper {
+   template <typename TypeImplementation>
+   class TFloatDigits {
+     public:
+      static const int UBitSizeMantissa=0;
+      static const int UBitSizeExponent=0;
+      static const int UBitFullSizeExponent=0;
+   };
+
+   template <>
+   class TFloatDigits<float> {
+     public:
+      static const int UBitSizeMantissa=FLT_MANT_DIG-1;
+      static const int UBitSizeExponent=sizeof(float)*8-FLT_MANT_DIG;
+      static const int UBitFullSizeExponent=UBitSizeExponent;
+   };
+
+   template <>
+   class TFloatDigits<double> {
+     public:
+      static const int UBitSizeMantissa=DBL_MANT_DIG-1;
+      static const int UBitSizeExponent=sizeof(double)*8-DBL_MANT_DIG;
+      static const int UBitFullSizeExponent=UBitSizeExponent;
+   };
+
+   template <>
+   class TFloatDigits<long double> {
+     public:
+      static const int UBitSizeMantissa=LDBL_MANT_DIG-1;
+      static const int UBitSizeExponent
+         = (LDBL_MAX_EXP == (1 << (16-2))) ? 15 /* leading 1 bit */
+            : sizeof(long double)*8-LDBL_MANT_DIG;
+      static const int UBitFullSizeExponent
+         = (LDBL_MAX_EXP == (1 << (16-2))) ? 16 /* leading 1 bit */
+            : sizeof(long double)*8-LDBL_MANT_DIG;
+   };
+};
+
+class FloatDigitsHelper {
+  public:
+   template <typename TypeImplementation>
+   class TFloatDigits : public DFloatDigitsHelper::TFloatDigits<TypeImplementation> {};
+};
+
 #ifndef FLOAT_REAL_BITS_NUMBER
 #define FLOAT_REAL_BITS_NUMBER 123
 #endif
@@ -52,17 +98,20 @@ namespace DDoubleExact {
 typedef TBuiltReal<FLOAT_REAL_BITS_NUMBER> BuiltReal;
 typedef TBuiltFloat<FLOAT_REAL_BITS_NUMBER, 23, 8> BuiltFloat;
 typedef TBuiltFloat<FLOAT_REAL_BITS_NUMBER, 52, 11> BuiltDouble;
-typedef TBuiltFloat<FLOAT_REAL_BITS_NUMBER, 80, 15> BuiltLongDouble;
+typedef TBuiltFloat<FLOAT_REAL_BITS_NUMBER,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa, FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent> BuiltLongDouble;
 #elif defined(FLOAT_GENERIC_BASE_LONG)
 typedef TGBuiltReal<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER> BuiltReal;
 typedef TGBuiltFloat<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, 23, 8> BuiltFloat;
 typedef TGBuiltFloat<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, 52, 11> BuiltDouble;
-typedef TGBuiltFloat<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, 80, 15> BuiltLongDouble;
+typedef TGBuiltFloat<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER,
+      FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa, FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent> BuiltLongDouble;
 #else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
 typedef TGBuiltReal<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER> BuiltReal;
 typedef TGBuiltFloat<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, 23, 8> BuiltFloat;
 typedef TGBuiltFloat<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, 52, 11> BuiltDouble;
-typedef TGBuiltFloat<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, 80, 15> BuiltLongDouble;
+typedef TGBuiltFloat<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER,
+        FloatDigitsHelper::TFloatDigits<long double>::UBitSizeMantissa, FloatDigitsHelper::TFloatDigits<long double>::UBitSizeExponent> BuiltLongDouble;
 #endif
 
 class BaseExecutionPath {
@@ -78,6 +127,8 @@ class BaseExecutionPath {
    static Numerics::DDouble::Access::ReadParameters& nearestParams() { return rpNearestParams; }
    class QuickDouble;
    class end {};
+
+   typedef DDoubleExact::FloatDigitsHelper FloatDigitsHelper;
 };
 
 class ExecutionPathContract : public BaseExecutionPath {

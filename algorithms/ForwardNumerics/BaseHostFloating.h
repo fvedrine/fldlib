@@ -86,7 +86,12 @@ class LongDoubleTraits {
 
    static const int UBitSizeMantissa = LDBL_MANT_DIG-1;
    static const int UByteSizeImplementation = sizeof(TypeFloat);
-   static const int UBitSizeExponent = UByteSizeImplementation*8-LDBL_MANT_DIG;
+   static const int UBitSizeExponent
+      = (LDBL_MAX_EXP == (1 << (16-2))) ? 15 /* leading 1 bit */
+         : UByteSizeImplementation*8-LDBL_MANT_DIG;
+   static const int UBitFullSizeExponent
+      = (LDBL_MAX_EXP == (1 << (16-2))) ? 16 /* leading 1 bit */
+         : UByteSizeImplementation*8-LDBL_MANT_DIG;
    static unsigned int getMaxExponent() { return LDBL_MAX_EXP-1; }
    static unsigned int getZeroExponent() { return LDBL_MAX_EXP-1; }
    static long double epsilon() { return LDBL_EPSILON; }

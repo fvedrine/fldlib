@@ -100,7 +100,7 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    TInstrumentedFloat() {}
    TInstrumentedFloat(float value) { inherited::initFrom(value); }
    TInstrumentedFloat(double value) { inherited::initFrom(value); }
-   TInstrumentedFloat(long double value) { inherited::initFrom(value); }
+   TInstrumentedFloat(long double value); // { inherited::initFrom(value); }
    TInstrumentedFloat(int value) : inherited(value) {}
    TInstrumentedFloat(long int value) : inherited(value) {}
    // TInstrumentedFloat(unsigned value) : inherited(value) {}
@@ -207,6 +207,14 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
 
    void persist(const char* prefix) { inherited::notifyForPersistence(*this, prefix); }
 };
+
+template <class TypeBuiltDouble, typename TypeImplementation>
+inline
+TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>::TInstrumentedFloat(long double value) {
+   TFloatExact<ExecutionPath, BuiltLongDouble, long double> receiver;
+   receiver.initFrom(value);
+   inherited::operator=(std::move(receiver));
+}
 
 } // end of namespace DDoubleExact
 
