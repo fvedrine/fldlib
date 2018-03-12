@@ -368,6 +368,7 @@ TBaseFloatExact<TypeExecutionPath>::writeBranchCompare(const TFloatExact& source
       inherited::writeDomain(", xxx, xxx)");
    };
    inherited::writeDomain('\n');
+   inherited::writeUnstableTest();
 }
 
 template <class TypeExecutionPath, class TypeBuiltDouble, typename TypeImplementation>
