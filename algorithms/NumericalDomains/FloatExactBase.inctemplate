@@ -57,6 +57,7 @@ template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, 
 void
 DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::retrieveReal(
       const TypeBuiltDouble& source, BuiltReal& result) {
+   result.clear();
    result.setNegative(source.isNegative());
    if (!source.getBasicExponent().isZero()
          || !source.getMantissa().isZero()) {
