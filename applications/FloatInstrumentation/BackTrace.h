@@ -37,6 +37,7 @@
 namespace NumericalDomains {
 
 void writeBackTrace(STG::IOObject::OSBase& out);
+void readBackTrace(STG::IOObject::ISBase& in);
 
 }
 
