@@ -88,6 +88,38 @@ class SaveMemory {
       }
 };
 
+template <typename TypeImplementation>
+int tfinite(TypeImplementation val)
+   {  AssumeUncalled return 0; }
+
+template <> int tfinite(long double val);
+template <> int tfinite(double val);
+template <> int tfinite(float val);
+
+template <typename TypeImplementation>
+int tisfinite(TypeImplementation val)
+   {  AssumeUncalled return 0; }
+
+template <> int tisfinite(long double val);
+template <> int tisfinite(double val);
+template <> int tisfinite(float val);
+
+template <typename TypeImplementation>
+int tisnan(TypeImplementation val)
+   {  AssumeUncalled return 0; }
+
+template <> int tisnan(long double val);
+template <> int tisnan(double val);
+template <> int tisnan(float val);
+
+template <typename TypeImplementation>
+int tisinf(TypeImplementation val)
+   {  AssumeUncalled return 0; }
+
+template <> int tisinf(long double val);
+template <> int tisinf(double val);
+template <> int tisinf(float val);
+
 template <class TypeBuiltDouble, typename TypeImplementation>
 class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, TypeImplementation> {
   private:
@@ -101,10 +133,12 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    TInstrumentedFloat(float value) { inherited::initFrom(value); }
    TInstrumentedFloat(double value) { inherited::initFrom(value); }
    TInstrumentedFloat(long double value); // { inherited::initFrom(value); }
+   TInstrumentedFloat(short int value) : inherited(value) {}
    TInstrumentedFloat(int value) : inherited(value) {}
    TInstrumentedFloat(long int value) : inherited(value) {}
-   // TInstrumentedFloat(unsigned value) : inherited(value) {}
-   // TInstrumentedFloat(unsigned long value) : inherited(value) {}
+   TInstrumentedFloat(unsigned short value) : inherited(value) {}
+   TInstrumentedFloat(unsigned int value) : inherited(value) {}
+   TInstrumentedFloat(unsigned long value) : inherited(value) {}
    TInstrumentedFloat(TypeImplementation value, TypeImplementation error, ErrorParameter)
       {  inherited::initFrom(value);
          inherited addition;
@@ -206,6 +240,418 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
       {  auto result(*this); result.medianAssign(thisType(fst), thisType(snd)); return result; }
 
    void persist(const char* prefix) { inherited::notifyForPersistence(*this, prefix); }
+
+   friend std::ostream& operator<<(std::ostream& out, const thisType& source)
+      {  return out << source.asImplementation(); }
+   friend std::istream& operator>>(std::istream& in, thisType& source)
+      {  decltype(thisType.asImplementation()) val;
+         in >> val;
+         source = thisType(val);
+         return in;
+      }
+
+   friend thisType sqrt(const thisType& source)
+      {  auto result(std::move(source)); result.sqrtAssign(); return result; }
+   friend thisType sin(const thisType& source)
+      {  auto result(std::move(source)); result.sinAssign(); return result; }
+   friend thisType cos(const thisType& source)
+      {  auto result(std::move(source)); result.cosAssign(); return result; }
+   friend thisType asin(const thisType& source)
+      {  auto result(std::move(source)); result.asinAssign(); return result; }
+   friend thisType acos(const thisType& source)
+      {  auto result(std::move(source)); result.acosAssign(); return result; }
+   friend thisType tan(const thisType& source)
+      {  auto result(std::move(source)); result.tanAssign(); return result; }
+   friend thisType atan(const thisType& source)
+      {  auto result(std::move(source)); result.atanAssign(); return result; }
+   friend thisType exp(const thisType& source)
+      {  auto result(std::move(source)); result.expAssign(); return result; }
+   friend thisType log(const thisType& source)
+      {  auto result(std::move(source)); result.logAssign(); return result; }
+   friend thisType log2(const thisType& source)
+      {  auto result(std::move(source)); result.logAssign(); result.operator/=(log(thisType(2.0))); return result; }
+   friend thisType exp2(const thisType& source)
+      {  thisType result(2.0); result.powAssign(source); return result; }
+   friend thisType log10(const thisType& source)
+      {  auto result(std::move(source)); result.log10Assign(); return result; }
+
+   friend thisType pow(const thisType& source, const thisType& value)
+      {  auto result(std::move(source)); result.powAssign(value); return result; }
+   friend thisType pow(long double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(float source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(unsigned long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(unsigned int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(unsigned short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+
+   friend thisType pow(const thisType& source, long double value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, double value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, float value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, unsigned long value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, long value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, unsigned int value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, int value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, unsigned short value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, short value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+
+   friend thisType powf(const thisType& source, const thisType& value)
+      {  auto result(std::move(source)); result.powAssign(value); return result; }
+   friend thisType powf(long double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(float source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(unsigned long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(unsigned int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(unsigned short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+
+   friend thisType powf(const thisType& source, long double value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, double value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, float value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, unsigned long value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, long value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, unsigned int value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, int value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, unsigned short value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, short value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+
+   friend thisType atan2(const thisType& source, const thisType& value)
+      {  auto result(std::move(source)); result.atan2Assign(value); return result; }
+   friend thisType atan2(long double source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(double source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(float source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(unsigned long source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(long source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(unsigned int source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(int source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(unsigned short source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(short source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+
+   friend thisType atan2(const thisType& source, long double value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, double value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, float value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, unsigned long value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, long value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, unsigned int value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, int value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, unsigned short value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, short value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+
+   friend bool operator<(long double fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+   friend bool operator<(double fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+   friend bool operator<(float fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+   friend bool operator<(unsigned long fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+   friend bool operator<(long fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+   friend bool operator<(unsigned int fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+   friend bool operator<(int fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+   friend bool operator<(unsigned short fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+   friend bool operator<(short fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+
+   friend bool operator<=(long double fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+   friend bool operator<=(double fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+   friend bool operator<=(float fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+   friend bool operator<=(unsigned long fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+   friend bool operator<=(long fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+   friend bool operator<=(unsigned int fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+   friend bool operator<=(int fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+   friend bool operator<=(unsigned short fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+   friend bool operator<=(short fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+
+   friend bool operator==(long double fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+   friend bool operator==(double fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+   friend bool operator==(float fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+   friend bool operator==(unsigned long fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+   friend bool operator==(long fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+   friend bool operator==(unsigned int fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+   friend bool operator==(int fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+   friend bool operator==(unsigned short fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+   friend bool operator==(short fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+
+   friend bool operator!=(long double fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+   friend bool operator!=(double fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+   friend bool operator!=(float fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+   friend bool operator!=(unsigned long fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+   friend bool operator!=(long fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+   friend bool operator!=(unsigned int fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+   friend bool operator!=(int fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+   friend bool operator!=(unsigned short fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+   friend bool operator!=(short fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+
+   friend bool operator>=(long double fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+   friend bool operator>=(double fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+   friend bool operator>=(float fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+   friend bool operator>=(unsigned long fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+   friend bool operator>=(long fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+   friend bool operator>=(unsigned int fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+   friend bool operator>=(int fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+   friend bool operator>=(unsigned short fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+   friend bool operator>=(short fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+
+   friend bool operator>(long double fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+   friend bool operator>(double fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+   friend bool operator>(float fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+   friend bool operator>(unsigned long fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+   friend bool operator>(long fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+   friend bool operator>(unsigned int fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+   friend bool operator>(int fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+   friend bool operator>(unsigned short fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+   friend bool operator>(short fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+
+   friend thisType operator+(long double fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+   friend thisType operator+(double fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+   friend thisType operator+(float fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+   friend thisType operator+(unsigned long fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+   friend thisType operator+(long fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+   friend thisType operator+(unsigned int fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+   friend thisType operator+(int fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+   friend thisType operator+(unsigned short fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+   friend thisType operator+(short fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+
+   friend thisType operator-(long double fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+   friend thisType operator-(double fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+   friend thisType operator-(float fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+   friend thisType operator-(unsigned long fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+   friend thisType operator-(long fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+   friend thisType operator-(unsigned int fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+   friend thisType operator-(int fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+   friend thisType operator-(unsigned short fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+   friend thisType operator-(short fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+
+   friend thisType operator*(long double fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+   friend thisType operator*(double fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+   friend thisType operator*(float fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+   friend thisType operator*(unsigned long fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+   friend thisType operator*(long fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+   friend thisType operator*(unsigned int fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+   friend thisType operator*(int fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+   friend thisType operator*(unsigned short fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+   friend thisType operator*(short fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+
+   friend thisType operator/(long double fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+   friend thisType operator/(double fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+   friend thisType operator/(float fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+   friend thisType operator/(unsigned long fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+   friend thisType operator/(long fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+   friend thisType operator/(unsigned int fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+   friend thisType operator/(int fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+   friend thisType operator/(unsigned short fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+   friend thisType operator/(short fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+
+   friend thisType floor(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMLowest)); }
+   friend thisType floor(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMLowest)); }
+   friend thisType ceil(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMHighest)); }
+   friend thisType ceil(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMHighest)); }
+   friend thisType trunc(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMZero)); }
+   friend thisType trunc(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMZero)); }
+   friend thisType round(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest)); }
+   friend thisType round(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest)); }
+   friend thisType rint(const thisType& fst)
+      {  return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */)); }
+   friend thisType rintf(const thisType& fst)
+      {  return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */)); }
+   friend thisType fabs(const thisType& source)
+      {  auto result(std::move(source)); result.absAssign(); return result; }
+   friend thisType fabs(thisType&& source)
+      {  auto result(source); result.absAssign(); return result; }
+   friend thisType abs(const thisType& source)
+      {  auto result(std::move(source)); result.absAssign(); return result; }
+   friend thisType abs(thisType&& source)
+      {  auto result(source); result.absAssign(); return result; }
+   friend thisType fmod(const thisType& source, const thisType& value)
+      {  auto divResult(source); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value;
+         multResult -= source;
+         multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(long double source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(double source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(float source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(unsigned long source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(long source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(unsigned int source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(int source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(unsigned short source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(short source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(const thisType& source, long double value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, double value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, float value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, unsigned long value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, long value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, unsigned int value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, int value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, unsigned short value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, short value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend int finite(const thisType& source) { return tfinite(source.asImplementation()); }
+   friend int isfinite(const thisType& source) { return tisfinite(source.asImplementation()); }
+   friend int isnan(const thisType& source) { return tisnan(source.asImplementation()); }
+   friend int isinf(const thisType& source) { return tisinf(source.asImplementation()); }
 };
 
 template <class TypeBuiltDouble, typename TypeImplementation>
@@ -223,270 +669,6 @@ typedef DDoubleExact::TInstrumentedFloat<DDoubleExact::BuiltDouble, double> Doub
 typedef DDoubleExact::TInstrumentedFloat<DDoubleExact::BuiltLongDouble, long double> LongDoubleExact;
 
 } // end of namespace NumericalDomains
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-sqrt(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.sqrtAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-sin(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.sinAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-cos(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.cosAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-asin(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.asinAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-acos(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.acosAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-tan(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.tanAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-atan(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.atanAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-exp(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.expAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-log(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.logAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-log2(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source)
-   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
-      auto result(std::move(source)); result.logAssign(); result.operator/=(thisType(log(2))); return result;
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-exp2(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source)
-   {  NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> result(2.0);
-      result.powAssign(source);
-      return result;
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-log10(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.log10Assign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-pow(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source,
-      const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& value)
-   {  auto result(std::move(source)); result.powAssign(value); return result; }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-pow(TypeFst source, const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& value)
-   {  NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> result(source);
-      result.powAssign(value);
-      return result;
-   }
-
-template <typename TypeSnd, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-pow(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source,
-      TypeSnd value)
-   {  auto result(std::move(source));
-      result.powAssign(NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>(value));
-      return result;
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-powf(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source,
-      const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& value)
-   {  auto result(std::move(source)); result.powAssign(value); return result; }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-powf(TypeFst source, const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& value)
-   {  NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> result(source);
-      result.powAssign(value);
-      return result;
-   }
-
-template <typename TypeSnd, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-powf(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source,
-      TypeSnd value)
-   {  auto result(std::move(source));
-      result.powAssign(NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>(value));
-      return result;
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-atan2(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source,
-      const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& value)
-   {  auto result(std::move(source)); result.atan2Assign(value); return result; }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-atan2(TypeFst source, const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& value)
-   {  NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> result(source);
-      result.atan2Assign(value);
-      return result;
-   }
-
-template <typename TypeSnd, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-atan2(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source,
-      TypeSnd value)
-   {  auto result(std::move(source));
-      result.atan2Assign(NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>(value));
-      return result;
-   }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline bool
-operator<(TypeFst fst, const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>(fst).operator<(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline bool
-operator<=(TypeFst fst, const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>(fst).operator<=(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline bool
-operator==(TypeFst fst, const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>(fst).operator==(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline bool
-operator!=(TypeFst fst, const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>(fst).operator!=(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline bool
-operator>=(TypeFst fst, const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>(fst).operator>=(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline bool
-operator>(TypeFst fst, const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>(fst).operator>(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-operator+(TypeFst fst, const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>(fst).operator+(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-operator-(TypeFst fst, const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>(fst).operator-(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-operator*(TypeFst fst, const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>(fst).operator*(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-operator/(TypeFst fst, const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>(fst).operator/(snd); }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-floor(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& fst)
-   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
-      return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMLowest));
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-floor(NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>&& fst)
-   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
-      return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMLowest));
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-ceil(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& fst)
-   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
-      return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMHighest));
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-ceil(NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>&& fst)
-   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
-      return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMHighest));
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-trunc(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& fst)
-   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
-      return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMZero));
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-trunc(NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>&& fst)
-   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
-      return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMZero));
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-round(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& fst)
-   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
-      return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest));
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-round(NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>&& fst)
-   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
-      return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest));
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-rint(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& fst)
-   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
-      return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-rintf(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& fst)
-   {  typedef NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation> thisType;
-      return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-fabs(const NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.absAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>
-fabs(NumericalDomains::DDoubleExact::TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>&& source)
-   {  auto result(source); result.absAssign(); return result; }
 
 #endif // FloatInstrumentation_FloatExactH
 
