@@ -21,13 +21,13 @@ typedef float old_float;
 typedef double old_double;
 typedef long double old_long_double;
 
+#define float_fld NumericalDomains::FloatZonotope
+#define double_fld NumericalDomains::DoubleZonotope
+#define long_double_fld NumericalDomains::LongDoubleZonotope
+
 #ifndef FLOAT_KEEP_DOUBLE
 #define float NumericalDomains::FloatZonotope
 #define double NumericalDomains::DoubleZonotope
-#define long_double_fld NumericalDomains::LongDoubleZonotope
-#else
-#define float_fld NumericalDomains::FloatZonotope
-#define double_fld NumericalDomains::DoubleZonotope
 #define long_double_fld NumericalDomains::LongDoubleZonotope
 #endif
 
@@ -40,6 +40,11 @@ typedef long double old_long_double;
 #define FAFFPRINT(x) (x).persist(#x":\t")
 #define DAFFPRINT(x) (x).persist(#x":\t")
 #define IPRINT(x) NumericalDomains::DoubleZonotope(x).lightPersist(#x":\t")
+#define FCPRINT(name, x) (x).lightPersist((std::string(name) + ":\t").c_str())
+#define DCPRINT(name, x) (x).lightPersist((std::string(name) + ":\t").c_str())
+#define FCAFFPRINT(name, x) (x).persist((std::string(name) + ":\t").c_str())
+#define DCAFFPRINT(name, x) (x).persist((std::string(name) + ":\t").c_str())
+#define ICPRINT(name, x) NumericalDomains::DoubleZonotope(x).lightPersist(name":\t")
 #define FSENSITIVITY(x)
 #define DSENSITIVITY(x)
 #define _FDL NumericalDomains::DAffine::BaseFloatAffine::setSourceLine(__FILE__, __LINE__);
@@ -196,13 +201,13 @@ inline double middle_of_double(double x, double y) { return (x+y)/2.0; }
 #define DBETWEEN_WITH_ERROR(x,y,errmin,errmax) NumericalDomains::DoubleInterval((old_double) x, (old_double) y, (old_double) errmin, (old_double) errmax)
 #endif // FLOAT_THRESHOLD_DETECTION
 
+#define float_fld NumericalDomains::FloatInterval
+#define double_fld NumericalDomains::DoubleInterval
+#define long_double_fld NumericalDomains::LongDoubleInterval
+
 #ifndef FLOAT_KEEP_DOUBLE
 #define float NumericalDomains::FloatInterval
 #define double NumericalDomains::DoubleInterval
-#define long_double_fld NumericalDomains::LongDoubleInterval
-#else
-#define float_fld NumericalDomains::FloatInterval
-#define double_fld NumericalDomains::DoubleInterval
 #define long_double_fld NumericalDomains::LongDoubleInterval
 #endif
 
@@ -211,6 +216,11 @@ inline double middle_of_double(double x, double y) { return (x+y)/2.0; }
 #define FAFFPRINT(x) (x).persist(#x":\t")
 #define DAFFPRINT(x) (x).persist(#x":\t")
 #define IPRINT(x) NumericalDomains::DoubleInterval(x).persist(#x":\t")
+#define FCPRINT(name, x) (x).persist((std::string(name) + ":\t").c_str())
+#define DCPRINT(name, x) (x).persist((std::string(name) + ":\t").c_str())
+#define FCAFFPRINT(name, x) (x).persist((std::string(name) + ":\t").c_str())
+#define DCAFFPRINT(name, x) (x).persist((std::string(name) + ":\t").c_str())
+#define ICPRINT(name, x) NumericalDomains::DoubleInterval(x).persist(name":\t")
 #define FSENSITIVITY(x)
 #define DSENSITIVITY(x)
 #define _FDL NumericalDomains::DDoubleInterval::ExecutionPath::setSourceLine(__FILE__, __LINE__);
@@ -287,13 +297,13 @@ typedef float old_float;
 typedef double old_double;
 typedef long double old_long_double;
 
+#define float_fld NumericalDomains::FloatExact
+#define double_fld NumericalDomains::DoubleExact
+#define long_double_fld NumericalDomains::LongDoubleExact
+
 #ifndef FLOAT_KEEP_DOUBLE
 #define float NumericalDomains::FloatExact
 #define double NumericalDomains::DoubleExact
-#define long_double_fld NumericalDomains::LongDoubleExact
-#else
-#define float_fld NumericalDomains::FloatExact
-#define double_fld NumericalDomains::DoubleExact
 #define long_double_fld NumericalDomains::LongDoubleExact
 #endif
 
@@ -306,6 +316,11 @@ typedef long double old_long_double;
 #define FAFFPRINT(x) (x).persist(#x":\t")
 #define DAFFPRINT(x) (x).persist(#x":\t")
 #define IPRINT(x) NumericalDomains::DoubleExact(x).persist(#x":\t")
+#define FCPRINT(name, x) (x).persist((std::string(name) + ":\t").c_str())
+#define DCPRINT(name, x) (x).persist((std::string(name) + ":\t").c_str())
+#define FCAFFPRINT(name, x) (x).persist((std::string(name) + ":\t").c_str())
+#define DCAFFPRINT(name, x) (x).persist((std::string(name) + ":\t").c_str())
+#define ICPRINT(name, x) NumericalDomains::DoubleExact(x).persist(name":\t")
 #define FSENSITIVITY(x)
 #define DSENSITIVITY(x)
 #define _FDL NumericalDomains::DDoubleExact::BaseFloatExact::setSourceLine(__FILE__, __LINE__);
@@ -394,6 +409,11 @@ inline double middle_of_double(double x, double y) { return (x+y)/2.0; }
 #define IPRINT(x) printf("%d\n", x)
 #define FAFFPRINT(x) printf("%e\n", x)
 #define DAFFPRINT(x) printf("%e\n", x)
+#define FCPRINT(name, x) printf("%e\n", x)
+#define DCPRINT(name, x) printf("%e\n", x)
+#define ICPRINT(name, x) printf("%d\n", x)
+#define FCAFFPRINT(name, x) printf("%e\n", x)
+#define DCAFFPRINT(name, x) printf("%e\n", x)
 #define FSENSITIVITY(x)
 #define DSENSITIVITY(x)
 #define _FDL 
