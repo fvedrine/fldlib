@@ -173,10 +173,10 @@ class ExecutionPathContract : public BaseExecutionPath {
    void writeNegativeOrNulLog() const {}
    void assumeSourceLine() const {}
 
-   void assumeThresholdDetection(const BuiltReal& relativeError) const {}
-   void updateThresholdDetection(const BuiltReal& relativeError) const {}
+   void assumeThresholdDetection(const BuiltReal& relativeError, const BuiltReal& value) const {}
+   void updateThresholdDetection(const BuiltReal& relativeError, const BuiltReal& value) const {}
    bool hasThreshold() const { return false; }
-   bool updateMaximalAccuracy(const BuiltReal& relativeError) const { return false; }
+   bool updateMaximalAccuracy(const BuiltReal& relativeError, const BuiltReal& value) const { return false; }
 
    void notifyPossibleSplit(const char* file, int line) const {}
    void notifyPossibleMerge() const {}
@@ -265,12 +265,26 @@ class TBaseFloatExact : public TypeExecutionPath {
                BuiltReal relativeError;
                source.retrieveRelativeError(relativeError);
                if (!relativeError.isZero()) {
-                  if (doesAssume && inherited::hasThreshold() && inherited::doesAssumeInput())
-                     inherited::assumeThresholdDetection(relativeError);
+                  if (doesAssume && inherited::hasThreshold() && inherited::doesAssumeInput()) {
+                     if (source.real().isPositive())
+                        inherited::assumeThresholdDetection(relativeError, source.real());
+                     else {
+                        BuiltReal sourceReal(source.real());
+                        sourceReal.opposite();
+                        inherited::assumeThresholdDetection(relativeError, sourceReal);
+                     };
+                  };
                   if (hasOutput && mode == BaseExecutionPath::SVNone) {
-                     if (inherited::hasThreshold())
-                        inherited::updateThresholdDetection(relativeError);
-                     inherited::updateMaximalAccuracy(relativeError);
+                     if (inherited::hasThreshold()) {
+                        if (source.real().isPositive())
+                           inherited::updateThresholdDetection(relativeError, source.real());
+                        else {
+                           BuiltReal sourceReal(source.real());
+                           sourceReal.opposite();
+                           inherited::updateThresholdDetection(relativeError, sourceReal);
+                        };
+                     };
+                     inherited::updateMaximalAccuracy(relativeError, source.real());
                   };
                };
             }

@@ -53,6 +53,7 @@ class ExecutionPath : public BaseExecutionPath {
    static bool fSupportThreshold;
    static bool fSupportFirstFollowFloat;
    static BuiltReal brThreshold;
+   static BuiltReal brThresholdDomain;
    static BuiltReal brMaximalAccuracy;
    static const char* szFile;
    static int uLine;
@@ -206,10 +207,10 @@ class ExecutionPath : public BaseExecutionPath {
          oTraceFile->flush();
       }
 
-   static void assumeThresholdDetection(const BuiltReal& relativeError)
+   static void assumeThresholdDetection(const BuiltReal& relativeError, const BuiltReal& real)
       {  if (!relativeError.isZero()) {
             if (relativeError > brThreshold) {
-               if (doesAssumeInput()) {
+               if (doesAssumeInput() && real > brThresholdDomain) {
                   iTraceFile->assume("warning: relative accuracy beyond threshold\n");
                   if (fSupportBacktrace)
                      readBackTrace(*iTraceFile);
@@ -217,20 +218,24 @@ class ExecutionPath : public BaseExecutionPath {
             };
          };
       }
-   static void updateThresholdDetection(const BuiltReal& relativeError)
+   static void updateThresholdDetection(const BuiltReal& relativeError, const BuiltReal& real)
       {  if (!relativeError.isZero()) {
             if (relativeError > brThreshold) {
-               oTraceFile->writesome("warning: relative accuracy beyond threshold\n");
-               if (fSupportBacktrace)
-                  writeBackTrace(*oTraceFile);
+               if (real > brThresholdDomain) {
+                  oTraceFile->writesome("warning: relative accuracy beyond threshold\n");
+                  if (fSupportBacktrace)
+                     writeBackTrace(*oTraceFile);
+               };
             };
          };
       }
    static bool hasThreshold() { return !brThreshold.isZero(); }
-   static bool updateMaximalAccuracy(const BuiltReal& relativeError)
+   static bool updateMaximalAccuracy(const BuiltReal& relativeError, const BuiltReal& real)
       {  bool result = relativeError > brMaximalAccuracy;
-         if (result)
-            brMaximalAccuracy = relativeError;
+         if (result) {
+            if (real > brThresholdDomain)
+               brMaximalAccuracy = relativeError;
+         }
          return result;
       }
 

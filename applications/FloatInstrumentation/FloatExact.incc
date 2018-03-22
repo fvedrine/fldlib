@@ -167,6 +167,7 @@ bool ExecutionPath::fSupportVerbose = false;
 bool ExecutionPath::fSupportThreshold = false;
 bool ExecutionPath::fSupportFirstFollowFloat = false;
 BuiltReal ExecutionPath::brThreshold;
+BuiltReal ExecutionPath::brThresholdDomain;
 BuiltReal ExecutionPath::brMaximalAccuracy;
 
 void
@@ -196,6 +197,18 @@ ExecutionPath::initializeGlobals(const char* fileSuffix) {
             brThreshold.read(*iTraceFile, defaultParams);
             char ch = iTraceFile->get();
             if (ch == ' ') {
+               ch = iTraceFile->get();
+               if (ch == 's') {
+                  iTraceFile->unget();
+                  ch = ' ';
+               }
+               else {
+                  defaultParams.clear();
+                  brThresholdDomain.read(*iTraceFile, defaultParams);
+                  ch = iTraceFile->get();
+               };
+            };
+            if (ch == ' ') {
                iTraceFile->assume("s\n");
                delete iTraceFile;
                iTraceFile = nullptr;
@@ -224,6 +237,8 @@ ExecutionPath::finalizeGlobals() {
       if (fSupportThreshold) {
          oTraceFile->writesome("maximal accuracy: ");
          brMaximalAccuracy.write(*oTraceFile, BuiltReal::WriteParameters().setDecimal());
+         oTraceFile->put(' ');
+         brThresholdDomain.write(*oTraceFile, BuiltReal::WriteParameters().setDecimal());
          oTraceFile->put('\n');
       };
       oTraceFile->writesome("path condition: ");
