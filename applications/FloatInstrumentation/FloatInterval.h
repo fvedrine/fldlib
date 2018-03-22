@@ -143,6 +143,38 @@ class MergeMemory {
       }
 };
 
+template <typename TypeImplementation>
+int tfinite(TypeImplementation val)
+   {  AssumeUncalled return 0; }
+
+template <> int tfinite(long double val);
+template <> int tfinite(double val);
+template <> int tfinite(float val);
+
+template <typename TypeImplementation>
+int tisfinite(TypeImplementation val)
+   {  AssumeUncalled return 0; }
+
+template <> int tisfinite(long double val);
+template <> int tisfinite(double val);
+template <> int tisfinite(float val);
+
+template <typename TypeImplementation>
+int tisnan(TypeImplementation val)
+   {  AssumeUncalled return 0; }
+
+template <> int tisnan(long double val);
+template <> int tisnan(double val);
+template <> int tisnan(float val);
+
+template <typename TypeImplementation>
+int tisinf(TypeImplementation val)
+   {  AssumeUncalled return 0; }
+
+template <> int tisinf(long double val);
+template <> int tisinf(double val);
+template <> int tisinf(float val);
+
 template <class TypeBuiltDouble, typename TypeImplementation>
 class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, TypeBuiltDouble, TypeImplementation> {
   private:
@@ -178,10 +210,12 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
          TypeImplementation errmin, TypeImplementation errmax)
       :  inherited(errmin < 0 ? min+errmin : min,
                    errmax > 0 ? max+errmax : max) {}
+   TInstrumentedFloatInterval(short int value) : inherited(value) {}
    TInstrumentedFloatInterval(int value) : inherited(value) {}
    TInstrumentedFloatInterval(long int value) : inherited(value) {}
-   // TInstrumentedFloatInterval(unsigned value) : inherited(value) {}
-   // TInstrumentedFloatInterval(unsigned long value) : inherited(value) {}
+   TInstrumentedFloatInterval(unsigned short value) : inherited(value) {}
+   TInstrumentedFloatInterval(unsigned value) : inherited(value) {}
+   TInstrumentedFloatInterval(unsigned long value) : inherited(value) {}
    TInstrumentedFloatInterval(const thisType& source) = default;
    TInstrumentedFloatInterval(thisType&& source) = default; // [TODO] keep symbolic for constraints
    TInstrumentedFloatInterval& operator=(const thisType& source) = default;
@@ -353,6 +387,513 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
       }
 
    void persist(const char* prefix) { inherited::notifyForPersistence(*this, prefix); }
+
+   friend std::ostream& operator<<(std::ostream& out, const thisType& source)
+      {  return out << source.asImplementation(); }
+   friend std::istream& operator>>(std::istream& in, thisType& source)
+      {  decltype(thisType.asImplementation()) val;
+         in >> val;
+         source = thisType(val);
+         return in;
+      }
+
+   friend thisType sqrt(const thisType& source)
+      {  auto result(std::move(source)); result.sqrtAssign(); return result; }
+   friend thisType sin(const thisType& source)
+      {  auto result(std::move(source)); result.sinAssign(); return result; }
+   friend thisType cos(const thisType& source)
+      {  auto result(std::move(source)); result.cosAssign(); return result; }
+   friend thisType asin(const thisType& source)
+      {  auto result(std::move(source)); result.asinAssign(); return result; }
+   friend thisType acos(const thisType& source)
+      {  auto result(std::move(source)); result.acosAssign(); return result; }
+   friend thisType tan(const thisType& source)
+      {  auto result(std::move(source)); result.tanAssign(); return result; }
+   friend thisType atan(const thisType& source)
+      {  auto result(std::move(source)); result.atanAssign(); return result; }
+   friend thisType exp(const thisType& source)
+      {  auto result(std::move(source)); result.expAssign(); return result; }
+   friend thisType log(const thisType& source)
+      {  auto result(std::move(source)); result.logAssign(); return result; }
+   friend thisType log2(const thisType& source)
+      {  auto result(std::move(source)); result.logAssign();
+         result.operator/=(log(thisType(2.0)));
+         return result;
+      }
+   friend thisType exp2(const thisType& source)
+      {  thisType result(2.0);
+         result.powAssign(source);
+         return result;
+      }
+   friend thisType log10(const thisType& source)
+      {  auto result(std::move(source)); result.log10Assign(); return result; }
+
+   friend thisType pow(const thisType& source, const thisType& value)
+      {  auto result(std::move(source)); result.powAssign(value); return result; }
+   friend thisType pow(long double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(float source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(unsigned long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(unsigned int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(unsigned short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+
+   friend thisType pow(const thisType& source, long double value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, double value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, float value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, unsigned long value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, long value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, unsigned int value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, int value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, unsigned short value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, short value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+
+   friend thisType powf(const thisType& source, const thisType& value)
+      {  auto result(std::move(source)); result.powAssign(value); return result; }
+   friend thisType powf(long double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(float source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(unsigned long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(unsigned int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(unsigned short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+
+   friend thisType powf(const thisType& source, long double value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, double value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, float value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, unsigned long value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, long value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, unsigned int value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, int value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, unsigned short value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, short value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+
+   friend thisType atan2(const thisType& source, const thisType& value)
+      {  auto result(std::move(source)); result.atan2Assign(value); return result; }
+   friend thisType atan2(long double source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(double source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(float source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(unsigned long source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(long source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(unsigned int source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(int source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(unsigned short source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(short source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+
+   friend thisType atan2(const thisType& source, long double value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, double value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, float value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, unsigned long value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, long value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, unsigned int value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, int value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, unsigned short value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, short value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+
+   friend bool operator<(long double fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+   friend bool operator<(double fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+   friend bool operator<(float fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+   friend bool operator<(unsigned long fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+   friend bool operator<(long fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+   friend bool operator<(unsigned int fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+   friend bool operator<(int fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+   friend bool operator<(unsigned short fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+   friend bool operator<(short fst, const thisType& snd) { return thisType(fst).operator<(snd); }
+
+   friend bool operator<=(long double fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+   friend bool operator<=(double fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+   friend bool operator<=(float fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+   friend bool operator<=(unsigned long fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+   friend bool operator<=(long fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+   friend bool operator<=(unsigned int fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+   friend bool operator<=(int fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+   friend bool operator<=(unsigned short fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+   friend bool operator<=(short fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
+
+   friend bool operator==(long double fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+   friend bool operator==(double fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+   friend bool operator==(float fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+   friend bool operator==(unsigned long fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+   friend bool operator==(long fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+   friend bool operator==(unsigned int fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+   friend bool operator==(int fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+   friend bool operator==(unsigned short fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+   friend bool operator==(short fst, const thisType& snd) { return thisType(fst).operator==(snd); }
+
+   friend bool operator!=(long double fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+   friend bool operator!=(double fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+   friend bool operator!=(float fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+   friend bool operator!=(unsigned long fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+   friend bool operator!=(long fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+   friend bool operator!=(unsigned int fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+   friend bool operator!=(int fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+   friend bool operator!=(unsigned short fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+   friend bool operator!=(short fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
+
+   friend bool operator>=(long double fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+   friend bool operator>=(double fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+   friend bool operator>=(float fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+   friend bool operator>=(unsigned long fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+   friend bool operator>=(long fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+   friend bool operator>=(unsigned int fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+   friend bool operator>=(int fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+   friend bool operator>=(unsigned short fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+   friend bool operator>=(short fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
+
+   friend bool operator>(long double fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+   friend bool operator>(double fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+   friend bool operator>(float fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+   friend bool operator>(unsigned long fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+   friend bool operator>(long fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+   friend bool operator>(unsigned int fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+   friend bool operator>(int fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+   friend bool operator>(unsigned short fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+   friend bool operator>(short fst, const thisType& snd) { return thisType(fst).operator>(snd); }
+
+   friend thisType operator+(long double fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+   friend thisType operator+(double fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+   friend thisType operator+(float fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+   friend thisType operator+(unsigned long fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+   friend thisType operator+(long fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+   friend thisType operator+(unsigned int fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+   friend thisType operator+(int fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+   friend thisType operator+(unsigned short fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+   friend thisType operator+(short fst, const thisType& snd) { return thisType(fst).operator+(snd); }
+
+   friend thisType operator-(long double fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+   friend thisType operator-(double fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+   friend thisType operator-(float fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+   friend thisType operator-(unsigned long fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+   friend thisType operator-(long fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+   friend thisType operator-(unsigned int fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+   friend thisType operator-(int fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+   friend thisType operator-(unsigned short fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+   friend thisType operator-(short fst, const thisType& snd) { return thisType(fst).operator-(snd); }
+
+   friend thisType operator*(long double fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+   friend thisType operator*(double fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+   friend thisType operator*(float fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+   friend thisType operator*(unsigned long fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+   friend thisType operator*(long fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+   friend thisType operator*(unsigned int fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+   friend thisType operator*(int fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+   friend thisType operator*(unsigned short fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+   friend thisType operator*(short fst, const thisType& snd) { return thisType(fst).operator*(snd); }
+
+   friend thisType operator/(long double fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+   friend thisType operator/(double fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+   friend thisType operator/(float fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+   friend thisType operator/(unsigned long fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+   friend thisType operator/(long fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+   friend thisType operator/(unsigned int fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+   friend thisType operator/(int fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+   friend thisType operator/(unsigned short fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+   friend thisType operator/(short fst, const thisType& snd) { return thisType(fst).operator/(snd); }
+
+   friend thisType floor(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMLowest)); }
+   friend thisType floor(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMLowest)); }
+   friend thisType ceil(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMHighest)); }
+   friend thisType ceil(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMHighest)); }
+   friend thisType trunc(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMZero)); }
+   friend thisType trunc(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMZero)); }
+   friend thisType round(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest)); }
+   friend thisType round(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest)); }
+   friend thisType rint(const thisType& fst)
+      {  return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */)); }
+   friend thisType rintf(const thisType& fst)
+      {  return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */)); }
+   friend thisType fabs(const thisType& source)
+      {  thisType result = source;
+         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+         auto* oldPathExplorer = NumericalDomains::DDoubleInterval::ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = NumericalDomains::DDoubleInterval::ExecutionPath::doesFollowFlow();
+         NumericalDomains::DDoubleInterval::ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = NumericalDomains::DDoubleInterval::ExecutionPath::inputTraceFile();
+         NumericalDomains::DDoubleInterval::PathExplorer pathExplorer;
+         NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         auto mergeMemory = NumericalDomains::DDoubleInterval::MergeMemory() >> result;
+         auto saveMemory = NumericalDomains::DDoubleInterval::SaveMemory() << result;
+         do {
+            if (result < 0)
+               result.oppositeAssign();
+            NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow();
+         } while ((mergeMemory << result)
+               && !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> result));
+         NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
+         NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+         return result;
+      }
+   friend thisType fabs(thisType&& source)
+      {  thisType result(std::forward<thisType>(source));
+         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+         auto* oldPathExplorer = NumericalDomains::DDoubleInterval::ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = NumericalDomains::DDoubleInterval::ExecutionPath::doesFollowFlow();
+         NumericalDomains::DDoubleInterval::ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = NumericalDomains::DDoubleInterval::ExecutionPath::inputTraceFile();
+         NumericalDomains::DDoubleInterval::PathExplorer pathExplorer;
+         NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         auto mergeMemory = NumericalDomains::DDoubleInterval::MergeMemory() >> result;
+         auto saveMemory = NumericalDomains::DDoubleInterval::SaveMemory() << result;
+         do {
+            if (result < 0)
+               result.oppositeAssign();
+            NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow();
+         } while ((mergeMemory << result)
+               && !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> result));
+         NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
+         NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+
+         return result;
+      }
+   friend thisType abs(const thisType& source)
+      {  thisType result = source;
+         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+         auto* oldPathExplorer = NumericalDomains::DDoubleInterval::ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = NumericalDomains::DDoubleInterval::ExecutionPath::doesFollowFlow();
+         NumericalDomains::DDoubleInterval::ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = NumericalDomains::DDoubleInterval::ExecutionPath::inputTraceFile();
+         NumericalDomains::DDoubleInterval::PathExplorer pathExplorer;
+         NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         auto mergeMemory = NumericalDomains::DDoubleInterval::MergeMemory() >> result;
+         auto saveMemory = NumericalDomains::DDoubleInterval::SaveMemory() << result;
+         do {
+            if (result < 0)
+               result.oppositeAssign();
+            NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow();
+         } while ((mergeMemory << result)
+               && !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> result));
+         NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
+         NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+         return result;
+      }
+   friend thisType abs(thisType&& source)
+      {  thisType result(std::forward<thisType>(source));
+         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+         auto* oldPathExplorer = NumericalDomains::DDoubleInterval::ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = NumericalDomains::DDoubleInterval::ExecutionPath::doesFollowFlow();
+         NumericalDomains::DDoubleInterval::ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = NumericalDomains::DDoubleInterval::ExecutionPath::inputTraceFile();
+         NumericalDomains::DDoubleInterval::PathExplorer pathExplorer;
+         NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         auto mergeMemory = NumericalDomains::DDoubleInterval::MergeMemory() >> result;
+         auto saveMemory = NumericalDomains::DDoubleInterval::SaveMemory() << result;
+         do {
+            if (result < 0)
+               result.oppositeAssign();
+            NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow();
+         } while ((mergeMemory << result)
+               && !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> result));
+         NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
+         NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+
+         return result;
+      }
+   friend thisType fmod(const thisType& source, const thisType& value)
+      {  typedef thisType thisType;
+         auto divResult(source);
+         divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value;
+         multResult -= source;
+         multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(long double source, const thisType& value)
+      {  typedef thisType thisType; thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(double source, const thisType& value)
+      {  typedef thisType thisType; thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(float source, const thisType& value)
+      {  typedef thisType thisType; thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(unsigned long source, const thisType& value)
+      {  typedef thisType thisType; thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(long source, const thisType& value)
+      {  typedef thisType thisType; thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(unsigned int source, const thisType& value)
+      {  typedef thisType thisType; thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(int source, const thisType& value)
+      {  typedef thisType thisType; thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(unsigned short source, const thisType& value)
+      {  typedef thisType thisType; thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(short source, const thisType& value)
+      {  typedef thisType thisType; thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(const thisType& source, long double value)
+      {  typedef thisType thisType;
+         auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, double value)
+      {  typedef thisType thisType;
+         auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, float value)
+      {  typedef thisType thisType;
+         auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, unsigned long value)
+      {  typedef thisType thisType;
+         auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, long value)
+      {  typedef thisType thisType;
+         auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, unsigned int value)
+      {  typedef thisType thisType;
+         auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, int value)
+      {  typedef thisType thisType;
+         auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, unsigned short value)
+      {  typedef thisType thisType;
+         auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, short value)
+      {  typedef thisType thisType;
+         auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend int finite(const thisType& source) { return tfinite(source.asImplementation()); }
+   friend int isfinite(const thisType& source) { return tisfinite(source.asImplementation()); }
+   friend int isnan(const thisType& source) { return tisnan(source.asImplementation()); }
+   friend int isinf(const thisType& source) { return tisinf(source.asImplementation()); }
 };
 
 template <class TypeBuiltDouble, typename TypeImplementation>
@@ -374,309 +915,6 @@ typedef DDoubleInterval::TInstrumentedFloatInterval<DDoubleInterval::BuiltDouble
 typedef DDoubleInterval::TInstrumentedFloatInterval<DDoubleInterval::BuiltLongDouble, long double> LongDoubleInterval;
 
 } // end of namespace NumericalDomains
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-sqrt(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.sqrtAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-sin(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.sinAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-cos(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.cosAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-asin(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.asinAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-acos(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.acosAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-tan(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.tanAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-atan(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.atanAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-exp(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.expAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-log(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.logAssign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-log10(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.log10Assign(); return result; }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-pow(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& source,
-      const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& value)
-   {  auto result(std::move(source)); result.powAssign(value); return result; }
-
-template <class TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-pow(TypeFst source, const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& value)
-   {  NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> result(source);
-      result.powAssign(value);
-      return result;
-   }
-
-template <class TypeSnd, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-pow(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& source,
-      TypeSnd value)
-   {  auto result(std::move(source));
-      result.powAssign(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>(value));
-      return result;
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-powf(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& source,
-      const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& value)
-   {  auto result(std::move(source)); result.powAssign(value); return result; }
-
-template <class TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-powf(TypeFst source, const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& value)
-   {  NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> result(source);
-      result.powAssign(value);
-      return result;
-   }
-
-template <class TypeSnd, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-powf(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& source,
-      TypeSnd value)
-   {  auto result(std::move(source));
-      result.powAssign(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>(value));
-      return result;
-   }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline bool
-operator<(TypeFst fst, const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>(fst).operator<(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline bool
-operator<=(TypeFst fst, const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>(fst).operator<=(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline bool
-operator==(TypeFst fst, const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>(fst).operator==(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline bool
-operator!=(TypeFst fst, const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>(fst).operator!=(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline bool
-operator>=(TypeFst fst, const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>(fst).operator>=(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline bool
-operator>(TypeFst fst, const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>(fst).operator>(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-operator+(TypeFst fst, const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>(fst).operator+(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-operator-(TypeFst fst, const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>(fst).operator-(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-operator*(TypeFst fst, const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>(fst).operator*(snd); }
-
-template <typename TypeFst, class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-operator/(TypeFst fst, const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>(fst).operator/(snd); }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-log2(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& source)
-   {  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-      thisType result(std::move(source));
-      result.logAssign();
-      result.divAssign(thisType(::log(2.0)));
-      return result;
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-exp2(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& source)
-   {  NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-         result = 2.0;
-      result.powAssign(source);
-      return result;
-   }
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-floor(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& fst)
-{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-   return thisType(fst.asInt(thisType::ReadParametersBase::RMLowest));
-}
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-floor(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-   return thisType(fst.asInt(thisType::ReadParametersBase::RMLowest));
-}
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-ceil(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& fst)
-{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-   return thisType(fst.asInt(thisType::ReadParametersBase::RMHighest));
-}
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-ceil(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-   return thisType(fst.asInt(thisType::ReadParametersBase::RMHighest));
-}
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-trunc(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& fst)
-{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-   return thisType(fst.asInt(thisType::ReadParametersBase::RMZero));
-}
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-trunc(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-   return thisType(fst.asInt(thisType::ReadParametersBase::RMZero));
-}
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-round(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& fst)
-{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-   return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest));
-}
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-round(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-   return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest));
-}
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-rintf(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& fst)
-{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-   return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-}
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-rintf(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-   return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-}
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-rint(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& fst)
-{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-   return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-}
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-rint(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-   return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-}
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-fabs(const NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>& fst)
-{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-   thisType result = fst;
-
-   // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
-   auto* oldPathExplorer = NumericalDomains::DDoubleInterval::ExecutionPath::getCurrentPathExplorer();
-   bool oldDoesFollow = NumericalDomains::DDoubleInterval::ExecutionPath::doesFollowFlow();
-   NumericalDomains::DDoubleInterval::ExecutionPath::clearFollowFlow();
-   auto* oldInputTraceFile = NumericalDomains::DDoubleInterval::ExecutionPath::inputTraceFile();
-   NumericalDomains::DDoubleInterval::PathExplorer pathExplorer;
-   NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
-   auto mergeMemory = NumericalDomains::DDoubleInterval::MergeMemory() >> result;
-   auto saveMemory = NumericalDomains::DDoubleInterval::SaveMemory() << result;
-   do {
-      if (result < 0)
-         result.oppositeAssign();
-      NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow();
-   } while ((mergeMemory << result)
-         && !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> result));
-   NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
-   NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
-
-   return result;
-}
-
-template <class TypeBuiltDouble, typename TypeImplementation>
-inline NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>
-fabs(NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DDoubleInterval::TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(fst));
-
-   // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
-   auto* oldPathExplorer = NumericalDomains::DDoubleInterval::ExecutionPath::getCurrentPathExplorer();
-   bool oldDoesFollow = NumericalDomains::DDoubleInterval::ExecutionPath::doesFollowFlow();
-   NumericalDomains::DDoubleInterval::ExecutionPath::clearFollowFlow();
-   auto* oldInputTraceFile = NumericalDomains::DDoubleInterval::ExecutionPath::inputTraceFile();
-   NumericalDomains::DDoubleInterval::PathExplorer pathExplorer;
-   NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
-   auto mergeMemory = NumericalDomains::DDoubleInterval::MergeMemory() >> result;
-   auto saveMemory = NumericalDomains::DDoubleInterval::SaveMemory() << result;
-   do {
-      if (result < 0)
-         result.oppositeAssign();
-      NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow();
-   } while ((mergeMemory << result)
-         && !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> result));
-   NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
-   NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
-
-   return result;
-}
 
 #endif // FloatInstrumentation_FloatIntervalH
 
