@@ -427,10 +427,27 @@ class TMergeBranches : public TBaseFloatExact<TypeExecutionPath> {
       :  fActive((inherited::getMode() != BaseExecutionPath::SVNone) && inherited::isSynchronizedWith(file, line)) {}
 
    template <class TypeBuiltDouble, typename TypeImplementation>
-   TMergeBranches& operator<<(TFloatExact<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>& value);
+   TMergeBranches<TypeExecutionPath>& operator<<(TFloatExact<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>& value);
    template <class TypeBuiltDouble, typename TypeImplementation>
-   TMergeBranches& operator<<(const TFloatExact<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>& value)
+   TMergeBranches<TypeExecutionPath>& operator<<(const TFloatExact<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>& value)
       {  return operator<<(const_cast<TFloatExact<TypeExecutionPath, TypeBuiltDouble, TypeImplementation>&>(value)); }
+
+   template <class TypeIterator>
+   struct TPacker {
+      TypeIterator iter, end;
+      TPacker(TypeIterator aiter, TypeIterator aend) : iter(aiter), end(aend) {}
+   };
+
+   template <class TypeIterator>
+   static TPacker<TypeIterator> packer(TypeIterator iter, TypeIterator end)
+      {  return TPacker<TypeIterator>(iter, end); }
+
+   template <class TypeIterator>
+   TMergeBranches<TypeExecutionPath>& operator<<(TPacker<TypeIterator>&& packer)
+      {  for (; packer.iter != packer.end; ++packer.iter)
+            operator<<(*packer.iter);
+         return *this;
+      }
    bool operator<<(BaseExecutionPath::end)
       {  if (!fActive) {
             inherited::notifyPossibleMerge();

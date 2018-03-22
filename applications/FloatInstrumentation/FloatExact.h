@@ -37,6 +37,9 @@
 
 namespace NumericalDomains { namespace DDoubleExact {
 
+template <typename TypeIterator, class TypeSaveMemory>
+class TPackedSaveMemory;
+
 template <typename T1, class TypeSaveMemory>
 class TSaveMemory {
   public:
@@ -50,6 +53,9 @@ class TSaveMemory {
    template <typename T>
    TSaveMemory<T, TSaveMemory<T1, TypeSaveMemory> > operator<<(T t)
       {  return TSaveMemory<T, TSaveMemory<T1, TypeSaveMemory> >(t, *this); }
+   template <typename TypeIterator>
+   TPackedSaveMemory<TypeIterator, TSaveMemory<T1, TypeSaveMemory> > operator<<(MergeBranches::TPacker<TypeIterator> packer);
+
    TSaveMemory<T1, TypeSaveMemory>& operator<<(BaseExecutionPath::end) { return *this; }
    TSaveMemory<T1, TypeSaveMemory>& setCurrent(bool result)
       {  next.setCurrent(result); return *this; }
@@ -67,6 +73,59 @@ class TSaveMemory {
    bool getResult() const { return next.getResult(); }
 };
 
+template <typename TypeIterator, class TypeSaveMemory>
+class TPackedSaveMemory {
+  public:
+   COL::TVector<typename TypeIterator::value_type> save;
+   TypeSaveMemory next;
+
+   TPackedSaveMemory(TypeIterator iter, TypeIterator end, TypeSaveMemory nextArg)
+      :  next(nextArg)
+      {  int count = end - iter;
+         save.bookPlace(count);
+         for (; iter != end; ++iter)
+            save.insertAtEnd(*iter);
+      }
+   TPackedSaveMemory(const TPackedSaveMemory<TypeIterator, TypeSaveMemory>&) = default;
+   TPackedSaveMemory(TPackedSaveMemory<TypeIterator, TypeSaveMemory>&&) = default;
+
+   template <typename T>
+   TSaveMemory<T, TSaveMemory<TypeIterator, TypeSaveMemory> > operator<<(T t)
+      {  return TSaveMemory<T, TSaveMemory<TypeIterator, TypeSaveMemory> >(t, *this); }
+   template <class TypeIteratorArgument>
+   TPackedSaveMemory<TypeIteratorArgument, TPackedSaveMemory<TypeIterator, TypeSaveMemory> >
+      operator<<(MergeBranches::TPacker<TypeIteratorArgument> packer)
+      {  return TPackedSaveMemory<TypeIteratorArgument, TPackedSaveMemory<TypeIterator, TypeSaveMemory> >
+            (packer.iter, packer.end, *this);
+      }
+   TPackedSaveMemory<TypeIterator, TypeSaveMemory>& operator<<(BaseExecutionPath::end) { return *this; }
+
+   TPackedSaveMemory<TypeIterator, TypeSaveMemory>& setCurrent(bool result)
+      {  next.setCurrent(result); return *this; }
+   
+   TypeSaveMemory& operator>>(MergeBranches::TPacker<TypeIterator>&& packer)
+      {  if (!next.getResult()) {
+            int count = packer.end - packer.iter;
+            AssumeCondition(count == save.count())
+            for (int index = 0; index < count; ++index) {
+               *packer.iter = save[index];
+               ++packer.iter;
+            }
+         }
+         return next;
+      }
+   bool getResult() const { return next.getResult(); }
+};
+
+template <typename T1, class TypeSaveMemory>
+template <typename TypeIterator>
+inline
+TPackedSaveMemory<TypeIterator, TSaveMemory<T1, TypeSaveMemory> >
+TSaveMemory<T1, TypeSaveMemory>::operator<<(MergeBranches::TPacker<TypeIterator> packer)
+   {  return TPackedSaveMemory<TypeIterator, TSaveMemory<T1, TypeSaveMemory> >
+         (packer.iter, packer.end, *this);
+   }
+
 class SaveMemory {
   private:
    bool fResult;
@@ -77,6 +136,12 @@ class SaveMemory {
    template <typename T>
    TSaveMemory<T, SaveMemory> operator<<(T t)
       {  return TSaveMemory<T, SaveMemory>(t, *this); }
+   template <class TypeIterator>
+   TPackedSaveMemory<TypeIterator, SaveMemory>
+      operator<<(MergeBranches::TPacker<TypeIterator> packer)
+      {  return TPackedSaveMemory<TypeIterator, SaveMemory>
+            (packer.iter, packer.end, *this);
+      }
    SaveMemory& operator<<(BaseExecutionPath::end) { return *this; }
    SaveMemory& setCurrent(bool result) { fResult = result; return *this; }
    bool getResult() const { return fResult; }
@@ -128,6 +193,7 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
 
   public:
    class ErrorParameter {};
+   typedef DDoubleExact::MergeBranches MergeBranches;
 
    TInstrumentedFloat() {}
    TInstrumentedFloat(float value) { inherited::initFrom(value); }
