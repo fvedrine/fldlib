@@ -310,7 +310,7 @@ typedef long double old_long_double;
 #define FBETWEEN(x,y) NumericalDomains::FloatExact(middle_of_float((old_float) x, (old_float) y))
 #define FBETWEEN_WITH_ERROR(x,y,errmin,errmax) NumericalDomains::FloatExact(middle_of_float((old_float) x, (old_float) y), middle_of_float((old_float) errmin, (old_float) errmax), NumericalDomains::FloatExact::ErrorParameter())
 #define DBETWEEN(x,y) NumericalDomains::DoubleExact(middle_of_double((old_double) x, (old_double) y))
-#define DBETWEEN_WITH_ERROR(x,y,errmin,errmax) NumericalDomains::DoubleExact(middle_of_double((old_double) x, (old_double) y), middle_of_float((old_float) errmin, (old_float) errmax), NumericalDomains::FloatExact::ErrorParameter())
+#define DBETWEEN_WITH_ERROR(x,y,errmin,errmax) NumericalDomains::DoubleExact(middle_of_double((old_double) x, (old_double) y), middle_of_double((old_double) errmin, (old_double) errmax), NumericalDomains::DoubleExact::ErrorParameter())
 #define FPRINT(x) (x).persist(#x":\t")
 #define DPRINT(x) (x).persist(#x":\t")
 #define FAFFPRINT(x) (x).persist(#x":\t")

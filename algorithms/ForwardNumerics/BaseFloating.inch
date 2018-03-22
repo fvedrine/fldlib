@@ -576,7 +576,9 @@ class DefineBuiltDouble : protected DDouble::Access, protected TypeTraits {
       }
    ComparisonResult compareValue(const thisType& source) const
       {  ComparisonResult result;
-         if (fNegative != source.fNegative) {
+         if (isNaN() || source.isNaN())
+            result = CRNonComparable;
+         else if (fNegative != source.fNegative) {
             if (!isZero() || !source.isZero())
                result = fNegative ? CRLess : CRGreater;
             else

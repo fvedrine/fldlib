@@ -4264,7 +4264,7 @@ template <class TypeTraits>
 DefineBuiltDouble<TypeTraits>&
 DefineBuiltDouble<TypeTraits>::sqrtAssign() { // u_{n+1} = (u_n + this/u_n)/2
    AssumeCondition(!fNegative)
-   if (isZero() || isInfty())
+   if (isZero() || isInftyExponent())
       return *this;
    thisType result;
    result.biExponent = biExponent;

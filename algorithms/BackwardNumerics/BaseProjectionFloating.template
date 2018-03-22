@@ -1154,7 +1154,7 @@ LApproximation:
 template <class TypeDouble, class TypeDouble_1>
 TProjectionDouble<TypeDouble, TypeDouble_1>&
 TProjectionDouble<TypeDouble, TypeDouble_1>::sqrtAssign(ReadParameters& roundMode) {
-   if (inherited::isZero())
+   if (inherited::isZero() || inherited::isInftyExponent())
       return *this;
 
    int addExponent = 0;
