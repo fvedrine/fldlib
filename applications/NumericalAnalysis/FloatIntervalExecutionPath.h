@@ -149,12 +149,14 @@ class ExecutionPathContract : public BaseExecutionPath {
    template <class TypeBuiltDouble>
    static TypeBuiltDouble& threshold(const TypeBuiltDouble& relativeError) { return *(TypeBuiltDouble*) nullptr; }
    template <class TypeBuiltDouble>
+   static TypeBuiltDouble& thresholdDomain(const TypeBuiltDouble& relativeError) { return *(TypeBuiltDouble*) nullptr; }
+   template <class TypeBuiltDouble>
    static TypeBuiltDouble& maximalAccuracy(const TypeBuiltDouble& relativeError) { return *(TypeBuiltDouble*) nullptr; }
 
    template <class TypeBuiltDouble>
-   void assumeThresholdDetection(const TypeBuiltDouble& relativeError) const;
+   void assumeThresholdDetection(const TypeBuiltDouble& relativeError, const TypeBuiltDouble& meanValue) const;
    template <class TypeBuiltDouble>
-   void updateThresholdDetection(const TypeBuiltDouble& relativeError) const;
+   void updateThresholdDetection(const TypeBuiltDouble& relativeError, const TypeBuiltDouble& meanValue) const;
 
    bool followNewUnresolvedBranch(bool& isLastBranch) const { return true; }
    unsigned followNewConversionBranch(unsigned conversion, bool& isLastBranch) const { return 0; }
@@ -288,12 +290,35 @@ TBaseFloatInterval<TypeExecutionPath>::notifyForCompare(const TFloatInterval& so
          typename TFloatInterval::BuiltDouble relativeError;
          source.retrieveRelativeError(relativeError);
          if (!relativeError.isZero()) {
+            typename TFloatInterval::BuiltDouble meanValue = source.min();
+            typename TFloatInterval::BuiltDouble two;
+            two.setBasicExponent(source.min().getOneExponent());
+            Numerics::DDouble::Access::ReadParameters params(inherited::minParams());
+            params.setRoundToEven().setNearestRound();
+            if (source.min().isNegative() != source.max().isNegative()
+                  || (source.min().getBasicExponent() <= source.min().getZeroExponent()
+                     && source.max().getBasicExponent() <= source.max().getZeroExponent())) {
+               meanValue.plusAssign(source.max(), params);
+               params.clear();
+               meanValue.divAssign(two, params);
+            }
+            else {
+               meanValue.divAssign(two, params);
+               params.clear();
+               typename TFloatInterval::BuiltDouble meanAdd = source.max();
+               meanAdd.divAssign(two, params);
+               params.clear();
+               meanValue.plusAssign(meanAdd, params);
+            };
+            if (meanValue.isNegative())
+               meanValue.opposite();
+
             if (doesAssume && !threshold.isZero() && inherited::doesAssumeInput())
-               inherited::assumeThresholdDetection(relativeError);
+               inherited::assumeThresholdDetection(relativeError, meanValue);
             if (hasOutput) {
                auto& maximalAccuracy = inherited::maximalAccuracy(source.min());
                if (!threshold.isZero())
-                  inherited::updateThresholdDetection(relativeError);
+                  inherited::updateThresholdDetection(relativeError, meanValue);
                if (relativeError > maximalAccuracy)
                   maximalAccuracy = relativeError;
             };

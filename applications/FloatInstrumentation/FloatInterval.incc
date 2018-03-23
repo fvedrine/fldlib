@@ -170,6 +170,9 @@ bool ExecutionPath::fSupportFirstFollowFloat = false;
 BuiltFloat ExecutionPath::brFloatThreshold;
 BuiltDouble ExecutionPath::brDoubleThreshold;
 BuiltLongDouble ExecutionPath::brLongDoubleThreshold;
+BuiltFloat ExecutionPath::brFloatThresholdDomain;
+BuiltDouble ExecutionPath::brDoubleThresholdDomain;
+BuiltLongDouble ExecutionPath::brLongDoubleThresholdDomain;
 BuiltFloat ExecutionPath::brFloatMaximalAccuracy;
 BuiltDouble ExecutionPath::brDoubleMaximalAccuracy;
 BuiltLongDouble ExecutionPath::brLongDoubleMaximalAccuracy;
@@ -215,6 +218,34 @@ ExecutionPath::initializeGlobals(const char* fileSuffix) {
             nearestParams.clear();
 
             char ch = iTraceFile->get();
+            if (ch == ' ') {
+               ch = iTraceFile->get();
+               if (ch == 's') {
+                  iTraceFile->unget();
+                  ch = ' ';
+               }
+               else {
+                  defaultParams.clear();
+                  brLongDoubleThresholdDomain.read(*iTraceFile, defaultParams);
+                  BuiltLongDouble::FloatConversion conversion;
+                  conversion.setSizeMantissa(brLongDoubleThresholdDomain.bitSizeMantissa())
+                        .setSizeExponent(brLongDoubleThresholdDomain.bitSizeExponent());
+                  int sizeMantissa = (brLongDoubleThresholdDomain.bitSizeMantissa() + 8*sizeof(unsigned) - 1)/(8*sizeof(unsigned));
+                  for (int index = 0; index < sizeMantissa; ++index)
+                     conversion.mantissa()[index] = brLongDoubleThresholdDomain.getMantissa()[index];
+                  int sizeExponent = (brLongDoubleThresholdDomain.bitSizeExponent() + 8*sizeof(unsigned) - 1)/(8*sizeof(unsigned));
+                  for (int index = 0; index < sizeExponent; ++index)
+                     conversion.exponent()[index] = brLongDoubleThresholdDomain.getBasicExponent()[index];
+                  conversion.setNegative(brLongDoubleThresholdDomain.isNegative());
+                  Numerics::DDouble::Access::ReadParameters nearestParams;
+                  nearestParams.setNearestRound().setRoundToEven();
+                  brDoubleThresholdDomain.setFloat(conversion, nearestParams);
+                  nearestParams.clear();
+                  brFloatThresholdDomain.setFloat(conversion, nearestParams);
+                  nearestParams.clear();
+                  ch = iTraceFile->get();
+               };
+            };
             if (ch == ' ') {
                iTraceFile->assume("s\n");
                delete iTraceFile;
@@ -274,6 +305,8 @@ ExecutionPath::finalizeGlobals() {
 
          oTraceFile->writesome("maximal accuracy: ");
          maximalAccuracy.write(*oTraceFile, BuiltLongDouble::WriteParameters().setDecimal());
+         oTraceFile->put(' ');
+         brLongDoubleThresholdDomain.write(*oTraceFile, BuiltLongDouble::WriteParameters().setDecimal());
          oTraceFile->put('\n');
       };
       oTraceFile->writesome("path condition: ");

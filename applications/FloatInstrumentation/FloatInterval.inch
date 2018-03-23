@@ -135,6 +135,9 @@ class ExecutionPath : public BaseExecutionPath {
    static BuiltFloat brFloatThreshold;
    static BuiltDouble brDoubleThreshold;
    static BuiltLongDouble brLongDoubleThreshold;
+   static BuiltFloat brFloatThresholdDomain;
+   static BuiltDouble brDoubleThresholdDomain;
+   static BuiltLongDouble brLongDoubleThresholdDomain;
    static BuiltFloat brFloatMaximalAccuracy;
    static BuiltDouble brDoubleMaximalAccuracy;
    static BuiltLongDouble brLongDoubleMaximalAccuracy;
@@ -272,15 +275,18 @@ class ExecutionPath : public BaseExecutionPath {
    static BuiltFloat& threshold(const BuiltFloat& source) { return brFloatThreshold; }
    static BuiltDouble& threshold(const BuiltDouble& source) { return brDoubleThreshold; }
    static BuiltLongDouble& threshold(const BuiltLongDouble& source) { return brLongDoubleThreshold; }
+   static BuiltFloat& thresholdDomain(const BuiltFloat& source) { return brFloatThresholdDomain; }
+   static BuiltDouble& thresholdDomain(const BuiltDouble& source) { return brDoubleThresholdDomain; }
+   static BuiltLongDouble& thresholdDomain(const BuiltLongDouble& source) { return brLongDoubleThresholdDomain; }
    static BuiltFloat& maximalAccuracy(const BuiltFloat& source) { return brFloatMaximalAccuracy; }
    static BuiltDouble& maximalAccuracy(const BuiltDouble& source) { return brDoubleMaximalAccuracy; }
    static BuiltLongDouble& maximalAccuracy(const BuiltLongDouble& source) { return brLongDoubleMaximalAccuracy; }
 
    template <class TypeBuiltDouble>
-   static void assumeThresholdDetection(const TypeBuiltDouble& relativeError)
+   static void assumeThresholdDetection(const TypeBuiltDouble& relativeError, const TypeBuiltDouble& real)
       {  if (!relativeError.isZero()) {
             if (relativeError > threshold(relativeError)) {
-               if (doesAssumeInput()) {
+               if (doesAssumeInput() && real > thresholdDomain(real)) {
                   iTraceFile->assume("warning: relative accuracy beyond threshold\n");
                   if (fSupportBacktrace)
                      readBackTrace(*iTraceFile);
@@ -290,12 +296,14 @@ class ExecutionPath : public BaseExecutionPath {
       }
 
    template <class TypeBuiltDouble>
-   static void updateThresholdDetection(const TypeBuiltDouble& relativeError)
+   static void updateThresholdDetection(const TypeBuiltDouble& relativeError, const TypeBuiltDouble& real)
       {  if (!relativeError.isZero()) {
             if (relativeError > threshold(relativeError)) {
-               oTraceFile->writesome("warning: relative accuracy beyond threshold\n");
-               if (fSupportBacktrace)
-                  writeBackTrace(*oTraceFile);
+               if (real > thresholdDomain(real)) {
+                  oTraceFile->writesome("warning: relative accuracy beyond threshold\n");
+                  if (fSupportBacktrace)
+                     writeBackTrace(*oTraceFile);
+               };
             };
          };
       }
