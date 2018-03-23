@@ -558,21 +558,162 @@ class TInstrumentedFloatZonotope : public TFloatZonotope<ExecutionPath, USizeMan
       {  return inherited::asUnsignedLong(inherited::ReadParametersBase::RMZero); }
 
    thisType abs() const
-      {  if (*this < 0)
-            return -(*this);
-         return *this;
+      {  thisType result = *this;
+         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+         bool oldSupportUnstableInLoop = inherited::doesSupportUnstableInLoop();
+         inherited::setSupportUnstableInLoop();
+         auto* oldPathExplorer = ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = ExecutionPath::doesFollowFlow();
+         ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = ExecutionPath::inputTraceFile();
+         const char* oldSynchronisationFile = ExecutionPath::synchronisationFile();
+         int oldSynchronisationLine = ExecutionPath::synchronisationLine();
+         bool isCompleteFlow = true;
+         PathExplorer pathExplorer(ExecutionPath::queryMode(oldPathExplorer));
+         ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         auto mergeMemory = MergeMemory() >> result >> BaseExecutionPath::end();
+         auto saveMemory = SaveMemory() << result << BaseExecutionPath::end();
+         const char* sourceFile = __FILE__;
+         int sourceLine = __LINE__;
+         do {
+            try {
+               BaseFloatAffine::splitBranches(sourceFile, sourceLine);
+
+               if (result < 0)
+                  result.oppositeAssign();
+
+               isCompleteFlow = MergeBranches(sourceFile, sourceLine) << result << BaseExecutionPath::end();
+            } 
+            catch (typename thisType::anticipated_termination&) {
+               isCompleteFlow = false;
+               ExecutionPath::clearSynchronizationBranches();
+            }
+            catch (STG::EReadError& error) {
+               if (const char* message = error.getMessage())
+                  std::cerr << "error: " << message << std::endl;
+               else
+                  std::cerr << "error while reading input file!" << std::endl;
+               isCompleteFlow = false;
+               ExecutionPath::clearSynchronizationBranches();
+            }
+            ExecutionPath::setFollowFlow();
+         } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result << BaseExecutionPath::end())
+               && !(saveMemory.setCurrentResult(pathExplorer.isFinished(ExecutionPath::queryMode(oldPathExplorer))) >> result >> BaseExecutionPath::end()));
+         ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
+               oldSynchronisationFile, oldSynchronisationLine);
+         ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+         inherited::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+         if (mergeMemory.isFirst())
+            ExecutionPath::throwEmptyBranch(true);
+         return result;
       }
-   thisType min(const thisType& source) const
-      {  return (*this <= source) ? *this : source; }
+   thisType min(const thisType& asource) const
+      {  thisType result = *this, source = asource;
+         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+         bool oldSupportUnstableInLoop = inherited::doesSupportUnstableInLoop();
+         inherited::setSupportUnstableInLoop();
+         auto* oldPathExplorer = ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = ExecutionPath::doesFollowFlow();
+         ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = ExecutionPath::inputTraceFile();
+         const char* oldSynchronisationFile = ExecutionPath::synchronisationFile();
+         int oldSynchronisationLine = ExecutionPath::synchronisationLine();
+         bool isCompleteFlow = true;
+         PathExplorer pathExplorer(ExecutionPath::queryMode(oldPathExplorer));
+         ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         auto mergeMemory = MergeMemory() >> result >> BaseExecutionPath::end();
+         auto saveMemory = SaveMemory() << result << source << BaseExecutionPath::end();
+         const char* sourceFile = __FILE__;
+         int sourceLine = __LINE__;
+         do {
+            try {
+               BaseFloatAffine::splitBranches(sourceFile, sourceLine);
+
+               if (source < result)
+                  result = source;
+
+               isCompleteFlow = MergeBranches(sourceFile, sourceLine) << result << BaseExecutionPath::end();
+            } 
+            catch (typename thisType::anticipated_termination&) {
+               isCompleteFlow = false;
+               ExecutionPath::clearSynchronizationBranches();
+            }
+            catch (STG::EReadError& error) {
+               if (const char* message = error.getMessage())
+                  std::cerr << "error: " << message << std::endl;
+               else
+                  std::cerr << "error while reading input file!" << std::endl;
+               isCompleteFlow = false;
+               ExecutionPath::clearSynchronizationBranches();
+            }
+            ExecutionPath::setFollowFlow();
+         } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result << BaseExecutionPath::end())
+               && !(saveMemory.setCurrentResult(pathExplorer.isFinished(ExecutionPath::queryMode(oldPathExplorer))) >> source >> result >> BaseExecutionPath::end()));
+         ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
+               oldSynchronisationFile, oldSynchronisationLine);
+         ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+         inherited::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+         if (mergeMemory.isFirst())
+            ExecutionPath::throwEmptyBranch(true);
+         return result;
+      }
    thisType min(TypeImplementation source) const
       {  thisType affineSource(source);
-         return (*this <= affineSource) ? *this : affineSource;
+         return min(affineSource);
       }
-   thisType max(const thisType& source) const
-      {  return (*this >= source) ? *this : source; }
+   thisType max(const thisType& asource) const
+      {  thisType result = *this, source = asource;
+         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+         bool oldSupportUnstableInLoop = inherited::doesSupportUnstableInLoop();
+         inherited::setSupportUnstableInLoop();
+         auto* oldPathExplorer = ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = ExecutionPath::doesFollowFlow();
+         ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = ExecutionPath::inputTraceFile();
+         const char* oldSynchronisationFile = ExecutionPath::synchronisationFile();
+         int oldSynchronisationLine = ExecutionPath::synchronisationLine();
+         bool isCompleteFlow = true;
+         PathExplorer pathExplorer(ExecutionPath::queryMode(oldPathExplorer));
+         ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         auto mergeMemory = MergeMemory() >> result >> BaseExecutionPath::end();
+         auto saveMemory = SaveMemory() << result << source << BaseExecutionPath::end();
+         const char* sourceFile = __FILE__;
+         int sourceLine = __LINE__;
+         do {
+            try {
+               BaseFloatAffine::splitBranches(sourceFile, sourceLine);
+
+               if (source > result)
+                  result = source;
+
+               isCompleteFlow = MergeBranches(sourceFile, sourceLine) << result << BaseExecutionPath::end();
+            } 
+            catch (typename thisType::anticipated_termination&) {
+               isCompleteFlow = false;
+               ExecutionPath::clearSynchronizationBranches();
+            }
+            catch (STG::EReadError& error) {
+               if (const char* message = error.getMessage())
+                  std::cerr << "error: " << message << std::endl;
+               else
+                  std::cerr << "error while reading input file!" << std::endl;
+               isCompleteFlow = false;
+               ExecutionPath::clearSynchronizationBranches();
+            }
+            ExecutionPath::setFollowFlow();
+         } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result << BaseExecutionPath::end())
+               && !(saveMemory.setCurrentResult(pathExplorer.isFinished(ExecutionPath::queryMode(oldPathExplorer))) >> source >> result >> BaseExecutionPath::end()));
+         ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
+               oldSynchronisationFile, oldSynchronisationLine);
+         ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+         inherited::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+         if (mergeMemory.isFirst())
+            ExecutionPath::throwEmptyBranch(true);
+         return result;
+      }
    thisType max(TypeImplementation source) const
       {  thisType affineSource(source);
-         return (*this >= affineSource) ? *this : affineSource;
+         return max(affineSource);
       }
    thisType median(const thisType& fst, const thisType& snd) const
       {  if (*this <= fst) {
@@ -1358,6 +1499,9 @@ fabs(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, 
    thisType result = fst;
 
    // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+   bool oldSupportUnstableInLoop = fst.doesSupportUnstableInLoop();
+   fst.setSupportUnstableInLoop();
+   typedef NumericalDomains::DAffine::BaseExecutionPath BaseExecutionPath;
    auto* oldPathExplorer = NumericalDomains::DAffine::ExecutionPath::getCurrentPathExplorer();
    bool oldDoesFollow = NumericalDomains::DAffine::ExecutionPath::doesFollowFlow();
    NumericalDomains::DAffine::ExecutionPath::clearFollowFlow();
@@ -1368,8 +1512,8 @@ fabs(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, 
    NumericalDomains::DAffine::PathExplorer pathExplorer(
         NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer));
    NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
-   auto mergeMemory = NumericalDomains::DAffine::MergeMemory() >> result;
-   auto saveMemory = NumericalDomains::DAffine::SaveMemory() << result;
+   auto mergeMemory = NumericalDomains::DAffine::MergeMemory() >> result >> BaseExecutionPath::end();
+   auto saveMemory = NumericalDomains::DAffine::SaveMemory() << result << BaseExecutionPath::end();
    const char* sourceFile = __FILE__;
    int sourceLine = __LINE__;
    do {
@@ -1379,7 +1523,7 @@ fabs(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, 
          if (result < 0)
             result.oppositeAssign();
 
-         isCompleteFlow = NumericalDomains::DAffine::MergeBranches(sourceFile, sourceLine) << result;
+         isCompleteFlow = NumericalDomains::DAffine::MergeBranches(sourceFile, sourceLine) << result << BaseExecutionPath::end();
       } 
       catch (typename thisType::anticipated_termination&) {
          isCompleteFlow = false;
@@ -1394,11 +1538,12 @@ fabs(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, 
          NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();
       }
       NumericalDomains::DAffine::ExecutionPath::setFollowFlow();
-   } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result)
-         && !(saveMemory.setCurrentResult(pathExplorer.isFinished(NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer))) >> result));
+   } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result << BaseExecutionPath::end())
+         && !(saveMemory.setCurrentResult(pathExplorer.isFinished(NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer))) >> result >> BaseExecutionPath::end()));
    NumericalDomains::DAffine::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
          oldSynchronisationFile, oldSynchronisationLine);
    NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+   fst.setSupportUnstableInLoop(oldSupportUnstableInLoop);
    if (mergeMemory.isFirst())
       NumericalDomains::DAffine::ExecutionPath::throwEmptyBranch(true);
    return result;
@@ -1411,6 +1556,9 @@ fabs(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeE
    thisType result(std::forward<thisType>(fst));
 
    // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+   bool oldSupportUnstableInLoop = fst.doesSupportUnstableInLoop();
+   fst.setSupportUnstableInLoop();
+   typedef NumericalDomains::DAffine::BaseExecutionPath BaseExecutionPath;
    auto* oldPathExplorer = NumericalDomains::DAffine::ExecutionPath::getCurrentPathExplorer();
    bool oldDoesFollow = NumericalDomains::DAffine::ExecutionPath::doesFollowFlow();
    NumericalDomains::DAffine::ExecutionPath::clearFollowFlow();
@@ -1421,8 +1569,8 @@ fabs(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeE
    NumericalDomains::DAffine::PathExplorer pathExplorer(
         NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer));
    NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
-   auto mergeMemory = NumericalDomains::DAffine::MergeMemory() >> result;
-   auto saveMemory = NumericalDomains::DAffine::SaveMemory() << result;
+   auto mergeMemory = NumericalDomains::DAffine::MergeMemory() >> result >> BaseExecutionPath::end();
+   auto saveMemory = NumericalDomains::DAffine::SaveMemory() << result << BaseExecutionPath::end();
    const char* sourceFile = __FILE__;
    int sourceLine = __LINE__;
    do {
@@ -1432,7 +1580,8 @@ fabs(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeE
          if (result < 0)
             result.oppositeAssign();
 
-         isCompleteFlow = NumericalDomains::DAffine::MergeBranches(sourceFile, sourceLine) << result;
+         isCompleteFlow = NumericalDomains::DAffine::MergeBranches(sourceFile, sourceLine) << result
+		<< BaseExecutionPath::end();
       } 
       catch (typename thisType::anticipated_termination&) {
          isCompleteFlow = false;
@@ -1447,11 +1596,12 @@ fabs(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeE
          NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();
       }
       NumericalDomains::DAffine::ExecutionPath::setFollowFlow();
-   } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result)
-         && !(saveMemory.setCurrentResult(pathExplorer.isFinished(NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer))) >> result));
+   } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result << BaseExecutionPath::end())
+         && !(saveMemory.setCurrentResult(pathExplorer.isFinished(NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer))) >> result >> BaseExecutionPath::end()));
    NumericalDomains::DAffine::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
          oldSynchronisationFile, oldSynchronisationLine);
    NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+   fst.setSupportUnstableInLoop(oldSupportUnstableInLoop);
    if (mergeMemory.isFirst())
       NumericalDomains::DAffine::ExecutionPath::throwEmptyBranch(true);
    return result;

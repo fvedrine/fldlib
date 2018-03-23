@@ -328,7 +328,7 @@ class ExecutionPath : public BaseExecutionPath {
 
    static void setSupportAtomic() { fSupportAtomic = true; }
    static bool doesSupportAtomic() { return fSupportAtomic; }
-   static void setSupportUnstableInLoop() { fSupportUnstableInLoop = true; }
+   static void setSupportUnstableInLoop(bool value=true) { fSupportUnstableInLoop = value; }
    static bool doesSupportUnstableInLoop() { return fSupportUnstableInLoop; }
    static void setSupportVerbose() { fSupportVerbose = true; }
    static bool doesSupportVerbose() { return fSupportVerbose; }
