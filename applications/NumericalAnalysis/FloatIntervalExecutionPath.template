@@ -218,6 +218,7 @@ TBaseFloatInterval<TypeExecutionPath>::writeBranchInterval(const TFloatInterval&
    diff.opposite();
    inherited::writeValueToOutput(diff, defaultParams);
    inherited::writeDomain("]\n");
+   inherited::writeUnsolvedBranch();
 }
 
 template <class TypeExecutionPath>
@@ -313,6 +314,7 @@ TBaseFloatInterval<TypeExecutionPath>::assumeBranchInterval(const TFloatInterval
          diffRead, "expected max relative error", params.setDecimal());
    };
    inherited::assumeDomain("]\n");
+   inherited::assumeUnsolvedBranch();
 }
 
 template <class TypeExecutionPath>

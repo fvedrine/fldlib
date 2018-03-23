@@ -125,12 +125,14 @@ class ExecutionPathContract : public BaseExecutionPath {
          const TypeImplementation& readValue, const char* readPrefix,
          const TypeImplementation& expectedValue, const char* expectedPrefix,
          const TypeParameters& params) const {}
+   void assumeUnsolvedBranch() {}
 
    void writeDomain(char prefix) const {}
    void writeDomain(const char* prefix) const {}
    void writePrefixDomain(const char* prefix) const {}
    template <class TypeImplementation, class TypeParameters>
    void writeValueToOutput(const TypeImplementation& value, const TypeParameters& params) const {}
+   void writeUnsolvedBranch() {}
 
    void assumeDivisionByZero() const {}
    void writeDivisionByZero() const {}
