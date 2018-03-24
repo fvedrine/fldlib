@@ -232,6 +232,38 @@ class MergeMemory {
       }
 };
 
+template <typename TypeImplementation>
+int tfinite(TypeImplementation val)
+   {  AssumeUncalled return 0; }
+
+template <> int tfinite(long double val);
+template <> int tfinite(double val);
+template <> int tfinite(float val);
+
+template <typename TypeImplementation>
+int tisfinite(TypeImplementation val)
+   {  AssumeUncalled return 0; }
+
+template <> int tisfinite(long double val);
+template <> int tisfinite(double val);
+template <> int tisfinite(float val);
+
+template <typename TypeImplementation>
+int tisnan(TypeImplementation val)
+   {  AssumeUncalled return 0; }
+
+template <> int tisnan(long double val);
+template <> int tisnan(double val);
+template <> int tisnan(float val);
+
+template <typename TypeImplementation>
+int tisinf(TypeImplementation val)
+   {  AssumeUncalled return 0; }
+
+template <> int tisinf(long double val);
+template <> int tisinf(double val);
+template <> int tisinf(float val);
+
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 class TInstrumentedFloatZonotope : public TFloatZonotope<ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> {
   private:
@@ -270,10 +302,12 @@ class TInstrumentedFloatZonotope : public TFloatZonotope<ExecutionPath, USizeMan
             inherited::getSError().setHolder(inherited::currentPathExplorer);
          };
       }
+   TInstrumentedFloatZonotope(short int value) : inherited(value) {}
    TInstrumentedFloatZonotope(int value) : inherited(value) {}
    TInstrumentedFloatZonotope(long int value) : inherited(value) {}
-   // TInstrumentedFloatZonotope(unsigned value) : inherited(value) {}
-   // TInstrumentedFloatZonotope(unsigned long value) : inherited(value) {}
+   TInstrumentedFloatZonotope(unsigned short value) : inherited(value) {}
+   TInstrumentedFloatZonotope(unsigned int value) : inherited(value) {}
+   TInstrumentedFloatZonotope(unsigned long value) : inherited(value) {}
    TInstrumentedFloatZonotope(const thisType& source) : inherited(source)
       {  if (inherited::doesSupportUnstableInLoop()) {
             inherited::getSRealDomain().setHolder(inherited::currentPathExplorer);
@@ -793,6 +827,294 @@ class TInstrumentedFloatZonotope : public TFloatZonotope<ExecutionPath, USizeMan
 
    void lightPersist(const char* prefix) const { inherited::lightPersist(*this, prefix); }
    void persist(const char* prefix) const { inherited::persist(*this, prefix); }
+
+   friend std::ostream& operator<<(std::ostream& out, const thisType& source)
+      {  return out << source.asImplementation(); }
+   friend std::istream& operator>>(std::istream& in, thisType& source)
+      {  decltype(thisType.asImplementation()) val;
+         in >> val;
+         source = thisType(val);
+         return in;
+      }
+
+   friend thisType sqrt(const thisType& source)
+      {  thisType result(source); result.sqrtAssign(); return result; }
+   friend thisType sqrt(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.sqrtAssign(); return result; }
+   friend thisType sin(const thisType& source)
+      {  thisType result(source); result.sinAssign(); return result; }
+   friend thisType sin(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.sinAssign(); return result; }
+   friend thisType cos(const thisType& source)
+      {  thisType result(source); result.cosAssign(); return result; }
+   friend thisType cos(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.cosAssign(); return result; }
+   friend thisType asin(const thisType& source)
+      {  thisType result(source); result.asinAssign(); return result; }
+   friend thisType asin(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.asinAssign(); return result; }
+   friend thisType acos(const thisType& source)
+      {  thisType result(source); result.acosAssign(); return result; }
+   friend thisType acos(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.acosAssign(); return result; }
+   friend thisType tan(const thisType& source)
+      {  thisType result(source); result.tanAssign(); return result; }
+   friend thisType tan(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.tanAssign(); return result; }
+   friend thisType atan(const thisType& source)
+      {  thisType result(source); result.atanAssign(); return result; }
+   friend thisType atan(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.atanAssign(); return result; }
+   friend thisType exp(const thisType& source)
+      {  thisType result(source); result.expAssign(); return result; }
+   friend thisType exp(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.expAssign(); return result; }
+   friend thisType log(const thisType& source)
+      {  thisType result(source); result.logAssign(); return result; }
+   friend thisType log(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.logAssign(); return result; }
+   friend thisType log2(const thisType& source)
+      {  thisType result(source); result.logAssign(); result.divAssign(log(thisType(2.0)), Equation::PCSourceXValue); return result; }
+   friend thisType log2(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.logAssign(); result.divAssign(log(thisType(2.0)), Equation::PCSourceXValue); return result; }
+   friend thisType exp2(const thisType& fst)
+      {  thisType result = 2.0; result.powAssign(fst, Equation::PCSourceRValue); return result; }
+   friend thisType exp2(thisType&& fst)
+      {  thisType result = 2.0; result.powAssign(fst, Equation::PCSourceXValue); return result; }
+   friend thisType log10(const thisType& source)
+      {  thisType result(source); result.log10Assign(); return result; }
+   friend thisType log10(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.log10Assign(); return result; }
+   friend thisType pow(const thisType& source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType pow(const thisType& source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType pow(thisType&& source, const thisType& value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType pow(thisType&& source, thisType&& value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   template <typename TypeFst>
+   friend thisType pow(TypeFst source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   template <typename TypeFst>
+   friend thisType pow(TypeFst source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   template <typename TypeSnd>
+   friend thisType pow(const thisType& source, TypeSnd value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   template <typename TypeSnd>
+   friend thisType pow(thisType&& source, TypeSnd value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(const thisType& source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType powf(const thisType& source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType powf(thisType&& source, const thisType& value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType powf(thisType&& source, thisType&& value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   template <typename TypeFst>
+   friend thisType powf(TypeFst source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   template <typename TypeFst>
+   friend thisType powf(TypeFst source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   template <typename TypeSnd>
+   friend thisType powf(const thisType& source, TypeSnd value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   template <typename TypeSnd>
+   friend thisType powf(thisType&& source, TypeSnd value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(const thisType& source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceRValue); return result; }
+   friend thisType atan2(const thisType& source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceXValue); return result; }
+   friend thisType atan2(thisType&& source, const thisType& value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(value, Equation::PCSourceRValue); return result; }
+   friend thisType atan2(thisType&& source, thisType&& value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(value, Equation::PCSourceXValue); return result; }
+   template <typename TypeFst>
+   friend thisType atan2(TypeFst source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceRValue); return result; }
+   template <typename TypeFst>
+   friend thisType atan2(TypeFst source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceXValue); return result; }
+   template <typename TypeSnd>
+   friend thisType atan2(const thisType& source, TypeSnd value)
+      {  thisType result(source); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   template <typename TypeSnd>
+   friend thisType atan2(thisType&& source, TypeSnd value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+
+   template <typename TypeFst>
+   friend bool operator<(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   template <typename TypeFst>
+   friend bool operator<=(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   template <typename TypeFst>
+   friend bool operator==(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   template <typename TypeFst>
+   friend bool operator!=(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   template <typename TypeFst>
+   friend bool operator>=(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   template <typename TypeFst>
+   friend bool operator>(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   template <typename TypeFst>
+   friend thisType operator+(TypeFst fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   template <typename TypeFst>
+   friend thisType operator+(TypeFst fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   template <typename TypeFst>
+   friend thisType operator-(TypeFst fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   template <typename TypeFst>
+   friend thisType operator-(TypeFst fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   template <typename TypeFst>
+   friend thisType operator*(TypeFst fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   template <typename TypeFst>
+   friend thisType operator*(TypeFst fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   template <typename TypeFst>
+   friend thisType operator/(TypeFst fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   template <typename TypeFst>
+   friend thisType operator/(TypeFst fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType floor(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(inherited::ReadParametersBase::RMLowest)); }
+   friend thisType floor(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(inherited::ReadParametersBase::RMLowest)); }
+   friend thisType ceil(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(inherited::ReadParametersBase::RMHighest)); }
+   friend thisType ceil(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(inherited::ReadParametersBase::RMHighest)); }
+   friend thisType trunc(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(inherited::ReadParametersBase::RMZero)); }
+   friend thisType trunc(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(inherited::ReadParametersBase::RMZero)); }
+   friend thisType round(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(inherited::ReadParametersBase::RMNearest)); }
+   friend thisType round(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(inherited::ReadParametersBase::RMNearest)); }
+   friend thisType rintf(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(inherited::ReadParametersBase::RMNearest /* fegetround */)); }
+   friend thisType rintf(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(inherited::ReadParametersBase::RMNearest /* fegetround */)); }
+   friend thisType rint(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(inherited::ReadParametersBase::RMNearest /* fegetround */)); }
+   friend thisType rint(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(inherited::ReadParametersBase::RMNearest /* fegetround */)); }
+   friend thisType fabs(const thisType& fst)
+      {  thisType result = fst;
+         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+         bool oldSupportUnstableInLoop = fst.doesSupportUnstableInLoop();
+         fst.setSupportUnstableInLoop();
+         auto* oldPathExplorer = NumericalDomains::DAffine::ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = NumericalDomains::DAffine::ExecutionPath::doesFollowFlow();
+         NumericalDomains::DAffine::ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = NumericalDomains::DAffine::ExecutionPath::inputTraceFile();
+         const char* oldSynchronisationFile = NumericalDomains::DAffine::ExecutionPath::synchronisationFile();
+         int oldSynchronisationLine = NumericalDomains::DAffine::ExecutionPath::synchronisationLine();
+         bool isCompleteFlow = true;
+         NumericalDomains::DAffine::PathExplorer pathExplorer(
+              NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer));
+         NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         auto mergeMemory = NumericalDomains::DAffine::MergeMemory() >> result >> BaseExecutionPath::end();
+         auto saveMemory = NumericalDomains::DAffine::SaveMemory() << result << BaseExecutionPath::end();
+         const char* sourceFile = __FILE__;
+         int sourceLine = __LINE__;
+         do {
+            try {
+               NumericalDomains::DAffine::BaseFloatAffine::splitBranches(sourceFile, sourceLine);
+
+               if (result < 0)
+                  result.oppositeAssign();
+
+               isCompleteFlow = NumericalDomains::DAffine::MergeBranches(sourceFile, sourceLine) << result << BaseExecutionPath::end();
+            } 
+            catch (typename thisType::anticipated_termination&) {
+               isCompleteFlow = false;
+               NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();
+            }
+            catch (STG::EReadError& error) {
+               if (const char* message = error.getMessage())
+                  std::cerr << "error: " << message << std::endl;
+               else
+                  std::cerr << "error while reading input file!" << std::endl;
+               isCompleteFlow = false;
+               NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();
+            }
+            NumericalDomains::DAffine::ExecutionPath::setFollowFlow();
+         } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result << BaseExecutionPath::end())
+               && !(saveMemory.setCurrentResult(pathExplorer.isFinished(NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer))) >> result >> BaseExecutionPath::end()));
+         NumericalDomains::DAffine::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
+               oldSynchronisationFile, oldSynchronisationLine);
+         NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+         fst.setSupportUnstableInLoop(oldSupportUnstableInLoop);
+         if (mergeMemory.isFirst())
+            NumericalDomains::DAffine::ExecutionPath::throwEmptyBranch(true);
+         return result;
+      }
+
+   friend thisType fabs(thisType&& fst)
+      {  thisType result(std::forward<thisType>(fst));
+         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+         bool oldSupportUnstableInLoop = fst.doesSupportUnstableInLoop();
+         fst.setSupportUnstableInLoop();
+         auto* oldPathExplorer = NumericalDomains::DAffine::ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = NumericalDomains::DAffine::ExecutionPath::doesFollowFlow();
+         NumericalDomains::DAffine::ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = NumericalDomains::DAffine::ExecutionPath::inputTraceFile();
+         const char* oldSynchronisationFile = NumericalDomains::DAffine::ExecutionPath::synchronisationFile();
+         int oldSynchronisationLine = NumericalDomains::DAffine::ExecutionPath::synchronisationLine();
+         bool isCompleteFlow = true;
+         NumericalDomains::DAffine::PathExplorer pathExplorer(
+              NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer));
+         NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         auto mergeMemory = NumericalDomains::DAffine::MergeMemory() >> result >> BaseExecutionPath::end();
+         auto saveMemory = NumericalDomains::DAffine::SaveMemory() << result << BaseExecutionPath::end();
+         const char* sourceFile = __FILE__;
+         int sourceLine = __LINE__;
+         do {
+            try {
+               NumericalDomains::DAffine::BaseFloatAffine::splitBranches(sourceFile, sourceLine);
+
+               if (result < 0)
+                  result.oppositeAssign();
+
+               isCompleteFlow = NumericalDomains::DAffine::MergeBranches(sourceFile, sourceLine) << result << BaseExecutionPath::end();
+            } 
+            catch (typename thisType::anticipated_termination&) {
+               isCompleteFlow = false;
+               NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();
+            }
+            catch (STG::EReadError& error) {
+               if (const char* message = error.getMessage())
+                  std::cerr << "error: " << message << std::endl;
+               else
+                  std::cerr << "error while reading input file!" << std::endl;
+               isCompleteFlow = false;
+               NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();
+            }
+            NumericalDomains::DAffine::ExecutionPath::setFollowFlow();
+         } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result << BaseExecutionPath::end())
+               && !(saveMemory.setCurrentResult(pathExplorer.isFinished(NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer))) >> result >> BaseExecutionPath::end()));
+         NumericalDomains::DAffine::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
+               oldSynchronisationFile, oldSynchronisationLine);
+         NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+         fst.setSupportUnstableInLoop(oldSupportUnstableInLoop);
+         if (mergeMemory.isFirst())
+            NumericalDomains::DAffine::ExecutionPath::throwEmptyBranch(true);
+         return result;
+      }
 };
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
@@ -819,812 +1141,6 @@ typedef DAffine::TInstrumentedFloatZonotope<LongDoubleFloatDigits::UBitSizeManti
         LongDoubleFloatDigits::UBitSizeExponent, long double> LongDoubleZonotope;
 
 } // end of namespace NumericalDomains
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-sqrt(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.sqrtAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-sqrt(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.sqrtAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-sin(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.sinAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-sin(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.sinAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-cos(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.cosAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-cos(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.cosAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-asin(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.asinAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-asin(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.asinAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-acos(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.acosAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-acos(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.acosAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-tan(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.tanAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-tan(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.tanAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.atanAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.atanAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-exp(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.expAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-exp(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.expAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-log(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.logAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-log(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.logAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-log10(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.log10Assign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-log10(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.log10Assign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-pow(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.powAssign(value, NumericalDomains::DAffine::Equation::PCSourceRValue);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-pow(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.powAssign(value, NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-pow(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.powAssign(value, NumericalDomains::DAffine::Equation::PCSourceRValue);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-pow(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.powAssign(value, NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-pow(TypeFst source, const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.powAssign(value, NumericalDomains::DAffine::Equation::PCSourceRValue);
-   return result;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-pow(TypeFst source, NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.powAssign(value, NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <typename TypeSnd, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-pow(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      TypeSnd value) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(source);
-   result.powAssign(thisType(value), NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <typename TypeSnd, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-pow(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      TypeSnd value) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.powAssign(thisType(value), NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-powf(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.powAssign(value, NumericalDomains::DAffine::Equation::PCSourceRValue);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-powf(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.powAssign(value, NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-powf(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.powAssign(value, NumericalDomains::DAffine::Equation::PCSourceRValue);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-powf(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.powAssign(value, NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-powf(TypeFst source, const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.powAssign(value, NumericalDomains::DAffine::Equation::PCSourceRValue);
-   return result;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-powf(TypeFst source, NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.powAssign(value, NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <typename TypeSnd, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-powf(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      TypeSnd value) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(source);
-   result.powAssign(thisType(value), NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <typename TypeSnd, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-powf(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      TypeSnd value) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.powAssign(thisType(value), NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan2(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.atan2Assign(value, NumericalDomains::DAffine::Equation::PCSourceRValue);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan2(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.atan2Assign(value, NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan2(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.atan2Assign(value, NumericalDomains::DAffine::Equation::PCSourceRValue);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan2(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.atan2Assign(value, NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan2(TypeFst source, const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.atan2Assign(value, NumericalDomains::DAffine::Equation::PCSourceRValue);
-   return result;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan2(TypeFst source, NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.atan2Assign(value, NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <typename TypeSnd, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan2(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      TypeSnd value) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(source);
-   result.atan2Assign(thisType(value), NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <typename TypeSnd, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan2(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      TypeSnd value) {
-   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.atan2Assign(thisType(value), NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator<(TypeFst fst, const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator<(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator<=(TypeFst fst, const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator<=(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator==(TypeFst fst, const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator==(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator!=(TypeFst fst, const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator!=(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator>=(TypeFst fst, const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator>=(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator>(TypeFst fst, const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator>(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-operator+(TypeFst fst, const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
-   typedef NumericalDomains::DAffine::TEquation<FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#elif defined(FLOAT_GENERIC_BASE_LONG)
-   typedef NumericalDomains::DAffine::TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
-   typedef NumericalDomains::DAffine::TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#endif
-   thisType fstConvert(fst);
-   fstConvert.plusAssign(snd, Equation::PCSourceRValue);
-   return fstConvert;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-operator+(TypeFst fst, NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& snd)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
-   typedef NumericalDomains::DAffine::TEquation<FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#elif defined(FLOAT_GENERIC_BASE_LONG)
-   typedef NumericalDomains::DAffine::TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
-   typedef NumericalDomains::DAffine::TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#endif
-   thisType fstConvert(fst);
-   fstConvert.plusAssign(snd, Equation::PCSourceXValue);
-   return fstConvert;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-operator-(TypeFst fst, const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
-   typedef NumericalDomains::DAffine::TEquation<FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#elif defined(FLOAT_GENERIC_BASE_LONG)
-   typedef NumericalDomains::DAffine::TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
-   typedef NumericalDomains::DAffine::TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#endif
-   thisType fstConvert(fst);
-   fstConvert.minusAssign(snd, Equation::PCSourceRValue);
-   return fstConvert;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-operator-(TypeFst fst, NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& snd)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
-   typedef NumericalDomains::DAffine::TEquation<FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#elif defined(FLOAT_GENERIC_BASE_LONG)
-   typedef NumericalDomains::DAffine::TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
-   typedef NumericalDomains::DAffine::TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#endif
-   thisType fstConvert(fst);
-   fstConvert.minusAssign(snd, Equation::PCSourceXValue);
-   return fstConvert;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-operator*(TypeFst fst, const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
-   typedef NumericalDomains::DAffine::TEquation<FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#elif defined(FLOAT_GENERIC_BASE_LONG)
-   typedef NumericalDomains::DAffine::TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
-   typedef NumericalDomains::DAffine::TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#endif
-   thisType fstConvert(fst);
-   fstConvert.multAssign(snd, Equation::PCSourceRValue);
-   return fstConvert;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-operator*(TypeFst fst, NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& snd)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
-   typedef NumericalDomains::DAffine::TEquation<FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#elif defined(FLOAT_GENERIC_BASE_LONG)
-   typedef NumericalDomains::DAffine::TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
-   typedef NumericalDomains::DAffine::TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#endif
-   thisType fstConvert(fst);
-   fstConvert.multAssign(snd, Equation::PCSourceXValue);
-   return fstConvert;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-operator/(TypeFst fst, const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
-   typedef NumericalDomains::DAffine::TEquation<FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#elif defined(FLOAT_GENERIC_BASE_LONG)
-   typedef NumericalDomains::DAffine::TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
-   typedef NumericalDomains::DAffine::TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#endif
-   thisType fstConvert(fst);
-   fstConvert.divAssign(snd, Equation::PCSourceRValue);
-   return fstConvert;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-operator/(TypeFst fst, NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& snd)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-#if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
-   typedef NumericalDomains::DAffine::TEquation<FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#elif defined(FLOAT_GENERIC_BASE_LONG)
-   typedef NumericalDomains::DAffine::TGEquation<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
-   typedef NumericalDomains::DAffine::TGEquation<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, NumericalDomains::DAffine::TBaseFloatAffine<NumericalDomains::DAffine::ExecutionPath> > Equation;
-#endif
-   thisType fstConvert(fst);
-   fstConvert.divAssign(snd, Equation::PCSourceXValue);
-   return fstConvert;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-log2(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result = fst;
-   result.logAssign();
-   result.divAssign(thisType(log(2)), NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-log2(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(fst));
-   result.logAssign();
-   result.divAssign(thisType(log(2)), NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-exp2(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result = 2.0;
-   result.powAssign(fst, NumericalDomains::DAffine::Equation::PCSourceRValue);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-exp2(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result = 2.0;
-   result.powAssign(fst, NumericalDomains::DAffine::Equation::PCSourceXValue);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-floor(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMLowest));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-floor(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMLowest));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-ceil(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMHighest));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-ceil(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMHighest));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-trunc(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMZero));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-trunc(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMZero));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-round(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-round(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-rintf(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-rintf(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-rint(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-rint(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-fabs(const NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result = fst;
-
-   // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
-   bool oldSupportUnstableInLoop = fst.doesSupportUnstableInLoop();
-   fst.setSupportUnstableInLoop();
-   typedef NumericalDomains::DAffine::BaseExecutionPath BaseExecutionPath;
-   auto* oldPathExplorer = NumericalDomains::DAffine::ExecutionPath::getCurrentPathExplorer();
-   bool oldDoesFollow = NumericalDomains::DAffine::ExecutionPath::doesFollowFlow();
-   NumericalDomains::DAffine::ExecutionPath::clearFollowFlow();
-   auto* oldInputTraceFile = NumericalDomains::DAffine::ExecutionPath::inputTraceFile();
-   const char* oldSynchronisationFile = NumericalDomains::DAffine::ExecutionPath::synchronisationFile();
-   int oldSynchronisationLine = NumericalDomains::DAffine::ExecutionPath::synchronisationLine();
-   bool isCompleteFlow = true;
-   NumericalDomains::DAffine::PathExplorer pathExplorer(
-        NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer));
-   NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
-   auto mergeMemory = NumericalDomains::DAffine::MergeMemory() >> result >> BaseExecutionPath::end();
-   auto saveMemory = NumericalDomains::DAffine::SaveMemory() << result << BaseExecutionPath::end();
-   const char* sourceFile = __FILE__;
-   int sourceLine = __LINE__;
-   do {
-      try {
-         NumericalDomains::DAffine::BaseFloatAffine::splitBranches(sourceFile, sourceLine);
-
-         if (result < 0)
-            result.oppositeAssign();
-
-         isCompleteFlow = NumericalDomains::DAffine::MergeBranches(sourceFile, sourceLine) << result << BaseExecutionPath::end();
-      } 
-      catch (typename thisType::anticipated_termination&) {
-         isCompleteFlow = false;
-         NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();
-      }
-      catch (STG::EReadError& error) {
-         if (const char* message = error.getMessage())
-            std::cerr << "error: " << message << std::endl;
-         else
-            std::cerr << "error while reading input file!" << std::endl;
-         isCompleteFlow = false;
-         NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();
-      }
-      NumericalDomains::DAffine::ExecutionPath::setFollowFlow();
-   } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result << BaseExecutionPath::end())
-         && !(saveMemory.setCurrentResult(pathExplorer.isFinished(NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer))) >> result >> BaseExecutionPath::end()));
-   NumericalDomains::DAffine::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
-         oldSynchronisationFile, oldSynchronisationLine);
-   NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
-   fst.setSupportUnstableInLoop(oldSupportUnstableInLoop);
-   if (mergeMemory.isFirst())
-      NumericalDomains::DAffine::ExecutionPath::throwEmptyBranch(true);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-fabs(NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(fst));
-
-   // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
-   bool oldSupportUnstableInLoop = fst.doesSupportUnstableInLoop();
-   fst.setSupportUnstableInLoop();
-   typedef NumericalDomains::DAffine::BaseExecutionPath BaseExecutionPath;
-   auto* oldPathExplorer = NumericalDomains::DAffine::ExecutionPath::getCurrentPathExplorer();
-   bool oldDoesFollow = NumericalDomains::DAffine::ExecutionPath::doesFollowFlow();
-   NumericalDomains::DAffine::ExecutionPath::clearFollowFlow();
-   auto* oldInputTraceFile = NumericalDomains::DAffine::ExecutionPath::inputTraceFile();
-   const char* oldSynchronisationFile = NumericalDomains::DAffine::ExecutionPath::synchronisationFile();
-   int oldSynchronisationLine = NumericalDomains::DAffine::ExecutionPath::synchronisationLine();
-   bool isCompleteFlow = true;
-   NumericalDomains::DAffine::PathExplorer pathExplorer(
-        NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer));
-   NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
-   auto mergeMemory = NumericalDomains::DAffine::MergeMemory() >> result >> BaseExecutionPath::end();
-   auto saveMemory = NumericalDomains::DAffine::SaveMemory() << result << BaseExecutionPath::end();
-   const char* sourceFile = __FILE__;
-   int sourceLine = __LINE__;
-   do {
-      try {
-         NumericalDomains::DAffine::BaseFloatAffine::splitBranches(sourceFile, sourceLine);
-
-         if (result < 0)
-            result.oppositeAssign();
-
-         isCompleteFlow = NumericalDomains::DAffine::MergeBranches(sourceFile, sourceLine) << result
-		<< BaseExecutionPath::end();
-      } 
-      catch (typename thisType::anticipated_termination&) {
-         isCompleteFlow = false;
-         NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();
-      }
-      catch (STG::EReadError& error) {
-         if (const char* message = error.getMessage())
-            std::cerr << "error: " << message << std::endl;
-         else
-            std::cerr << "error while reading input file!" << std::endl;
-         isCompleteFlow = false;
-         NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();
-      }
-      NumericalDomains::DAffine::ExecutionPath::setFollowFlow();
-   } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result << BaseExecutionPath::end())
-         && !(saveMemory.setCurrentResult(pathExplorer.isFinished(NumericalDomains::DAffine::ExecutionPath::queryMode(oldPathExplorer))) >> result >> BaseExecutionPath::end()));
-   NumericalDomains::DAffine::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
-         oldSynchronisationFile, oldSynchronisationLine);
-   NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
-   fst.setSupportUnstableInLoop(oldSupportUnstableInLoop);
-   if (mergeMemory.isFirst())
-      NumericalDomains::DAffine::ExecutionPath::throwEmptyBranch(true);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline std::ostream&
-operator<<(std::ostream& out, const NumericalDomains::DAffine::TInstrumentedFloatZonotope
-      <USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   out << value.asImplementation();
-   return out;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline std::istream&
-operator>>(std::istream& in, NumericalDomains::DAffine::TInstrumentedFloatZonotope
-      <USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   decltype(value.asImplementation()) result; 
-   in >> result;
-   value = NumericalDomains::DAffine::TInstrumentedFloatZonotope
-         <USizeMantissa, USizeExponent, TypeImplementation>(result, result);
-   return in;
-}
 
 #endif // FloatInstrumentation_FloatAffineH
 

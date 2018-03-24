@@ -42,6 +42,22 @@
 
 namespace NumericalDomains { namespace DAffine {
 
+template <> int tfinite(long double val) { return finite(val); }
+template <> int tfinite(double val) { return finite(val); }
+template <> int tfinite(float val) { return finite(val); }
+
+template <> int tisfinite(long double val) { return isfinite(val); }
+template <> int tisfinite(double val) { return isfinite(val); }
+template <> int tisfinite(float val) { return isfinite(val); }
+
+template <> int tisnan(long double val) { return isnan(val); }
+template <> int tisnan(double val) { return isnan(val); }
+template <> int tisnan(float val) { return isnan(val); }
+
+template <> int tisinf(long double val) { return isinf(val); }
+template <> int tisinf(double val) { return isinf(val); }
+template <> int tisinf(float val) { return isinf(val); }
+
 #ifndef LDBL_EXPONENT_DIG
 #define LDBL_EXPONENT_DIG \
       ((LDBL_MAX_EXP == (1 << (16-2))) ? 15 : sizeof(long double)*8-LDBL_MANT_DIG)
