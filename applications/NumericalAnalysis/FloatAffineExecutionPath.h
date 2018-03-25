@@ -627,11 +627,27 @@ class TMergeBranches : public TBaseFloatAffine<TypeExecutionPath> {
   public:
    TMergeBranches(const char* file, int line);
 
+   template <class TypeIterator>
+   struct TPacker {
+      TypeIterator iter, end;
+      TPacker(TypeIterator aiter, TypeIterator aend) : iter(aiter), end(aend) {}
+   };
+
+   template <class TypeIterator>
+   static TPacker<TypeIterator> packer(TypeIterator iter, TypeIterator end)
+      {  return TPacker<TypeIterator>(iter, end); }
+
    template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
    TMergeBranches<TypeExecutionPath>& operator<<(TFloatZonotope<TypeExecutionPath, USizeMantissa, USizeExponent, TypeImplementation>& value);
    template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
    TMergeBranches<TypeExecutionPath>& operator<<(const TFloatZonotope<TypeExecutionPath, USizeMantissa, USizeExponent, TypeImplementation>& value)
-      { return operator<<(const_cast<TFloatZonotope<TypeExecutionPath, USizeMantissa, USizeExponent, TypeImplementation>&>(value)); }
+      {  return operator<<(const_cast<TFloatZonotope<TypeExecutionPath, USizeMantissa, USizeExponent, TypeImplementation>&>(value)); }
+   template <class TypeIterator>
+   TMergeBranches<TypeExecutionPath>& operator<<(TPacker<TypeIterator> packer)
+      {  for (; packer.iter != packer.end; ++packer.iter)
+            operator<<(*packer.iter);
+         return *this;
+      }
    bool operator<<(BaseExecutionPath::end);
 };
 

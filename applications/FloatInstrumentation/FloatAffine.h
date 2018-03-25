@@ -64,6 +64,9 @@ namespace NumericalDomains { namespace DAffine {
 
 typedef STG::IOObject::OSBase DiagnosisReadStream;
 
+template <typename TypeIterator, class TypeSaveMemory>
+class TPackedSaveMemory;
+
 template <typename T1, class TypeSaveMemory>
 class TSaveMemory {
   public:
@@ -100,6 +103,9 @@ class TSaveMemory {
    template <typename T>
    TSaveMemory<T, TSaveMemory<T1, TypeSaveMemory> > operator<<(const T& t)
       {  return TSaveMemory<T, TSaveMemory<T1, TypeSaveMemory> >(const_cast<T&>(t), *this); }
+   template <typename TypeIterator>
+   TPackedSaveMemory<TypeIterator, TSaveMemory<T1, TypeSaveMemory> > operator<<(MergeBranches::TPacker<TypeIterator> packer);
+
    TSaveMemory<T1, TypeSaveMemory>& operator<<(BaseExecutionPath::end) { return *this; }
    TSaveMemory<T1, TypeSaveMemory>& setCurrentResult(bool result)
       {  next.setCurrentResult(result); return *this; }
@@ -118,6 +124,77 @@ class TSaveMemory {
    bool getResult() const { return next.getResult(); }
 };
 
+template <typename TypeIterator, class TypeSaveMemory>
+class TPackedSaveMemory {
+  public:
+   COL::TVector<typename TypeIterator::value_type> save;
+   TypeSaveMemory next;
+
+   TPackedSaveMemory(TypeIterator iter, TypeIterator end, TypeSaveMemory nextArg)
+      :  next(nextArg)
+      {  int count = end - iter;
+         save.bookPlace(count);
+         for (; iter != end; ++iter)
+            save.insertAtEnd(*iter);
+      }
+   TPackedSaveMemory(const TPackedSaveMemory<TypeIterator, TypeSaveMemory>& source)
+      :  save(source.save), next(source.next)
+      {  if (save.doesSupportUnstableInLoop()) {
+            int count = save.count();
+            for (int index = 0; index < count; ++index) {
+               save.referenceAt(index).getSRealDomain().clearHolder();
+               save.referenceAt(index).getSError().clearHolder();
+            };
+         };
+      }
+   TPackedSaveMemory(TPackedSaveMemory<TypeIterator, TypeSaveMemory>&& source)
+      :  save(std::move(source.save)), next(std::move(source.next))
+      {  if (save.doesSupportUnstableInLoop()) {
+            int count = save.count();
+            for (int index = 0; index < count; ++index) {
+               save.referenceAt(index).getSRealDomain().clearHolder();
+               save.referenceAt(index).getSError().clearHolder();
+            };
+         };
+      }
+
+   template <typename T>
+   TSaveMemory<T, TPackedSaveMemory<TypeIterator, TypeSaveMemory> > operator<<(T& t)
+      {  return TSaveMemory<T, TPackedSaveMemory<TypeIterator, TypeSaveMemory> >(t, *this); }
+   template <class TypeIteratorArgument>
+   TPackedSaveMemory<TypeIteratorArgument, TPackedSaveMemory<TypeIterator, TypeSaveMemory> >
+      operator<<(MergeBranches::TPacker<TypeIteratorArgument> packer)
+      {  return TPackedSaveMemory<TypeIteratorArgument, TPackedSaveMemory<TypeIterator, TypeSaveMemory> >
+            (packer.iter, packer.end, *this);
+      }
+   TPackedSaveMemory<TypeIterator, TypeSaveMemory>& operator<<(BaseExecutionPath::end) { return *this; }
+
+   TPackedSaveMemory<TypeIterator, TypeSaveMemory>& setCurrentResult(bool result)
+      {  next.setCurrentResult(result); return *this; }
+   
+   TypeSaveMemory& operator>>(MergeBranches::TPacker<TypeIterator>&& packer)
+      {  if (!next.getResult()) {
+            int count = packer.end - packer.iter;
+            AssumeCondition(count == save.count())
+            for (int index = 0; index < count; ++index) {
+               *packer.iter = save[index];
+               ++packer.iter;
+            }
+         }
+         return next;
+      }
+   bool getResult() const { return next.getResult(); }
+};
+
+template <typename T1, class TypeSaveMemory>
+template <typename TypeIterator>
+inline
+TPackedSaveMemory<TypeIterator, TSaveMemory<T1, TypeSaveMemory> >
+TSaveMemory<T1, TypeSaveMemory>::operator<<(MergeBranches::TPacker<TypeIterator> packer)
+   {  return TPackedSaveMemory<TypeIterator, TSaveMemory<T1, TypeSaveMemory> >
+         (packer.iter, packer.end, *this);
+   }
+
 class SaveMemory {
   private:
    bool fResult;
@@ -131,6 +208,10 @@ class SaveMemory {
    template <typename T>
    TSaveMemory<T, SaveMemory> operator<<(const T& t)
       {  return TSaveMemory<T, SaveMemory>(const_cast<T&>(t), *this); }
+   template <class TypeIterator>
+   TPackedSaveMemory<TypeIterator, SaveMemory>
+      operator<<(MergeBranches::TPacker<TypeIterator> packer)
+      {  return TPackedSaveMemory<TypeIterator, SaveMemory>(packer.iter, packer.end, *this); }
    SaveMemory& operator<<(BaseExecutionPath::end) { return *this; }
    SaveMemory& setCurrentResult(bool result) { fResult = result; return *this; }
    bool getResult() const { return fResult; }
@@ -141,6 +222,9 @@ class SaveMemory {
          return result;
       }
 };
+
+template <typename TypeIterator, class TypeMergeMemory>
+class TPackedMergeMemory;
 
 template <typename T1, class TypeMergeMemory>
 class TMergeMemory {
@@ -159,6 +243,9 @@ class TMergeMemory {
    template <typename T>
    TMergeMemory<T, TMergeMemory<T1, TypeMergeMemory> > operator>>(const T& t)
       {  return TMergeMemory<T, TMergeMemory<T1, TypeMergeMemory> >(const_cast<T&>(t), *this); }
+   template <typename TypeIterator>
+   TPackedMergeMemory<TypeIterator, TMergeMemory<T1, TypeMergeMemory> > operator>>(MergeBranches::TPacker<TypeIterator> packer);
+
    TMergeMemory<T1, TypeMergeMemory>& operator>>(BaseExecutionPath::end) { return *this; }
    TMergeMemory<T1, TypeMergeMemory>& setCurrentComplete(bool isComplete)
       {  next.setCurrentComplete(isComplete); return *this; }
@@ -205,6 +292,80 @@ class TMergeMemory {
    bool isFirst() const { return next.isFirst(); }
    bool isComplete() const { return next.isComplete(); }
 };
+
+template <typename TypeIterator, class TypeMergeMemory>
+class TPackedMergeMemory {
+  public:
+   COL::TVector<typename TypeIterator::value_type> merge;
+   TypeMergeMemory next;
+
+   TPackedMergeMemory(TypeIterator iter, TypeIterator end, TypeMergeMemory nextArg)
+      :  next(nextArg)
+      {  int count = end - iter;
+         merge.bookPlace(count);
+      }
+   TPackedMergeMemory(const TPackedMergeMemory<TypeIterator, TypeMergeMemory>&) = default;
+   TPackedMergeMemory(TPackedMergeMemory<TypeIterator, TypeMergeMemory>&&) = default;
+
+   template <typename T>
+   TMergeMemory<T, TPackedMergeMemory<TypeIterator, TypeMergeMemory> > operator>>(T& t)
+      {  return TMergeMemory<T, TPackedMergeMemory<TypeIterator, TypeMergeMemory> >(t, *this); }
+   template <class TypeIteratorArgument>
+   TPackedMergeMemory<TypeIteratorArgument, TPackedMergeMemory<TypeIterator, TypeMergeMemory> >
+      operator>>(MergeBranches::TPacker<TypeIteratorArgument> packer)
+      {  return TPackedMergeMemory<TypeIteratorArgument, TPackedMergeMemory<TypeIterator, TypeMergeMemory> >
+            (packer.iter, packer.end, *this);
+      }
+
+   TPackedMergeMemory<TypeIterator, TypeMergeMemory>& operator>>(BaseExecutionPath::end) { return *this; }
+   TPackedMergeMemory<TypeIterator, TypeMergeMemory>& setCurrentComplete(bool isComplete)
+      {  next.setCurrentComplete(isComplete); return *this; }
+   TypeMergeMemory& operator<<(MergeBranches::TPacker<TypeIterator>&& packer)
+      {  int count = packer.end - packer.iter;
+         if (next.isComplete()) {
+            if (next.isFirst()) {
+               AssumeCondition(merge.count() == 0 && merge.queryPlaces() == count)
+               for (; packer.iter != packer.end; ++packer.iter) {
+                  if (packer.iter->optimizeValue()) {
+                     merge.insertAtEnd(*packer.iter);
+                     if (merge.slast().doesSupportUnstableInLoop()) {
+                        merge.slast().getSRealDomain().clearHolder();
+                        merge.slast().getSError().clearHolder();
+                     };
+                  }
+                  else
+                     next.setCurrentComplete(false);
+               };
+            }
+            else {
+               auto iter = packer.iter;
+               for (int index = 0; index < count; ++index) {
+                  if (iter->optimizeValue())
+                     merge[index].mergeWith(*iter);
+                  else
+                     next.setCurrentComplete(false);
+                  ++iter;
+               }
+            }
+         }
+         for (int index = 0; index < count; ++index) {
+            *packer.iter = merge[index];
+            ++packer.iter;
+         }
+         return next;
+      }
+   bool isFirst() const { return next.isFirst(); }
+   bool isComplete() const { return next.isComplete(); }
+};
+
+template <typename T1, class TypeMergeMemory>
+template <typename TypeIterator>
+inline
+TPackedMergeMemory<TypeIterator, TMergeMemory<T1, TypeMergeMemory> >
+TMergeMemory<T1, TypeMergeMemory>::operator>>(MergeBranches::TPacker<TypeIterator> packer)
+   {  return TPackedMergeMemory<TypeIterator, TMergeMemory<T1, TypeMergeMemory> >
+         (packer.iter, packer.end, *this);
+   }
 
 class MergeMemory {
   private:
@@ -274,6 +435,8 @@ class TInstrumentedFloatZonotope : public TFloatZonotope<ExecutionPath, USizeMan
    friend class TMergeBranches<ExecutionPath>;
 
   public:
+   typedef DAffine::MergeBranches MergeBranches;
+
    TInstrumentedFloatZonotope() = default;
    TInstrumentedFloatZonotope(float value)
       {  if (!inherited::fSupportAtomic)
