@@ -294,6 +294,7 @@ class ExecutionPath : public BaseExecutionPath {
    static bool fSupportThreshold;
    static bool fSupportFirstFollowFloat;
    static BuiltReal brThreshold;
+   static BuiltReal brThresholdDomain;
    static BuiltReal brMaximalAccuracy;
 #if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
    static PNT::AutoPointer<TConstraintsSet<FLOAT_REAL_BITS_NUMBER, TBaseFloatAffine<ExecutionPath> > >
@@ -406,9 +407,24 @@ class ExecutionPath : public BaseExecutionPath {
             if (!relativeError.isZero()) {
                if (relativeError > brThreshold) {
                   if (doesAssumeInput()) {
-                     iTraceFile->assume("warning: relative accuracy beyond threshold\n");
-                     if (fSupportBacktrace)
-                        readBackTrace(*iTraceFile);
+                     BuiltReal min, max;
+                     source.getRealDomain().retrieveBound(min, max, false /* hasExternalCoefficient */);
+                     if (min.isNegative()) {
+                        if (max.isNegative()) {
+                           max = min;
+                           max.opposite();
+                        }
+                        else {
+                           min.opposite();
+                           if (min > max)
+                              max = min;
+                        };
+                     };
+                     if (max > brThresholdDomain) {
+                        iTraceFile->assume("warning: relative accuracy beyond threshold\n");
+                        if (fSupportBacktrace)
+                           readBackTrace(*iTraceFile);
+                     };
                   };
                }
             };
@@ -419,13 +435,28 @@ class ExecutionPath : public BaseExecutionPath {
       {  BuiltReal relativeError;
          source.retrieveRelativeError(relativeError);
          if (!relativeError.isZero()) {
-            if (!brThreshold.isZero() && relativeError > brThreshold)
-               oTraceFile->writesome("warning: relative accuracy beyond threshold\n");
-            if (relativeError > brMaximalAccuracy) {
-               brMaximalAccuracy = relativeError;
-               if (fSupportBacktrace)
-                  writeBackTrace(*oTraceFile);
+            if (!brThreshold.isZero() && relativeError > brThreshold) {
+               BuiltReal min, max;
+               source.getRealDomain().retrieveBound(min, max, false /* hasExternalCoefficient */);
+               if (min.isNegative()) {
+                  if (max.isNegative()) {
+                     max = min;
+                     max.opposite();
+                  }
+                  else {
+                     min.opposite();
+                     if (min > max)
+                        max = min;
+                  };
+               };
+               if (max > brThresholdDomain) {
+                  oTraceFile->writesome("warning: relative accuracy beyond threshold\n");
+                  if (fSupportBacktrace)
+                     writeBackTrace(*oTraceFile);
+               };
             };
+            if (relativeError > brMaximalAccuracy)
+               brMaximalAccuracy = relativeError;
          };
       }
 
