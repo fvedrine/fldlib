@@ -656,6 +656,7 @@ TBaseFloatAffine<TypeExecutionPath>::writeBranchCompare(const TypeFloatAffine& s
          inherited::writeValueToOutput(source.getError(), defaultRealParams);
          inherited::writeDomain(")\n");
       }
+      inherited::writeUnstableTest();
    };
 }
 

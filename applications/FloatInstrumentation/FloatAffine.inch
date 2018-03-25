@@ -29,6 +29,8 @@
 //   Definition of a class of affine relations.
 //
 
+#include "FloatInstrumentation/BackTrace.h"
+
 namespace NumericalDomains { namespace DAffine {
 
 class BaseExecutionPathParams : public EnhancedObject {
@@ -287,6 +289,7 @@ class ExecutionPath : public BaseExecutionPath {
    static bool fDoesFollow;
    static bool fSupportAtomic;
    static bool fSupportUnstableInLoop;
+   static bool fSupportBacktrace;
    static bool fSupportVerbose;
    static bool fSupportThreshold;
    static bool fSupportFirstFollowFloat;
@@ -330,6 +333,8 @@ class ExecutionPath : public BaseExecutionPath {
    static bool doesSupportAtomic() { return fSupportAtomic; }
    static void setSupportUnstableInLoop(bool value=true) { fSupportUnstableInLoop = value; }
    static bool doesSupportUnstableInLoop() { return fSupportUnstableInLoop; }
+   static void setSupportBacktrace() { fSupportBacktrace = true; }
+   static bool doesSupportBacktrace() { return fSupportBacktrace; }
    static void setSupportVerbose() { fSupportVerbose = true; }
    static bool doesSupportVerbose() { return fSupportVerbose; }
    static void setSupportThreshold() { fSupportThreshold = true; }
@@ -342,6 +347,7 @@ class ExecutionPath : public BaseExecutionPath {
       Initialization() {}
       void setSupportAtomic() { ExecutionPath::setSupportAtomic(); }
       void setSupportUnstableInLoop() { ExecutionPath::setSupportUnstableInLoop(); }
+      void setSupportBacktrace() { ExecutionPath::setSupportBacktrace(); }
       void setSupportVerbose() { ExecutionPath::setSupportVerbose(); }
       void setSupportThreshold() { ExecutionPath::setSupportThreshold(); }
       void setSupportFirstFollowFloat() { ExecutionPath::setSupportFirstFollowFloat(); }
@@ -398,8 +404,13 @@ class ExecutionPath : public BaseExecutionPath {
             BuiltReal relativeError;
             source.retrieveRelativeError(relativeError);
             if (!relativeError.isZero()) {
-               if (relativeError > brThreshold)
-                  if (doesAssumeInput()) iTraceFile->assume("warning: relative accuracy beyond threshold\n");
+               if (relativeError > brThreshold) {
+                  if (doesAssumeInput()) {
+                     iTraceFile->assume("warning: relative accuracy beyond threshold\n");
+                     if (fSupportBacktrace)
+                        readBackTrace(*iTraceFile);
+                  };
+               }
             };
          };
       }
@@ -410,8 +421,11 @@ class ExecutionPath : public BaseExecutionPath {
          if (!relativeError.isZero()) {
             if (!brThreshold.isZero() && relativeError > brThreshold)
                oTraceFile->writesome("warning: relative accuracy beyond threshold\n");
-            if (relativeError > brMaximalAccuracy)
+            if (relativeError > brMaximalAccuracy) {
                brMaximalAccuracy = relativeError;
+               if (fSupportBacktrace)
+                  writeBackTrace(*oTraceFile);
+            };
          };
       }
 
@@ -819,22 +833,63 @@ class ExecutionPath : public BaseExecutionPath {
             oTraceFile->put('\n');
       }
 
+   static void writeUnstableTest()
+      {  if (fSupportBacktrace)
+            writeBackTrace(*oTraceFile);
+      }
+   static void readUnstableTest()
+      {  if (doesAssumeInput() && fSupportBacktrace) {
+            readBackTrace(*iTraceFile);
+         };
+      }
    static void assumeDivisionByZero()
-      {  if (doesAssumeInput()) iTraceFile->assume("warning: division by zero\n"); }
+      {  if (doesAssumeInput()) {
+            iTraceFile->assume("warning: division by zero\n");
+            if (fSupportBacktrace)
+               readBackTrace(*iTraceFile);
+         };
+      }
    static void writeDivisionByZero()
-      {  oTraceFile->writesome("warning: division by zero\n"); }
+      {  oTraceFile->writesome("warning: division by zero\n");
+         if (fSupportBacktrace)
+            writeBackTrace(*oTraceFile);
+      }
    static void assumeNegativeSqrt()
-      {  if (doesAssumeInput()) iTraceFile->assume("warning: negative square root\n"); }
+      {  if (doesAssumeInput()) {
+            iTraceFile->assume("warning: negative square root\n");
+            if (fSupportBacktrace)
+               readBackTrace(*iTraceFile);
+         };
+      }
    static void writeNegativeSqrt()
-      {  oTraceFile->writesome("warning: negative square root\n"); }
+      {  oTraceFile->writesome("warning: negative square root\n");
+         if (fSupportBacktrace)
+            writeBackTrace(*oTraceFile);
+      }
    static void assumeNegativePow()
-      {  if (doesAssumeInput()) iTraceFile->assume("warning: negative argument for power\n"); }
+      {  if (doesAssumeInput()) {
+            iTraceFile->assume("warning: negative argument for power\n");
+            if (fSupportBacktrace)
+               readBackTrace(*iTraceFile);
+         };
+      }
    static void writeNegativePow()
-      {  oTraceFile->writesome("warning: negative argument for power\n"); }
+      {  oTraceFile->writesome("warning: negative argument for power\n");
+         if (fSupportBacktrace)
+            writeBackTrace(*oTraceFile);
+      }
    static void assumeNegativeOrNulLog()
-      {  if (doesAssumeInput()) iTraceFile->assume("warning: negative or nul log\n"); }
+      {  if (doesAssumeInput()) {
+            iTraceFile->assume("warning: negative or nul log\n");
+            if (fSupportBacktrace)
+               readBackTrace(*iTraceFile);
+         };
+      }
    static void writeNegativeOrNulLog()
-      {  oTraceFile->writesome("warning: negative or nul log\n"); }
+      {  oTraceFile->writesome("warning: negative or nul log\n");
+         if (fSupportBacktrace)
+            writeBackTrace(*oTraceFile);
+      }
 
    static void followNewBranch(int cases, BooleanChoice& realChoice, BooleanChoice& errorChoice,
          bool doesChooseDefaultErrorChoice, BooleanChoice defaultErrorChoice);

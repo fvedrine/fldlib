@@ -179,6 +179,8 @@ class ExecutionPathContract : public BaseExecutionPath {
    template <class TypeImplementation, class TypeParameters>
    void writeValueToOutput(const TypeImplementation& value, const TypeParameters& params) const {}
 
+   void writeUnstableTest() const {}
+   void readUnstableTest() const {}
    void assumeDivisionByZero() const {}
    void writeDivisionByZero() const {}
    void assumeNegativeSqrt() const {}

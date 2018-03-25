@@ -164,6 +164,7 @@ bool ExecutionPath::fHasNewLine = false;
 
 bool ExecutionPath::fSupportAtomic = false;
 bool ExecutionPath::fSupportUnstableInLoop = false;
+bool ExecutionPath::fSupportBacktrace = false;
 bool ExecutionPath::fSupportVerbose = false;
 bool ExecutionPath::fSupportThreshold = false;
 bool ExecutionPath::fSupportFirstFollowFloat = false;
