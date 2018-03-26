@@ -287,6 +287,13 @@ TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::TFloatInterval
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::TFloatInterval(short int value) {
+   typedef DDoubleInterval::TFloatInterval<DDoubleInterval::ExecutionPath, DDoubleInterval::TBuiltFloat<DDoubleInterval::LongDoubleFloatDigits::UBitSizeMantissa+1, USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   AssumeCondition(sizeof(Implementation) <= UFloatIntervalSize*sizeof(AlignType))
+   new (content) Implementation(value);
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::TFloatInterval(int value) {
    typedef DDoubleInterval::TFloatInterval<DDoubleInterval::ExecutionPath, DDoubleInterval::TBuiltFloat<DDoubleInterval::LongDoubleFloatDigits::UBitSizeMantissa+1, USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
    AssumeCondition(sizeof(Implementation) <= UFloatIntervalSize*sizeof(AlignType))
@@ -300,7 +307,13 @@ TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::TFloatInterval
    new (content) Implementation(value);
 }
 
-/*
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::TFloatInterval(unsigned short value) {
+   typedef DDoubleInterval::TFloatInterval<DDoubleInterval::ExecutionPath, DDoubleInterval::TBuiltFloat<DDoubleInterval::LongDoubleFloatDigits::UBitSizeMantissa+1, USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   AssumeCondition(sizeof(Implementation) <= UFloatIntervalSize*sizeof(AlignType))
+   new (content) Implementation(value);
+}
+
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::TFloatInterval(unsigned value) {
    typedef DDoubleInterval::TFloatInterval<DDoubleInterval::ExecutionPath, DDoubleInterval::TBuiltFloat<DDoubleInterval::LongDoubleFloatDigits::UBitSizeMantissa+1, USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
@@ -314,7 +327,6 @@ TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::TFloatInterval
    AssumeCondition(sizeof(Implementation) <= UFloatIntervalSize*sizeof(AlignType))
    new (content) Implementation(value);
 }
-*/
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::TFloatInterval(const thisType& asource) {
@@ -579,6 +591,21 @@ TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::operator TypeI
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TypeImplementation
+TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::asImplementation() const {
+   typedef DDoubleInterval::TFloatInterval<DDoubleInterval::ExecutionPath, DDoubleInterval::TBuiltFloat<DDoubleInterval::LongDoubleFloatDigits::UBitSizeMantissa+1, USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   return reinterpret_cast<const Implementation*>(content)->asImplementation();
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+int
+TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::asInt(RoundMode mode) const {
+   typedef DDoubleInterval::TFloatInterval<DDoubleInterval::ExecutionPath, DDoubleInterval::TBuiltFloat<DDoubleInterval::LongDoubleFloatDigits::UBitSizeMantissa+1, USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
+   return reinterpret_cast<const Implementation*>(content)->asInt((ReadParametersBase::RoundMode) mode);
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::operator int() const {
    typedef DDoubleInterval::TFloatInterval<DDoubleInterval::ExecutionPath, DDoubleInterval::TBuiltFloat<DDoubleInterval::LongDoubleFloatDigits::UBitSizeMantissa+1, USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
    typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
@@ -704,6 +731,34 @@ TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::persist(const 
    typedef DDoubleInterval::TFloatInterval<DDoubleInterval::ExecutionPath, DDoubleInterval::TBuiltFloat<DDoubleInterval::LongDoubleFloatDigits::UBitSizeMantissa+1, USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
    const Implementation& thisInterval = *reinterpret_cast<const Implementation*>(content);
    thisInterval.notifyForPersistence(thisInterval, prefix);
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+int
+TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::sfinite() const {
+   typedef DDoubleInterval::TFloatInterval<DDoubleInterval::ExecutionPath, DDoubleInterval::TBuiltFloat<DDoubleInterval::LongDoubleFloatDigits::UBitSizeMantissa+1, USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   return finite(reinterpret_cast<const Implementation*>(content)->asImplementation());
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+int
+TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::sisfinite() const {
+   typedef DDoubleInterval::TFloatInterval<DDoubleInterval::ExecutionPath, DDoubleInterval::TBuiltFloat<DDoubleInterval::LongDoubleFloatDigits::UBitSizeMantissa+1, USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   return isfinite(reinterpret_cast<const Implementation*>(content)->asImplementation());
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+int
+TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::sisnan() const {
+   typedef DDoubleInterval::TFloatInterval<DDoubleInterval::ExecutionPath, DDoubleInterval::TBuiltFloat<DDoubleInterval::LongDoubleFloatDigits::UBitSizeMantissa+1, USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   return isnan(reinterpret_cast<const Implementation*>(content)->asImplementation());
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+int
+TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::sisinf() const {
+   typedef DDoubleInterval::TFloatInterval<DDoubleInterval::ExecutionPath, DDoubleInterval::TBuiltFloat<DDoubleInterval::LongDoubleFloatDigits::UBitSizeMantissa+1, USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   return isinf(reinterpret_cast<const Implementation*>(content)->asImplementation());
 }
 
 #if defined __GNUC__ && GCC_VERSION >= 50000
