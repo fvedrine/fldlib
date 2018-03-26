@@ -110,7 +110,27 @@ class MergeBranches {
    template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
    MergeBranches& operator<<(TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& value);
    bool operator<<(end);
+
+   template <class TypeIterator>
+   struct TPacker {
+      TypeIterator iter, end;
+      TPacker(TypeIterator aiter, TypeIterator aend) : iter(aiter), end(aend) {}
+   };
+
+   template <class TypeIterator>
+   static TPacker<TypeIterator> packer(TypeIterator iter, TypeIterator end)
+      {  return TPacker<TypeIterator>(iter, end); }
+
+   template <class TypeIterator>
+   MergeBranches& operator<<(TPacker<TypeIterator> packer)
+      {  for (; packer.iter != packer.end; ++packer.iter)
+            operator<<(*packer.iter);
+         return *this;
+      }
 };
+
+template <typename TypeIterator, class TypeSaveMemory>
+class TPackedSaveMemory;
 
 template <typename T1, class TypeSaveMemory>
 class TSaveMemory {
@@ -125,6 +145,8 @@ class TSaveMemory {
    template <typename T>
    TSaveMemory<T, TSaveMemory<T1, TypeSaveMemory> > operator<<(T t)
       {  return TSaveMemory<T, TSaveMemory<T1, TypeSaveMemory> >(t, *this); }
+   template <typename TypeIterator>
+   TPackedSaveMemory<TypeIterator, TSaveMemory<T1, TypeSaveMemory> > operator<<(MergeBranches::TPacker<TypeIterator> packer);
    TSaveMemory<T1, TypeSaveMemory>& operator<<(end) { return *this; }
    TSaveMemory<T1, TypeSaveMemory>& setCurrent(bool result)
       {  next.setCurrent(result); return *this; }
@@ -142,6 +164,59 @@ class TSaveMemory {
    bool getResult() const { return next.getResult(); }
 };
 
+template <typename TypeIterator, class TypeSaveMemory>
+class TPackedSaveMemory {
+  public:
+   std::vector<typename TypeIterator::value_type> save;
+   TypeSaveMemory next;
+
+   TPackedSaveMemory(TypeIterator iter, TypeIterator end, TypeSaveMemory nextArg)
+      :  next(nextArg)
+      {  int count = end - iter;
+         save.reserve(count);
+         for (; iter != end; ++iter)
+            save.push_back(*iter);
+      }
+   TPackedSaveMemory(const TPackedSaveMemory<TypeIterator, TypeSaveMemory>&) = default;
+   TPackedSaveMemory(TPackedSaveMemory<TypeIterator, TypeSaveMemory>&&) = default;
+
+   template <typename T>
+   TSaveMemory<T, TSaveMemory<TypeIterator, TypeSaveMemory> > operator<<(T t)
+      {  return TSaveMemory<T, TSaveMemory<TypeIterator, TypeSaveMemory> >(t, *this); }
+   template <class TypeIteratorArgument>
+   TPackedSaveMemory<TypeIteratorArgument, TPackedSaveMemory<TypeIterator, TypeSaveMemory> >
+      operator<<(MergeBranches::TPacker<TypeIteratorArgument> packer)
+      {  return TPackedSaveMemory<TypeIteratorArgument, TPackedSaveMemory<TypeIterator, TypeSaveMemory> >
+            (packer.iter, packer.end, *this);
+      }
+   TPackedSaveMemory<TypeIterator, TypeSaveMemory>& operator<<(end) { return *this; }
+
+   TPackedSaveMemory<TypeIterator, TypeSaveMemory>& setCurrent(bool result)
+      {  next.setCurrent(result); return *this; }
+   
+   TypeSaveMemory& operator>>(MergeBranches::TPacker<TypeIterator>&& packer)
+      {  if (!next.getResult()) {
+            int count = packer.end - packer.iter;
+            assert(count == save.size());
+            for (int index = 0; index < count; ++index) {
+               *packer.iter = save[index];
+               ++packer.iter;
+            }
+         }
+         return next;
+      }
+   bool getResult() const { return next.getResult(); }
+};
+
+template <typename T1, class TypeSaveMemory>
+template <typename TypeIterator>
+inline
+TPackedSaveMemory<TypeIterator, TSaveMemory<T1, TypeSaveMemory> >
+TSaveMemory<T1, TypeSaveMemory>::operator<<(MergeBranches::TPacker<TypeIterator> packer)
+   {  return TPackedSaveMemory<TypeIterator, TSaveMemory<T1, TypeSaveMemory> >
+         (packer.iter, packer.end, *this);
+   }
+
 class SaveMemory {
   private:
    bool fResult;
@@ -152,6 +227,9 @@ class SaveMemory {
    template <typename T>
    TSaveMemory<T, SaveMemory> operator<<(T t)
       {  return TSaveMemory<T, SaveMemory>(t, *this); }
+   template <class TypeIterator>
+   TPackedSaveMemory<TypeIterator, SaveMemory> operator<<(MergeBranches::TPacker<TypeIterator> packer)
+      {  return TPackedSaveMemory<TypeIterator, SaveMemory>(packer.iter, packer.end, *this); }
    SaveMemory& operator<<(end) { return *this; }
    SaveMemory& setCurrent(bool result) { fResult = result; return *this; }
    bool getResult() const { return fResult; }
@@ -176,7 +254,7 @@ class TFloatExact {
 
    template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
    friend class TFloatExact;
-   friend class MergeBranches;
+   friend class DDoubleExactInterface::MergeBranches;
 
    enum RoundMode { RMNearest, RMLowest, RMHighest, RMZero };
    int asInt(RoundMode mode) const;
@@ -187,6 +265,7 @@ class TFloatExact {
    int sisinf() const;
 
   public:
+   typedef DDoubleExactInterface::MergeBranches MergeBranches;
    const char* queryDebugValue() const;
    typedef ExecutionPath::Initialization Initialization;
    typedef ExecutionPath::anticipated_termination anticipated_termination;
