@@ -271,6 +271,13 @@ TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::TFloatExact(long 
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::TFloatExact(short int value) {
+   typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   AssumeCondition(sizeof(Implementation) <= UFloatExactSize*sizeof(AlignType))
+   new (content) Implementation(value);
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::TFloatExact(int value) {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
    AssumeCondition(sizeof(Implementation) <= UFloatExactSize*sizeof(AlignType))
@@ -284,7 +291,13 @@ TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::TFloatExact(long 
    new (content) Implementation(value);
 }
 
-/*
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::TFloatExact(unsigned short value) {
+   typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   AssumeCondition(sizeof(Implementation) <= UFloatExactSize*sizeof(AlignType))
+   new (content) Implementation(value);
+}
+
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::TFloatExact(unsigned value) {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
@@ -298,7 +311,6 @@ TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::TFloatExact(unsig
    AssumeCondition(sizeof(Implementation) <= UFloatExactSize*sizeof(AlignType))
    new (content) Implementation(value);
 }
-*/
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::TFloatExact(const thisType& asource) {
@@ -318,6 +330,13 @@ TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::TFloatExact(
 }
 
 #include "StandardClasses/DefineNew.h"
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TypeImplementation
+TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::asImplementation() const {
+   typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   return reinterpret_cast<const Implementation*>(content)->asImplementation();
+}
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::~TFloatExact() {
@@ -588,6 +607,14 @@ TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::operator TypeImpl
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+int
+TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::asInt(RoundMode mode) const {
+   typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
+   return reinterpret_cast<const Implementation*>(content)->asInt((ReadParametersBase::RoundMode) mode);
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::operator int() const {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
    typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
@@ -741,6 +768,34 @@ void
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::medianAssign(const thisType& fst, const thisType& snd) {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
    reinterpret_cast<Implementation*>(content)->medianAssign(*reinterpret_cast<const Implementation*>(fst.content), *reinterpret_cast<const Implementation*>(snd.content));
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+int
+TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::sfinite() const {
+   typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   return finite(reinterpret_cast<const Implementation*>(content)->asImplementation());
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+int
+TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::sisfinite() const {
+   typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   return isfinite(reinterpret_cast<const Implementation*>(content)->asImplementation());
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+int
+TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::sisnan() const {
+   typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   return isnan(reinterpret_cast<const Implementation*>(content)->asImplementation());
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+int
+TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::sisinf() const {
+   typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   return isinf(reinterpret_cast<const Implementation*>(content)->asImplementation());
 }
 
 #if defined __GNUC__ && GCC_VERSION >= 50000

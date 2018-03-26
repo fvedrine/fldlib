@@ -38,6 +38,7 @@
 
 // #include <iosfwd>
 #include <iostream>
+#include <vector>
 
 namespace NumericalDomains { namespace DDoubleExactInterface {
 
@@ -177,6 +178,14 @@ class TFloatExact {
    friend class TFloatExact;
    friend class MergeBranches;
 
+   enum RoundMode { RMNearest, RMLowest, RMHighest, RMZero };
+   int asInt(RoundMode mode) const;
+
+   int sfinite() const;
+   int sisfinite() const;
+   int sisnan() const;
+   int sisinf() const;
+
   public:
    const char* queryDebugValue() const;
    typedef ExecutionPath::Initialization Initialization;
@@ -193,10 +202,12 @@ class TFloatExact {
    TFloatExact(double value, double error, ErrorParameter);
    TFloatExact(long double value);
    TFloatExact(long double value, long double error, ErrorParameter);
+   TFloatExact(short int value);
    TFloatExact(int value);
    TFloatExact(long int value);
-   // TFloatExact(unsigned value);
-   // TFloatExact(unsigned long value);
+   TFloatExact(unsigned short value);
+   TFloatExact(unsigned value);
+   TFloatExact(unsigned long value);
    TFloatExact(const thisType& source);
    TFloatExact& operator=(const thisType& source);
    ~TFloatExact();
@@ -206,8 +217,18 @@ class TFloatExact {
    template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
    thisType& operator=(const TFloatExact<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source);
 
+   TypeImplementation asImplementation() const;
    void writeImplementation(std::ostream& out) const;
    void readImplementation(std::istream& in);
+   friend std::ostream& operator<<(std::ostream& out, const thisType& source)
+      {  return out << source.asImplementation(); }
+   friend std::istream& operator>>(std::istream& in, thisType& source)
+      {  TypeImplementation val;
+         in >> val;
+         operator=(thisType(val));
+         return in;
+      }
+
 
    bool operator<(const thisType& source) const;
    bool operator<(TypeImplementation source) const;
@@ -304,6 +325,144 @@ class TFloatExact {
       {  auto result(*this); result.medianAssign(thisType(fst), thisType(snd)); return result; }
 
    void persist(const char* prefix) const;
+
+   friend thisType sqrt(const thisType& source)
+      {  auto result(std::move(source)); result.sqrtAssign(); return result; }
+   friend thisType sin(const thisType& source)
+      {  auto result(std::move(source)); result.sinAssign(); return result; }
+   friend thisType cos(const thisType& source)
+      {  auto result(std::move(source)); result.cosAssign(); return result; }
+   friend thisType asin(const thisType& source)
+      {  auto result(std::move(source)); result.asinAssign(); return result; }
+   friend thisType acos(const thisType& source)
+      {  auto result(std::move(source)); result.acosAssign(); return result; }
+   friend thisType tan(const thisType& source)
+      {  auto result(std::move(source)); result.tanAssign(); return result; }
+   friend thisType atan(const thisType& source)
+      {  auto result(std::move(source)); result.atanAssign(); return result; }
+   friend thisType exp(const thisType& source)
+      {  auto result(std::move(source)); result.expAssign(); return result; }
+   friend thisType log(const thisType& source)
+      {  auto result(std::move(source)); result.logAssign(); return result; }
+   friend thisType log2(const thisType& source)
+      {  thisType result(std::move(source));
+         result.logAssign();
+         result.divAssign(log(thisType(2.0)));
+         return result;
+      }
+   friend thisType exp2(const thisType& source)
+      {  thisType result = 2.0;
+         result.powAssign(source);
+         return result;
+      }
+   friend thisType log10(const thisType& source)
+      {  auto result(std::move(source)); result.log10Assign(); return result; }
+
+   friend thisType pow(const thisType& source, const thisType& value)
+      {  auto result(std::move(source)); result.powAssign(value); return result; }
+   template <typename TypeFst>
+   friend thisType pow(TypeFst source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   template <typename TypeSnd>
+   friend thisType pow(const thisType& source, TypeSnd value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, const thisType& value)
+      {  auto result(std::move(source)); result.powAssign(value); return result; }
+   template <typename TypeFst>
+   friend thisType powf(TypeFst source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   template <typename TypeSnd>
+   friend thisType powf(const thisType& source, TypeSnd value)
+      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+
+   friend thisType atan2(const thisType& source, const thisType& value)
+      {  auto result(std::move(source)); result.atan2Assign(value); return result; }
+   template <typename TypeFst>
+   friend thisType atan2(TypeFst source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   template <typename TypeSnd>
+   friend thisType atan2(const thisType& source, TypeSnd value)
+      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+
+   template <typename TypeFst>
+   friend bool operator<(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }
+   template <typename TypeFst>
+   friend bool operator<=(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }
+   template <typename TypeFst>
+   friend bool operator==(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }
+   template <typename TypeFst>
+   friend bool operator!=(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }
+   template <typename TypeFst>
+   friend bool operator>=(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }
+   template <typename TypeFst>
+   friend bool operator>(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }
+   template <typename TypeFst>
+   friend thisType operator+(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator+(snd); }
+   template <typename TypeFst>
+   friend thisType operator-(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator-(snd); }
+   template <typename TypeFst>
+   friend thisType operator*(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator*(snd); }
+   template <typename TypeFst>
+   friend thisType operator/(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator/(snd); }
+   friend thisType floor(const thisType& fst) { return thisType(fst.asInt(RMLowest)); }
+   friend thisType floor(thisType&& fst) { return thisType(fst.asInt(RMLowest)); }
+   friend thisType ceil(const thisType& fst) { return thisType(fst.asInt(RMHighest)); }
+   friend thisType ceil(thisType&& fst) { return thisType(fst.asInt(RMHighest)); }
+   friend thisType trunc(const thisType& fst) { return thisType(fst.asInt(RMZero)); }
+   friend thisType trunc(thisType&& fst) { return thisType(fst.asInt(RMZero)); }
+   friend thisType round(const thisType& fst) { return thisType(fst.asInt(RMNearest)); } 
+   friend thisType round(thisType&& fst) { return thisType(fst.asInt(RMNearest)); } 
+   friend thisType rintf(const thisType& fst) { return thisType(fst.asInt(RMNearest /* fegetround */)); } 
+   friend thisType rintf(thisType&& fst) { return thisType(fst.asInt(RMNearest /* fegetround */)); } 
+   friend thisType rint(const thisType& fst) { return thisType(fst.asInt(RMNearest /* fegetround */)); } 
+   friend thisType rint(thisType&& fst) { return thisType(fst.asInt(RMNearest /* fegetround */)); } 
+   friend thisType fabs(const thisType& source)
+      {  auto result(std::move(source)); result.absAssign(); return result; } 
+   friend thisType fabs(thisType&& source)
+      {  auto result(std::forward<thisType>(source)); result.absAssign(); return result; }
+   friend thisType abs(const thisType& source)
+      {  auto result(std::move(source)); result.absAssign(); return result; } 
+   friend thisType abs(thisType&& source)
+      {  auto result(std::forward<thisType>(source)); result.absAssign(); return result; }
+
+   friend thisType fmod(const thisType& source, const thisType& value)
+      {  thisType divResult(source);
+         divResult /= value;
+         thisType multResult(divResult.asInt(RMZero));
+         multResult *= value;
+         multResult -= source;
+         multResult.oppositeAssign();
+         return multResult;
+      }
+   template <typename TypeFst>
+   friend thisType fmod(TypeFst source, const thisType& value)
+      {  thisType fst(source);
+         thisType divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   template <typename TypeSnd>
+   friend thisType fmod(const thisType& source, TypeSnd value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend int finite(const thisType& source) { return source.sfinite(); }
+   friend int isfinite(const thisType& source) { return source.sisfinite(); }
+   friend int isnan(const thisType& source) { return source.sisnan(); }
+   friend int isinf(const thisType& source) { return source.sisinf(); }
 };
 
 } // end of namespace DDoubleExactInterface
@@ -316,265 +475,6 @@ typedef DDoubleExactInterface::TFloatExact<LDBL_MANT_DIG-1,
       long double> LongDoubleExact;
 
 } // end of namespace NumericalDomains
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-sqrt(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.sqrtAssign(); return result; }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-sin(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.sinAssign(); return result; }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-cos(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.cosAssign(); return result; }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-asin(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.asinAssign(); return result; }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-acos(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.acosAssign(); return result; }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-tan(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.tanAssign(); return result; }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-atan(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.atanAssign(); return result; }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-exp(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.expAssign(); return result; }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-log(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.logAssign(); return result; }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-log10(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.log10Assign(); return result; }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-pow(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& value)
-   {  auto result(std::move(source)); result.powAssign(value); return result; }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-pow(TypeFst source, const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& value)
-   {  NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-      result.powAssign(value);
-      return result;
-   }
-
-template <typename TypeSnd, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-pow(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      TypeSnd value)
-   {  auto result(std::move(source));
-      result.powAssign(NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>(value));
-      return result;
-   }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-powf(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& value)
-   {  auto result(std::move(source)); result.powAssign(value); return result; }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-powf(TypeFst source, const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& value)
-   {  NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-      result.powAssign(value);
-      return result;
-   }
-
-template <typename TypeSnd, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-powf(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      TypeSnd value)
-   {  auto result(std::move(source));
-      result.powAssign(NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>(value));
-      return result;
-   }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator<(TypeFst fst, const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator<(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator<=(TypeFst fst, const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator<=(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator==(TypeFst fst, const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator==(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator!=(TypeFst fst, const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator!=(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator>=(TypeFst fst, const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator>=(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator>(TypeFst fst, const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator>(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-operator+(TypeFst fst, const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator+(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-operator-(TypeFst fst, const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator-(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-operator*(TypeFst fst, const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator*(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-operator/(TypeFst fst, const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator/(snd); }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-log2(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source)
-   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-      thisType result(std::move(source));
-      result.logAssign();
-      result.divAssign(thisType(::log(2.0)));
-      return result;
-   }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-exp2(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source)
-   {  NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-            result = 2.0;
-      result.powAssign(source);
-      return result;
-   }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-floor(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-      return thisType(fst.asInt(thisType::ReadParametersBase::RMLowest));
-   }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-floor(NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-      return thisType(fst.asInt(thisType::ReadParametersBase::RMLowest));
-   }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-ceil(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-      return thisType(fst.asInt(thisType::ReadParametersBase::RMHighest));
-   }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-ceil(NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-      return thisType(fst.asInt(thisType::ReadParametersBase::RMHighest));
-   }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-trunc(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-      return thisType(fst.asInt(thisType::ReadParametersBase::RMZero));
-   }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-trunc(NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-      return thisType(fst.asInt(thisType::ReadParametersBase::RMZero));
-   }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-round(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-      return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest));
-   }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-round(NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-      return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest));
-   }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-rintf(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-      return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-   }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-rintf(NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-      return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-   }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-rint(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-      return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-   }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-rint(NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-   {  typedef NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-      return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-   }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-fabs(const NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>& source)
-   {  auto result(std::move(source)); result.absAssign(); return result; }
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>
-fabs(NumericalDomains::DDoubleExactInterface::TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>&& source)
-   {  auto result(source); result.absAssign(); return result; }
 
 #endif // FloatInstrumentation_FloatExactH
 
