@@ -136,8 +136,8 @@ ExecutionPath::setSupportAtomic() {
 }
 
 void
-ExecutionPath::setSupportUnstableInLoop() {
-   DAffine::ExecutionPath::setSupportUnstableInLoop();
+ExecutionPath::setSupportUnstableInLoop(bool value) {
+   DAffine::ExecutionPath::setSupportUnstableInLoop(value);
 }
 
 void
@@ -153,6 +153,11 @@ ExecutionPath::setSupportThreshold() {
 void
 ExecutionPath::setSupportFirstFollowFloat() {
    DAffine::ExecutionPath::setSupportFirstFollowFloat();
+}
+
+bool
+ExecutionPath::doesSupportUnstableInLoop() {
+   return DAffine::ExecutionPath::doesSupportUnstableInLoop();
 }
 
 void
@@ -393,13 +398,26 @@ TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope(short int value) {
+   typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   AssumeCondition(sizeof(Implementation) <= UFloatZonotopeSize*sizeof(AlignType))
+   new (content) Implementation(value);
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope(long int value) {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
    AssumeCondition(sizeof(Implementation) <= UFloatZonotopeSize*sizeof(AlignType))
    new (content) Implementation(value);
 }
 
-/*
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope(unsigned short value) {
+   typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   AssumeCondition(sizeof(Implementation) <= UFloatZonotopeSize*sizeof(AlignType))
+   new (content) Implementation(value);
+}
+
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope(unsigned value) {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
@@ -413,7 +431,6 @@ TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope
    AssumeCondition(sizeof(Implementation) <= UFloatZonotopeSize*sizeof(AlignType))
    new (content) Implementation(value);
 }
-*/
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope(const thisType& asource) {
@@ -987,9 +1004,29 @@ TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::divAssign(this
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TypeImplementation
+TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::asImplementation() const {
+   typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   return reinterpret_cast<const Implementation*>(content)->asImplementation();
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::operator TypeImplementation() const {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
    return reinterpret_cast<const Implementation*>(content)->asImplementation();
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+int
+TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::asInt(RoundMode mode) const {
+   try {
+   typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   typedef Numerics::DDouble::Access::ReadParameters ReadParametersBase;
+   return reinterpret_cast<const Implementation*>(content)->asInt((ReadParametersBase::RoundMode) mode);
+   }
+   catch (DAffine::ExecutionPath::anticipated_termination) {
+      throw DAffineInterface::ExecutionPath::anticipated_termination();
+   };
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
@@ -1187,6 +1224,34 @@ TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::atan2Assign(th
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
    reinterpret_cast<Implementation*>(content)->atan2Assign(
          *reinterpret_cast<const Implementation*>(value.content), DAffine::Equation::PCSourceXValue);
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+int
+TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::sfinite() const {
+   typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   return finite(reinterpret_cast<const Implementation*>(content)->asImplementation());
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+int
+TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::sisfinite() const {
+   typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   return isfinite(reinterpret_cast<const Implementation*>(content)->asImplementation());
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+int
+TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::sisnan() const {
+   typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   return isnan(reinterpret_cast<const Implementation*>(content)->asImplementation());
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+int
+TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::sisinf() const {
+   typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   return isinf(reinterpret_cast<const Implementation*>(content)->asImplementation());
 }
 
 typedef DAffine::FloatDigitsHelper::TFloatDigits<long double> LongDoubleFloatDigits;

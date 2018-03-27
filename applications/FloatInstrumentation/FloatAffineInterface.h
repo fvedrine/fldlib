@@ -209,13 +209,14 @@ class ExecutionPath {
 
    bool hasMultipleBranches() const;
    static void setSupportAtomic();
-   static void setSupportUnstableInLoop();
+   static void setSupportUnstableInLoop(bool value=true);
    static void setSupportVerbose();
    static void setSupportThreshold();
    static void setSupportFirstFollowFloat();
    static void initializeGlobals(const char* fileSuffix);
    static void finalizeGlobals();
    static void setSimplificationTriggerPercent(double percent);
+   static bool doesSupportUnstableInLoop();
    class Initialization {
      public:
       Initialization() {}
@@ -303,6 +304,14 @@ class TFloatZonotope {
    friend class TFloatZonotope;
    friend class MergeBranches;
 
+   enum RoundMode { RMNearest, RMLowest, RMHighest, RMZero };
+   int asInt(RoundMode mode) const;
+
+   int sfinite() const;
+   int sisfinite() const;
+   int sisnan() const;
+   int sisinf() const;
+
   public:
    const char* queryDebugValue() const;
    const char* queryLightDebugValue() const;
@@ -321,10 +330,12 @@ class TFloatZonotope {
    TFloatZonotope(TypeImplementation min, TypeImplementation max);
    TFloatZonotope(TypeImplementation min, TypeImplementation max,
          TypeImplementation errmin, TypeImplementation errmax);
+   TFloatZonotope(short int value);
    TFloatZonotope(int value);
    TFloatZonotope(long int value);
-   // TFloatZonotope(unsigned value);
-   // TFloatZonotope(unsigned long value);
+   TFloatZonotope(unsigned short value);
+   TFloatZonotope(unsigned value);
+   TFloatZonotope(unsigned long value);
    TFloatZonotope(const thisType& source);
    TFloatZonotope(const thisType& source, Record);
    TFloatZonotope(thisType&& source);
@@ -347,8 +358,14 @@ class TFloatZonotope {
    thisType& operator=(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source);
    template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
    thisType& operator=(TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& source);
+
+   TypeImplementation asImplementation() const;
    void readImplementation(std::istream& in);
    void writeImplementation(std::ostream& out) const;
+   friend std::ostream& operator<<(std::ostream& out, const thisType& value)
+      {  value.writeImplementation(out); return out; }
+   friend std::istream& operator>>(std::istream& in, thisType& value)
+      {  value.readImplementation(in); return in; }
 
    bool optimizeValue();
    bool operator<(const thisType& source) const;
@@ -629,6 +646,317 @@ class TFloatZonotope {
 
    void lightPersist(const char* prefix) const;
    void persist(const char* prefix) const;
+
+   friend thisType sqrt(const thisType& source)
+      {  thisType result(source); result.sqrtAssign(); return result; }
+   friend thisType sqrt(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.sqrtAssign(); return result; }
+   friend thisType sin(const thisType& source)
+      {  thisType result(source); result.sinAssign(); return result; }
+   friend thisType sin(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.sinAssign(); return result; }
+   friend thisType cos(const thisType& source)
+      {  thisType result(source); result.cosAssign(); return result; }
+   friend thisType cos(thisType&& source)
+      {   thisType result(std::forward<thisType>(source)); result.cosAssign(); return result; }
+   friend thisType asin(const thisType& source)
+      {  thisType result(source); result.asinAssign(); return result; }
+   friend thisType asin(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.asinAssign(); return result; }
+   friend thisType acos(const thisType& source)
+      {  thisType result(source); result.acosAssign(); return result; }
+   friend thisType acos(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.acosAssign(); return result; }
+   friend thisType tan(const thisType& source)
+      {  thisType result(source); result.tanAssign(); return result; }
+   friend thisType tan(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.tanAssign(); return result; }
+   friend thisType atan(const thisType& source)
+      {  thisType result(source); result.atanAssign(); return result; }
+   friend thisType atan(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.atanAssign(); return result; }
+   friend thisType exp(const thisType& source)
+      {  thisType result(source); result.expAssign(); return result; }
+   friend thisType exp(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.expAssign(); return result; }
+   friend thisType log(const thisType& source)
+      {  thisType result(source); result.logAssign(); return result; }
+   friend thisType log(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.logAssign(); return result; }
+   friend thisType log2(const thisType& source)
+      {  thisType result(source); result.logAssign(); result.divAssign(log(thisType(2.0))); return result; }
+   friend thisType log2(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.logAssign(); result.divAssign(log(thisType(2.0))); return result; }
+   friend thisType exp2(const thisType& source)
+      {  thisType result = 2.0; result.powAssign(source); return result; }
+   friend thisType exp2(thisType&& source)
+      {  thisType result = 2.0; result.powAssign(std::forward<thisType>(source)); return result; }
+   friend thisType log10(const thisType& source)
+      {  thisType result(source); result.log10Assign(); return result; }
+   friend thisType log10(thisType&& source)
+      {  thisType result(std::forward<thisType>(source)); result.log10Assign(); return result; }
+   friend thisType pow(const thisType& source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(const thisType& source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType pow(thisType&& source, const thisType& value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(value); return result; }
+   friend thisType pow(thisType&& source, thisType&& value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(std::forward<thisType>(value)); return result; }
+   template <typename TypeFst>
+   friend thisType pow(TypeFst source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   template <typename TypeFst>
+   friend thisType pow(TypeFst source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   template <typename TypeSnd>
+   friend thisType pow(const thisType& source, TypeSnd value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   template <typename TypeSnd>
+   friend thisType pow(thisType&& source, TypeSnd value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(const thisType& source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType powf(thisType&& source, const thisType& value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(value); return result; }
+   friend thisType powf(thisType&& source, thisType&& value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(std::forward<thisType>(value)); return result; }
+   template <typename TypeFst>
+   friend thisType powf(TypeFst source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   template <typename TypeFst>
+   friend thisType powf(TypeFst source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   template <typename TypeSnd>
+   friend thisType powf(const thisType& source, TypeSnd value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   template <typename TypeSnd>
+   friend thisType powf(thisType&& source, TypeSnd value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(const thisType& source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(std::forward<thisType>(value)); return result; }
+   friend thisType atan2(thisType&& source, const thisType& value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(value); return result; }
+   friend thisType atan2(thisType&& source, thisType&& value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(std::forward<thisType>(value)); return result; }
+   template <typename TypeFst>
+   friend thisType atan2(TypeFst source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   template <typename TypeFst>
+   friend thisType atan2(TypeFst source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(std::forward<thisType>(value)); return result; }
+   template <typename TypeSnd>
+   friend thisType atan2(const thisType& source, TypeSnd value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   template <typename TypeSnd>
+   friend thisType atan2(thisType&& source, TypeSnd value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value)); return result; }
+
+   template <typename TypeFst>
+   friend bool operator<(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }
+   template <typename TypeFst>
+   friend bool operator<=(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }
+   template <typename TypeFst>
+   friend bool operator==(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }
+   template <typename TypeFst>
+   friend bool operator!=(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }
+   template <typename TypeFst>
+   friend bool operator>=(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }
+   template <typename TypeFst>
+   friend bool operator>(TypeFst fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }
+   template <typename TypeFst>
+   friend thisType operator+(TypeFst fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   template <typename TypeFst>
+   friend thisType operator+(TypeFst fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert += std::forward<thisType>(snd); return fstConvert; }
+   template <typename TypeFst>
+   friend thisType operator-(TypeFst fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   template <typename TypeFst>
+   friend thisType operator-(TypeFst fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert -= std::forward<thisType>(snd); return fstConvert; }
+   template <typename TypeFst>
+   friend thisType operator*(TypeFst fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   template <typename TypeFst>
+   friend thisType operator*(TypeFst fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert *= std::forward<thisType>(snd); return fstConvert; }
+   template <typename TypeFst>
+   friend thisType operator/(TypeFst fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   template <typename TypeFst>
+   friend thisType operator/(TypeFst fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert /= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType floor(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMLowest)); }
+   friend thisType floor(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMLowest)); }
+   friend thisType ceil(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMHighest)); }
+   friend thisType ceil(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMHighest)); }
+   friend thisType trunc(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMZero)); }
+   friend thisType trunc(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMZero)); }
+   friend thisType round(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMNearest)); }
+   friend thisType round(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMNearest)); }
+   friend thisType rintf(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMNearest /* fegetround */)); }
+   friend thisType rintf(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMNearest /* fegetround */)); }
+   friend thisType rint(const thisType& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMNearest /* fegetround */)); }
+   friend thisType rint(thisType&& fst)
+      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMNearest /* fegetround */)); }
+
+   friend thisType fabs(const thisType& fst)
+      {  thisType result = fst;
+         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+         bool oldSupportUnstableInLoop = ExecutionPath::doesSupportUnstableInLoop();
+         ExecutionPath::setSupportUnstableInLoop();
+         auto* oldPathExplorer = ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = ExecutionPath::doesFollowFlow();
+         ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = ExecutionPath::inputTraceFile();
+         const char* oldSynchronisationFile = ExecutionPath::synchronisationFile();
+         int oldSynchronisationLine = ExecutionPath::synchronisationLine();
+         bool isCompleteFlow = true;
+         PathExplorer pathExplorer(
+              ExecutionPath::queryMode(oldPathExplorer));
+         ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         auto mergeMemory = MergeMemory() >> result;
+         auto saveMemory = SaveMemory() << result;
+         const char* sourceFile = __FILE__;
+         int sourceLine = __LINE__;
+         do {
+            try {
+               BaseFloatAffine::splitBranches(sourceFile, sourceLine);
+
+               if (result < 0)
+                  result.oppositeAssign();
+
+               isCompleteFlow = MergeBranches(sourceFile, sourceLine) << result;
+            } 
+            catch (ExecutionPath::anticipated_termination&) {
+               isCompleteFlow = false;
+               ExecutionPath::clearSynchronizationBranches();
+            }
+            catch (ExecutionPath::read_error& error) {
+               if (const char* message = error.getMessage())
+                  std::cerr << "error: " << message << std::endl;
+               else
+                  std::cerr << "error while reading input file!" << std::endl;
+               isCompleteFlow = false;
+               ExecutionPath::clearSynchronizationBranches();
+            }
+            ExecutionPath::setFollowFlow();
+         } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result)
+               && !(saveMemory.setCurrentResult(pathExplorer.isFinished(ExecutionPath::queryMode(oldPathExplorer))) >> result));
+         ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
+               oldSynchronisationFile, oldSynchronisationLine);
+         ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+         ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+         if (mergeMemory.isFirst())
+            ExecutionPath::throwEmptyBranch(true);
+         return result;
+      }
+
+   friend thisType fabs(thisType&& fst)
+      {  thisType result(std::forward<thisType>(fst));
+         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+         bool oldSupportUnstableInLoop = ExecutionPath::doesSupportUnstableInLoop();
+         ExecutionPath::setSupportUnstableInLoop();
+         auto* oldPathExplorer = ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = ExecutionPath::doesFollowFlow();
+         ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = ExecutionPath::inputTraceFile();
+         const char* oldSynchronisationFile = ExecutionPath::synchronisationFile();
+         int oldSynchronisationLine = ExecutionPath::synchronisationLine();
+         bool isCompleteFlow = true;
+         PathExplorer pathExplorer(
+              ExecutionPath::queryMode(oldPathExplorer));
+         ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         auto mergeMemory = MergeMemory() >> result;
+         auto saveMemory = SaveMemory() << result;
+         const char* sourceFile = __FILE__;
+         int sourceLine = __LINE__;
+         do {
+            try {
+               BaseFloatAffine::splitBranches(sourceFile, sourceLine);
+
+               if (result < 0)
+                  result.oppositeAssign();
+
+               isCompleteFlow = MergeBranches(sourceFile, sourceLine) << result;
+            } 
+            catch (ExecutionPath::anticipated_termination&) {
+               isCompleteFlow = false;
+               ExecutionPath::clearSynchronizationBranches();
+            }
+            catch (ExecutionPath::read_error& error) {
+               if (const char* message = error.getMessage())
+                  std::cerr << "error: " << message << std::endl;
+               else
+                  std::cerr << "error while reading input file!" << std::endl;
+               isCompleteFlow = false;
+               ExecutionPath::clearSynchronizationBranches();
+            }
+            ExecutionPath::setFollowFlow();
+         } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result)
+               && !(saveMemory.setCurrentResult(pathExplorer.isFinished(ExecutionPath::queryMode(oldPathExplorer))) >> result));
+         ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
+               oldSynchronisationFile, oldSynchronisationLine);
+         ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+         ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+         if (mergeMemory.isFirst())
+            ExecutionPath::throwEmptyBranch(true);
+         return result;
+      }
+   friend thisType abs(const thisType& source) { return fabs(source); }
+   friend thisType abs(thisType&& source) { return fabs(std::forward<thisType>(source)); }
+
+   friend thisType fmod(const thisType& source, const thisType& value)
+      {  thisType divResult(source);
+         divResult /= value;
+         thisType multResult(divResult.asInt(RMZero));
+         multResult *= value;
+         multResult -= source;
+         multResult.oppositeAssign();
+         return multResult;
+      }
+   template <typename TypeFst>
+   friend thisType fmod(TypeFst source, const thisType& value)
+      {  thisType fst(source);
+         thisType divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   template <typename TypeSnd>
+   friend thisType fmod(const thisType& source, TypeSnd value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend int finite(const thisType& source) { return source.sfinite(); }
+   friend int isfinite(const thisType& source) { return source.sisfinite(); }
+   friend int isnan(const thisType& source) { return source.sisnan(); }
+   friend int isinf(const thisType& source) { return source.sisinf(); }
 };
 
 } // end of namespace DAffineInterface
@@ -641,751 +969,6 @@ typedef DAffineInterface::TFloatZonotope<LDBL_MANT_DIG-1,
       long double> LongDoubleZonotope;
 
 } // end of namespace NumericalDomains
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-sqrt(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.sqrtAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-sqrt(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.sqrtAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-sin(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.sinAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-sin(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.sinAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-cos(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.cosAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-cos(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.cosAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-asin(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.asinAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-asin(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.asinAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-acos(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.acosAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-acos(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.acosAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-tan(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.tanAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-tan(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.tanAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.atanAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.atanAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-exp(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.expAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-exp(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.expAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-log(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.logAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-log(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.logAssign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-log10(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.log10Assign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-log10(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.log10Assign();
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-pow(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.powAssign(value);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-pow(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(source);
-   result.powAssign(std::forward<thisType>(value));
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-pow(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.powAssign(value);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-pow(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.powAssign(std::forward<thisType>(value));
-   return result;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-pow(TypeFst source, const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.powAssign(value);
-   return result;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-pow(TypeFst source, NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(source);
-   result.powAssign(std::forward<thisType>(value));
-   return result;
-}
-
-template <typename TypeSnd, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-pow(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      TypeSnd value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(source);
-   result.powAssign(thisType(value));
-   return result;
-}
-
-template <typename TypeSnd, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-pow(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      TypeSnd value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.powAssign(thisType(value));
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-powf(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.powAssign(value);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-powf(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(source);
-   result.powAssign(std::forward<thisType>(value));
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-powf(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.powAssign(value);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-powf(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.powAssign(std::forward<thisType>(value));
-   return result;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-powf(TypeFst source, const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.powAssign(value);
-   return result;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-powf(TypeFst source, NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(source);
-   result.powAssign(std::forward<thisType>(value));
-   return result;
-}
-
-template <typename TypeSnd, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-powf(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      TypeSnd value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(source);
-   result.powAssign(thisType(value));
-   return result;
-}
-
-template <typename TypeSnd, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-powf(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      TypeSnd value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.powAssign(thisType(value));
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan2(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.atan2Assign(value);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan2(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(source);
-   result.atan2Assign(std::forward<thisType>(value));
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan2(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.atan2Assign(value);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan2(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.atan2Assign(std::forward<thisType>(value));
-   return result;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan2(TypeFst source, const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> result(source);
-   result.atan2Assign(value);
-   return result;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan2(TypeFst source, NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(source);
-   result.atan2Assign(std::forward<thisType>(value));
-   return result;
-}
-
-template <typename TypeSnd, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan2(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source,
-      TypeSnd value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(source);
-   result.atan2Assign(thisType(value));
-   return result;
-}
-
-template <typename TypeSnd, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-atan2(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source,
-      TypeSnd value) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.atan2Assign(thisType(value));
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-log2(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(source);
-   result.logAssign();
-   result.divAssign(thisType(::log(2.0)));
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-log2(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(source));
-   result.logAssign();
-   result.divAssign(thisType(::log(2.0)));
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-exp2(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& source) {
-   NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-      result = 2.0;
-   result.powAssign(source);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-exp2(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& source) {
-   typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result = 2.0;
-   result.powAssign(std::forward<thisType>(source));
-   return result;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator<(TypeFst fst, const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator<(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator<=(TypeFst fst, const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator<=(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator==(TypeFst fst, const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator==(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator!=(TypeFst fst, const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator!=(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator>=(TypeFst fst, const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator>=(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline bool
-operator>(TypeFst fst, const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-   {  return NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>(fst).operator>(snd); }
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-operator+(TypeFst fst, const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType fstConvert(fst);
-   fstConvert += snd;
-   return fstConvert;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-operator+(TypeFst fst, NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& snd)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType fstConvert(fst);
-   fstConvert += std::forward<thisType>(snd);
-   return fstConvert;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-operator-(TypeFst fst, const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType fstConvert(fst);
-   fstConvert -= snd;
-   return fstConvert;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-operator-(TypeFst fst, NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& snd)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType fstConvert(fst);
-   fstConvert -= std::forward<thisType>(snd);
-   return fstConvert;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-operator*(TypeFst fst, const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType fstConvert(fst);
-   fstConvert *= snd;
-   return fstConvert;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-operator*(TypeFst fst, NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& snd)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType fstConvert(fst);
-   fstConvert *= std::forward<thisType>(snd);
-   return fstConvert;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-operator/(TypeFst fst, const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& snd)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType fstConvert(fst);
-   fstConvert /= snd;
-   return fstConvert;
-}
-
-template <typename TypeFst, int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-operator/(TypeFst fst, NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& snd)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType fstConvert(fst);
-   fstConvert /= std::forward<thisType>(snd);
-   return fstConvert;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-floor(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMLowest));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-floor(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMLowest));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-ceil(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMHighest));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-ceil(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMHighest));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-trunc(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMZero));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-trunc(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMZero));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-round(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-round(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-rintf(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-rintf(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-rint(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-rint(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest /* fegetround */));
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-fabs(const NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& fst)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result = fst;
-
-   // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
-   auto* oldPathExplorer = NumericalDomains::DAffineInterface::ExecutionPath::getCurrentPathExplorer();
-   bool oldDoesFollow = NumericalDomains::DAffineInterface::ExecutionPath::doesFollowFlow();
-   NumericalDomains::DAffineInterface::ExecutionPath::clearFollowFlow();
-   auto* oldInputTraceFile = NumericalDomains::DAffineInterface::ExecutionPath::inputTraceFile();
-   const char* oldSynchronisationFile = NumericalDomains::DAffineInterface::ExecutionPath::synchronisationFile();
-   int oldSynchronisationLine = NumericalDomains::DAffineInterface::ExecutionPath::synchronisationLine();
-   bool isCompleteFlow = true;
-   NumericalDomains::DAffineInterface::PathExplorer pathExplorer(
-        NumericalDomains::DAffineInterface::ExecutionPath::queryMode(oldPathExplorer));
-   NumericalDomains::DAffineInterface::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
-   auto mergeMemory = NumericalDomains::DAffineInterface::MergeMemory() >> result;
-   auto saveMemory = NumericalDomains::DAffineInterface::SaveMemory() << result;
-   const char* sourceFile = __FILE__;
-   int sourceLine = __LINE__;
-   do {
-      try {
-         NumericalDomains::DAffineInterface::BaseFloatAffine::splitBranches(sourceFile, sourceLine);
-
-         if (result < 0)
-            result.oppositeAssign();
-
-         isCompleteFlow = NumericalDomains::DAffineInterface::MergeBranches(sourceFile, sourceLine) << result;
-      } 
-      catch (NumericalDomains::DAffineInterface::ExecutionPath::anticipated_termination&) {
-         isCompleteFlow = false;
-         NumericalDomains::DAffineInterface::ExecutionPath::clearSynchronizationBranches();
-      }
-      catch (NumericalDomains::DAffineInterface::ExecutionPath::read_error& error) {
-         if (const char* message = error.getMessage())
-            std::cerr << "error: " << message << std::endl;
-         else
-            std::cerr << "error while reading input file!" << std::endl;
-         isCompleteFlow = false;
-         NumericalDomains::DAffineInterface::ExecutionPath::clearSynchronizationBranches();
-      }
-      NumericalDomains::DAffineInterface::ExecutionPath::setFollowFlow();
-   } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result)
-         && !(saveMemory.setCurrentResult(pathExplorer.isFinished(NumericalDomains::DAffineInterface::ExecutionPath::queryMode(oldPathExplorer))) >> result));
-   NumericalDomains::DAffineInterface::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
-         oldSynchronisationFile, oldSynchronisationLine);
-   NumericalDomains::DAffineInterface::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
-   if (mergeMemory.isFirst())
-      NumericalDomains::DAffineInterface::ExecutionPath::throwEmptyBranch(true);
-
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>
-fabs(NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&& fst)
-{  typedef NumericalDomains::DAffineInterface::TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> thisType;
-   thisType result(std::forward<thisType>(fst));
-
-   // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
-   auto* oldPathExplorer = NumericalDomains::DAffineInterface::ExecutionPath::getCurrentPathExplorer();
-   bool oldDoesFollow = NumericalDomains::DAffineInterface::ExecutionPath::doesFollowFlow();
-   NumericalDomains::DAffineInterface::ExecutionPath::clearFollowFlow();
-   auto* oldInputTraceFile = NumericalDomains::DAffineInterface::ExecutionPath::inputTraceFile();
-   const char* oldSynchronisationFile = NumericalDomains::DAffineInterface::ExecutionPath::synchronisationFile();
-   int oldSynchronisationLine = NumericalDomains::DAffineInterface::ExecutionPath::synchronisationLine();
-   bool isCompleteFlow = true;
-   NumericalDomains::DAffineInterface::PathExplorer pathExplorer(
-        NumericalDomains::DAffineInterface::ExecutionPath::queryMode(oldPathExplorer));
-   NumericalDomains::DAffineInterface::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
-   auto mergeMemory = NumericalDomains::DAffineInterface::MergeMemory() >> result;
-   auto saveMemory = NumericalDomains::DAffineInterface::SaveMemory() << result;
-   const char* sourceFile = __FILE__;
-   int sourceLine = __LINE__;
-   do {
-      try {
-         NumericalDomains::DAffineInterface::BaseFloatAffine::splitBranches(sourceFile, sourceLine);
-
-         if (result < 0)
-            result.oppositeAssign();
-
-         isCompleteFlow = NumericalDomains::DAffineInterface::MergeBranches(sourceFile, sourceLine) << result;
-      } 
-      catch (NumericalDomains::DAffineInterface::ExecutionPath::anticipated_termination&) {
-         isCompleteFlow = false;
-         NumericalDomains::DAffineInterface::ExecutionPath::clearSynchronizationBranches();
-      }
-      catch (NumericalDomains::DAffineInterface::ExecutionPath::read_error& error) {
-         if (const char* message = error.getMessage())
-            std::cerr << "error: " << message << std::endl;
-         else
-            std::cerr << "error while reading input file!" << std::endl;
-         isCompleteFlow = false;
-         NumericalDomains::DAffineInterface::ExecutionPath::clearSynchronizationBranches();
-      }
-      NumericalDomains::DAffineInterface::ExecutionPath::setFollowFlow();
-   } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result)
-         && !(saveMemory.setCurrentResult(pathExplorer.isFinished(NumericalDomains::DAffineInterface::ExecutionPath::queryMode(oldPathExplorer))) >> result));
-   NumericalDomains::DAffineInterface::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
-         oldSynchronisationFile, oldSynchronisationLine);
-   NumericalDomains::DAffineInterface::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
-   if (mergeMemory.isFirst())
-      NumericalDomains::DAffineInterface::ExecutionPath::throwEmptyBranch(true);
-   return result;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline std::ostream&
-operator<<(std::ostream& out, const NumericalDomains::DAffineInterface::TFloatZonotope
-      <USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   value.writeImplementation(out);
-   return out;
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-inline std::istream&
-operator>>(std::istream& in, NumericalDomains::DAffineInterface::TFloatZonotope
-      <USizeMantissa, USizeExponent, TypeImplementation>& value) {
-   value.readImplementation(in);
-   return in;
-}
 
 #endif // FloatInstrumentation_FloatAffineH
 
