@@ -180,6 +180,9 @@ static inline NumericalDomains::DoubleZonotope middle_of_double_with_error(old_d
 
 #endif // FLOAT_SCENARIO
 
+#define fld_implementation(x) (x).asImplementation()
+#define FLOAT_IMPLEMENTATION fld_implementation
+
 #elif defined(FLOAT_INTERVAL)
 #if !defined(FLOAT_LOOP_UNSTABLE)
 #define INIT_MAIN                                                                                \
@@ -206,6 +209,9 @@ static inline NumericalDomains::DoubleZonotope middle_of_double_with_error(old_d
   std::cout << FLOAT_INIT_MESSAGE << std::endl;
 #define END_MAIN 
 #endif // FLOAT_LOOP_UNSTABLE
+
+#define fld_implementation(x) (x).asImplementation()
+#define FLOAT_IMPLEMENTATION fld_implementation
 
 #else // FLOAT_EXACT
 

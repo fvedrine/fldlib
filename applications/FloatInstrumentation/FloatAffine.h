@@ -341,7 +341,7 @@ class TPackedMergeMemory {
                auto iter = packer.iter;
                for (int index = 0; index < count; ++index) {
                   if (iter->optimizeValue())
-                     merge[index].mergeWith(*iter);
+                     merge.referenceAt(index).mergeWith(*iter);
                   else
                      next.setCurrentComplete(false);
                   ++iter;
