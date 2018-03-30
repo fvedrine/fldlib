@@ -26,6 +26,7 @@
 #include "float_diagnosis.h"
 #include "feature.h"
 
+#define EXTERN_DECLARE_RESOURCES 
 #define DECLARE_RESOURCES 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
@@ -180,18 +181,7 @@ static inline NumericalDomains::DoubleZonotope middle_of_double_with_error(old_d
 #endif // FLOAT_SCENARIO
 
 #elif defined(FLOAT_INTERVAL)
-#ifdef FLOAT_LOOP_UNSTABLE
-#define INIT_MAIN                                                                                \
-  NumericalDomains::FloatInterval::Initialization init;                                          \
-  FLOAT_INIT_ATOMIC                                                                              \
-  FLOAT_INIT_LOOP_UNSTABLE                                                                       \
-  FLOAT_INIT_VERBOSE                                                                             \
-  FLOAT_INIT_THRESHOLD                                                                           \
-  FLOAT_INIT_FIRST_FOLLOW_EXE                                                                    \
-  init.setResultFile(TOSTRING(PROG_NAME) "_diag_int");                                           \
-  std::cout << FLOAT_INIT_MESSAGE << std::endl;
-#define END_MAIN 
-#else // FLOAT_LOOP_UNSTABLE
+#if !defined(FLOAT_LOOP_UNSTABLE)
 #define INIT_MAIN                                                                                \
   NumericalDomains::FloatInterval::Initialization init;                                          \
   FLOAT_INIT_ATOMIC                                                                              \
@@ -204,6 +194,17 @@ static inline NumericalDomains::DoubleZonotope middle_of_double_with_error(old_d
   FLOAT_SPLIT_ALL(main, double::end(), double::end())
 #define END_MAIN                                                                                 \
   FLOAT_MERGE_ALL(main, double::end(), double::endl())
+#else // FLOAT_LOOP_UNSTABLE
+#define INIT_MAIN                                                                                \
+  NumericalDomains::FloatInterval::Initialization init;                                          \
+  FLOAT_INIT_ATOMIC                                                                              \
+  FLOAT_INIT_LOOP_UNSTABLE                                                                       \
+  FLOAT_INIT_VERBOSE                                                                             \
+  FLOAT_INIT_THRESHOLD                                                                           \
+  FLOAT_INIT_FIRST_FOLLOW_EXE                                                                    \
+  init.setResultFile(TOSTRING(PROG_NAME) "_diag_int");                                           \
+  std::cout << FLOAT_INIT_MESSAGE << std::endl;
+#define END_MAIN 
 #endif // FLOAT_LOOP_UNSTABLE
 
 #else // FLOAT_EXACT
@@ -274,6 +275,9 @@ static inline old_double random_double(old_double x, old_double y)
 #define DBETWEEN(x,y) NumericalDomains::DoubleExact(random_double((old_double) x, (old_double) y))
 #define DBETWEEN_WITH_ERROR(x,y,errmin,errmax) NumericalDomains::DoubleExact(random_double((old_double) x, (old_double) y), random_double((old_double) errmin, (old_double) errmax), NumericalDomains::DoubleExact::ErrorParameter())
 
+#define fld_implementation(x) (x).asImplementation()
+#define FLOAT_IMPLEMENTATION fld_implementation
+
 #endif // FLOAT_INTERVAL && FLOAT_AFFINE && FLOAT_EXACT
 
 /* standard execution */
@@ -284,6 +288,14 @@ static inline old_double random_double(old_double x, old_double y)
 #include <stdlib.h>
 #include <stdio.h>
 #include "float_diagnosis.h"
+
+#define float_fld float
+#define double_fld double
+typedef float old_float;
+typedef double old_double;
+typedef long double old_long_double;
+
+#define FLOAT_IMPLEMENTATION 
 
 static inline float rand_of_float(float x, float y)
    {  return x + (y-x)*((float) rand() / RAND_MAX); }
@@ -315,6 +327,7 @@ static inline double rand_of_double(double x, double y)
 #define DPRINT(x) printf("%s: %e\n", #x, x)
 #define IPRINT(x) printf("%s: %d\n", #x, x)
 */
+#define EXTERN_DECLARE_RESOURCES 
 #define DECLARE_RESOURCES 
 #define INIT_MAIN 
 #define END_MAIN 

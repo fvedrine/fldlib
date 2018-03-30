@@ -538,10 +538,10 @@ class TFloatExact {
          multResult *= snd; multResult -= source; multResult.oppositeAssign();
          return multResult;
       }
-   friend int finite(const thisType& source) { return source.sfinite(); }
-   friend int isfinite(const thisType& source) { return source.sisfinite(); }
-   friend int isnan(const thisType& source) { return source.sisnan(); }
-   friend int isinf(const thisType& source) { return source.sisinf(); }
+   friend int fld_finite(const thisType& source) { return source.sfinite(); }
+   friend int fld_isfinite(const thisType& source) { return source.sisfinite(); }
+   friend int fld_isnan(const thisType& source) { return source.sisnan(); }
+   friend int fld_isinf(const thisType& source) { return source.sisinf(); }
 };
 
 } // end of namespace DDoubleExactInterface

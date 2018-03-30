@@ -535,7 +535,7 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    friend std::ostream& operator<<(std::ostream& out, const thisType& source)
       {  return out << source.asImplementation(); }
    friend std::istream& operator>>(std::istream& in, thisType& source)
-      {  decltype(thisType.asImplementation()) val;
+      {  TypeImplementation val;
          in >> val;
          source = thisType(val);
          return in;
@@ -1034,10 +1034,11 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
          multResult *= snd; multResult -= source; multResult.oppositeAssign();
          return multResult;
       }
-   friend int finite(const thisType& source) { return tfinite(source.asImplementation()); }
-   friend int isfinite(const thisType& source) { return tisfinite(source.asImplementation()); }
-   friend int isnan(const thisType& source) { return tisnan(source.asImplementation()); }
-   friend int isinf(const thisType& source) { return tisinf(source.asImplementation()); }
+
+   friend int fld_finite(const thisType& source) { return tfinite(source.asImplementation()); }
+   friend int fld_isfinite(const thisType& source) { return tisfinite(source.asImplementation()); }
+   friend int fld_isnan(const thisType& source) { return tisnan(source.asImplementation()); }
+   friend int fld_isinf(const thisType& source) { return tisinf(source.asImplementation()); }
 };
 
 template <class TypeBuiltDouble, typename TypeImplementation>
