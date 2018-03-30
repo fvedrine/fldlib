@@ -381,6 +381,11 @@ class MergeMemory {
    template <typename T>
    TMergeMemory<T, MergeMemory> operator>>(const T& t)
       {  return TMergeMemory<T, MergeMemory>(const_cast<T&>(t), *this); }
+   template <typename TypeIterator>
+   TPackedMergeMemory<TypeIterator, MergeMemory> operator>>(const MergeBranches::TPacker<TypeIterator>& packer)
+      {  return TPackedMergeMemory<TypeIterator, MergeMemory>
+            (packer.iter, packer.end, *this);
+      }
    MergeMemory& operator>>(BaseExecutionPath::end) { return *this; }
    MergeMemory& setCurrentComplete(bool isComplete)
       {  fComplete = isComplete; return *this; }

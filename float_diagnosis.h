@@ -128,7 +128,7 @@ typedef long double old_long_double;
          FLOAT_PRINT_CURRENT_PATH(ident)                                                         \
          _isCompleteFlow##ident = NumericalDomains::DAffine::MergeBranches(_sourceFile##ident, _sourceLine##ident) << x;\
       }                                                                                          \
-      catch (double::anticipated_termination&) {                                                 \
+      catch (double_fld::anticipated_termination&) {                                                 \
          _isCompleteFlow##ident = false;                                                         \
          NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();               \
       }                                                                                          \
@@ -153,7 +153,7 @@ typedef long double old_long_double;
          FLOAT_PRINT_CURRENT_PATH(ident)                                                         \
          _isCompleteFlow##ident = NumericalDomains::DAffine::MergeBranches(_sourceFile##ident, _sourceLine##ident) << x;\
       }                                                                                          \
-      catch (double::anticipated_termination&) {                                                 \
+      catch (double_fld::anticipated_termination&) {                                                 \
          _isCompleteFlow##ident = false;                                                         \
          NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();               \
       }                                                                                          \
@@ -459,7 +459,7 @@ inline double middle_of_double(double x, double y) { return (x+y)/2.0; }
 #ifdef FLOAT_DIAGNOSIS
 #if !defined(FLOAT_INTERVAL)
   }
-  catch (double::anticipated_termination&) {}
+  catch (double_fld::anticipated_termination&) {}
 #ifndef FLOAT_INTERFACE
   catch (STG::EReadError& error) {
     if (error.getMessage())
