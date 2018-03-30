@@ -100,8 +100,8 @@ ExecutionPath::setSupportAtomic() {
 }
 
 void
-ExecutionPath::setSupportUnstableInLoop() {
-   DDoubleInterval::ExecutionPath::setSupportUnstableInLoop();
+ExecutionPath::setSupportUnstableInLoop(bool value) {
+   DDoubleInterval::ExecutionPath::setSupportUnstableInLoop(value);
 }
 
 void
@@ -175,6 +175,11 @@ ExecutionPath::doesFollowFlow() {
 void
 ExecutionPath::clearFollowFlow() {
    DDoubleInterval::ExecutionPath::clearFollowFlow();
+}
+
+bool
+ExecutionPath::doesSupportUnstableInLoop() {
+   return DDoubleInterval::ExecutionPath::doesSupportUnstableInLoop();
 }
 
 void
@@ -438,6 +443,30 @@ TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::readImplementa
    decltype(reinterpret_cast<const Implementation*>(content)->asImplementation()) result; 
    in >> result;
    *reinterpret_cast<Implementation*>(content) = Implementation(result, result);
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>
+TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::min() const {
+   typedef DDoubleInterval::TFloatInterval<DDoubleInterval::ExecutionPath, DDoubleInterval::TBuiltFloat<DDoubleInterval::LongDoubleFloatDigits::UBitSizeMantissa+1, USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   const Implementation& thisInterval = *reinterpret_cast<const Implementation*>(content);
+   thisType result;
+   new (result.content) Implementation(thisInterval);
+   Implementation& resultInterval = *reinterpret_cast<Implementation*>(result.content);
+   resultInterval.setToMin();
+   return result;
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>
+TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::max() const {
+   typedef DDoubleInterval::TFloatInterval<DDoubleInterval::ExecutionPath, DDoubleInterval::TBuiltFloat<DDoubleInterval::LongDoubleFloatDigits::UBitSizeMantissa+1, USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   const Implementation& thisInterval = *reinterpret_cast<const Implementation*>(content);
+   thisType result;
+   new (result.content) Implementation(thisInterval);
+   Implementation& resultInterval = *reinterpret_cast<Implementation*>(result.content);
+   resultInterval.setToMax();
+   return result;
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>

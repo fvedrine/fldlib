@@ -270,6 +270,7 @@ inline double middle_of_double(double x, double y) { return (x+y)/2.0; }
    NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(&_pathExplorer##ident);\
    auto _mergeMemory##ident = NumericalDomains::DDoubleInterval::MergeMemory() >> merge;         \
    auto _saveMemory##ident = NumericalDomains::DDoubleInterval::SaveMemory() << save;            \
+   bool _doesIterate##ident;                                                                     \
    do {
 #define FLOAT_SPLIT_ALL_LOOP(ident)
 #define FLOAT_SPLIT_ALL_OUTER(ident, merge, save)                                                \
@@ -281,20 +282,25 @@ inline double middle_of_double(double x, double y) { return (x+y)/2.0; }
    NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(&_pathExplorer##ident);\
    auto _mergeMemory##ident = NumericalDomains::DDoubleInterval::MergeMemory() >> merge;         \
    auto _saveMemory##ident = NumericalDomains::DDoubleInterval::SaveMemory() << save;            \
+   bool _doesIterate##ident;                                                                     \
    do {
 
 #define FLOAT_MERGE_ALL(ident, x, load)                                                          \
       FLOAT_PRINT_CURRENT_PATH(ident)                                                            \
       NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow();                         \
-   } while ((_mergeMemory##ident << x)                                                           \
-         && !(_saveMemory##ident.setCurrentResult(_pathExplorer##ident.isFinished()) >> load));  \
+      _doesIterate##ident = _mergeMemory##ident << x;                                            \
+      if (_doesIterate##ident)                                                                   \
+         _doesIterate##ident = !(_saveMemory##ident.setCurrentResult(_pathExplorer##ident.isFinished()) >> load);\
+   } while (_doesIterate##ident);                                                                \
    NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow(_oldDoesFollow##ident, _oldInputTraceFile##ident); \
    NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(_oldPathExplorer##ident); }
 #define FLOAT_MERGE_ALL_OUTER(ident, x, load)                                                    \
       FLOAT_PRINT_CURRENT_PATH(ident)                                                            \
       NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow();                         \
-   } while ((_mergeMemory##ident << x)                                                           \
-         && !(_saveMemory##ident.setCurrentResult(_pathExplorer##ident.isFinished()) >> load));  \
+      _doesIterate##ident = _mergeMemory##ident << x;                                            \
+      if (_doesIterate##ident)                                                                   \
+         _doesIterate##ident = !(_saveMemory##ident.setCurrentResult(_pathExplorer##ident.isFinished()) >> load);\
+   } while (_doesIterate##ident);                                                                \
    NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow(_oldDoesFollow##ident, _oldInputTraceFile##ident); \
    NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(_oldPathExplorer##ident);
 #endif // FLOAT_LOOP_UNSTABLE

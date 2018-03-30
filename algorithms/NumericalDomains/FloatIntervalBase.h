@@ -137,6 +137,8 @@ class TCompareFloatInterval : public TypeBaseFloatInterval {
    TCompareFloatInterval& operator=(const TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltArgument, TypeImplementationArgument>& source)
       {  return operator=(thisType(source)); }
 
+   void setToMin() { bfMax = bfMin; }
+   void setToMax() { bfMin = bfMax; }
    bool operator<(const thisType& source) const;
    bool operator<=(const thisType& source) const;
    bool operator==(const thisType& source) const;

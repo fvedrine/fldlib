@@ -38,6 +38,7 @@
 // #include <iosfwd>
 #include <iostream>
 #include <vector>
+#include <functional>
 #include <cassert>
 
 namespace NumericalDomains {
@@ -217,7 +218,7 @@ class TPackedSaveMemory {
    TypeSaveMemory& operator>>(MergeBranches::TPacker<TypeIterator>&& packer)
       {  if (!next.getResult()) {
             int count = packer.end - packer.iter;
-            assert(count == save.size());
+            assert(count == (int) save.size());
             for (int index = 0; index < count; ++index) {
                *packer.iter = save[index];
                ++packer.iter;
@@ -748,97 +749,290 @@ class TFloatZonotope {
    explicit operator long int() const;
    explicit operator unsigned long() const;
 
+   void continuousFlow(std::function<void (thisType& val)> funAssign)
+      {  // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+         bool oldSupportUnstableInLoop = ExecutionPath::doesSupportUnstableInLoop();
+         ExecutionPath::setSupportUnstableInLoop();
+         auto* oldPathExplorer = ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = ExecutionPath::doesFollowFlow();
+         ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = ExecutionPath::inputTraceFile();
+         const char* oldSynchronisationFile = ExecutionPath::synchronisationFile();
+         int oldSynchronisationLine = ExecutionPath::synchronisationLine();
+         bool isCompleteFlow = true;
+         PathExplorer pathExplorer(ExecutionPath::queryMode(oldPathExplorer));
+         ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         auto mergeMemory = MergeMemory() >> *this >> end();
+         auto saveMemory = SaveMemory() << *this << end();
+         const char* sourceFile = __FILE__;
+         int sourceLine = __LINE__;
+         auto oldSourceInfo = BaseFloatAffine::querySplitInfo();
+         bool doesIterate;
+         do {
+            try {
+               BaseFloatAffine::splitBranches(sourceFile, sourceLine);
+               funAssign(*this);
+               isCompleteFlow = MergeBranches(sourceFile, sourceLine) << *this << end();
+            } 
+            catch (typename thisType::anticipated_termination&) {
+               isCompleteFlow = false;
+               ExecutionPath::clearSynchronizationBranches();
+            }
+            catch (ExecutionPath::read_error& error) {
+               if (const char* message = error.getMessage())
+                  std::cerr << "error: " << message << std::endl;
+               else
+                  std::cerr << "error while reading input file!" << std::endl;
+               isCompleteFlow = false;
+               ExecutionPath::clearSynchronizationBranches();
+            }
+            ExecutionPath::setFollowFlow();
+            doesIterate = mergeMemory.setCurrentComplete(isCompleteFlow) << *this << end();
+            if (doesIterate)
+               doesIterate = !(saveMemory.setCurrentResult(pathExplorer.isFinished(ExecutionPath::queryMode(oldPathExplorer))) >> *this >> end());
+         } while (doesIterate);
+         ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
+               oldSynchronisationFile, oldSynchronisationLine);
+         ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+         ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+         BaseFloatAffine::splitBranches(oldSourceInfo.first, oldSourceInfo.second);
+         if (mergeMemory.isFirst())
+            ExecutionPath::throwEmptyBranch(true);
+      }
+   void continuousFlow(std::function<void (thisType& val, const thisType& arg)> funAssign, const thisType& anarg)
+      {  // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+         bool oldSupportUnstableInLoop = ExecutionPath::doesSupportUnstableInLoop();
+         ExecutionPath::setSupportUnstableInLoop();
+         auto* oldPathExplorer = ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = ExecutionPath::doesFollowFlow();
+         ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = ExecutionPath::inputTraceFile();
+         const char* oldSynchronisationFile = ExecutionPath::synchronisationFile();
+         int oldSynchronisationLine = ExecutionPath::synchronisationLine();
+         bool isCompleteFlow = true;
+         PathExplorer pathExplorer(ExecutionPath::queryMode(oldPathExplorer));
+         ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         thisType& arg = const_cast<thisType&>(anarg);
+         auto mergeMemory = MergeMemory() >> arg >> *this >> end();
+         auto saveMemory = SaveMemory() << *this << arg << end();
+         const char* sourceFile = __FILE__;
+         int sourceLine = __LINE__;
+         auto oldSourceInfo = BaseFloatAffine::querySplitInfo();
+         bool doesIterate;
+         do {
+            try {
+               BaseFloatAffine::splitBranches(sourceFile, sourceLine);
+               funAssign(*this, anarg);
+               isCompleteFlow = MergeBranches(sourceFile, sourceLine) << *this << arg << end();
+            } 
+            catch (typename thisType::anticipated_termination&) {
+               isCompleteFlow = false;
+               ExecutionPath::clearSynchronizationBranches();
+            }
+            catch (ExecutionPath::read_error& error) {
+               if (const char* message = error.getMessage())
+                  std::cerr << "error: " << message << std::endl;
+               else
+                  std::cerr << "error while reading input file!" << std::endl;
+               isCompleteFlow = false;
+               ExecutionPath::clearSynchronizationBranches();
+            }
+            ExecutionPath::setFollowFlow();
+            doesIterate = mergeMemory.setCurrentComplete(isCompleteFlow) << *this << arg << end();
+            if (doesIterate)
+               doesIterate = !(saveMemory.setCurrentResult(pathExplorer.isFinished(ExecutionPath::queryMode(oldPathExplorer))) >> arg >> *this >> end());
+         } while (doesIterate);
+         ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
+               oldSynchronisationFile, oldSynchronisationLine);
+         ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+         ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+         BaseFloatAffine::splitBranches(oldSourceInfo.first, oldSourceInfo.second);
+         if (mergeMemory.isFirst())
+            ExecutionPath::throwEmptyBranch(true);
+      }
+   void continuousFlow(std::function<void (thisType& val, const thisType& fstarg, const thisType& sndarg)> funAssign,
+         const thisType& afstarg, const thisType& asndarg)
+      {  // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
+         bool oldSupportUnstableInLoop = ExecutionPath::doesSupportUnstableInLoop();
+         ExecutionPath::setSupportUnstableInLoop();
+         auto* oldPathExplorer = ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = ExecutionPath::doesFollowFlow();
+         ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = ExecutionPath::inputTraceFile();
+         const char* oldSynchronisationFile = ExecutionPath::synchronisationFile();
+         int oldSynchronisationLine = ExecutionPath::synchronisationLine();
+         bool isCompleteFlow = true;
+         PathExplorer pathExplorer(ExecutionPath::queryMode(oldPathExplorer));
+         ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         thisType& fstarg = const_cast<thisType&>(afstarg);
+         thisType& sndarg = const_cast<thisType&>(asndarg);
+         auto mergeMemory = MergeMemory() >> sndarg >> fstarg >> *this >> end();
+         auto saveMemory = SaveMemory() << *this << fstarg << sndarg << end();
+         const char* sourceFile = __FILE__;
+         int sourceLine = __LINE__;
+         auto oldSourceInfo = BaseFloatAffine::querySplitInfo();
+         bool doesIterate;
+         do {
+            try {
+               BaseFloatAffine::splitBranches(sourceFile, sourceLine);
+               funAssign(*this, afstarg, asndarg);
+               isCompleteFlow = MergeBranches(sourceFile, sourceLine) << *this << fstarg << sndarg << end();
+            } 
+            catch (typename thisType::anticipated_termination&) {
+               isCompleteFlow = false;
+               ExecutionPath::clearSynchronizationBranches();
+            }
+            catch (ExecutionPath::read_error& error) {
+               if (const char* message = error.getMessage())
+                  std::cerr << "error: " << message << std::endl;
+               else
+                  std::cerr << "error while reading input file!" << std::endl;
+               isCompleteFlow = false;
+               ExecutionPath::clearSynchronizationBranches();
+            }
+            ExecutionPath::setFollowFlow();
+            doesIterate = mergeMemory.setCurrentComplete(isCompleteFlow) << *this << fstarg << sndarg << end();
+            if (doesIterate)
+               doesIterate = !(saveMemory.setCurrentResult(pathExplorer.isFinished(ExecutionPath::queryMode(oldPathExplorer))) >> sndarg >> fstarg >> *this >> end());
+         } while (doesIterate);
+         ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
+               oldSynchronisationFile, oldSynchronisationLine);
+         ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+         ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+         BaseFloatAffine::splitBranches(oldSourceInfo.first, oldSourceInfo.second);
+         if (mergeMemory.isFirst())
+            ExecutionPath::throwEmptyBranch(true);
+      }
+
    thisType abs() const
-      {  if (*this < 0)
-            return -(*this);
-         return *this;
+      {  auto result(*this);
+         result.continuousFlow([](thisType& val){ if (val < 0) val.oppositeAssign(); });
+         return result;
       }
-   thisType min(const thisType& source) const
-      {  return (*this <= source) ? *this : source; }
-   thisType min(TypeImplementation source) const
-      {  thisType affineSource(source);
-         return (*this <= affineSource) ? *this : affineSource;
+   thisType min(const thisType& asource) const
+      {  auto result(*this), source(asource); // source should gain back its original value
+         result.continuousFlow([](thisType& val, const thisType& source)
+               { if (val > source) val = source; }, source);
+         return result;
       }
-   thisType max(const thisType& source) const
-      {  return (*this >= source) ? *this : source; }
-   thisType max(TypeImplementation source) const
-      {  thisType affineSource(source);
-         return (*this >= affineSource) ? *this : affineSource;
+   thisType min(thisType&& source) const
+      {  auto result(*this);
+         result.continuousFlow([](thisType& val, const thisType& source)
+               { if (val > source) val = source; }, source);
+         return result;
       }
-   thisType median(const thisType& fst, const thisType& snd) const
-      {  if (*this <= fst) {
-            if (fst <= snd)
-               return fst;
-            // snd < fst 
-            if (*this <= snd)
-               return snd;
-            // snd < *this <= fst
-            return *this;
-         }
-         // fst < *this
-         if (snd <= fst)
-            return fst;
-         // fst < snd
-         if (*this <= snd)
-            return *this;
-         return snd;
+   thisType min(TypeImplementation asource) const
+      {  auto result(*this);
+         thisType source(asource);
+         result.continuousFlow([](thisType& val, const thisType& source)
+               { if (val > source) val = source; }, source);
+         return result;
       }
-   thisType median(TypeImplementation fstValue, const thisType& snd) const
-      {  thisType fst(fstValue);
-         if (*this <= fst) {
-            if (fst <= snd)
-               return fst;
-            // snd < fst 
-            if (*this <= snd)
-               return snd;
-            // snd < *this <= fst
-            return *this;
-         }
-         // fst < *this
-         if (snd <= fst)
-            return fst;
-         // fst < snd
-         if (*this <= snd)
-            return *this;
-         return snd;
+   thisType max(const thisType& asource) const
+      {  auto result(*this), source(asource); // source should gain back its original value
+         result.continuousFlow([](thisType& val, const thisType& source)
+               { if (val < source) val = source; }, source);
+         return result;
       }
-   thisType median(const thisType& fst, TypeImplementation sndValue) const
-      {  thisType snd(sndValue);
-         if (*this <= fst) {
-            if (fst <= snd)
-               return fst;
-            // snd < fst 
-            if (*this <= snd)
-               return snd;
-            // snd < *this <= fst
-            return *this;
-         }
-         // fst < *this
-         if (snd <= fst)
-            return fst;
-         // fst < snd
-         if (*this <= snd)
-            return *this;
-         return snd;
+   thisType max(thisType&& source) const
+      {  auto result(*this);
+         result.continuousFlow([](thisType& val, const thisType& source)
+               { if (val < source) val = source; }, source);
+         return result;
       }
-   thisType median(TypeImplementation fstValue, TypeImplementation sndValue) const
-      {  thisType fst(fstValue), snd(sndValue);
-         if (*this <= fst) {
-            if (fst <= snd)
-               return fst;
-            // snd < fst 
-            if (*this <= snd)
-               return snd;
-            // snd < *this <= fst
-            return *this;
-         }
-         // fst < *this
-         if (snd <= fst)
-            return fst;
-         // fst < snd
-         if (*this <= snd)
-            return *this;
-         return snd;
+   thisType max(TypeImplementation asource) const
+      {  auto result(*this);
+         thisType source(asource);
+         result.continuousFlow([](thisType& val, const thisType& source)
+               { if (val < source) val = source; }, source);
+         return result;
+      }
+   thisType median(const thisType& afst, const thisType& asnd) const
+      {  auto result(*this), fst(afst), snd(asnd);
+         result.continuousFlow(
+               [](thisType& val, const thisType& fst, const thisType& snd)
+                  {  if (val <= fst) {
+                        if (fst <= snd)
+                           val = fst;
+                        // snd < fst 
+                        else if (val <= snd)
+                           val = snd;
+                        // snd < val <= fst
+                     }
+                     // fst < val
+                     else if (snd <= fst)
+                        val = fst;
+                     // fst < snd
+                     else if (val > snd)
+                        val = snd;
+                  }, fst, snd);
+         return result;
+      }
+   thisType median(TypeImplementation afst, const thisType& asnd) const
+      {  auto result(*this), snd(asnd);
+         thisType fst(afst);
+         result.continuousFlow(
+               [](thisType& val, const thisType& fst, const thisType& snd)
+                  {  if (val <= fst) {
+                        if (fst <= snd)
+                           val = fst;
+                        // snd < fst 
+                        else if (val <= snd)
+                           val = snd;
+                        // snd < val <= fst
+                     }
+                     // fst < val
+                     else if (snd <= fst)
+                        val = fst;
+                     // fst < snd
+                     else if (val > snd)
+                        val = snd;
+                  }, fst, snd);
+         return result;
+      }
+   thisType median(const thisType& afst, TypeImplementation asnd) const
+      {  auto result(*this), fst(afst);
+         thisType snd(asnd);
+         result.continuousFlow(
+               [](thisType& val, const thisType& fst, const thisType& snd)
+                  {  if (val <= fst) {
+                        if (fst <= snd)
+                           val = fst;
+                        // snd < fst 
+                        else if (val <= snd)
+                           val = snd;
+                        // snd < val <= fst
+                     }
+                     // fst < val
+                     else if (snd <= fst)
+                        val = fst;
+                     // fst < snd
+                     else if (val > snd)
+                        val = snd;
+                  }, fst, snd);
+         return result;
+      }
+   thisType median(TypeImplementation afst, TypeImplementation asnd) const
+      {  auto result(*this);
+         thisType fst(afst), snd(asnd);
+         result.continuousFlow(
+               [](thisType& val, const thisType& fst, const thisType& snd)
+                  {  if (val <= fst) {
+                        if (fst <= snd)
+                           val = fst;
+                        // snd < fst 
+                        else if (val <= snd)
+                           val = snd;
+                        // snd < val <= fst
+                     }
+                     // fst < val
+                     else if (snd <= fst)
+                        val = fst;
+                     // fst < snd
+                     else if (val > snd)
+                        val = snd;
+                  }, fst, snd);
+         return result;
       }
 
    void lightPersist(const char* prefix) const;
@@ -1540,161 +1734,394 @@ class TFloatZonotope {
       {  thisType fstConvert(fst); fstConvert /= std::forward<thisType>(snd); return fstConvert; }
    friend thisType operator/(short fst, thisType&& snd)
       {  thisType fstConvert(fst); fstConvert /= std::forward<thisType>(snd); return fstConvert; }
-   friend thisType floor(const thisType& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMLowest)); }
-   friend thisType floor(thisType&& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMLowest)); }
-   friend thisType ceil(const thisType& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMHighest)); }
-   friend thisType ceil(thisType&& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMHighest)); }
-   friend thisType trunc(const thisType& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMZero)); }
-   friend thisType trunc(thisType&& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMZero)); }
-   friend thisType round(const thisType& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMNearest)); }
-   friend thisType round(thisType&& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMNearest)); }
-   friend thisType rintf(const thisType& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMNearest /* fegetround */)); }
-   friend thisType rintf(thisType&& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMNearest /* fegetround */)); }
-   friend thisType rint(const thisType& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMNearest /* fegetround */)); }
-   friend thisType rint(thisType&& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMNearest /* fegetround */)); }
 
-   friend thisType fabs(const thisType& fst)
-      {  thisType result = fst;
-         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
-         bool oldSupportUnstableInLoop = ExecutionPath::doesSupportUnstableInLoop();
-         ExecutionPath::setSupportUnstableInLoop();
-         auto* oldPathExplorer = ExecutionPath::getCurrentPathExplorer();
-         bool oldDoesFollow = ExecutionPath::doesFollowFlow();
-         ExecutionPath::clearFollowFlow();
-         auto* oldInputTraceFile = ExecutionPath::inputTraceFile();
-         const char* oldSynchronisationFile = ExecutionPath::synchronisationFile();
-         int oldSynchronisationLine = ExecutionPath::synchronisationLine();
-         bool isCompleteFlow = true;
-         PathExplorer pathExplorer(
-              ExecutionPath::queryMode(oldPathExplorer));
-         ExecutionPath::setCurrentPathExplorer(&pathExplorer);
-         auto mergeMemory = MergeMemory() >> result >> end();
-         auto saveMemory = SaveMemory() << result << end();
-         const char* sourceFile = __FILE__;
-         int sourceLine = __LINE__;
-         do {
-            try {
-               BaseFloatAffine::splitBranches(sourceFile, sourceLine);
-
-               if (result < 0)
-                  result.oppositeAssign();
-
-               isCompleteFlow = MergeBranches(sourceFile, sourceLine) << result << end();
-            } 
-            catch (ExecutionPath::anticipated_termination&) {
-               isCompleteFlow = false;
-               ExecutionPath::clearSynchronizationBranches();
-            }
-            catch (ExecutionPath::read_error& error) {
-               if (const char* message = error.getMessage())
-                  std::cerr << "error: " << message << std::endl;
-               else
-                  std::cerr << "error while reading input file!" << std::endl;
-               isCompleteFlow = false;
-               ExecutionPath::clearSynchronizationBranches();
-            }
-            ExecutionPath::setFollowFlow();
-         } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result << end())
-               && !(saveMemory.setCurrentResult(pathExplorer.isFinished(ExecutionPath::queryMode(oldPathExplorer))) >> result >> end()));
-         ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
-               oldSynchronisationFile, oldSynchronisationLine);
-         ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
-         ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
-         if (mergeMemory.isFirst())
-            ExecutionPath::throwEmptyBranch(true);
+   friend thisType floor(const thisType& afst)
+      {  thisType result, fst(afst); // afst should gain back its original value
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(RMLowest)); },
+               fst);
          return result;
       }
-
-   friend thisType fabs(thisType&& fst)
-      {  thisType result(std::forward<thisType>(fst));
-         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
-         bool oldSupportUnstableInLoop = ExecutionPath::doesSupportUnstableInLoop();
-         ExecutionPath::setSupportUnstableInLoop();
-         auto* oldPathExplorer = ExecutionPath::getCurrentPathExplorer();
-         bool oldDoesFollow = ExecutionPath::doesFollowFlow();
-         ExecutionPath::clearFollowFlow();
-         auto* oldInputTraceFile = ExecutionPath::inputTraceFile();
-         const char* oldSynchronisationFile = ExecutionPath::synchronisationFile();
-         int oldSynchronisationLine = ExecutionPath::synchronisationLine();
-         bool isCompleteFlow = true;
-         PathExplorer pathExplorer(
-              ExecutionPath::queryMode(oldPathExplorer));
-         ExecutionPath::setCurrentPathExplorer(&pathExplorer);
-         auto mergeMemory = MergeMemory() >> result >> end();
-         auto saveMemory = SaveMemory() << result << end();
-         const char* sourceFile = __FILE__;
-         int sourceLine = __LINE__;
-         do {
-            try {
-               BaseFloatAffine::splitBranches(sourceFile, sourceLine);
-
-               if (result < 0)
-                  result.oppositeAssign();
-
-               isCompleteFlow = MergeBranches(sourceFile, sourceLine) << result << end();
-            } 
-            catch (ExecutionPath::anticipated_termination&) {
-               isCompleteFlow = false;
-               ExecutionPath::clearSynchronizationBranches();
-            }
-            catch (ExecutionPath::read_error& error) {
-               if (const char* message = error.getMessage())
-                  std::cerr << "error: " << message << std::endl;
-               else
-                  std::cerr << "error while reading input file!" << std::endl;
-               isCompleteFlow = false;
-               ExecutionPath::clearSynchronizationBranches();
-            }
-            ExecutionPath::setFollowFlow();
-         } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result << end())
-               && !(saveMemory.setCurrentResult(pathExplorer.isFinished(ExecutionPath::queryMode(oldPathExplorer))) >> result >> end()));
-         ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
-               oldSynchronisationFile, oldSynchronisationLine);
-         ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
-         ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
-         if (mergeMemory.isFirst())
-            ExecutionPath::throwEmptyBranch(true);
+   friend thisType floor(thisType&& fst)
+      {  thisType result;
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(RMLowest)); },
+               fst);
          return result;
+      }
+   friend thisType ceil(const thisType& afst)
+      {  thisType result, fst(afst);
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(RMHighest)); },
+               fst);
+         return result;
+      }
+   friend thisType ceil(thisType&& fst)
+      {  thisType result;
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(RMHighest)); },
+               fst);
+         return result;
+      }
+   friend thisType trunc(const thisType& afst)
+      {  thisType result, fst(afst);
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(RMZero)); },
+               fst);
+         return result;
+      }
+   friend thisType trunc(thisType&& fst)
+      {  thisType result;
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(RMZero)); },
+               fst);
+         return result;
+      }
+   friend thisType round(const thisType& afst)
+      {  thisType result, fst(afst);
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(RMNearest)); },
+               fst);
+         return result;
+      }
+   friend thisType round(thisType&& fst)
+      {  thisType result;
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(RMNearest)); },
+               fst);
+         return result;
+      }
+   friend thisType rint(const thisType& afst)
+      {  thisType result, fst(afst);
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(RMNearest)); },
+               fst);
+         return result;
+      }
+   friend thisType rint(thisType&& fst)
+      {  thisType result;
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(RMNearest)); },
+               fst);
+         return result;
+      }
+   friend thisType rintf(const thisType& afst)
+      {  thisType result, fst(afst);
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(RMNearest)); },
+               fst);
+         return result;
+      }
+   friend thisType rintf(thisType&& fst)
+      {  thisType result;
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(RMNearest)); },
+               fst);
+         return result;
+      }
+   friend thisType dis_floor(const thisType& fst)
+      {  return thisType(fst.asInt(RMLowest)); }
+   friend thisType dis_ceil(const thisType& fst)
+      {  return thisType(fst.asInt(RMHighest)); }
+   friend thisType dis_trunc(const thisType& fst)
+      {  return thisType(fst.asInt(RMZero)); }
+   friend thisType dis_round(const thisType& fst)
+      {  return thisType(fst.asInt(RMNearest)); }
+   friend thisType dis_rint(const thisType& fst)
+      {  return thisType(fst.asInt(RMNearest /* fegetround */)); }
+   friend thisType dis_rintf(const thisType& fst)
+      {  return thisType(fst.asInt(RMNearest /* fegetround */)); }
+
+   friend thisType fabs(const thisType& fst)
+      {  auto result(fst);
+         result.continuousFlow([](thisType& val){ if (val < 0) val.oppositeAssign(); });
+         return result;
+      }
+   friend thisType fabs(thisType&& fst)
+      {  fst.continuousFlow([](thisType& val){ if (val < 0) val.oppositeAssign(); });
+         return fst;
       }
    friend thisType abs(const thisType& source) { return fabs(source); }
    friend thisType abs(thisType&& source) { return fabs(std::forward<thisType>(source)); }
 
    friend thisType fmod(const thisType& source, const thisType& value)
-      {  thisType divResult(source);
-         divResult /= value;
-         thisType multResult(divResult.asInt(RMZero));
-         multResult *= value;
-         multResult -= source;
-         multResult.oppositeAssign();
+      {  thisType multResult;
+         multResult.continuousFlow(
+               [](thisType& result, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  result = thisType(divResult.asInt(RMZero));
+                  result *= value;
+                  result -= source;
+                  result.oppositeAssign();
+               },
+               source, value);
          return multResult;
       }
-   template <typename TypeFst>
-   friend thisType fmod(TypeFst source, const thisType& value)
-      {  thisType fst(source);
-         thisType divResult(fst); divResult /= value;
-         thisType multResult(divResult.asInt(RMZero));
-         multResult *= value; fst -= multResult;
-         return fst;
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType fmod(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
       }
-   template <typename TypeSnd>
-   friend thisType fmod(const thisType& source, TypeSnd value)
-      {  auto divResult(source); thisType snd(value); divResult /= snd;
-         thisType multResult(divResult.asInt(RMZero));
-         multResult *= snd; multResult -= source; multResult.oppositeAssign();
-         return multResult;
+   friend thisType fmod(long double asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
       }
+   friend thisType fmod(double asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
+      }
+   friend thisType fmod(float asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
+      }
+   friend thisType fmod(unsigned long asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
+      }
+   friend thisType fmod(long asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
+      }
+   friend thisType fmod(unsigned int asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
+      }
+   friend thisType fmod(int asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
+      }
+   friend thisType fmod(unsigned short asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
+      }
+   friend thisType fmod(short asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
+      }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType fmod(const thisType& source, const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
+      }
+   friend thisType fmod(const thisType& source, long double avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
+      }
+   friend thisType fmod(const thisType& source, double avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
+      }
+   friend thisType fmod(const thisType& source, float avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
+      }
+   friend thisType fmod(const thisType& source, unsigned long avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
+      }
+   friend thisType fmod(const thisType& source, long avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
+      }
+   friend thisType fmod(const thisType& source, unsigned int avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
+      }
+   friend thisType fmod(const thisType& source, int avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
+      }
+   friend thisType fmod(const thisType& source, unsigned short avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
+      }
+   friend thisType fmod(const thisType& source, short avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
+      }
+
    friend int fld_finite(const thisType& source) { return source.sfinite(); }
    friend int fld_isfinite(const thisType& source) { return source.sisfinite(); }
    friend int fld_isnan(const thisType& source) { return source.sisnan(); }

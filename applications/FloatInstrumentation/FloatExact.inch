@@ -462,7 +462,7 @@ class ExecutionPath : public BaseExecutionPath {
 
    static void setSupportAtomic() { fSupportAtomic = true; }
    static bool doesSupportAtomic() { return fSupportAtomic; }
-   static void setSupportUnstableInLoop() { fSupportUnstableInLoop = true; }
+   static void setSupportUnstableInLoop(bool value=true) { fSupportUnstableInLoop = value; }
    static bool doesSupportUnstableInLoop() { return fSupportUnstableInLoop; }
    static void setSupportBacktrace() { fSupportBacktrace = true; }
    static bool doesSupportBacktrace() { return fSupportBacktrace; }

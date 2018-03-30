@@ -440,99 +440,199 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    explicit operator unsigned long() const
       { return inherited::asUnsignedLong(inherited::ReadParametersBase::RMZero); }
 
+   void continuousFlow(std::function<void (thisType& val)> funAssign)
+      {  bool oldSupportUnstableInLoop = ExecutionPath::doesSupportUnstableInLoop();
+         ExecutionPath::setSupportUnstableInLoop();
+         auto* oldPathExplorer = ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = ExecutionPath::doesFollowFlow();
+         ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = ExecutionPath::inputTraceFile();
+         PathExplorer pathExplorer;
+         ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         auto mergeMemory = MergeMemory() >> *this >> BaseExecutionPath::end();
+         auto saveMemory = SaveMemory() << *this << BaseExecutionPath::end();
+         bool doesIterate;
+         do {
+            funAssign(*this);
+            ExecutionPath::setFollowFlow();
+            doesIterate = mergeMemory << *this << BaseExecutionPath::end();
+            if (doesIterate)
+               doesIterate = !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> *this >> BaseExecutionPath::end());
+         } while (doesIterate);
+         ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
+         ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+         ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+      }
+   void continuousFlow(std::function<void (thisType& val, const thisType& arg)> funAssign, const thisType& anarg)
+      {  bool oldSupportUnstableInLoop = ExecutionPath::doesSupportUnstableInLoop();
+         ExecutionPath::setSupportUnstableInLoop();
+         auto* oldPathExplorer = ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = ExecutionPath::doesFollowFlow();
+         ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = ExecutionPath::inputTraceFile();
+         PathExplorer pathExplorer;
+         ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         thisType& arg = const_cast<thisType&>(anarg);
+         auto mergeMemory = MergeMemory() >> arg >> *this >> BaseExecutionPath::end();
+         auto saveMemory = SaveMemory() << *this << arg << BaseExecutionPath::end();
+         bool doesIterate;
+         do {
+            funAssign(*this, anarg);
+            ExecutionPath::setFollowFlow();
+            doesIterate = mergeMemory << *this << arg << BaseExecutionPath::end();
+            if (doesIterate)
+               doesIterate = !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> arg >> *this >> BaseExecutionPath::end());
+         } while (doesIterate);
+         ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
+         ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+         ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+      }
+   void continuousFlow(std::function<void (thisType& val, const thisType& fstarg, const thisType& sndarg)> funAssign,
+         const thisType& afstarg, const thisType& asndarg)
+      {  bool oldSupportUnstableInLoop = ExecutionPath::doesSupportUnstableInLoop();
+         ExecutionPath::setSupportUnstableInLoop();
+         auto* oldPathExplorer = ExecutionPath::getCurrentPathExplorer();
+         bool oldDoesFollow = ExecutionPath::doesFollowFlow();
+         ExecutionPath::clearFollowFlow();
+         auto* oldInputTraceFile = ExecutionPath::inputTraceFile();
+         PathExplorer pathExplorer;
+         ExecutionPath::setCurrentPathExplorer(&pathExplorer);
+         thisType& fstarg = const_cast<thisType&>(afstarg);
+         thisType& sndarg = const_cast<thisType&>(asndarg);
+         auto mergeMemory = MergeMemory() >> sndarg >> fstarg >> *this >> BaseExecutionPath::end();
+         auto saveMemory = SaveMemory() << *this << fstarg << sndarg << BaseExecutionPath::end();
+         bool doesIterate;
+         do {
+            funAssign(*this, afstarg, asndarg);
+            ExecutionPath::setFollowFlow();
+            doesIterate = mergeMemory << *this << fstarg << sndarg << BaseExecutionPath::end();
+            if (doesIterate)
+               doesIterate = !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> sndarg >> fstarg >> *this >> BaseExecutionPath::end());
+         } while (doesIterate);
+         ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
+         ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+         ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+      }
    thisType abs() const
-      {  if (*this < 0)
-            return -(*this);
-         return *this;
+      {  auto result(*this);
+         result.continuousFlow([](thisType& val){ if (val < 0) val.oppositeAssign(); });
+         return result;
       }
    const TypeBuiltDouble& min() const { return inherited::min(); }
    const TypeBuiltDouble& max() const { return inherited::max(); }
    thisType min(const thisType& source) const
-      {  return (*this <= source) ? *this : source; }
-   thisType min(TypeImplementation source) const
-      {  thisType affineSource(source);
-         return (*this <= affineSource) ? *this : affineSource;
+      {  auto result(*this);
+         result.continuousFlow([](thisType& val, const thisType& source)
+               { if (val > source) val = source; }, source);
+         return result;
+      }
+   thisType min(TypeImplementation asource) const
+      {  auto result(*this);
+         thisType source(asource);
+         result.continuousFlow([](thisType& val, const thisType& source)
+               { if (val > source) val = source; }, source);
+         return result;
       }
    thisType max(const thisType& source) const
-      {  return (*this >= source) ? *this : source; }
-   thisType max(TypeImplementation source) const
-      {  thisType affineSource(source);
-         return (*this >= affineSource) ? *this : affineSource;
+      {  auto result(*this);
+         result.continuousFlow([](thisType& val, const thisType& source)
+               { if (val < source) val = source; }, source);
+         return result;
       }
+   thisType max(TypeImplementation asource) const
+      {  auto result(*this);
+         thisType source(asource);
+         result.continuousFlow([](thisType& val, const thisType& source)
+               { if (val < source) val = source; }, source);
+         return result;
+      }
+
    thisType median(const thisType& fst, const thisType& snd) const
-      {  if (*this <= fst) {
-            if (fst <= snd)
-               return fst;
-            // snd < fst 
-            if (*this <= snd)
-               return snd;
-            // snd < *this <= fst
-            return *this;
-         }
-         // fst < *this
-         if (snd <= fst)
-            return fst;
-         // fst < snd
-         if (*this <= snd)
-            return *this;
-         return snd;
+      {  auto result(*this);
+         result.continuousFlow(
+               [](thisType& val, const thisType& fst, const thisType& snd)
+                  {  if (val <= fst) {
+                        if (fst <= snd)
+                           val = fst;
+                        // snd < fst 
+                        else if (val <= snd)
+                           val = snd;
+                        // snd < val <= fst
+                     }
+                     // fst < val
+                     else if (snd <= fst)
+                        val = fst;
+                     // fst < snd
+                     else if (val > snd)
+                        val = snd;
+                  }, fst, snd);
+         return result;
       }
-   thisType median(TypeImplementation fstValue, const thisType& snd) const
-      {  thisType fst(fstValue);
-         if (*this <= fst) {
-            if (fst <= snd)
-               return fst;
-            // snd < fst 
-            if (*this <= snd)
-               return snd;
-            // snd < *this <= fst
-            return *this;
-         }
-         // fst < *this
-         if (snd <= fst)
-            return fst;
-         // fst < snd
-         if (*this <= snd)
-            return *this;
-         return snd;
+   thisType median(TypeImplementation afst, const thisType& snd) const
+      {  auto result(*this);
+         thisType fst(afst);
+         result.continuousFlow(
+               [](thisType& val, const thisType& fst, const thisType& snd)
+                  {  if (val <= fst) {
+                        if (fst <= snd)
+                           val = fst;
+                        // snd < fst 
+                        else if (val <= snd)
+                           val = snd;
+                        // snd < val <= fst
+                     }
+                     // fst < val
+                     else if (snd <= fst)
+                        val = fst;
+                     // fst < snd
+                     else if (val > snd)
+                        val = snd;
+                  }, fst, snd);
+         return result;
       }
-   thisType median(const thisType& fst, TypeImplementation sndValue) const
-      {  thisType snd(sndValue);
-         if (*this <= fst) {
-            if (fst <= snd)
-               return fst;
-            // snd < fst 
-            if (*this <= snd)
-               return snd;
-            // snd < *this <= fst
-            return *this;
-         }
-         // fst < *this
-         if (snd <= fst)
-            return fst;
-         // fst < snd
-         if (*this <= snd)
-            return *this;
-         return snd;
+   thisType median(const thisType& fst, TypeImplementation asnd) const
+      {  auto result(*this);
+         thisType snd(asnd);
+         result.continuousFlow(
+               [](thisType& val, const thisType& fst, const thisType& snd)
+                  {  if (val <= fst) {
+                        if (fst <= snd)
+                           val = fst;
+                        // snd < fst 
+                        else if (val <= snd)
+                           val = snd;
+                        // snd < val <= fst
+                     }
+                     // fst < val
+                     else if (snd <= fst)
+                        val = fst;
+                     // fst < snd
+                     else if (val > snd)
+                        val = snd;
+                  }, fst, snd);
+         return result;
       }
-   thisType median(TypeImplementation fstValue, TypeImplementation sndValue) const
-      {  thisType fst(fstValue), snd(sndValue);
-         if (*this <= fst) {
-            if (fst <= snd)
-               return fst;
-            // snd < fst 
-            if (*this <= snd)
-               return snd;
-            // snd < *this <= fst
-            return *this;
-         }
-         // fst < *this
-         if (snd <= fst)
-            return fst;
-         // fst < snd
-         if (*this <= snd)
-            return *this;
-         return snd;
+   thisType median(TypeImplementation afst, TypeImplementation asnd) const
+      {  auto result(*this);
+         thisType fst(afst), snd(asnd);
+         result.continuousFlow(
+               [](thisType& val, const thisType& fst, const thisType& snd)
+                  {  if (val <= fst) {
+                        if (fst <= snd)
+                           val = fst;
+                        // snd < fst 
+                        else if (val <= snd)
+                           val = snd;
+                        // snd < val <= fst
+                     }
+                     // fst < val
+                     else if (snd <= fst)
+                        val = fst;
+                     // fst < snd
+                     else if (val > snd)
+                        val = snd;
+                  }, fst, snd);
+         return result;
       }
 
    void persist(const char* prefix) { inherited::notifyForPersistence(*this, prefix); }
@@ -846,236 +946,347 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    friend thisType operator/(short fst, const thisType& snd) { return thisType(fst).operator/(snd); }
 
    friend thisType floor(const thisType& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMLowest)); }
-   friend thisType floor(thisType&& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMLowest)); }
+      {  thisType result;
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(thisType::ReadParametersBase::RMLowest)); },
+               fst);
+         return result;
+      }
    friend thisType ceil(const thisType& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMHighest)); }
-   friend thisType ceil(thisType&& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMHighest)); }
+      {  thisType result;
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(thisType::ReadParametersBase::RMHighest)); },
+               fst);
+         return result;
+      }
    friend thisType trunc(const thisType& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMZero)); }
-   friend thisType trunc(thisType&& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMZero)); }
+      {  thisType result;
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(thisType::ReadParametersBase::RMZero)); },
+               fst);
+         return result;
+      }
    friend thisType round(const thisType& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest)); }
-   friend thisType round(thisType&& fst)
-      {  return thisType(std::forward<thisType>(thisType(fst)).asInt(thisType::ReadParametersBase::RMNearest)); }
+      {  thisType result;
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(thisType::ReadParametersBase::RMNearest)); },
+               fst);
+         return result;
+      }
    friend thisType rint(const thisType& fst)
-      {  return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */)); }
+      {  thisType result;
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(thisType::ReadParametersBase::RMNearest)); },
+               fst);
+         return result;
+      }
    friend thisType rintf(const thisType& fst)
+      {  thisType result;
+         result.continuousFlow(
+               [](thisType& result, const thisType& fst)
+                  {  result = thisType(fst.asInt(thisType::ReadParametersBase::RMNearest)); },
+               fst);
+         return result;
+      }
+   friend thisType dis_floor(const thisType& fst)
+      {  return thisType(fst.asInt(thisType::ReadParametersBase::RMLowest)); }
+   friend thisType dis_ceil(const thisType& fst)
+      {  return thisType(fst.asInt(thisType::ReadParametersBase::RMHighest)); }
+   friend thisType dis_trunc(const thisType& fst)
+      {  return thisType(fst.asInt(thisType::ReadParametersBase::RMZero)); }
+   friend thisType dis_round(const thisType& fst)
+      {  return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest)); }
+   friend thisType dis_rint(const thisType& fst)
+      {  return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */)); }
+   friend thisType dis_rintf(const thisType& fst)
       {  return thisType(fst.asInt(thisType::ReadParametersBase::RMNearest /* fegetround */)); }
    friend thisType fabs(const thisType& source)
-      {  thisType result = source;
-         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
-         auto* oldPathExplorer = NumericalDomains::DDoubleInterval::ExecutionPath::getCurrentPathExplorer();
-         bool oldDoesFollow = NumericalDomains::DDoubleInterval::ExecutionPath::doesFollowFlow();
-         NumericalDomains::DDoubleInterval::ExecutionPath::clearFollowFlow();
-         auto* oldInputTraceFile = NumericalDomains::DDoubleInterval::ExecutionPath::inputTraceFile();
-         NumericalDomains::DDoubleInterval::PathExplorer pathExplorer;
-         NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
-         auto mergeMemory = NumericalDomains::DDoubleInterval::MergeMemory() >> result;
-         auto saveMemory = NumericalDomains::DDoubleInterval::SaveMemory() << result;
-         do {
-            if (result < 0)
-               result.oppositeAssign();
-            NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow();
-         } while ((mergeMemory << result)
-               && !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> result));
-         NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
-         NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+      {  auto result(source);
+         result.continuousFlow([](thisType& val){ if (val < 0) val.oppositeAssign(); });
          return result;
       }
    friend thisType fabs(thisType&& source)
-      {  thisType result(std::forward<thisType>(source));
-         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
-         auto* oldPathExplorer = NumericalDomains::DDoubleInterval::ExecutionPath::getCurrentPathExplorer();
-         bool oldDoesFollow = NumericalDomains::DDoubleInterval::ExecutionPath::doesFollowFlow();
-         NumericalDomains::DDoubleInterval::ExecutionPath::clearFollowFlow();
-         auto* oldInputTraceFile = NumericalDomains::DDoubleInterval::ExecutionPath::inputTraceFile();
-         NumericalDomains::DDoubleInterval::PathExplorer pathExplorer;
-         NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
-         auto mergeMemory = NumericalDomains::DDoubleInterval::MergeMemory() >> result;
-         auto saveMemory = NumericalDomains::DDoubleInterval::SaveMemory() << result;
-         do {
-            if (result < 0)
-               result.oppositeAssign();
-            NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow();
-         } while ((mergeMemory << result)
-               && !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> result));
-         NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
-         NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
-
-         return result;
+      {  source.continuousFlow([](thisType& val){ if (val < 0) val.oppositeAssign(); });
+         return source;
       }
    friend thisType abs(const thisType& source)
-      {  thisType result = source;
-         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
-         auto* oldPathExplorer = NumericalDomains::DDoubleInterval::ExecutionPath::getCurrentPathExplorer();
-         bool oldDoesFollow = NumericalDomains::DDoubleInterval::ExecutionPath::doesFollowFlow();
-         NumericalDomains::DDoubleInterval::ExecutionPath::clearFollowFlow();
-         auto* oldInputTraceFile = NumericalDomains::DDoubleInterval::ExecutionPath::inputTraceFile();
-         NumericalDomains::DDoubleInterval::PathExplorer pathExplorer;
-         NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
-         auto mergeMemory = NumericalDomains::DDoubleInterval::MergeMemory() >> result;
-         auto saveMemory = NumericalDomains::DDoubleInterval::SaveMemory() << result;
-         do {
-            if (result < 0)
-               result.oppositeAssign();
-            NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow();
-         } while ((mergeMemory << result)
-               && !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> result));
-         NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
-         NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
+      {  auto result(source);
+         result.continuousFlow([](thisType& val){ if (val < 0) val.oppositeAssign(); });
          return result;
       }
    friend thisType abs(thisType&& source)
-      {  thisType result(std::forward<thisType>(source));
-         // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL
-         auto* oldPathExplorer = NumericalDomains::DDoubleInterval::ExecutionPath::getCurrentPathExplorer();
-         bool oldDoesFollow = NumericalDomains::DDoubleInterval::ExecutionPath::doesFollowFlow();
-         NumericalDomains::DDoubleInterval::ExecutionPath::clearFollowFlow();
-         auto* oldInputTraceFile = NumericalDomains::DDoubleInterval::ExecutionPath::inputTraceFile();
-         NumericalDomains::DDoubleInterval::PathExplorer pathExplorer;
-         NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(&pathExplorer);
-         auto mergeMemory = NumericalDomains::DDoubleInterval::MergeMemory() >> result;
-         auto saveMemory = NumericalDomains::DDoubleInterval::SaveMemory() << result;
-         do {
-            if (result < 0)
-               result.oppositeAssign();
-            NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow();
-         } while ((mergeMemory << result)
-               && !(saveMemory.setCurrentResult(pathExplorer.isFinished()) >> result));
-         NumericalDomains::DDoubleInterval::ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile);
-         NumericalDomains::DDoubleInterval::ExecutionPath::setCurrentPathExplorer(oldPathExplorer);
-
-         return result;
+      {  source.continuousFlow([](thisType& val){ if (val < 0) val.oppositeAssign(); });
+         return source;
       }
    friend thisType fmod(const thisType& source, const thisType& value)
-      {  auto divResult(source);
-         divResult /= value;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= value;
-         multResult -= source;
-         multResult.oppositeAssign();
+      {  thisType multResult;
+         multResult.continuousFlow(
+               [](thisType& result, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  result = thisType(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  result *= value;
+                  result -= source;
+                  result.oppositeAssign();
+               },
+               source, value);
          return multResult;
       }
-   friend thisType fmod(long double source, const thisType& value)
-      {  thisType fst(source);
-         auto divResult(fst); divResult /= value;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= value; fst -= multResult;
-         return fst;
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType fmod(const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
       }
-   friend thisType fmod(double source, const thisType& value)
-      {  thisType fst(source);
-         auto divResult(fst); divResult /= value;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= value; fst -= multResult;
-         return fst;
+   friend thisType fmod(long double asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
       }
-   friend thisType fmod(float source, const thisType& value)
-      {  thisType fst(source);
-         auto divResult(fst); divResult /= value;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= value; fst -= multResult;
-         return fst;
+   friend thisType fmod(double asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
       }
-   friend thisType fmod(unsigned long source, const thisType& value)
-      {  thisType fst(source);
-         auto divResult(fst); divResult /= value;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= value; fst -= multResult;
-         return fst;
+   friend thisType fmod(float asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
       }
-   friend thisType fmod(long source, const thisType& value)
-      {  thisType fst(source);
-         auto divResult(fst); divResult /= value;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= value; fst -= multResult;
-         return fst;
+   friend thisType fmod(unsigned long asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
       }
-   friend thisType fmod(unsigned int source, const thisType& value)
-      {  thisType fst(source);
-         auto divResult(fst); divResult /= value;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= value; fst -= multResult;
-         return fst;
+   friend thisType fmod(long asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
       }
-   friend thisType fmod(int source, const thisType& value)
-      {  thisType fst(source);
-         auto divResult(fst); divResult /= value;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= value; fst -= multResult;
-         return fst;
+   friend thisType fmod(unsigned int asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
       }
-   friend thisType fmod(unsigned short source, const thisType& value)
-      {  thisType fst(source);
-         auto divResult(fst); divResult /= value;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= value; fst -= multResult;
-         return fst;
+   friend thisType fmod(int asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
       }
-   friend thisType fmod(short source, const thisType& value)
-      {  thisType fst(source);
-         auto divResult(fst); divResult /= value;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= value; fst -= multResult;
-         return fst;
+   friend thisType fmod(unsigned short asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
       }
-   friend thisType fmod(const thisType& source, long double value)
-      {  auto divResult(source); thisType snd(value); divResult /= snd;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= snd; multResult -= source; multResult.oppositeAssign();
-         return multResult;
+   friend thisType fmod(short asource, const thisType& value)
+      {  thisType source(asource);
+         source.continuousFlow(
+               [](thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value; source -= multResult;
+               },
+               source, value);
+         return source;
       }
-   friend thisType fmod(const thisType& source, double value)
-      {  auto divResult(source); thisType snd(value); divResult /= snd;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= snd; multResult -= source; multResult.oppositeAssign();
-         return multResult;
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType fmod(const thisType& source, const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
       }
-   friend thisType fmod(const thisType& source, float value)
-      {  auto divResult(source); thisType snd(value); divResult /= snd;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= snd; multResult -= source; multResult.oppositeAssign();
-         return multResult;
+   friend thisType fmod(const thisType& source, long double avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
       }
-   friend thisType fmod(const thisType& source, unsigned long value)
-      {  auto divResult(source); thisType snd(value); divResult /= snd;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= snd; multResult -= source; multResult.oppositeAssign();
-         return multResult;
+   friend thisType fmod(const thisType& source, double avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
       }
-   friend thisType fmod(const thisType& source, long value)
-      {  auto divResult(source); thisType snd(value); divResult /= snd;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= snd; multResult -= source; multResult.oppositeAssign();
-         return multResult;
+   friend thisType fmod(const thisType& source, float avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
       }
-   friend thisType fmod(const thisType& source, unsigned int value)
-      {  auto divResult(source); thisType snd(value); divResult /= snd;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= snd; multResult -= source; multResult.oppositeAssign();
-         return multResult;
+   friend thisType fmod(const thisType& source, unsigned long avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
       }
-   friend thisType fmod(const thisType& source, int value)
-      {  auto divResult(source); thisType snd(value); divResult /= snd;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= snd; multResult -= source; multResult.oppositeAssign();
-         return multResult;
+   friend thisType fmod(const thisType& source, long avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
       }
-   friend thisType fmod(const thisType& source, unsigned short value)
-      {  auto divResult(source); thisType snd(value); divResult /= snd;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= snd; multResult -= source; multResult.oppositeAssign();
-         return multResult;
+   friend thisType fmod(const thisType& source, unsigned int avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
       }
-   friend thisType fmod(const thisType& source, short value)
-      {  auto divResult(source); thisType snd(value); divResult /= snd;
-         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
-         multResult *= snd; multResult -= source; multResult.oppositeAssign();
-         return multResult;
+   friend thisType fmod(const thisType& source, int avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
+      }
+   friend thisType fmod(const thisType& source, unsigned short avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
+      }
+   friend thisType fmod(const thisType& source, short avalue)
+      {  thisType value(avalue);
+         thisType result;
+         result.continuousFlow(
+               [](thisType& multResult, const thisType& source, const thisType& value)
+               {  auto divResult(source); divResult /= value;
+                  multResult = thisType(divResult.asInt(thisType::ReadParametersBase::RMZero));
+                  multResult *= value;
+                  multResult -= source;
+                  multResult.oppositeAssign();
+               },
+               source, value);
+         return result;
       }
 
    friend int fld_finite(const thisType& source) { return tfinite(source.asImplementation()); }

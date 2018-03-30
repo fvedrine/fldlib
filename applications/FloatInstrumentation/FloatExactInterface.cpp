@@ -88,8 +88,8 @@ ExecutionPath::setSupportAtomic() {
 }
 
 void
-ExecutionPath::setSupportUnstableInLoop() {
-   DDoubleExact::ExecutionPath::setSupportUnstableInLoop();
+ExecutionPath::setSupportUnstableInLoop(bool value) {
+   DDoubleExact::ExecutionPath::setSupportUnstableInLoop(value);
 }
 
 void
@@ -152,6 +152,12 @@ void
 ExecutionPath::clearFollowFlow() {
    DDoubleExact::ExecutionPath::clearFollowFlow();
 }
+
+bool
+ExecutionPath::doesSupportUnstableInLoop() {
+   return DDoubleExact::ExecutionPath::doesSupportUnstableInLoop();
+}
+
 // end of float loop unstable
 
 #if defined __GNUC__ && GCC_VERSION >= 50000
