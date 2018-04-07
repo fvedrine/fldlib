@@ -1359,6 +1359,260 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
 }
 
 DefineEquationTemplateHeader(URealBitsNumber)
+DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)&
+DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::multAssign(
+      const thisType& source, typename Equation::PolicyCall policyCall) {
+   if (this == &source) {
+      thisType sourceCopy(source);
+      return multAssign(sourceCopy, Equation::PCSourceXValue);
+   }
+   updateLocalState();
+   GuardStateZonotope sourceGuard(source, true /* isConstEquation*/, policyCall == Equation::PCSourceXValue);
+   // const_cast<thisType&>(source).updateLocalState();
+   bool hasReal = doesComputeReal() && source.doesComputeReal();
+   if (!hasReal)
+      mergeComputeReal(source);
+   if (doesComputeError() && source.doesComputeError()) {
+      if (hasReal) {
+         if ((source.eRealDomain.getCentral().isZero() && source.eRealDomain.isEmpty()
+                  && source.eError.getCentral().isZero() && source.eError.isEmpty())
+               || (eRealDomain.getCentral().isZero() && eRealDomain.isEmpty()
+                  && eError.getCentral().isZero() && eError.isEmpty()))
+            eError.clear();
+         else {
+            Equation error(eError);
+            error.multAssign(source.eError, Equation::PCSourceRValue,
+                  symbolsManager(), TypeBaseFloatAffine::doesAbsorbHighLevel());
+            eError.multAssign(source.eRealDomain, Equation::PCSourceRValue, symbolsManager());
+            eError.plusAssign(error, Equation::PCSourceXValue, symbolsManager());
+            if (policyCall == Equation::PCSourceXValue)
+               error.swap(const_cast<EquationHolder&>(source.eError));
+            else
+               error = source.eError;
+            error.multAssign(eRealDomain, Equation::PCSourceRValue, symbolsManager());
+            eError.plusAssign(error, Equation::PCSourceXValue, symbolsManager());
+         };
+      }
+      else if (source.doesComputeReal()) {
+         Equation error(source.eRealDomain);
+         error.plusAssign(source.eError, policyCall, symbolsManager());
+         eError.multAssign(error, Equation::PCSourceXValue, symbolsManager());
+      }
+      else {
+         if ((source.eError.getCentral().isZero() && source.eError.isEmpty())
+               || (eError.getCentral().isZero() && eError.isEmpty())) {
+            bool isNegative = eError.getCentral().isNegative();
+            eError.clear();
+            eError.getSCentral().setNegative(isNegative != source.eError.getCentral().isNegative());
+         }
+         else
+            eError.multAssign(source.eError, policyCall, symbolsManager());
+      };
+   }
+   else
+      mergeComputeError(source);
+   if (hasReal) {
+      if ((source.eRealDomain.getCentral().isZero() && source.eRealDomain.isEmpty())
+            || (eRealDomain.getCentral().isZero() && eRealDomain.isEmpty())) {
+         bool isNegative = eRealDomain.getCentral().isNegative();
+         eRealDomain.clear();
+         eRealDomain.getSCentral().setNegative(isNegative != source.eRealDomain.getCentral().isNegative());
+      }
+      else
+         eRealDomain.multAssign(source.eRealDomain, policyCall, symbolsManager());
+   };
+   return *this;
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)&
+DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::divAssign(
+      const thisType& source, typename Equation::PolicyCall policyCall) {
+   if (this == &source) {
+      thisType sourceCopy(source);
+      return divAssign(sourceCopy, Equation::PCSourceXValue);
+   }
+   updateLocalState();
+   GuardStateZonotope sourceGuard(source, true /* isConstEquation*/, policyCall == Equation::PCSourceXValue);
+   // const_cast<thisType&>(source).updateLocalState();
+   bool hasReal = doesComputeReal() && source.doesComputeReal();
+   if (!hasReal)
+      mergeComputeReal(source);
+   auto& symbolsManager = thisType::symbolsManager();
+   if (doesComputeError() && source.doesComputeError()) {
+      if (hasTopReal() || source.hasTopReal())
+         mergeTopError();
+      else if (hasReal) {
+         if (source.eRealDomain.getCentral().isZero() && source.eRealDomain.isEmpty()
+               && source.eError.getCentral().isZero() && source.eError.isEmpty()) {
+            Equation error(eRealDomain);
+            error.plusAssign(eError, Equation::PCSourceRValue, symbolsManager);
+            BuiltReal min, max;
+            error.retrieveBound(min, max, false /* hasExternalCoefficient */);
+            if (source.eRealDomain.getCentral().isNegative()
+                  != source.eError.getCentral().isNegative())
+               mergeTopError();
+            else if (min.isPositive() || max.isNegative()) {
+               if (min.isZero() && max.isZero() && min.isNegative() == max.isNegative())
+                  eError.clear();
+               else if (!min.isZero())
+                  eError.clear();
+               else if (!max.isZero())
+                  eError.clear();
+               else
+                  mergeTopError();
+            }
+            else
+               mergeTopError();
+         }
+         else {
+            // (x+e)/(y+e') = x/y + (e*y-x*e')/y*(y+e')
+            Equation error(source.eError);
+            error.multAssign(eRealDomain, Equation::PCSourceRValue, symbolsManager);
+            eError.multAssign(source.eRealDomain, Equation::PCSourceRValue, symbolsManager);
+            eError.minusAssign(error, Equation::PCSourceXValue, symbolsManager);
+            if (!eError.divAssign(source.eRealDomain, Equation::PCSourceRValue, symbolsManager))
+               mergeTopError();
+            else {
+               Equation divide(source.eRealDomain);
+               divide.plusAssign(source.eError, policyCall, symbolsManager);
+               if (!eError.divAssign(divide, Equation::PCSourceXValue, symbolsManager))
+                  mergeTopError();
+            };
+         };
+      }
+      else if (source.doesComputeReal()) {
+         Equation error(source.eRealDomain);
+         error.plusAssign(source.eError, policyCall, symbolsManager);
+         if (!eError.divAssign(error, Equation::PCSourceXValue, symbolsManager))
+            mergeTopError();
+      }
+      else {
+         if (source.eError.getCentral().isZero() && source.eError.isEmpty()) {
+            BuiltReal min, max;
+            eError.retrieveBound(min, max, false /* hasExternalCoefficient */);
+            if (min.isPositive() || max.isNegative()) {
+               if (min.isZero() && max.isZero() && min.isNegative() == max.isNegative()) {
+                  eError.clear();
+                  eError.getSCentral().setSNaN();
+               }
+               else if (!min.isZero()) {
+                  eError.clear();
+                  if (source.eError.getCentral().isPositive())
+                     eError.getSCentral().setPlusInfty();
+                  else
+                     eError.getSCentral().setMinusInfty();
+               }
+               else if (!max.isZero()) {
+                  eError.clear();
+                  if (source.eError.getCentral().isPositive())
+                     eError.getSCentral().setMinusInfty();
+                  else
+                     eError.getSCentral().setPlusInfty();
+               }
+               else
+                  mergeTopError();
+            }
+            else
+               mergeTopError();
+         }
+         else if (!eError.divAssign(source.eError, policyCall, symbolsManager))
+            mergeTopError();
+      };
+   }
+   else
+      mergeComputeError(source);
+   if (hasReal) {
+      if (source.eRealDomain.getCentral().isZero() && source.eRealDomain.isEmpty()) {
+         BuiltReal min, max;
+         eRealDomain.retrieveBound(min, max, false /* hasExternalCoefficient */);
+         if (min.isPositive() || max.isNegative()) {
+            if (min.isZero() && max.isZero() && min.isNegative() == max.isNegative()) {
+               eRealDomain.clear();
+               eRealDomain.getSCentral().setSNaN();
+               eRealDomain.getSCentral().setNegative(min.isNegative() != source.eRealDomain.getCentral().isNegative());
+            }
+            else if (!min.isZero()) {
+               eRealDomain.clear();
+               if (source.eRealDomain.getCentral().isPositive())
+                  eRealDomain.getSCentral().setPlusInfty();
+               else
+                  eRealDomain.getSCentral().setMinusInfty();
+            }
+            else if (!max.isZero()) {
+               eRealDomain.clear();
+               if (source.eRealDomain.getCentral().isPositive())
+                  eRealDomain.getSCentral().setMinusInfty();
+               else
+                  eRealDomain.getSCentral().setPlusInfty();
+            }
+            else
+               mergeTopReal();
+         }
+         else
+            mergeTopReal();
+      }
+      else if (!eRealDomain.divAssign(source.eRealDomain, policyCall, symbolsManager))
+         mergeTopReal();
+   };
+   return *this;
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+void
+DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::inverseAssign() {
+   updateLocalState();
+   bool hasReal = doesComputeReal();
+   auto& symbolsManager = thisType::symbolsManager();
+   if (doesComputeError()) {
+      if (hasReal) {
+         if (eRealDomain.getCentral().isZero() && eRealDomain.isEmpty()
+               && eError.getCentral().isZero() && eError.isEmpty()) {
+            if (eRealDomain.getCentral().isNegative()
+                  != eError.getCentral().isNegative())
+               mergeTopError();
+            else
+               eError.clear();
+         }
+         else {
+            // 1/(x+e) = 1/x - e/x*(x+e)
+            eError.oppositeAssign();
+            Equation divide(eRealDomain);
+            divide.minusAssign(eError, Equation::PCSourceRValue, symbolsManager);
+            if (!eError.divAssign(eRealDomain, Equation::PCSourceRValue, symbolsManager))
+               mergeTopError();
+            else if (!eError.divAssign(divide, Equation::PCSourceXValue, symbolsManager))
+               mergeTopError();
+         };
+      }
+      else if (hasNoReal()) {
+         if (eError.getCentral().isZero() && eError.isEmpty()) {
+            eError.clear();
+            if (eError.getCentral().isPositive())
+               eError.getSCentral().setPlusInfty();
+            else
+               eError.getSCentral().setMinusInfty();
+         }
+         else if (!eError.inverseAssign(symbolsManager))
+            mergeTopError();
+      }
+      else
+         mergeTopError();
+   };
+   if (hasReal) {
+      if (eRealDomain.getCentral().isZero() && eRealDomain.isEmpty()) {
+         eRealDomain.clear();
+         if (eRealDomain.getCentral().isPositive())
+            eRealDomain.getSCentral().setPlusInfty();
+         else
+            eRealDomain.getSCentral().setMinusInfty();
+      }
+      else if (!eRealDomain.inverseAssign(symbolsManager))
+         mergeTopReal();
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
 void
 DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sqrtAssign() {
    updateLocalState();

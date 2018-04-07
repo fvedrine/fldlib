@@ -613,125 +613,13 @@ class DefineBaseFloatZonotope : public TypeBaseFloatAffine {
       {  return minusAssign(source, Equation::PCSourceRValue); }
    thisType& operator-=(thisType&& source)
       {  return minusAssign(source, Equation::PCSourceXValue); }
-   thisType& multAssign(const thisType& source, typename Equation::PolicyCall policyCall)
-      {  if (this == &source) {
-            thisType sourceCopy(source);
-            return multAssign(sourceCopy, Equation::PCSourceXValue);
-         }
-         updateLocalState();
-         GuardStateZonotope sourceGuard(source, true /* isConstEquation*/, policyCall == Equation::PCSourceXValue);
-         // const_cast<thisType&>(source).updateLocalState();
-         bool hasReal = doesComputeReal() && source.doesComputeReal();
-         if (!hasReal)
-            mergeComputeReal(source);
-         if (doesComputeError() && source.doesComputeError()) {
-            if (hasReal) {
-               Equation error(eError);
-               error.multAssign(source.eError, Equation::PCSourceRValue,
-                     symbolsManager(), TypeBaseFloatAffine::doesAbsorbHighLevel());
-               eError.multAssign(source.eRealDomain, Equation::PCSourceRValue, symbolsManager());
-               eError.plusAssign(error, Equation::PCSourceXValue, symbolsManager());
-               if (policyCall == Equation::PCSourceXValue)
-                  error.swap(const_cast<EquationHolder&>(source.eError));
-               else
-                  error = source.eError;
-               error.multAssign(eRealDomain, Equation::PCSourceRValue, symbolsManager());
-               eError.plusAssign(error, Equation::PCSourceXValue, symbolsManager());
-            }
-            else if (source.doesComputeReal()) {
-               Equation error(source.eRealDomain);
-               error.plusAssign(source.eError, policyCall, symbolsManager());
-               eError.multAssign(error, Equation::PCSourceXValue, symbolsManager());
-            }
-            else
-               eError.multAssign(source.eError, policyCall, symbolsManager());
-         }
-         else
-            mergeComputeError(source);
-         if (hasReal)
-            eRealDomain.multAssign(source.eRealDomain, policyCall, symbolsManager());
-         return *this;
-      }
+   thisType& multAssign(const thisType& source, typename Equation::PolicyCall policyCall);
    thisType& operator*=(const thisType& source)
       {  return multAssign(source, Equation::PCSourceRValue); }
    thisType& operator*=(thisType&& source)
       {  return multAssign(source, Equation::PCSourceXValue); }
-   thisType& divAssign(const thisType& source, typename Equation::PolicyCall policyCall)
-      {  if (this == &source) {
-            thisType sourceCopy(source);
-            return divAssign(sourceCopy, Equation::PCSourceXValue);
-         }
-         updateLocalState();
-         GuardStateZonotope sourceGuard(source, true /* isConstEquation*/, policyCall == Equation::PCSourceXValue);
-         // const_cast<thisType&>(source).updateLocalState();
-         bool hasReal = doesComputeReal() && source.doesComputeReal();
-         if (!hasReal)
-            mergeComputeReal(source);
-         auto& symbolsManager = thisType::symbolsManager();
-         if (doesComputeError() && source.doesComputeError()) {
-            if (hasTopReal() || source.hasTopReal())
-               mergeTopError();
-            else if (hasReal) {
-               // (x+e)/(y+e') = x/y + (e*y-x*e')/y*(y+e')
-               Equation error(source.eError);
-               error.multAssign(eRealDomain, Equation::PCSourceRValue, symbolsManager);
-               eError.multAssign(source.eRealDomain, Equation::PCSourceRValue, symbolsManager);
-               eError.minusAssign(error, Equation::PCSourceXValue, symbolsManager);
-               if (!eError.divAssign(source.eRealDomain, Equation::PCSourceRValue, symbolsManager))
-                  mergeTopError();
-               else {
-                  Equation divide(source.eRealDomain);
-                  divide.plusAssign(source.eError, policyCall, symbolsManager);
-                  if (!eError.divAssign(divide, Equation::PCSourceXValue, symbolsManager))
-                     mergeTopError();
-               };
-            }
-            else if (source.doesComputeReal()) {
-               Equation error(source.eRealDomain);
-               error.plusAssign(source.eError, policyCall, symbolsManager);
-               if (!eError.divAssign(error, Equation::PCSourceXValue, symbolsManager))
-                  mergeTopError();
-            }
-            else {
-               if (!eError.divAssign(source.eError, policyCall, symbolsManager))
-                  mergeTopError();
-            };
-         }
-         else
-            mergeComputeError(source);
-         if (hasReal) {
-            if (!eRealDomain.divAssign(source.eRealDomain, policyCall, symbolsManager))
-               mergeTopReal();
-         };
-         return *this;
-      }
-   void inverseAssign()
-      {  updateLocalState();
-         bool hasReal = doesComputeReal();
-         auto& symbolsManager = thisType::symbolsManager();
-         if (doesComputeError()) {
-            if (hasReal) {
-               // 1/(x+e) = 1/x - e/x*(x+e)
-               eError.oppositeAssign();
-               Equation divide(eRealDomain);
-               divide.minusAssign(eError, Equation::PCSourceRValue, symbolsManager);
-               if (!eError.divAssign(eRealDomain, Equation::PCSourceRValue, symbolsManager))
-                  mergeTopError();
-               else if (!eError.divAssign(divide, Equation::PCSourceXValue, symbolsManager))
-                  mergeTopError();
-            }
-            else if (hasNoReal()) {
-               if (!eError.inverseAssign(symbolsManager))
-                  mergeTopError();
-            }
-            else
-               mergeTopError();
-         };
-         if (hasReal) {
-            if (!eRealDomain.inverseAssign(symbolsManager))
-               mergeTopReal();
-         };
-      }
+   thisType& divAssign(const thisType& source, typename Equation::PolicyCall policyCall);
+   void inverseAssign();
    thisType& operator/=(const thisType& source)
       {  return divAssign(source, Equation::PCSourceRValue); }
    thisType& operator/=(thisType&& source)

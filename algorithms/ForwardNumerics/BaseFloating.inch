@@ -656,6 +656,19 @@ class DefineBuiltDouble : protected DDouble::Access, protected TypeTraits {
    void setInfty() { fNegative = false; biExponent = TypeTraits::getInftyExponent(biExponent); biMantissa.clear(); }
    void setPlusInfty() { fNegative = false; biExponent = TypeTraits::getInftyExponent(biExponent); biMantissa.clear(); }
    void setMinusInfty() { fNegative = true; biExponent = TypeTraits::getInftyExponent(biExponent); biMantissa.clear(); }
+   void setSNaN()
+      {  fNegative = true;
+         biExponent = TypeTraits::getInftyExponent(biExponent);
+         biMantissa.clear();
+         biMantissa.neg();
+         biMantissa.setFalseBitArray(bitSizeMantissa()-1);
+      } 
+   void setQNaN()
+      {  fNegative = true;
+         biExponent = TypeTraits::getInftyExponent(biExponent);
+         biMantissa.clear();
+         biMantissa.setTrueBitArray(bitSizeMantissa()-1);
+      } 
    void setZero() { fNegative = false; biExponent.clear(); biMantissa.clear(); }
    void setOne() { fNegative = false; biExponent = TypeTraits::getZeroExponent(biExponent); biMantissa.clear(); }
    void setExponent(const typename TypeTraits::Exponent& exponent, bool isNegative = false)
