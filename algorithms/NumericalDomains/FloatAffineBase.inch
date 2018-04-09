@@ -571,18 +571,49 @@ class DefineBaseFloatZonotope : public TypeBaseFloatAffine {
          return isGreaterThan(source, hasMultiple, true);
       }
 
+   template <class TypeReal>
+   static void performInftyNaNComputation(Equation& thisEquation, const Equation& sourceEquation,
+         TypeReal& (TypeReal::*assignOperation)(const TypeReal&, typename TypeReal::ReadParameters&), 
+         typename TypeReal::ReadParameters& nearestParams)
+      {  if (!thisEquation.getCentral().isInftyExponent())
+            thisEquation.clear();
+         (thisEquation.getSCentral().*assignOperation)(sourceEquation.getCentral(), nearestParams);
+         nearestParams.clear();
+      }
+   template <class TypeReal>
+   static void performInftyNaNComputation(Equation& thisEquation,
+         TypeReal& (TypeReal::*assignOperation)(typename TypeReal::ReadParameters&), 
+         typename TypeReal::ReadParameters& nearestParams)
+      {  (thisEquation.getSCentral().*assignOperation)(nearestParams);
+         nearestParams.clear();
+      }
+   template <class TypeReal, class TypeDouble>
+   static void performInftyNaNComputationWithError(Equation& thisEquation,
+         void (TypeReal::*assignOperation)(TypeDouble&, TypeDouble&, typename TypeReal::ReadParameters&), 
+         typename TypeReal::ReadParameters& nearestParams)
+      {  TypeDouble minError, maxError;
+         (thisEquation.getSCentral().*assignOperation)(minError, maxError, nearestParams);
+         nearestParams.clear();
+      }
    thisType& plusAssign(const thisType& source, typename Equation::PolicyCall policyCall)
       {  updateLocalState();
          GuardStateZonotope sourceGuard(source, true /* isConstEquation*/, policyCall == Equation::PCSourceXValue);
          // const_cast<thisType&>(source).updateLocalState();
-         if (doesComputeReal() && source.doesComputeReal())
-            eRealDomain.plusAssign(source.eRealDomain, policyCall, symbolsManager());
+         if (doesComputeReal() && source.doesComputeReal()) {
+            if (eRealDomain.getCentral().isInftyExponent() || source.eRealDomain.getCentral().isInftyExponent())
+               performInftyNaNComputation(eRealDomain, source.eRealDomain, &BuiltReal::plusAssignDouble, TypeBaseFloatAffine::nearestParams());
+            else
+               eRealDomain.plusAssign(source.eRealDomain, policyCall, symbolsManager());
+         }
          else
             mergeComputeReal(source);
          if (doesComputeError() && source.doesComputeError()) {
             if (source.doesComputeReal() && !doesComputeReal())
                eError.plusAssign(source.eRealDomain, policyCall, symbolsManager());
-            eError.plusAssign(source.eError, policyCall, symbolsManager());
+            if (eError.getCentral().isInftyExponent() || source.eError.getCentral().isInftyExponent())
+               performInftyNaNComputation(eError, source.eError, &BuiltReal::plusAssignDouble, TypeBaseFloatAffine::nearestParams());
+            else
+               eError.plusAssign(source.eError, policyCall, symbolsManager());
          }
          else
             mergeComputeError(source);
@@ -596,14 +627,21 @@ class DefineBaseFloatZonotope : public TypeBaseFloatAffine {
       {  updateLocalState();
          GuardStateZonotope sourceGuard(source, true /* isConstEquation*/, policyCall == Equation::PCSourceXValue);
          // const_cast<thisType&>(source).updateLocalState();
-         if (doesComputeReal() && source.doesComputeReal())
-            eRealDomain.minusAssign(source.eRealDomain, policyCall, symbolsManager());
+         if (doesComputeReal() && source.doesComputeReal()) {
+            if (eRealDomain.getCentral().isInftyExponent() || source.eRealDomain.getCentral().isInftyExponent())
+               performInftyNaNComputation(eRealDomain, source.eRealDomain, &BuiltReal::minusAssignDouble, TypeBaseFloatAffine::nearestParams());
+            else
+               eRealDomain.minusAssign(source.eRealDomain, policyCall, symbolsManager());
+         }
          else
             mergeComputeReal(source);
          if (doesComputeError() && source.doesComputeError()) {
             if (source.doesComputeReal() && !doesComputeReal())
                eError.minusAssign(source.eRealDomain, policyCall, symbolsManager());
-            eError.minusAssign(source.eError, policyCall, symbolsManager());
+            if (eError.getCentral().isInftyExponent() || source.eError.getCentral().isInftyExponent())
+               performInftyNaNComputation(eError, source.eError, &BuiltReal::minusAssignDouble, TypeBaseFloatAffine::nearestParams());
+            else
+               eError.minusAssign(source.eError, policyCall, symbolsManager());
          }
          else
             mergeComputeError(source);

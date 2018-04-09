@@ -357,7 +357,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
          if (!hasTopError()) {
             if (!maxWithError.isZero() && maxWithError.isNegative())
                return true;
-            if (minWithError.isZero() || minWithError.isPositive())
+            if (minWithError.isZero() || minWithError.isPositive()
+                  || (minWithError.isNaN() && maxWithError.isNaN()))
                errorChoice = TypeBaseFloatAffine::BCFalse;
          };
       }
@@ -365,13 +366,14 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
          return true;
    };
    if (realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal()
-         && (min.isZero() || min.isPositive())) {
+         && (min.isZero() || min.isPositive() || (min.isNaN() && max.isNaN()))) {
       realChoice = TypeBaseFloatAffine::BCFalse;
       if (!doesAssumeErrorValue) {
          if (errorChoice == TypeBaseFloatAffine::BCNone)
             return false;
          if (!hasTopError()) {
-            if (minWithError.isZero() || minWithError.isPositive())
+            if (minWithError.isZero() || minWithError.isPositive()
+                  || (minWithError.isNaN() && maxWithError.isNaN()))
                return false;
             if (!maxWithError.isZero() && maxWithError.isNegative())
                errorChoice = TypeBaseFloatAffine::BCTrue;
@@ -384,7 +386,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
       if (errorChoice != TypeBaseFloatAffine::BCNone) {
          if (realChoice == TypeBaseFloatAffine::BCNone) {
             if (!hasTopError()) {
-               if ((minWithError.isZero() || minWithError.isPositive()))
+               if (minWithError.isZero() || minWithError.isPositive()
+                        || (minWithError.isNaN() && maxWithError.isNaN()))
                   return false;
                else if (!maxWithError.isZero() && maxWithError.isNegative())
                   return true;
@@ -392,7 +395,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
          }
          else if (realChoice == TypeBaseFloatAffine::BCTop) {
             if (!hasTopError()) {
-               if (minWithError.isZero() || minWithError.isPositive())
+               if (minWithError.isZero() || minWithError.isPositive()
+                     || (minWithError.isNaN() && maxWithError.isNaN()))
                   errorChoice = TypeBaseFloatAffine::BCFalse;
                else if (!maxWithError.isZero() && maxWithError.isNegative())
                   errorChoice = TypeBaseFloatAffine::BCTrue;
@@ -622,7 +626,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
          if (!hasTopError()) {
             if (maxWithError.isZero() || maxWithError.isNegative())
                return true;
-            if (!minWithError.isZero() && minWithError.isPositive())
+            if ((!minWithError.isZero() && minWithError.isPositive())
+                  || (minWithError.isNaN() && maxWithError.isNaN()))
                errorChoice = TypeBaseFloatAffine::BCFalse;
          }
       }
@@ -630,13 +635,14 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
          return true;
    };
    if (realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal()
-         && (!min.isZero() && min.isPositive())) {
+         && ((!min.isZero() && min.isPositive()) || (min.isNaN() && max.isNaN()))) {
       realChoice = TypeBaseFloatAffine::BCFalse;
       if (!doesAssumeErrorValue) {
          if (errorChoice == TypeBaseFloatAffine::BCNone)
             return false;
          if (!hasTopError()) {
-            if (!minWithError.isZero() && minWithError.isPositive())
+            if ((!minWithError.isZero() && minWithError.isPositive())
+                  || (minWithError.isNaN() && maxWithError.isNaN()))
                return false;
             if (maxWithError.isZero() || maxWithError.isNegative())
                errorChoice = TypeBaseFloatAffine::BCTrue;
@@ -649,7 +655,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
       if (errorChoice != TypeBaseFloatAffine::BCNone) {
          if (realChoice == TypeBaseFloatAffine::BCNone) {
             if (!hasTopError()) {
-               if (!minWithError.isZero() && minWithError.isPositive())
+               if ((!minWithError.isZero() && minWithError.isPositive())
+                     || (minWithError.isNaN() && maxWithError.isNaN()))
                   return false;
                else if (maxWithError.isZero() || maxWithError.isNegative())
                   return true;
@@ -657,7 +664,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
          }
          else if (realChoice == TypeBaseFloatAffine::BCTop) {
             if (!hasTopError()) {
-               if (!minWithError.isZero() && minWithError.isPositive())
+               if ((!minWithError.isZero() && minWithError.isPositive())
+                     || (minWithError.isNaN() && maxWithError.isNaN()))
                   errorChoice = TypeBaseFloatAffine::BCFalse;
                else if (maxWithError.isZero() || maxWithError.isNegative())
                   errorChoice = TypeBaseFloatAffine::BCTrue;
@@ -887,7 +895,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
          if (!hasTopError()) {
             if (maxWithError.isZero() || maxWithError.isNegative())
                return true;
-            if (!minWithError.isZero() && minWithError.isPositive())
+            if ((!minWithError.isZero() && minWithError.isPositive())
+                  || (minWithError.isNaN() && maxWithError.isNaN()))
                errorChoice = TypeBaseFloatAffine::BCFalse;
          };
       }
@@ -895,13 +904,14 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
          return true;
    };
    if (realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal()
-         && (!max.isZero() && max.isNegative())) {
+         && ((!max.isZero() && max.isNegative()) || (min.isNaN() && max.isNaN()))) {
       realChoice = TypeBaseFloatAffine::BCFalse;
       if (!doesAssumeErrorValue) {
          if (errorChoice == TypeBaseFloatAffine::BCNone)
             return false;
          if (!hasTopError()) {
-            if (!maxWithError.isZero() && maxWithError.isNegative())
+            if ((!maxWithError.isZero() && maxWithError.isNegative())
+                  || (minWithError.isNaN() && maxWithError.isNaN()))
                return false;
             if (minWithError.isZero() || minWithError.isPositive())
                errorChoice = TypeBaseFloatAffine::BCTrue;
@@ -914,7 +924,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
       if (errorChoice != TypeBaseFloatAffine::BCNone) {
          if (realChoice == TypeBaseFloatAffine::BCNone) {
             if (!hasTopError()) {
-               if (!maxWithError.isZero() && maxWithError.isNegative())
+               if ((!maxWithError.isZero() && maxWithError.isNegative())
+                     || (minWithError.isNaN() && maxWithError.isNaN()))
                   return false;
                else if (minWithError.isZero() || minWithError.isPositive())
                   return true;
@@ -922,7 +933,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
          }
          else if (realChoice == TypeBaseFloatAffine::BCTop) {
             if (!hasTopError()) {
-               if (!maxWithError.isZero() && maxWithError.isNegative())
+               if ((!maxWithError.isZero() && maxWithError.isNegative())
+                     || (minWithError.isNaN() && maxWithError.isNaN()))
                   errorChoice = TypeBaseFloatAffine::BCFalse;
                else if (minWithError.isZero() || minWithError.isPositive())
                   errorChoice = TypeBaseFloatAffine::BCTrue;
@@ -1152,7 +1164,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
          if (!hasTopError()) {
             if (!minWithError.isZero() && minWithError.isPositive())
                return true;
-            if (maxWithError.isZero() || maxWithError.isNegative())
+            if (maxWithError.isZero() || maxWithError.isNegative()
+                  || (minWithError.isNaN() && maxWithError.isNaN()))
                errorChoice = TypeBaseFloatAffine::BCFalse;
          };
       }
@@ -1160,13 +1173,14 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
          return true;
    };
    if (realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal()
-         && (max.isZero() || max.isNegative())) {
+         && (max.isZero() || max.isNegative() || (min.isNaN() && max.isNaN()))) {
       realChoice = TypeBaseFloatAffine::BCFalse;
       if (!doesAssumeErrorValue) {
          if (errorChoice == TypeBaseFloatAffine::BCNone)
             return false;
          if (!hasTopError()) {
-            if (maxWithError.isZero() || maxWithError.isNegative())
+            if (maxWithError.isZero() || maxWithError.isNegative()
+                  || (minWithError.isNaN() && maxWithError.isNaN()))
                return false;
             if (!minWithError.isZero() && minWithError.isPositive())
                errorChoice = TypeBaseFloatAffine::BCTrue;
@@ -1179,7 +1193,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
       if (errorChoice != TypeBaseFloatAffine::BCNone) {
          if (realChoice == TypeBaseFloatAffine::BCNone) {
             if (!hasTopError()) {
-               if (maxWithError.isZero() || maxWithError.isNegative())
+               if (maxWithError.isZero() || maxWithError.isNegative()
+                     || (minWithError.isNaN() && maxWithError.isNaN()))
                   return false;
                else if (!minWithError.isZero() && minWithError.isPositive())
                   return true;
@@ -1187,7 +1202,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
          }
          else if (realChoice == TypeBaseFloatAffine::BCTop) {
             if (!hasTopError()) {
-               if (maxWithError.isZero() || maxWithError.isNegative())
+               if (maxWithError.isZero() || maxWithError.isNegative()
+                     || (minWithError.isNaN() && maxWithError.isNaN()))
                   errorChoice = TypeBaseFloatAffine::BCFalse;
                else if (!minWithError.isZero() && minWithError.isPositive())
                   errorChoice = TypeBaseFloatAffine::BCTrue;
@@ -1370,11 +1386,16 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::multA
    GuardStateZonotope sourceGuard(source, true /* isConstEquation*/, policyCall == Equation::PCSourceXValue);
    // const_cast<thisType&>(source).updateLocalState();
    bool hasReal = doesComputeReal() && source.doesComputeReal();
+   bool hasInftyExponent = false;
    if (!hasReal)
       mergeComputeReal(source);
    if (doesComputeError() && source.doesComputeError()) {
       if (hasReal) {
-         if ((source.eRealDomain.getCentral().isZero() && source.eRealDomain.isEmpty()
+         if (eRealDomain.getCentral().isInftyExponent() || source.eRealDomain.getCentral().isInftyExponent()) {
+            performInftyNaNComputation(eRealDomain, source.eRealDomain, &BuiltReal::multAssignDouble, TypeBaseFloatAffine::nearestParams());
+            hasInftyExponent = true;
+         }
+         else if ((source.eRealDomain.getCentral().isZero() && source.eRealDomain.isEmpty()
                   && source.eError.getCentral().isZero() && source.eError.isEmpty())
                || (eRealDomain.getCentral().isZero() && eRealDomain.isEmpty()
                   && eError.getCentral().isZero() && eError.isEmpty()))
@@ -1396,10 +1417,19 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::multA
       else if (source.doesComputeReal()) {
          Equation error(source.eRealDomain);
          error.plusAssign(source.eError, policyCall, symbolsManager());
-         eError.multAssign(error, Equation::PCSourceXValue, symbolsManager());
+         if (eError.getCentral().isInftyExponent() || error.getCentral().isInftyExponent()) {
+            performInftyNaNComputation(eError, error, &BuiltReal::multAssignDouble, TypeBaseFloatAffine::nearestParams());
+            hasInftyExponent = true;
+         }
+         else
+            eError.multAssign(error, Equation::PCSourceXValue, symbolsManager());
       }
       else {
-         if ((source.eError.getCentral().isZero() && source.eError.isEmpty())
+         if (eError.getCentral().isInftyExponent() || source.eError.getCentral().isInftyExponent()) {
+            performInftyNaNComputation(eError, source.eError, &BuiltReal::multAssignDouble, TypeBaseFloatAffine::nearestParams());
+            hasInftyExponent = true;
+         }
+         else if ((source.eError.getCentral().isZero() && source.eError.isEmpty())
                || (eError.getCentral().isZero() && eError.isEmpty())) {
             bool isNegative = eError.getCentral().isNegative();
             eError.clear();
@@ -1412,7 +1442,11 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::multA
    else
       mergeComputeError(source);
    if (hasReal) {
-      if ((source.eRealDomain.getCentral().isZero() && source.eRealDomain.isEmpty())
+      if (eRealDomain.getCentral().isInftyExponent() || source.eRealDomain.getCentral().isInftyExponent()) {
+         if (!hasInftyExponent)
+            performInftyNaNComputation(eRealDomain, source.eRealDomain, &BuiltReal::multAssignDouble, TypeBaseFloatAffine::nearestParams());
+      }
+      else if ((source.eRealDomain.getCentral().isZero() && source.eRealDomain.isEmpty())
             || (eRealDomain.getCentral().isZero() && eRealDomain.isEmpty())) {
          bool isNegative = eRealDomain.getCentral().isNegative();
          eRealDomain.clear();
@@ -1436,6 +1470,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::divAs
    GuardStateZonotope sourceGuard(source, true /* isConstEquation*/, policyCall == Equation::PCSourceXValue);
    // const_cast<thisType&>(source).updateLocalState();
    bool hasReal = doesComputeReal() && source.doesComputeReal();
+   bool hasInftyExponent = false;
    if (!hasReal)
       mergeComputeReal(source);
    auto& symbolsManager = thisType::symbolsManager();
@@ -1443,7 +1478,11 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::divAs
       if (hasTopReal() || source.hasTopReal())
          mergeTopError();
       else if (hasReal) {
-         if (source.eRealDomain.getCentral().isZero() && source.eRealDomain.isEmpty()
+         if (eRealDomain.getCentral().isInftyExponent() || source.eRealDomain.getCentral().isInftyExponent()) {
+            performInftyNaNComputation(eRealDomain, source.eRealDomain, &BuiltReal::divAssignDouble, TypeBaseFloatAffine::nearestParams());
+            hasInftyExponent = true;
+         }
+         else if (source.eRealDomain.getCentral().isZero() && source.eRealDomain.isEmpty()
                && source.eError.getCentral().isZero() && source.eError.isEmpty()) {
             Equation error(eRealDomain);
             error.plusAssign(eError, Equation::PCSourceRValue, symbolsManager);
@@ -1484,11 +1523,19 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::divAs
       else if (source.doesComputeReal()) {
          Equation error(source.eRealDomain);
          error.plusAssign(source.eError, policyCall, symbolsManager);
-         if (!eError.divAssign(error, Equation::PCSourceXValue, symbolsManager))
+         if (eError.getCentral().isInftyExponent() || error.getCentral().isInftyExponent()) {
+            performInftyNaNComputation(eError, error, &BuiltReal::divAssignDouble, TypeBaseFloatAffine::nearestParams());
+            hasInftyExponent = true;
+         }
+         else if (!eError.divAssign(error, Equation::PCSourceXValue, symbolsManager))
             mergeTopError();
       }
       else {
-         if (source.eError.getCentral().isZero() && source.eError.isEmpty()) {
+         if (eError.getCentral().isInftyExponent() || source.eError.getCentral().isInftyExponent()) {
+            performInftyNaNComputation(eError, source.eError, &BuiltReal::multAssignDouble, TypeBaseFloatAffine::nearestParams());
+            hasInftyExponent = true;
+         }
+         else if (source.eError.getCentral().isZero() && source.eError.isEmpty()) {
             BuiltReal min, max;
             eError.retrieveBound(min, max, false /* hasExternalCoefficient */);
             if (min.isPositive() || max.isNegative()) {
@@ -1523,7 +1570,11 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::divAs
    else
       mergeComputeError(source);
    if (hasReal) {
-      if (source.eRealDomain.getCentral().isZero() && source.eRealDomain.isEmpty()) {
+      if (eRealDomain.getCentral().isInftyExponent() || source.eRealDomain.getCentral().isInftyExponent()) {
+         if (!hasInftyExponent)
+            performInftyNaNComputation(eRealDomain, source.eRealDomain, &BuiltReal::divAssignDouble, TypeBaseFloatAffine::nearestParams());
+      }
+      else if (source.eRealDomain.getCentral().isZero() && source.eRealDomain.isEmpty()) {
          BuiltReal min, max;
          eRealDomain.retrieveBound(min, max, false /* hasExternalCoefficient */);
          if (min.isPositive() || max.isNegative()) {
@@ -1564,9 +1615,14 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::inver
    updateLocalState();
    bool hasReal = doesComputeReal();
    auto& symbolsManager = thisType::symbolsManager();
+   bool hasInftyExponent = false;
    if (doesComputeError()) {
       if (hasReal) {
-         if (eRealDomain.getCentral().isZero() && eRealDomain.isEmpty()
+         if (eRealDomain.getCentral().isInftyExponent()) {
+            performInftyNaNComputation(eRealDomain, &BuiltReal::inverseAssign, TypeBaseFloatAffine::nearestParams());
+            hasInftyExponent = true;
+         }
+         else if (eRealDomain.getCentral().isZero() && eRealDomain.isEmpty()
                && eError.getCentral().isZero() && eError.isEmpty()) {
             if (eRealDomain.getCentral().isNegative()
                   != eError.getCentral().isNegative())
@@ -1586,7 +1642,11 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::inver
          };
       }
       else if (hasNoReal()) {
-         if (eError.getCentral().isZero() && eError.isEmpty()) {
+         if (eError.getCentral().isInftyExponent()) {
+            performInftyNaNComputation(eError, &BuiltReal::inverseAssign, TypeBaseFloatAffine::nearestParams());
+            hasInftyExponent = true;
+         }
+         else if (eError.getCentral().isZero() && eError.isEmpty()) {
             eError.clear();
             if (eError.getCentral().isPositive())
                eError.getSCentral().setPlusInfty();
@@ -1600,7 +1660,11 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::inver
          mergeTopError();
    };
    if (hasReal) {
-      if (eRealDomain.getCentral().isZero() && eRealDomain.isEmpty()) {
+      if (eRealDomain.getCentral().isInftyExponent()) {
+         if (!hasInftyExponent)
+            performInftyNaNComputation(eRealDomain, &BuiltReal::inverseAssign, TypeBaseFloatAffine::nearestParams());
+      }
+      else if (eRealDomain.getCentral().isZero() && eRealDomain.isEmpty()) {
          eRealDomain.clear();
          if (eRealDomain.getCentral().isPositive())
             eRealDomain.getSCentral().setPlusInfty();
@@ -1619,10 +1683,23 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sqrtA
    bool hasReal = false;
    bool hasError = false;
    if ((hasError = doesComputeError()) != false) {
-      if ((hasReal = doesComputeReal()) == false)
-         eError.sqrtAssign(symbolsManager());
+      if ((hasReal = doesComputeReal()) == false) {
+         if (eError.getCentral().isInftyExponent())
+            performInftyNaNComputationWithError(eError, &BuiltReal::sqrtAssign, TypeBaseFloatAffine::nearestParams());
+         else
+            eError.sqrtAssign(symbolsManager());
+      };
    }
    if (hasReal || doesComputeReal()) {
+      if (eRealDomain.getCentral().isInftyExponent()) {
+         performInftyNaNComputationWithError(eRealDomain, &BuiltReal::sqrtAssign, TypeBaseFloatAffine::nearestParams());
+         if (hasError) {
+            if (!eError.getCentral().isZero() || !eError.isEmpty())
+               mergeTopError();
+         };
+         return;
+      };
+
       BuiltReal sqrtMin, sqrtMax;
       if (hasError) {
          auto& minParams = TypeBaseFloatAffine::minParams();
@@ -1738,6 +1815,10 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sqrtA
       auto& symbolsManager = thisType::symbolsManager();
       eRealDomain.sqrtAssign(symbolsManager);
       if (hasError) {
+         if (eError.getCentral().isInftyExponent()) {
+            performInftyNaNComputationWithError(eError, &BuiltReal::sqrtAssign, TypeBaseFloatAffine::nearestParams());
+            return;
+         };
          // sqrt(x+e) = sqrt(x) + e/(2*sqrt(x)) + newCoeff
          eError.divAssign(eRealDomain, Equation::PCSourceRValue, symbolsManager);
          eError.divAssign(BuiltReal(2U), symbolsManager);
@@ -3920,26 +4001,30 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
 
    if (min.getBasicExponent() > max.getBasicExponent())
       max = min;
-   maxError.setBasicExponent(max.getBasicExponent());
-   if (maxError.getSBasicExponent().minusAssign(USizeMantissa+1).hasCarry()) {
-      int shift = maxError.getSBasicExponent().neg()[0]+1;
-      maxError.getSMantissa() = 1U;
-      if (USizeMantissa-shift > 0)
-         maxError.getSMantissa() <<= (USizeMantissa-shift);
-      maxError.getSBasicExponent() = 0;
-   };
-   BuiltReal minError(maxError);
-   minError.opposite();
+   if (!max.isInftyExponent()) {
+      maxError.setBasicExponent(max.getBasicExponent());
+      if (maxError.getSBasicExponent().minusAssign(USizeMantissa+1).hasCarry()) {
+         int shift = maxError.getSBasicExponent().neg()[0]+1;
+         maxError.getSMantissa() = 1U;
+         if (USizeMantissa-shift > 0)
+            maxError.getSMantissa() <<= (USizeMantissa-shift);
+         maxError.getSBasicExponent() = 0;
+      };
+      BuiltReal minError(maxError);
+      minError.opposite();
 
-   Equation additionalError;
-   additionalError.setInterval(minError, maxError, symbolsManager());
-   getSError().plusAssign(additionalError, Equation::PCSourceXValue, symbolsManager());
+      Equation additionalError;
+      additionalError.setInterval(minError, maxError, symbolsManager());
+      getSError().plusAssign(additionalError, Equation::PCSourceXValue, symbolsManager());
+   };
 }
 
 DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::addSemiUlp(BuiltReal& real) const {
+   if (real.isInftyExponent())
+      return;
    BuiltReal semiUlp;
    semiUlp.setBasicExponent(real.getBasicExponent());
    if (semiUlp.getSBasicExponent().minusAssign(USizeMantissa+1).hasCarry()) {
@@ -3958,6 +4043,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::subSemiUlp(BuiltReal& real) const {
+   if (real.isInftyExponent())
+      return;
    BuiltReal semiUlp;
    semiUlp.setBasicExponent(real.getBasicExponent());
    if (semiUlp.getSBasicExponent().minusAssign(USizeMantissa+1).hasCarry()) {
@@ -4624,6 +4711,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       return result;
    };
    if (!this->doesComputeReal() || !source.doesComputeReal()) {
+      if ((bfMin.isNaN() && bfMax.isNaN()) || (source.bfMin.isNaN() && source.bfMax.isNaN()))
+         return false;
       if (bfMax < source.bfMin)
          return true;
       else if (bfMin >= source.bfMax)
@@ -4644,7 +4733,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          };
          return result;
       }
-      else if (bfMin >= source.bfMax) {
+      else if ((bfMin >= source.bfMax)
+            || ((bfMin.isNaN() && bfMax.isNaN()) || (source.bfMin.isNaN() && source.bfMax.isNaN()))) {
          typename TypeBaseFloatAffine::Mode mode = inherited::getMode();
          bool result = inherited::isLessThan(source, hasMultiple, dValue < source.dValue,
                true /* bool doesAssumeErrorValue */, false /* errorValue */);
@@ -4715,6 +4805,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       return result;
    };
    if (!this->doesComputeReal() || !source.doesComputeReal()) {
+      if ((bfMin.isNaN() && bfMax.isNaN()) || (source.bfMin.isNaN() && source.bfMax.isNaN()))
+         return false;
       if (bfMax <= source.bfMin)
          return true;
       else if (bfMin > source.bfMax)
@@ -4735,7 +4827,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          };
          return result;
       }
-      else if (bfMin > source.bfMax) {
+      else if ((bfMin > source.bfMax)
+            || ((bfMin.isNaN() && bfMax.isNaN()) || (source.bfMin.isNaN() && source.bfMax.isNaN()))) {
          typename TypeBaseFloatAffine::Mode mode = inherited::getMode();
          bool result = inherited::isLessOrEqualThan(source, hasMultiple, dValue <= source.dValue,
                true /* bool doesAssumeErrorValue */, false /* errorValue */);
@@ -4807,7 +4900,9 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       return result;
    };
    if (!this->doesComputeReal() || !source.doesComputeReal()) {
-      if (bfMax < source.bfMin)
+      if ((bfMin.isNaN() && bfMax.isNaN()) || (source.bfMin.isNaN() && source.bfMax.isNaN()))
+         return false;
+      else if (bfMax < source.bfMin)
          return false;
       else if (bfMin > source.bfMax)
          return false;
@@ -4815,7 +4910,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          return true;
    }
    else {
-      if (bfMax < source.bfMin || bfMin > source.bfMax) {
+      if ((bfMax < source.bfMin || bfMin > source.bfMax)
+           || ((bfMin.isNaN() && bfMax.isNaN()) || (source.bfMin.isNaN() && source.bfMax.isNaN()))) {
          typename TypeBaseFloatAffine::Mode mode = inherited::getMode();
          bool result = inherited::isLessOrEqualThan(source, hasMultipleLess, dValue <= source.dValue,
                true /* bool doesAssumeErrorValue */, (bfMax < source.bfMin) /* errorValue */)
@@ -4899,7 +4995,9 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       return result;
    };
    if (!this->doesComputeReal() || !source.doesComputeReal()) {
-      if (bfMax < source.bfMin)
+      if ((bfMin.isNaN() && bfMax.isNaN()) || (source.bfMin.isNaN() && source.bfMax.isNaN()))
+         return false;
+      else if (bfMax < source.bfMin)
          return true;
       else if (bfMin > source.bfMax)
          return true;
@@ -4923,7 +5021,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          };
          return result;
       }
-      else if (bfMin == source.bfMax && bfMax == source.bfMin) {
+      else if ((bfMin == source.bfMax && bfMax == source.bfMin)
+           || ((bfMin.isNaN() && bfMax.isNaN()) || (source.bfMin.isNaN() && source.bfMax.isNaN()))) {
          typename TypeBaseFloatAffine::Mode mode = inherited::getMode();
          bool result = inherited::isLessThan(source, hasMultipleLess, dValue < source.dValue,
                   true /* bool doesAssumeErrorValue */, false /* errorValue */)
@@ -4990,13 +5089,16 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       return result;
    };
    if (!this->doesComputeReal() || !source.doesComputeReal()) {
-      if (bfMax < source.bfMin)
+      if ((bfMin.isNaN() && bfMax.isNaN()) || (source.bfMin.isNaN() && source.bfMax.isNaN()))
+         return false;
+      else if (bfMax < source.bfMin)
          return false;
       else if (bfMin >= source.bfMax)
          return true;
    }
    else {
-      if (bfMax < source.bfMin) {
+      if ((bfMax < source.bfMin)
+            || ((bfMin.isNaN() && bfMax.isNaN()) || (source.bfMin.isNaN() && source.bfMax.isNaN()))) {
          typename TypeBaseFloatAffine::Mode mode = inherited::getMode();
          bool result = inherited::isGreaterOrEqualThan(source, hasMultiple, dValue >= source.dValue,
                true /* bool doesAssumeErrorValue */, false /* errorValue */);
@@ -5081,13 +5183,16 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       return result;
    };
    if (!this->doesComputeReal() || !source.doesComputeReal()) {
-      if (bfMax <= source.bfMin)
+      if ((bfMin.isNaN() && bfMax.isNaN()) || (source.bfMin.isNaN() && source.bfMax.isNaN()))
+         return false;
+      else if (bfMax <= source.bfMin)
          return false;
       else if (bfMin > source.bfMax)
          return true;
    }
    else {
-      if (bfMax <= source.bfMin) {
+      if ((bfMax <= source.bfMin)
+            || ((bfMin.isNaN() && bfMax.isNaN()) || (source.bfMin.isNaN() && source.bfMax.isNaN()))) {
          typename TypeBaseFloatAffine::Mode mode = inherited::getMode();
          bool result = inherited::isGreaterThan(source, hasMultiple, dValue > source.dValue,
                true /* bool doesAssumeErrorValue */, false /* errorValue */);
