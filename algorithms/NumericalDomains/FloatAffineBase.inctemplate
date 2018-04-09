@@ -3358,7 +3358,10 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::atan2
    updateLocalState();
    GuardStateZonotope sourceGuard(source, true /* isConstEquation*/, policyCall == Equation::PCSourceXValue);
    // const_cast<thisType&>(source).updateLocalState();
+   thisType thisCopy;
    if (doesComputeReal()) {
+      if (doesComputeError())
+         thisCopy = *this;
       BuiltReal minReal, maxReal, minSourceReal, maxSourceReal;
       eRealDomain.retrieveBound(minReal, maxReal, false /* hasExternalCoefficient */);
       source.eRealDomain.retrieveBound(minSourceReal, maxSourceReal, false /* hasExternalCoefficient */);
@@ -3452,8 +3455,11 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::atan2
          BuiltReal one(0x1), minusOne(0x1);
          minusOne.opposite();
          Equation coeff;
+         thisType approxResult(source);
+         approxResult.divAssign(thisCopy, Equation::PCSourceRValue);
          coeff.setInterval(minusOne, one, symbolsManager());
-         eError.multAssign(coeff, Equation::PCSourceXValue, symbolsManager());
+         approxResult.eError.multAssign(coeff, Equation::PCSourceXValue, symbolsManager());
+         eError.swap(approxResult.eError);
       }
       else {
          BuiltReal minError, maxError, minSourceError, maxSourceError;
