@@ -48,6 +48,7 @@ class end {};
 class ExecutionPath {
   public:
    static void splitBranches(const char* file, int line);
+   static std::pair<const char*, int> querySplitInfo();
    static void flushOut();
    static void setSourceLine(const char* file, int line);
    static int getCurrentUnstableBranch();

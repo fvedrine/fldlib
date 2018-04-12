@@ -443,6 +443,7 @@ class ExecutionPath : public BaseExecutionPath {
       }
 
   public:
+   static std::pair<const char*, int> querySplitInfo() { return std::make_pair(szFile, uLine); }
    static void flushOut() { if (oTraceFile) oTraceFile->flush(); }
    static void writeCurrentPath(std::ostream& out) { out << uCurrentUnstableBranch; }
    static int getCurrentUnstableBranch() { return uCurrentUnstableBranch; }

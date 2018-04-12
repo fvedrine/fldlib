@@ -493,6 +493,7 @@ class ExecutionPath : public BaseExecutionPath {
    static bool doesFollow() { return fDoesFollow; }
 
   public:
+   static std::pair<const char*, int> querySplitInfo() { return std::make_pair(szFile, uLine); }
    static bool doesFollowFlow() { return fDoesFollow && (fSupportUnstableInLoop || iTraceFile != nullptr); }
    static STG::IOObject::ISBase* inputTraceFile() { return iTraceFile; }
    static const char* synchronisationFile() { return szSynchronisationFile; }

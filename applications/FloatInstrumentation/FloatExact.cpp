@@ -125,4 +125,6 @@ template class COL::TVector<NumericalDomains::DDoubleExact::TBaseFloatExact<Nume
 template class COL::TVector<NumericalDomains::DDoubleExact::BuiltFloat>;
 template class COL::TVector<NumericalDomains::DDoubleExact::BuiltDouble>;
 template class COL::TVector<NumericalDomains::DDoubleExact::BuiltLongDouble>;
-
+template class COL::TVector<NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::BuiltFloat, float> >;
+template class COL::TVector<NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::BuiltDouble, double> >;
+template class COL::TVector<NumericalDomains::DDoubleExact::TInstrumentedFloat<NumericalDomains::DDoubleExact::BuiltLongDouble, long double> >;

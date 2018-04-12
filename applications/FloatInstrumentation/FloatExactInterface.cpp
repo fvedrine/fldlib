@@ -77,6 +77,11 @@ ExecutionPath::splitBranches(const char* file, int line) {
    DDoubleExact::BaseFloatExact::splitBranches(file, line);
 }
 
+std::pair<const char*, int>
+ExecutionPath::querySplitInfo() {
+   return DDoubleExact::BaseFloatExact::querySplitInfo();
+}
+
 void
 ExecutionPath::setSupportAtomic() {
    DDoubleExact::ExecutionPath::setSupportAtomic();

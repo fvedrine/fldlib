@@ -382,6 +382,7 @@ class MergeMemory {
 class ExecutionPath {
   public:
    static void splitBranches(const char* file, int line);
+   static std::pair<const char*, int> querySplitInfo();
 
    bool hasMultipleBranches() const;
    static void setSupportAtomic();

@@ -125,6 +125,11 @@ ExecutionPath::splitBranches(const char* file, int line) {
    DAffine::BaseFloatAffine::splitBranches(file, line);
 }
 
+std::pair<const char*, int>
+ExecutionPath::querySplitInfo() {
+   return DAffine::BaseFloatAffine::querySplitInfo();
+}
+
 bool
 ExecutionPath::hasMultipleBranches() const {
    return DAffine::ExecutionPath::hasMultipleBranches();

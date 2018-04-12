@@ -63,21 +63,26 @@ typedef long double old_long_double;
 #define FLOAT_SPLIT_ALL(ident, merge, save) {                                                    \
    const char* _sourceFile##ident = __FILE__;                                                    \
    int _sourceLine##ident = __LINE__;                                                            \
+   auto _oldSourceInfo##ident = NumericalDomains::DAffine::BaseFloatAffine::querySplitInfo();    \
    NumericalDomains::DAffine::BaseFloatAffine::splitBranches(__FILE__, __LINE__);
 #define FLOAT_SPLIT_ALL_LOOP(ident)                                                              \
    _sourceFile##ident = __FILE__;                                                                \
    _sourceLine##ident = __LINE__;                                                                \
+   _oldSourceInfo##ident = NumericalDomains::DAffine::BaseFloatAffine::querySplitInfo();         \
    NumericalDomains::DAffine::BaseFloatAffine::splitBranches(__FILE__, __LINE__);
 #define FLOAT_SPLIT_ALL_OUTER(ident, merge, save)                                                \
    _sourceFile##ident = __FILE__;                                                                \
    _sourceLine##ident = __LINE__;                                                                \
+   _oldSourceInfo##ident = NumericalDomains::DAffine::BaseFloatAffine::querySplitInfo();         \
    NumericalDomains::DAffine::BaseFloatAffine::splitBranches(__FILE__, __LINE__);
 #define FLOAT_MERGE_ALL(ident, x, load)                                                          \
    FLOAT_PRINT_CURRENT_PATH(ident)                                                               \
-   NumericalDomains::DAffine::MergeBranches(_sourceFile##ident, _sourceLine##ident) << x; }
+   NumericalDomains::DAffine::MergeBranches(_sourceFile##ident, _sourceLine##ident) << x;        \
+   NumericalDomains::DAffine::BaseFloatAffine::splitBranches(_oldSourceInfo##ident.first, _oldSourceInfo##ident.second); }
 #define FLOAT_MERGE_ALL_OUTER(ident, x, load)                                                    \
    FLOAT_PRINT_CURRENT_PATH(ident)                                                               \
-   NumericalDomains::DAffine::MergeBranches(_sourceFile##ident, _sourceLine##ident) << x;
+   NumericalDomains::DAffine::MergeBranches(_sourceFile##ident, _sourceLine##ident) << x;        \
+   NumericalDomains::DAffine::BaseFloatAffine::splitBranches(_oldSourceInfo##ident.first, _oldSourceInfo##ident.second);
 #else // FLOAT_LOOP_UNSTABLE
 
 #define FLOAT_SPLIT_ALL(ident, merge, save) {                                                    \
@@ -95,6 +100,7 @@ typedef long double old_long_double;
    NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(&_pathExplorer##ident);      \
    auto _mergeMemory##ident = NumericalDomains::DAffine::MergeMemory() >> merge;                 \
    auto _saveMemory##ident = NumericalDomains::DAffine::SaveMemory() << save;                    \
+   auto _oldSourceInfo##ident = NumericalDomains::DAffine::BaseFloatAffine::querySplitInfo();    \
    do {                                                                                          \
       try {                                                                                      \
          _sourceFile##ident = __FILE__;                                                          \
@@ -104,6 +110,7 @@ typedef long double old_long_double;
 #define FLOAT_SPLIT_ALL_LOOP(ident)                                                              \
    _sourceFile##ident = __FILE__;                                                                \
    _sourceLine##ident = __LINE__;                                                                \
+   _oldSourceInfo##ident = NumericalDomains::DAffine::BaseFloatAffine::querySplitInfo();         \
    NumericalDomains::DAffine::BaseFloatAffine::splitBranches(__FILE__, __LINE__);
 #define FLOAT_SPLIT_ALL_OUTER(ident, merge, save)                                                \
    auto* _oldPathExplorer##ident = NumericalDomains::DAffine::ExecutionPath::getCurrentPathExplorer(); \
@@ -118,6 +125,7 @@ typedef long double old_long_double;
    NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(&_pathExplorer##ident);      \
    auto _mergeMemory##ident = NumericalDomains::DAffine::MergeMemory() >> merge;                 \
    auto _saveMemory##ident = NumericalDomains::DAffine::SaveMemory() << save;                    \
+   auto _oldSourceInfo##ident = NumericalDomains::DAffine::BaseFloatAffine::querySplitInfo();    \
    do {                                                                                          \
       try {                                                                                      \
          _sourceFile##ident = __FILE__;                                                          \
@@ -146,6 +154,7 @@ typedef long double old_long_double;
    NumericalDomains::DAffine::ExecutionPath::setFollowFlow(_oldDoesFollow##ident, _oldInputTraceFile##ident,\
          _oldSynchronisationFile##ident, _oldSynchronisationLine##ident);                        \
    NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(_oldPathExplorer##ident);    \
+   NumericalDomains::DAffine::BaseFloatAffine::splitBranches(_oldSourceInfo##ident.first, _oldSourceInfo##ident.second);\
    if (_mergeMemory##ident.isFirst())                                                            \
       NumericalDomains::DAffine::ExecutionPath::throwEmptyBranch(true); }
 
@@ -171,6 +180,7 @@ typedef long double old_long_double;
    NumericalDomains::DAffine::ExecutionPath::setFollowFlow(_oldDoesFollow##ident, _oldInputTraceFile##ident,\
          _oldSynchronisationFile##ident, _oldSynchronisationLine##ident);                        \
    NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(_oldPathExplorer##ident);    \
+   NumericalDomains::DAffine::BaseFloatAffine::splitBranches(_oldSourceInfo##ident.first, _oldSourceInfo##ident.second);\
    if (_mergeMemory##ident.isFirst())                                                            \
       NumericalDomains::DAffine::ExecutionPath::throwEmptyBranch(true);
 
@@ -339,19 +349,24 @@ typedef long double old_long_double;
 #define FLOAT_SPLIT_ALL(ident, merge, save) {                                                    \
    const char* _sourceFile##ident = __FILE__;                                                    \
    int _sourceLine##ident = __LINE__;                                                            \
+   auto _oldSourceInfo##ident = NumericalDomains::DDoubleExact::BaseFloatExact::querySplitInfo();\
    NumericalDomains::DDoubleExact::BaseFloatExact::splitBranches(__FILE__, __LINE__);
 #define FLOAT_SPLIT_ALL_OUTER(ident, merge, save)                                                \
    _sourceFile##ident = __FILE__;                                                                \
    _sourceLine##ident = __LINE__;                                                                \
+   _oldSourceInfo##ident = NumericalDomains::DDoubleExact::BaseFloatExact::querySplitInfo();     \
    NumericalDomains::DDoubleExact::BaseFloatExact::splitBranches(__FILE__, __LINE__);
 #define FLOAT_SPLIT_ALL_LOOP(ident)                                                              \
    _sourceFile##ident = __FILE__;                                                                \
    _sourceLine##ident = __LINE__;                                                                \
+   _oldSourceInfo##ident = NumericalDomains::DDoubleExact::BaseFloatExact::querySplitInfo();     \
    NumericalDomains::DDoubleExact::BaseFloatExact::splitBranches(__FILE__, __LINE__);
 #define FLOAT_MERGE_ALL(ident, x, load)                                                          \
-   NumericalDomains::DDoubleExact::MergeBranches(_sourceFile##ident, _sourceLine##ident) << x; }
+   NumericalDomains::DDoubleExact::MergeBranches(_sourceFile##ident, _sourceLine##ident) << x;   \
+   NumericalDomains::DDoubleExact::BaseFloatExact::splitBranches(_oldSourceInfo##ident.first, _oldSourceInfo##ident.second); }
 #define FLOAT_MERGE_ALL_OUTER(ident, x, load)                                                    \
-   NumericalDomains::DDoubleExact::MergeBranches(_sourceFile##ident, _sourceLine##ident) << x;
+   NumericalDomains::DDoubleExact::MergeBranches(_sourceFile##ident, _sourceLine##ident) << x;   \
+   NumericalDomains::DDoubleExact::BaseFloatExact::splitBranches(_oldSourceInfo##ident.first, _oldSourceInfo##ident.second);
 #else // FLOAT_LOOP_UNSTABLE
 #define FLOAT_SPLIT_ALL(ident, merge, save) {                                                    \
    const char* _sourceFile##ident;                                                               \
@@ -360,6 +375,7 @@ typedef long double old_long_double;
    auto _saveMemory##ident = NumericalDomains::DDoubleExact::SaveMemory() << save;               \
    bool _oldDoesFollow##ident = NumericalDomains::DDoubleExact::ExecutionPath::doesFollowFlow(); \
    NumericalDomains::DDoubleExact::ExecutionPath::clearFollowFlow();                             \
+   auto _oldSourceInfo##ident = NumericalDomains::DDoubleExact::BaseFloatExact::querySplitInfo();\
    do {                                                                                          \
       _sourceFile##ident = __FILE__;                                                             \
       _sourceLine##ident = __LINE__;                                                             \
@@ -368,12 +384,14 @@ typedef long double old_long_double;
 #define FLOAT_SPLIT_ALL_LOOP(ident)                                                              \
    _sourceFile##ident = __FILE__;                                                                \
    _sourceLine##ident = __LINE__;                                                                \
+   _oldSourceInfo##ident = NumericalDomains::DDoubleExact::BaseFloatExact::querySplitInfo();     \
    NumericalDomains::DDoubleExact::BaseFloatExact::splitBranches(__FILE__, __LINE__);
 #define FLOAT_SPLIT_ALL_OUTER(ident, merge, save)                                                \
    bool _isCompleteFlow##ident = true;                                                           \
    auto _saveMemory##ident = NumericalDomains::DDoubleExact::SaveMemory() << save;               \
    bool _oldDoesFollow##ident = NumericalDomains::DDoubleExact::ExecutionPath::doesFollowFlow(); \
    NumericalDomains::DDoubleExact::ExecutionPath::clearFollowFlow();                             \
+   auto _oldSourceInfo##ident = NumericalDomains::DDoubleExact::BaseFloatExact::querySplitInfo();\
    do {                                                                                          \
       _sourceFile##ident = __FILE__;                                                             \
       _sourceLine##ident = __LINE__;                                                             \
@@ -384,14 +402,16 @@ typedef long double old_long_double;
       _isCompleteFlow##ident = NumericalDomains::DDoubleExact::MergeBranches(_sourceFile##ident, _sourceLine##ident) << x;\
       NumericalDomains::DDoubleExact::ExecutionPath::setFollowFlow();                            \
    } while(!(_saveMemory##ident.setCurrent(_isCompleteFlow##ident) >> load));                    \
-   NumericalDomains::DDoubleExact::ExecutionPath::setFollowFlow(_oldDoesFollow##ident); }
+   NumericalDomains::DDoubleExact::ExecutionPath::setFollowFlow(_oldDoesFollow##ident);          \
+   NumericalDomains::DDoubleExact::BaseFloatExact::splitBranches(_oldSourceInfo##ident.first, _oldSourceInfo##ident.second); }
 
 #define FLOAT_MERGE_ALL_OUTER(ident, x, load) {}                                                 \
       FLOAT_PRINT_CURRENT_PATH(ident)                                                            \
       _isCompleteFlow##ident = NumericalDomains::DDoubleExact::MergeBranches(_sourceFile##ident, _sourceLine##ident) << x;\
       NumericalDomains::DDoubleExact::ExecutionPath::setFollowFlow();                            \
    } while(!(_saveMemory##ident.setCurrent(_isCompleteFlow##ident) >> load));                    \
-   NumericalDomains::DDoubleExact::ExecutionPath::setFollowFlow(_oldDoesFollow##ident);
+   NumericalDomains::DDoubleExact::ExecutionPath::setFollowFlow(_oldDoesFollow##ident);          \
+   NumericalDomains::DDoubleExact::BaseFloatExact::splitBranches(_oldSourceInfo##ident.first, _oldSourceInfo##ident.second);
 
 #endif // FLOAT_LOOP_UNSTABLE
 #endif // !FLOAT_AFFINE && !FLOAT_INTERVAL
