@@ -2820,15 +2820,15 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::acosA
       DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
       double temp;
       if (min <= -1.0)
-         temp = 0;
-      else if (min >= 1.0)
          temp = PI;
+      else if (min >= 1.0)
+         temp = 0;
       else
          temp = ::acos(min);
       if (max <= -1.0)
-         min = 0;
-      else if (max >= 1.0)
          min = PI;
+      else if (max >= 1.0)
+         min = 0;
       else
          min = ::acos(max);
       max = temp;
@@ -2915,15 +2915,15 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::acosA
          DAffine::DefineSetContent(max, maxBuilt /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
          double temp;
          if (min <= -1.0)
-            temp = 0;
-         else if (min >= 1.0)
             temp = PI;
+         else if (min >= 1.0)
+            temp = 0;
          else
             temp = ::acos(min);
          if (max <= -1.0)
-            min = 0;
-         else if (max >= 1.0)
             min = PI;
+         else if (max >= 1.0)
+            min = 0;
          else
             min = ::acos(max);
          max = temp;
