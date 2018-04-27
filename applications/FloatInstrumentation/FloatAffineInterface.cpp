@@ -181,6 +181,11 @@ ExecutionPath::setSimplificationTriggerPercent(double percent) {
 }
 
 void
+ExecutionPath::setLimitNoiseSymbolsNumber(int limit) {
+   DAffine::ExecutionPath::setLimitNoiseSymbolsNumber(limit);
+}
+
+void
 ExecutionPath::flushOut() {
    DAffine::ExecutionPath::flushOut();
 }

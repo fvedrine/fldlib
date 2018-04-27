@@ -413,7 +413,7 @@ class DefineBaseFloatZonotope : public TypeBaseFloatAffine {
          bool hasSourceIntervalConstraint, const BuiltReal& newMinError, const BuiltReal& newMaxError,
          const BuiltReal& newSourceMinError, const BuiltReal& newSourceMaxError) const;
 
-  protected:
+  public:
    SymbolsManager& symbolsManager() const { return inherited::symbolsManager(); }
    ConstraintsSet& constraints() const { return inherited::constraints(); }
 
@@ -422,6 +422,7 @@ class DefineBaseFloatZonotope : public TypeBaseFloatAffine {
    EquationHolder& getSError() { return eError; }
    const EquationHolder& getError() const { return eError; }
 
+  protected:
    void assumeZonotope(STG::IOObject::ISBase& in) const
       {  in.assume("r=[");
          typename Equation::ReadParameters defaultParams(symbolsManager());
@@ -763,6 +764,57 @@ class DefineBaseFloatZonotopeWithSymbolic
    void atan2Assign(const thisType& value);
 };
 
+DefineEquationTemplateHeader(URealBitsNumber)
+class TSimplificationRules {
+  private:
+   typedef DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber) BuiltReal;
+   typedef DefineEquation DefineEquationTemplateParameters(URealBitsNumber) Equation;
+   Equation* peDomainResult;
+   Equation* peErrorResult;
+   int uLimitSymbolsNumber;
+
+   class EquationCoefficientKey;
+   void simplifyMinMax(Equation& equation, int minSymbols, int maxSymbols) const;
+   void simplifySymbols(Equation& equation) const;
+   void simplifyNegligeable(Equation& equation) const;
+
+   void simplifyDomain(Equation& domain, int minSymbols, int maxSymbols) const
+      {  simplifySymbols(domain);
+         simplifyMinMax(domain, minSymbols, maxSymbols);
+      }
+   void simplifyError(Equation& error, int minSymbols, int maxSymbols) const
+      {  simplifySymbols(error); 
+         simplifyMinMax(error, minSymbols, maxSymbols);
+      }
+   void simplifyDomainResult(Equation& domain) const { simplifyNegligeable(domain); }
+   void simplifyErrorResult(Equation& error) const { simplifyNegligeable(error); }
+
+  public:
+   TSimplificationRules(int limitSymbolsNumber)
+      :  peDomainResult(nullptr), peErrorResult(nullptr), uLimitSymbolsNumber(limitSymbolsNumber) {}
+   ~TSimplificationRules()
+      {  if (uLimitSymbolsNumber > 0) {
+            if (peDomainResult) simplifyDomainResult(*peDomainResult);
+            if (peErrorResult) simplifyErrorResult(*peErrorResult);
+         };
+      }
+
+   TSimplificationRules DefineEquationTemplateParameters(URealBitsNumber)& operator<<(
+         const DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)& arg)
+      {  if (uLimitSymbolsNumber > 0) {
+            simplifyDomain(const_cast<Equation&>((const Equation&) arg.getRealDomain()), uLimitSymbolsNumber, uLimitSymbolsNumber+5);
+            simplifyError(const_cast<Equation&>((const Equation&) arg.getError()), uLimitSymbolsNumber, uLimitSymbolsNumber+5);
+         };
+         return *this;
+      }
+   TSimplificationRules DefineEquationTemplateParameters(URealBitsNumber)& operator>>(
+         const DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)& result)
+      {  peDomainResult = &const_cast<Equation&>((const Equation&) result.getRealDomain());
+         peErrorResult = &const_cast<Equation&>((const Equation&) result.getError());
+         return *this;
+      }
+};
+
 DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
 class DefineBasicFloatZonotope : public DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)
                            /* DefineBaseFloatZonotopeWithSymbolic DefineEquationTemplateParameters(URealBitsNumber) */ {
@@ -795,6 +847,7 @@ class DefineBasicFloatZonotope : public DefineBaseFloatZonotope DefineEquationTe
   public:
    typedef DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber) BuiltReal;
    typedef DefineEquation DefineEquationTemplateParameters(URealBitsNumber) Equation;
+   typedef TSimplificationRules DefineEquationTemplateParameters(URealBitsNumber) SimplificationRules;
 
    void mergeWith(const thisType& source)
       {  inherited::mergeWith(source);

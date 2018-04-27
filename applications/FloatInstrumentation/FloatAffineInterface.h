@@ -428,6 +428,7 @@ class ExecutionPath {
    static void finalizeGlobals();
    static void setSimplificationTriggerPercent(double percent);
    static bool doesSupportUnstableInLoop();
+   static void setLimitNoiseSymbolsNumber(int limit);
    class Initialization {
      public:
       Initialization() {}
@@ -439,6 +440,7 @@ class ExecutionPath {
       void setResultFile(const char* fileSuffix) { initializeGlobals(fileSuffix); }
       ~Initialization() { finalizeGlobals(); }
       void setSimplificationTriggerPercent(double percent) { ExecutionPath::setSimplificationTriggerPercent(percent); }
+      void setLimitNoiseSymbolsNumber(int limit) { ExecutionPath::setLimitNoiseSymbolsNumber(limit); }
    };
 
    class anticipated_termination { public: anticipated_termination() {} };

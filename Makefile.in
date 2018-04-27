@@ -159,6 +159,7 @@ am__libFloatDiagnosis_la_SOURCES_DIST =  \
 	utils/Collection/ConcreteCollection/List.cpp \
 	utils/Collection/ConcreteCollection/Array.cpp \
 	utils/Collection/ConcreteCollection/SortedArray.cpp \
+	utils/Collection/ConcreteCollection/MultiArray.cpp \
 	algorithms/Numerics/Integer.cpp \
 	applications/NumericalAnalysis/FloatCommonTypes.cpp \
 	applications/NumericalAnalysis/FloatExactTypes.cpp \
@@ -183,6 +184,7 @@ am__objects_1 =  \
 	utils/Collection/ConcreteCollection/libFloatDiagnosis_la-List.lo \
 	utils/Collection/ConcreteCollection/libFloatDiagnosis_la-Array.lo \
 	utils/Collection/ConcreteCollection/libFloatDiagnosis_la-SortedArray.lo \
+	utils/Collection/ConcreteCollection/libFloatDiagnosis_la-MultiArray.lo \
 	algorithms/Numerics/libFloatDiagnosis_la-Integer.lo \
 	applications/NumericalAnalysis/libFloatDiagnosis_la-FloatCommonTypes.lo \
 	applications/NumericalAnalysis/libFloatDiagnosis_la-FloatExactTypes.lo \
@@ -218,6 +220,7 @@ am__libFloatDiagnosisCore_la_SOURCES_DIST =  \
 	utils/Collection/ConcreteCollection/List.cpp \
 	utils/Collection/ConcreteCollection/Array.cpp \
 	utils/Collection/ConcreteCollection/SortedArray.cpp \
+	utils/Collection/ConcreteCollection/MultiArray.cpp \
 	algorithms/Numerics/Integer.cpp \
 	applications/NumericalAnalysis/FloatCommonTypes.cpp \
 	applications/NumericalAnalysis/FloatExactTypes.cpp \
@@ -237,6 +240,7 @@ am__objects_3 = utils/StandardClasses/libFloatDiagnosisCore_la-StandardClasses.l
 	utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-List.lo \
 	utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-Array.lo \
 	utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-SortedArray.lo \
+	utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-MultiArray.lo \
 	algorithms/Numerics/libFloatDiagnosisCore_la-Integer.lo \
 	applications/NumericalAnalysis/libFloatDiagnosisCore_la-FloatCommonTypes.lo \
 	applications/NumericalAnalysis/libFloatDiagnosisCore_la-FloatExactTypes.lo \
@@ -787,6 +791,7 @@ SOURCES = \
    utils/Collection/ConcreteCollection/List.cpp                   \
    utils/Collection/ConcreteCollection/Array.cpp                  \
    utils/Collection/ConcreteCollection/SortedArray.cpp            \
+   utils/Collection/ConcreteCollection/MultiArray.cpp             \
    algorithms/Numerics/Integer.cpp                                \
    applications/NumericalAnalysis/FloatCommonTypes.cpp            \
    applications/NumericalAnalysis/FloatExactTypes.cpp             \
@@ -1001,6 +1006,9 @@ utils/Collection/ConcreteCollection/libFloatDiagnosis_la-Array.lo:  \
 utils/Collection/ConcreteCollection/libFloatDiagnosis_la-SortedArray.lo:  \
 	utils/Collection/ConcreteCollection/$(am__dirstamp) \
 	utils/Collection/ConcreteCollection/$(DEPDIR)/$(am__dirstamp)
+utils/Collection/ConcreteCollection/libFloatDiagnosis_la-MultiArray.lo:  \
+	utils/Collection/ConcreteCollection/$(am__dirstamp) \
+	utils/Collection/ConcreteCollection/$(DEPDIR)/$(am__dirstamp)
 algorithms/Numerics/$(am__dirstamp):
 	@$(MKDIR_P) algorithms/Numerics
 	@: > algorithms/Numerics/$(am__dirstamp)
@@ -1086,6 +1094,9 @@ utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-Array.lo:  \
 	utils/Collection/ConcreteCollection/$(am__dirstamp) \
 	utils/Collection/ConcreteCollection/$(DEPDIR)/$(am__dirstamp)
 utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-SortedArray.lo:  \
+	utils/Collection/ConcreteCollection/$(am__dirstamp) \
+	utils/Collection/ConcreteCollection/$(DEPDIR)/$(am__dirstamp)
+utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-MultiArray.lo:  \
 	utils/Collection/ConcreteCollection/$(am__dirstamp) \
 	utils/Collection/ConcreteCollection/$(DEPDIR)/$(am__dirstamp)
 algorithms/Numerics/libFloatDiagnosisCore_la-Integer.lo:  \
@@ -1289,9 +1300,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@applications/NumericalAnalysis/$(DEPDIR)/libFloatDiagnosis_la-FloatIntervalTypes.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/Collection/ConcreteCollection/$(DEPDIR)/libFloatDiagnosisCore_la-Array.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/Collection/ConcreteCollection/$(DEPDIR)/libFloatDiagnosisCore_la-List.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@utils/Collection/ConcreteCollection/$(DEPDIR)/libFloatDiagnosisCore_la-MultiArray.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/Collection/ConcreteCollection/$(DEPDIR)/libFloatDiagnosisCore_la-SortedArray.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/Collection/ConcreteCollection/$(DEPDIR)/libFloatDiagnosis_la-Array.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/Collection/ConcreteCollection/$(DEPDIR)/libFloatDiagnosis_la-List.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@utils/Collection/ConcreteCollection/$(DEPDIR)/libFloatDiagnosis_la-MultiArray.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/Collection/ConcreteCollection/$(DEPDIR)/libFloatDiagnosis_la-SortedArray.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/Collection/VirtualCollection/$(DEPDIR)/libFloatDiagnosisCore_la-VirtualCollection.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utils/Collection/VirtualCollection/$(DEPDIR)/libFloatDiagnosis_la-VirtualCollection.Plo@am__quote@
@@ -1428,6 +1441,13 @@ utils/Collection/ConcreteCollection/libFloatDiagnosis_la-SortedArray.lo: utils/C
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='utils/Collection/ConcreteCollection/SortedArray.cpp' object='utils/Collection/ConcreteCollection/libFloatDiagnosis_la-SortedArray.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosis_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosis_la_CXXFLAGS) $(CXXFLAGS) -c -o utils/Collection/ConcreteCollection/libFloatDiagnosis_la-SortedArray.lo `test -f 'utils/Collection/ConcreteCollection/SortedArray.cpp' || echo '$(srcdir)/'`utils/Collection/ConcreteCollection/SortedArray.cpp
+
+utils/Collection/ConcreteCollection/libFloatDiagnosis_la-MultiArray.lo: utils/Collection/ConcreteCollection/MultiArray.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosis_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosis_la_CXXFLAGS) $(CXXFLAGS) -MT utils/Collection/ConcreteCollection/libFloatDiagnosis_la-MultiArray.lo -MD -MP -MF utils/Collection/ConcreteCollection/$(DEPDIR)/libFloatDiagnosis_la-MultiArray.Tpo -c -o utils/Collection/ConcreteCollection/libFloatDiagnosis_la-MultiArray.lo `test -f 'utils/Collection/ConcreteCollection/MultiArray.cpp' || echo '$(srcdir)/'`utils/Collection/ConcreteCollection/MultiArray.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) utils/Collection/ConcreteCollection/$(DEPDIR)/libFloatDiagnosis_la-MultiArray.Tpo utils/Collection/ConcreteCollection/$(DEPDIR)/libFloatDiagnosis_la-MultiArray.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='utils/Collection/ConcreteCollection/MultiArray.cpp' object='utils/Collection/ConcreteCollection/libFloatDiagnosis_la-MultiArray.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosis_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosis_la_CXXFLAGS) $(CXXFLAGS) -c -o utils/Collection/ConcreteCollection/libFloatDiagnosis_la-MultiArray.lo `test -f 'utils/Collection/ConcreteCollection/MultiArray.cpp' || echo '$(srcdir)/'`utils/Collection/ConcreteCollection/MultiArray.cpp
 
 algorithms/Numerics/libFloatDiagnosis_la-Integer.lo: algorithms/Numerics/Integer.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosis_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosis_la_CXXFLAGS) $(CXXFLAGS) -MT algorithms/Numerics/libFloatDiagnosis_la-Integer.lo -MD -MP -MF algorithms/Numerics/$(DEPDIR)/libFloatDiagnosis_la-Integer.Tpo -c -o algorithms/Numerics/libFloatDiagnosis_la-Integer.lo `test -f 'algorithms/Numerics/Integer.cpp' || echo '$(srcdir)/'`algorithms/Numerics/Integer.cpp
@@ -1582,6 +1602,13 @@ utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-SortedArray.lo: uti
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='utils/Collection/ConcreteCollection/SortedArray.cpp' object='utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-SortedArray.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosisCore_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosisCore_la_CXXFLAGS) $(CXXFLAGS) -c -o utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-SortedArray.lo `test -f 'utils/Collection/ConcreteCollection/SortedArray.cpp' || echo '$(srcdir)/'`utils/Collection/ConcreteCollection/SortedArray.cpp
+
+utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-MultiArray.lo: utils/Collection/ConcreteCollection/MultiArray.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosisCore_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosisCore_la_CXXFLAGS) $(CXXFLAGS) -MT utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-MultiArray.lo -MD -MP -MF utils/Collection/ConcreteCollection/$(DEPDIR)/libFloatDiagnosisCore_la-MultiArray.Tpo -c -o utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-MultiArray.lo `test -f 'utils/Collection/ConcreteCollection/MultiArray.cpp' || echo '$(srcdir)/'`utils/Collection/ConcreteCollection/MultiArray.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) utils/Collection/ConcreteCollection/$(DEPDIR)/libFloatDiagnosisCore_la-MultiArray.Tpo utils/Collection/ConcreteCollection/$(DEPDIR)/libFloatDiagnosisCore_la-MultiArray.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='utils/Collection/ConcreteCollection/MultiArray.cpp' object='utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-MultiArray.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosisCore_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosisCore_la_CXXFLAGS) $(CXXFLAGS) -c -o utils/Collection/ConcreteCollection/libFloatDiagnosisCore_la-MultiArray.lo `test -f 'utils/Collection/ConcreteCollection/MultiArray.cpp' || echo '$(srcdir)/'`utils/Collection/ConcreteCollection/MultiArray.cpp
 
 algorithms/Numerics/libFloatDiagnosisCore_la-Integer.lo: algorithms/Numerics/Integer.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libFloatDiagnosisCore_la_CPPFLAGS) $(CPPFLAGS) $(libFloatDiagnosisCore_la_CXXFLAGS) $(CXXFLAGS) -MT algorithms/Numerics/libFloatDiagnosisCore_la-Integer.lo -MD -MP -MF algorithms/Numerics/$(DEPDIR)/libFloatDiagnosisCore_la-Integer.Tpo -c -o algorithms/Numerics/libFloatDiagnosisCore_la-Integer.lo `test -f 'algorithms/Numerics/Integer.cpp' || echo '$(srcdir)/'`algorithms/Numerics/Integer.cpp

@@ -84,6 +84,10 @@ do
     then # Replace the zonotope by the interval if the interval is xxx% better than the zonotope
       cxxflags+=" -DFLOAT_TRIGGER_PERCENT="
       has_include=1
+    elif [ "$param" == "-limit-noise-symbols-number" ]
+    then # Limit the number of noise symbols by 2*xxx
+      cxxflags+=" -DFLOAT_LIMIT_NOISE_SYMBOLS_NUMBER="
+      has_include=1
     elif [ "$param" == "-keep-double" ]
     then
       cxxflags+=" -DFLOAT_KEEP_DOUBLE"

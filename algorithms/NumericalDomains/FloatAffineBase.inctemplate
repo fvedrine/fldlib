@@ -3553,6 +3553,161 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::atan2
    };
 }
 
+DefineEquationTemplateHeader(URealBitsNumber)
+class TSimplificationRules DefineEquationTemplateParameters(URealBitsNumber)
+   ::EquationCoefficientKey {
+  public:
+   EquationCoefficientKey(const COL::VirtualMultiSortedCollection& support) {}
+   typedef BuiltReal KeyType;
+   typedef BuiltReal ControlKeyType;
+   static KeyType key(const typename Equation::Coefficient& coefficient)
+      {  BuiltReal result = coefficient.getValue();
+         if (result.isNegative())
+            result.opposite();
+         return result;
+      }
+   static ComparisonResult compare(const ControlKeyType& first, const ControlKeyType& second)
+      {  return first.compare(second); }
+};
+
+DefineEquationTemplateHeader(URealBitsNumber)
+void
+TSimplificationRules DefineEquationTemplateParameters(URealBitsNumber)
+      ::simplifyMinMax(Equation& equation, int minSymbols, int maxSymbols) const {
+   if (equation.count() > maxSymbols) {
+      COL::TMultiArray<typename Equation::Coefficient, EquationCoefficientKey, HandlerCopyCast<typename Equation::Coefficient> >
+         simplifiedEquation;
+      int simplifiedSize = equation.count() - minSymbols + 1;
+      // simplifiedEquation.bookPlaces(simplifiedSize);
+      typename Equation::Cursor cursor(equation);
+      while (simplifiedEquation.count() < simplifiedSize) {
+         cursor.setToNext();
+         simplifiedEquation.add((typename Equation::Coefficient*) &cursor.globalElementSAt());
+      };
+      BuiltReal limitCoefficientValue = EquationCoefficientKey::key(simplifiedEquation.getLast());
+      while (cursor.setToNext()) {
+         auto& coefficient = (typename Equation::Coefficient&) cursor.globalElementSAt();
+         BuiltReal coefficientValue = EquationCoefficientKey::key(coefficient);
+         if (coefficientValue < limitCoefficientValue) {
+            simplifiedEquation.extractLast();
+            simplifiedEquation.add(&coefficient);
+            limitCoefficientValue = EquationCoefficientKey::key(simplifiedEquation.getLast());
+         };
+      };
+      Equation definitionEquation;
+      while (!simplifiedEquation.isEmpty()) {
+         typename Equation::Coefficient& coefficient = simplifiedEquation.getSLast();
+         simplifiedEquation.extractLast();
+         typename Equation::Cursor targetCursor(definitionEquation);
+         if (targetCursor.setToLast()) {
+            while (targetCursor.elementAt() > static_cast<const Symbol&>
+                  (coefficient.operator*()) && targetCursor.setToPrevious()) {}
+            targetCursor.setToNext();
+         };
+         cursor.setToGlobalElement(coefficient);
+         definitionEquation.absorbGlobalElementBefore(equation.extractAt(cursor), targetCursor);
+      };
+      BuiltReal min, max;
+      definitionEquation.retrieveBound(min, max, false /* hasExternalCoefficient */);
+      BuiltReal highLevelError;
+      auto& manager = equation.symbolsManager();
+      definitionEquation.divAssign(max, manager, highLevelError, false /* hasExternalCoefficient */);
+      Symbol* definedSymbol = equation.symbolsManager()
+            .createDefinedSymbol(typename Equation::TemplateTraits(), definitionEquation);
+      max.plusAssign(highLevelError, equation.maxParams());
+      equation.maxParams().clear();
+
+      if (cursor.setToLast()) {
+         while (cursor.elementAt() > *definedSymbol && cursor.setToPrevious()) {}
+         cursor.setToNext();
+      };
+      auto* coeff = (typename Equation::Coefficient*)
+            equation.addElementBefore(*definedSymbol, cursor);
+      coeff->setValue(max);
+
+      definitionEquation.notifyUpdate([this, &definitionEquation, &equation, &definedSymbol, &max, &manager]
+            (Equation& source)
+         {  if (!source.isDefinition() && equation.getConditionSameBranch()(source))
+               source.simplifyWith(definitionEquation, *definedSymbol, max, manager, false /* hasExternalCoefficient */);
+         });
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+void
+TSimplificationRules DefineEquationTemplateParameters(URealBitsNumber)
+      ::simplifySymbols(Equation& equation) const {
+   typename Equation::Cursor cursor(equation);
+   typename Equation::Coefficient* firstSingle = nullptr;
+   while (cursor.setToNext()) {
+      if (cursor.elementAt().isSingleReferenced()) {
+         auto& maxParams = equation.maxParams();
+         auto& minParams = equation.minParams();
+         if (firstSingle == nullptr)
+            firstSingle = &(typename Equation::Coefficient&) cursor.globalElementSAt();
+         else {
+            auto& source = (typename Equation::Coefficient&) cursor.globalElementSAt();
+            auto& params = !firstSingle->getValue().isNegative() ? maxParams : minParams;
+            if (firstSingle->getValue().isNegative() == source.getValue().isNegative())
+               firstSingle->getSValue().plusAssign(source.getValue(), params);
+            else
+               firstSingle->getSValue().minusAssign(source.getValue(), params);
+            params.clear();
+            typename Equation::Cursor removeCursor(cursor);
+            cursor.setToPrevious();
+            equation.removeAt(removeCursor);
+         };
+      };
+   };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+void
+TSimplificationRules DefineEquationTemplateParameters(URealBitsNumber)
+      ::simplifyNegligeable(Equation& equation) const {
+   if (equation.getLimitStartSymbolAbsorption()) {
+      BuiltReal referenceForAbsorption;
+      equation.computeReferenceForAbsorption(referenceForAbsorption);
+      BuiltReal minReferenceForAbsorption(referenceForAbsorption);
+      minReferenceForAbsorption.opposite();
+      auto& maxParams = equation.maxParams();
+      auto& minParams = equation.minParams();
+      typename Equation::Cursor cursor(equation);
+      typename Equation::Coefficient* firstNegligeable = nullptr;
+      while (cursor.setToNext()) {
+         auto& coefficient = (typename Equation::Coefficient&) cursor.globalElementSAt();
+         if (!coefficient.getValue().isNegative()
+               ? (coefficient.getValue() < referenceForAbsorption)
+               : (coefficient.getValue() > minReferenceForAbsorption)) {
+            if (firstNegligeable == nullptr)
+               firstNegligeable = &(typename Equation::Coefficient&) cursor.globalElementSAt();
+            else {
+               const auto& source = (const typename Equation::Coefficient&) cursor.globalElementSAt();
+               auto& params = !firstNegligeable->getValue().isNegative() ? maxParams : minParams;
+               if (firstNegligeable->getValue().isNegative() == source.getValue().isNegative())
+                  firstNegligeable->getSValue().plusAssign(source.getValue(), params);
+               else
+                  firstNegligeable->getSValue().minusAssign(source.getValue(), params);
+               params.clear();
+               typename Equation::Cursor removeCursor(cursor);
+               cursor.setToPrevious();
+               equation.removeAt(removeCursor);
+            };
+         };
+      };
+      if (firstNegligeable) {
+         cursor.setToGlobalElement(*firstNegligeable);
+         BuiltReal newValue = firstNegligeable->getValue();
+         equation.removeAt(cursor);
+         Symbol* newSymbol = equation.symbolsManager().createNoiseSymbol();
+         if (cursor.setToLast())
+            while (cursor.elementAt() > *newSymbol && cursor.setToPrevious());
+         auto* coeff = (typename Equation::Coefficient*) equation.addElementAfter(*newSymbol, cursor);
+         coeff->setValue(newValue);
+      };
+   };
+}
+
 DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
@@ -3719,7 +3874,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    constraintMin->getSDefinition().minusAssign(getRealDomain(), Equation::PCSourceRValue, symbolsManager());
    bool doesConstraint = false;
    BuiltReal normalization = constraintMin->getDefinition().getNormalization(true, &doesConstraint);
-   if (doesConstraint && getSRealDomain().simplifyWith(constraintMin->getDefinition(), true,
+   if (doesConstraint && getSRealDomain().simplifyWith(constraintMin->getDefinition(),
          *constraintMin, normalization, symbolsManager()))
       symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
             constraintMin.extractElement());
@@ -3741,7 +3896,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    constraintMax->getSDefinition().minusAssign(getRealDomain(), Equation::PCSourceRValue, symbolsManager());
    doesConstraint = false;
    normalization = constraintMax->getDefinition().getNormalization(false, &doesConstraint);
-   if (doesConstraint && getSRealDomain().simplifyWith(constraintMax->getDefinition(), false,
+   if (doesConstraint && getSRealDomain().simplifyWith(constraintMax->getDefinition(),
          *constraintMax, normalization, symbolsManager()))
       symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
             constraintMax.extractElement());
@@ -3807,7 +3962,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    constraintMin->getSDefinition().minusAssign(getError(), Equation::PCSourceRValue, symbolsManager());
    bool doesConstraint = false;
    BuiltReal normalization = constraintMin->getDefinition().getNormalization(true, &doesConstraint);
-   if (doesConstraint && getSError().simplifyWith(constraintMin->getDefinition(), true,
+   if (doesConstraint && getSError().simplifyWith(constraintMin->getDefinition(),
          *constraintMin, normalization, symbolsManager()))
       symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
             constraintMin.extractElement());
@@ -3829,7 +3984,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    constraintMax->getSDefinition().minusAssign(getError(), Equation::PCSourceRValue, symbolsManager());
    doesConstraint = false;
    normalization = constraintMax->getDefinition().getNormalization(false, &doesConstraint);
-   if (doesConstraint && getSError().simplifyWith(constraintMax->getDefinition(), false,
+   if (doesConstraint && getSError().simplifyWith(constraintMax->getDefinition(),
          *constraintMax, normalization, symbolsManager()))
       symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
             constraintMax.extractElement());
@@ -3864,7 +4019,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    bool doesConstraint = false;
    BuiltReal normalization = constraintMin->getDefinition().getNormalization(minRelativeError.isNegative(),
          &doesConstraint);
-   if (doesConstraint && getSRealDomain().simplifyWith(constraintMin->getDefinition(), minRelativeError.isNegative(),
+   if (doesConstraint && getSRealDomain().simplifyWith(constraintMin->getDefinition(),
          *constraintMin, normalization, symbolsManager()))
       symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
             constraintMin.extractElement());
@@ -3886,7 +4041,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    doesConstraint = false;
    normalization = constraintMax->getDefinition().getNormalization(!minRelativeError.isNegative(),
          &doesConstraint);
-   if (doesConstraint && getSRealDomain().simplifyWith(constraintMax->getDefinition(), !minRelativeError.isNegative(),
+   if (doesConstraint && getSRealDomain().simplifyWith(constraintMax->getDefinition(),
          *constraintMax, normalization, symbolsManager()))
       symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
             constraintMax.extractElement());
@@ -3926,7 +4081,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    bool doesConstraint = false;
    BuiltReal normalization = constraintMin->getDefinition().getNormalization(!isNegativeDomain,
          &doesConstraint);
-   if (doesConstraint && getSError().simplifyWith(constraintMin->getDefinition(), !isNegativeDomain,
+   if (doesConstraint && getSError().simplifyWith(constraintMin->getDefinition(),
          *constraintMin, normalization, symbolsManager()))
       symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
             constraintMin.extractElement());
@@ -3948,7 +4103,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    doesConstraint = false;
    normalization = constraintMax->getDefinition().getNormalization(isNegativeDomain,
          &doesConstraint);
-   if (doesConstraint && getSError().simplifyWith(constraintMax->getDefinition(), isNegativeDomain,
+   if (doesConstraint && getSError().simplifyWith(constraintMax->getDefinition(),
          *constraintMax, normalization, symbolsManager()))
       symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
             constraintMax.extractElement());
@@ -5339,6 +5494,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::plusAssign(const thisType& source, typename Equation::PolicyCall policyCall) {
+   auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
+         << *this << source) >> *this;
    bool isApproximate = !this->isZero() && !source.isZero();
    inherited::plusAssign(source, policyCall);
    dValue += source.dValue;
@@ -5362,6 +5519,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::minusAssign(const thisType& source, typename Equation::PolicyCall policyCall) {
+   auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
+         << *this << source) >> *this;
    bool isApproximate = !this->isZero() && !source.isZero();
    inherited::minusAssign(source, policyCall);
    dValue -= source.dValue;
@@ -5385,6 +5544,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::multAssign(const thisType& source, typename Equation::PolicyCall policyCall) {
+   auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
+         << *this << source) >> *this;
    bool isApproximate = !this->isZero() && !source.isZero()
       && !this->isTwoPower() && !source.isTwoPower();
    inherited::multAssign(source, policyCall);
@@ -5584,6 +5745,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::divAssign(const thisType& source, typename Equation::PolicyCall policyCall) {
+   auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
+         << *this << source) >> *this;
    bool isApproximate = !this->isZero() && !source.isTwoPower();
    inherited::divAssign(source, policyCall);
    dValue /= source.dValue;
@@ -6658,6 +6821,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::sqrtAssign() {
+   auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
+         << *this) >> *this;
    bool isApproximate = !this->isFourPower();
    dValue = ::sqrt((double) dValue);
    inherited::sqrtAssign();
@@ -6687,6 +6852,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::sinAssign() {
+   auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
+         << *this) >> *this;
    dValue = ::sin((double) dValue);
    inherited::sinAssign();
    if (this->doesComputeError())
@@ -6702,6 +6869,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::cosAssign() {
+   auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
+         << *this) >> *this;
    dValue = ::cos((double) dValue);
    inherited::cosAssign();
    if (this->doesComputeError())
@@ -6717,6 +6886,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::asinAssign() {
+   auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
+         << *this) >> *this;
    dValue = ::asin((double) dValue);
    inherited::asinAssign();
    if (this->doesComputeError())
@@ -6732,6 +6903,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::acosAssign() {
+   auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
+         << *this) >> *this;
    dValue = ::acos((double) dValue);
    inherited::acosAssign();
    if (this->doesComputeError())
@@ -6747,6 +6920,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::tanAssign() {
+   auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
+         << *this) >> *this;
    dValue = ::tan((double) dValue);
    inherited::tanAssign();
    if (this->doesComputeError())
@@ -6762,6 +6937,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::atanAssign() {
+   auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
+         << *this) >> *this;
    dValue = ::atan((double) dValue);
    inherited::atanAssign();
 
@@ -6803,6 +6980,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::expAssign() {
+   auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
+         << *this) >> *this;
    bool isApproximate = !this->isZero();
    dValue = ::exp((double) dValue);
    inherited::expAssign();
@@ -6844,6 +7023,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::logAssign() {
+   auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
+         << *this) >> *this;
    bool isApproximate = !this->isOne();
    dValue = ::log((double) dValue);
    inherited::logAssign();
@@ -6941,6 +7122,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::powAssign(const thisType& source, typename Equation::PolicyCall policyCall) {
+   auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
+         << *this << source) >> *this;
    dValue = ::pow((double) dValue, (double) source.dValue);
    inherited::powAssign(source, policyCall);
    if (this->doesComputeError())

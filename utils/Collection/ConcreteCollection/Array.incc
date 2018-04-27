@@ -169,14 +169,24 @@ DefTypeCollection::_add(EnhancedObject* newElement, const ExtendedInsertionParam
       LocationResult result;
       if (cursor) {
          result = DefTypeFinal _locate(*newElement, ExtendedLocateParameters(RPUndefined), cursor);
+#ifndef DefTypeMultiSorted
          AssumeCondition(!result)
-         index = cursor->index()+((result.getInsertionPosition() == RPAfter) ? 1 : 0);
+         bool isAfter = result.getInsertionPosition() == RPAfter;
+#else
+         bool isAfter = (bool) result || (result.getInsertionPosition() == RPAfter);
+#endif
+         index = cursor->index()+(isAfter ? 1 : 0);
       }
       else {
          PPCursor localCursor(newCursor());
          result = DefTypeFinal _locate(*newElement, ExtendedLocateParameters(RPUndefined), localCursor.key());
+#ifndef DefTypeMultiSorted
          AssumeCondition(!result)
-         index = localCursor->index()+((result.getInsertionPosition() == RPAfter) ? 1 : 0);
+         bool isAfter = result.getInsertionPosition() == RPAfter;
+#else
+         bool isAfter = (bool) result || (result.getInsertionPosition() == RPAfter);
+#endif
+         index = localCursor->index()+(isAfter ? 1 : 0);
       };
       ImplArray::insertAt(index, newElement);
 #else // DefTypeSorted

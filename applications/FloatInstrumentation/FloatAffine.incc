@@ -204,6 +204,8 @@ bool ExecutionPath::fSupportVerbose = false;
 bool ExecutionPath::fSupportThreshold = false;
 bool ExecutionPath::fSupportFirstFollowFloat = false;
 bool ExecutionPath::fSupportPureZonotope = false;
+int ExecutionPath::uLimitNoiseSymbolsNumber = 0;
+
 BuiltReal ExecutionPath::brThreshold;
 BuiltReal ExecutionPath::brThresholdDomain;
 BuiltReal ExecutionPath::brMaximalAccuracy;

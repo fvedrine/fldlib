@@ -772,6 +772,9 @@ class DefineEquation
       void setValue(const BuiltReal& value) { dReal = value; }
    };
 
+  public:
+   void computeReferenceForAbsorption(BuiltReal& reference) const;
+
   private:
    typedef PNT::TSharedCollection<Symbol, HandlerCast<Symbol, PNT::SharedCollection::Element> > inherited;
    typedef DefineEquation DefineSEquationTemplateParameters(URealBitsNumber) thisType;
@@ -792,7 +795,6 @@ class DefineEquation
 
    static void computeReference(BuiltReal& reference, const BuiltReal& source,
          const PNT::AutoPointer<Coefficient>& sourceAdditions);
-   void computeReferenceForAbsorption(BuiltReal& reference) const;
    void clearHighLevelSymbols(COL::TVector<Symbol*>& symbolsToFree);
    void clearHighLevelSymbols(SymbolsManager& manager);
    void oppositeAssignCoefficient(Coefficient& thisCoeff, BuiltReal& thisCoeffValue,
@@ -1020,6 +1022,8 @@ class DefineEquation
 
    void notifyUpdate(Notification& notification) const
       {  inherited::notifyUpdate(notification); }
+
+  public:
    void notifyUpdate(std::function<void(DefineEquation DefineSEquationTemplateParameters(URealBitsNumber)&)> function) const
       {  PNT::TFunctionPointerNotification<PNT::SharedCollection, DefineEquation DefineSEquationTemplateParameters(URealBitsNumber) >
             notification(function);
@@ -1261,8 +1265,8 @@ class DefineEquation
    BuiltReal getNormalization(bool isNegative, bool* doesConstraint=nullptr,
          bool hasExternalCoefficient=false) const;
 
-   bool simplifyWith(const thisType& constraint, bool isNegative,
-         Symbol& definedSymbol, const BuiltReal& constraintNormalization,
+   bool simplifyWith(const thisType& constraint, Symbol& definedSymbol,
+         const BuiltReal& constraintNormalization,
          SymbolsManager& manager, bool hasExternalCoefficient=false);
    bool simplifyAllEquations(Symbol& symbol, bool isNegative, SymbolsManager& manager,
          bool hasExternalCoefficient=false) const;

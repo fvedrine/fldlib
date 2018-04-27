@@ -33,9 +33,11 @@
 #define NumericalDomains_FloatAffineBaseGenericTemplate
 
 #include "NumericalDomains/FloatAffineBaseGeneric.h"
+#include "Collection/ConcreteCollection/MultiArray.h"
 
 #include "NumericalLattices/FloatAffineBaseComponentsGeneric.template"
 #include "ForwardNumerics/BaseTaylorFloatingGeneric.template"
+#include "Pointer/ImplArray.template"
 
 namespace NumericalDomains {
 

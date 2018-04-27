@@ -152,6 +152,7 @@ SOURCES =                                                         \
    utils/Collection/ConcreteCollection/List.cpp                   \
    utils/Collection/ConcreteCollection/Array.cpp                  \
    utils/Collection/ConcreteCollection/SortedArray.cpp            \
+   utils/Collection/ConcreteCollection/MultiArray.cpp             \
    algorithms/Numerics/Integer.cpp                                \
    applications/NumericalAnalysis/FloatCommonTypes.cpp            \
    applications/NumericalAnalysis/FloatExactTypes.cpp             \

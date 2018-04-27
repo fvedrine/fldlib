@@ -3806,7 +3806,7 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::spatialMergeWi
 DefineEquationTemplateHeader(URealBitsNumber)
 bool
 DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::simplifyWith(
-      const thisType& constraint, bool isNegative, Symbol& constraintSymbol,
+      const thisType& constraint, Symbol& constraintSymbol,
       const BuiltReal& constraintNormalization, SymbolsManager& manager, bool hasExternalCoefficient) {
    BuiltReal constraintSymbolValue, remainder, weightPositive, weightAll, matchAll;
       /* match = weightPositive * constraintSymbolValue */
@@ -4120,10 +4120,10 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::simplifyAllEqu
    BuiltReal normalization = getNormalization(isNegative, nullptr, hasExternalCoefficient);
    bool result = true;
    notifyUpdate(
-         [this, &symbol, isNegative, &normalization, &result, &manager, hasExternalCoefficient]
+         [this, &symbol, &normalization, &result, &manager, hasExternalCoefficient]
          (thisType& equation)
       {  if (!equation.isDefinition())
-            result = equation.simplifyWith(*this, isNegative, symbol, normalization, manager, hasExternalCoefficient)
+            result = equation.simplifyWith(*this, symbol, normalization, manager, hasExternalCoefficient)
                && result;
       });
    return result;
@@ -4138,10 +4138,10 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::simplifyAllEqu
    BuiltReal normalization = getNormalization(isNegative, nullptr, hasExternalCoefficient);
    bool result = true;
    notifyUpdate(
-         [this, &symbol, isNegative, &normalization, &result, &manager, &condition, hasExternalCoefficient]
+         [this, &symbol, &normalization, &result, &manager, &condition, hasExternalCoefficient]
          (thisType& equation)
       {  if (!equation.isDefinition() && condition(equation))
-            result = equation.simplifyWith(*this, isNegative, symbol, normalization, manager, hasExternalCoefficient)
+            result = equation.simplifyWith(*this, symbol, normalization, manager, hasExternalCoefficient)
                && result;
       });
    return result;

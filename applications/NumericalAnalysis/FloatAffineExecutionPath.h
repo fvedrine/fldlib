@@ -205,6 +205,12 @@ class ExecutionPathContract : public BaseExecutionPath {
    bool doesExcludeConstantFromSymbolAbsorption() const { return false; }
    bool isPureZonotope() const { return false; }
    bool doesAllowSimplex() const { return false; }
+   bool doesSupportAtomic() const { return false; }
+   bool doesSupportUnstableInLoop() const { return false; }
+   bool doesSupportBacktrace() const { return false; }
+   bool doesSupportVerbose() const { return false; }
+   bool hasLimitNoiseSymbolsNumber() { return false; }
+   int getLimitNoiseSymbolsNumber() { return 0; }
 
    void followNewBranch(int cases, BooleanChoice& realChoice, BooleanChoice& errorChoice,
          bool doesChooseDefaultErrorChoice, BooleanChoice defaultErrorChoice) const {}

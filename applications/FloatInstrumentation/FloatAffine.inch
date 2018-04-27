@@ -296,6 +296,7 @@ class ExecutionPath : public BaseExecutionPath {
    static bool fSupportThreshold;
    static bool fSupportFirstFollowFloat;
    static bool fSupportPureZonotope;
+   static int uLimitNoiseSymbolsNumber;
    static BuiltReal brThreshold;
    static BuiltReal brThresholdDomain;
    static BuiltReal brMaximalAccuracy;
@@ -344,6 +345,10 @@ class ExecutionPath : public BaseExecutionPath {
    static void setSupportThreshold() { fSupportThreshold = true; }
    static void setSupportFirstFollowFloat() { fSupportFirstFollowFloat = true; }
    static void setSupportPureZonotope() { fSupportPureZonotope = true; }
+   static bool hasLimitNoiseSymbolsNumber() { return uLimitNoiseSymbolsNumber > 0; }
+   static int getLimitNoiseSymbolsNumber() { return uLimitNoiseSymbolsNumber; }
+   static void setLimitNoiseSymbolsNumber(int limit) { uLimitNoiseSymbolsNumber = limit; }
+
    static void initializeGlobals(const char* fileSuffix);
    static void finalizeGlobals();
    static void setSimplificationTriggerPercent(double percent);
@@ -357,6 +362,7 @@ class ExecutionPath : public BaseExecutionPath {
       void setSupportThreshold() { ExecutionPath::setSupportThreshold(); }
       void setSupportFirstFollowFloat() { ExecutionPath::setSupportFirstFollowFloat(); }
       void setSupportPureZonotope() { ExecutionPath::setSupportPureZonotope(); }
+      void setLimitNoiseSymbolsNumber(int limit) { ExecutionPath::setLimitNoiseSymbolsNumber(limit); }
       void setResultFile(const char* fileSuffix) { initializeGlobals(fileSuffix); }
       ~Initialization() { finalizeGlobals(); }
       void setSimplificationTriggerPercent(double percent) { return ExecutionPath::setSimplificationTriggerPercent(percent); }

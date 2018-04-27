@@ -82,6 +82,12 @@
 #define FLOAT_INIT_PURE_ZONOTOPE
 #endif
 
+#ifdef FLOAT_LIMIT_NOISE_SYMBOLS_NUMBER
+#define FLOAT_INIT_LIMIT_NOISE_SYMBOLS_NUMBER init.setLimitNoiseSymbolsNumber(FLOAT_LIMIT_NOISE_SYMBOLS_NUMBER);
+#else
+#define FLOAT_INIT_LIMIT_NOISE_SYMBOLS_NUMBER 
+#endif
+
 #ifdef FLOAT_LOOP_UNSTABLE
 #define INIT_MAIN                                                                                \
   NumericalDomains::FloatZonotope::Initialization init;                                          \
@@ -91,6 +97,7 @@
   FLOAT_INIT_THRESHOLD                                                                           \
   FLOAT_INIT_FIRST_FOLLOW_EXE                                                                    \
   FLOAT_INIT_SIMPLIFICATION                                                                      \
+  FLOAT_INIT_LIMIT_NOISE_SYMBOLS_NUMBER                                                          \
   FLOAT_INIT_PURE_ZONOTOPE                                                                       \
   init.setResultFile(TOSTRING(PROG_NAME) FLOAT_PROG_SUFFIX);                                     \
   std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
@@ -120,6 +127,7 @@
   FLOAT_INIT_THRESHOLD                                                                           \
   FLOAT_INIT_FIRST_FOLLOW_EXE                                                                    \
   FLOAT_INIT_SIMPLIFICATION                                                                      \
+  FLOAT_INIT_LIMIT_NOISE_SYMBOLS_NUMBER                                                          \
   FLOAT_INIT_PURE_ZONOTOPE                                                                       \
   init.setResultFile(TOSTRING(PROG_NAME) FLOAT_PROG_SUFFIX);                                     \
   std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
