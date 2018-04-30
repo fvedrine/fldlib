@@ -483,8 +483,10 @@ class TFloatZonotope {
 
   public:
    class Record {};
+   struct ValueFromString {}; 
 
    TFloatZonotope();
+   TFloatZonotope(const char* value, ValueFromString);
    TFloatZonotope(float value);
    TFloatZonotope(double value);
    TFloatZonotope(long double value);
@@ -1673,6 +1675,21 @@ typedef DAffineInterface::TFloatZonotope<LDBL_MANT_DIG-1,
       (LDBL_MAX_EXP == (1 << (16-2))) ? 15 /* leading 1 bit */
                                       : sizeof(long double)*8-LDBL_MANT_DIG,
       long double> LongDoubleZonotope;
+
+class ParseFloatZonotope : public FloatZonotope {
+  public:
+   ParseFloatZonotope(const char* value) : FloatZonotope(value, ValueFromString()) {}
+};
+
+class ParseDoubleZonotope : public DoubleZonotope {
+  public:
+   ParseDoubleZonotope(const char* value) : DoubleZonotope(value, ValueFromString()) {}
+};
+
+class ParseLongDoubleZonotope : public LongDoubleZonotope {
+  public:
+   ParseLongDoubleZonotope(const char* value) : LongDoubleZonotope(value, ValueFromString()) {}
+};
 
 } // end of namespace NumericalDomains
 

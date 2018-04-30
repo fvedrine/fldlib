@@ -193,9 +193,15 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
 
   public:
    class ErrorParameter {};
+   struct ValueFromString {}; 
    typedef DDoubleExact::MergeBranches MergeBranches;
 
    TInstrumentedFloat() {}
+   TInstrumentedFloat(const char* value, ValueFromString)
+      {  STG::IOObject::ISBase* in = ExecutionPath::acquireConstantStream(value);
+         inherited::initFrom(*in);
+         ExecutionPath::releaseConstantStream(in);
+      }
    TInstrumentedFloat(float value) { inherited::initFrom(value); }
    TInstrumentedFloat(double value) { inherited::initFrom(value); }
    TInstrumentedFloat(long double value); // { inherited::initFrom(value); }
@@ -781,6 +787,21 @@ TInstrumentedFloat<TypeBuiltDouble, TypeImplementation>::TInstrumentedFloat(long
 typedef DDoubleExact::TInstrumentedFloat<DDoubleExact::BuiltFloat, float> FloatExact;
 typedef DDoubleExact::TInstrumentedFloat<DDoubleExact::BuiltDouble, double> DoubleExact;
 typedef DDoubleExact::TInstrumentedFloat<DDoubleExact::BuiltLongDouble, long double> LongDoubleExact;
+
+class ParseFloatExact : public FloatExact {
+  public:
+   ParseFloatExact(const char* value) : FloatExact(value, ValueFromString()) {}
+};
+
+class ParseDoubleExact : public DoubleExact {
+  public:
+   ParseDoubleExact(const char* value) : DoubleExact(value, ValueFromString()) {}
+};
+
+class ParseLongDoubleExact : public LongDoubleExact {
+  public:
+   ParseLongDoubleExact(const char* value) : LongDoubleExact(value, ValueFromString()) {}
+};
 
 } // end of namespace NumericalDomains
 

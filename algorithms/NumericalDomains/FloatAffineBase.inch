@@ -808,6 +808,7 @@ class DefineBasicFloatZonotope : public DefineBaseFloatZonotope DefineEquationTe
          if (bfMaxRelativeError < source.bfMaxRelativeError)
             bfMaxRelativeError = source.bfMaxRelativeError;
       }
+   void initFrom(STG::IOObject::ISBase& in);
    void initFrom(TypeImplementation value);
    void initFromAtomic(TypeImplementation value);
    void computeRelativeError();

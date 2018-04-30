@@ -12,6 +12,8 @@
 #define INIT_MAIN 
 #define END_MAIN 
 
+#define FLOAT_IMPLEMENTATION 
+
 /* FLOAT_DIAGNOSIS */
 #elif defined(FLOAT_DIAGNOSIS)
 
@@ -183,6 +185,9 @@ static inline NumericalDomains::DoubleZonotope middle_of_double_with_error(old_d
 #define fld_implementation(x) (x).asImplementation()
 #define FLOAT_IMPLEMENTATION fld_implementation
 
+#define FLD_FFROM_STRING NumericalDomains::ParseFloatZonotope
+#define FLD_DFROM_STRING NumericalDomains::ParseDoubleZonotope
+
 #elif defined(FLOAT_INTERVAL)
 #if !defined(FLOAT_LOOP_UNSTABLE)
 #define INIT_MAIN                                                                                \
@@ -212,6 +217,9 @@ static inline NumericalDomains::DoubleZonotope middle_of_double_with_error(old_d
 
 #define fld_implementation(x) (x).asImplementation()
 #define FLOAT_IMPLEMENTATION fld_implementation
+
+#define FLD_FFROM_STRING NumericalDomains::ParseFloatInterval
+#define FLD_DFROM_STRING NumericalDomains::ParseDoubleInterval
 
 #else // FLOAT_EXACT
 
@@ -283,6 +291,9 @@ static inline old_double random_double(old_double x, old_double y)
 
 #define fld_implementation(x) (x).asImplementation()
 #define FLOAT_IMPLEMENTATION fld_implementation
+
+#define FLD_FFROM_STRING NumericalDomains::ParseFloatExact
+#define FLD_DFROM_STRING NumericalDomains::ParseDoubleExact
 
 #endif // FLOAT_INTERVAL && FLOAT_AFFINE && FLOAT_EXACT
 

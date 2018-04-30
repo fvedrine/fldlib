@@ -325,19 +325,23 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
 
   public:
    typedef DDoubleInterval::MergeBranches MergeBranches;
+   struct ValueFromString {};
 
   public:
    TInstrumentedFloatInterval() {}
+   TInstrumentedFloatInterval(const char* value, ValueFromString)
+      {  STG::IOObject::ISBase* in = BaseFloatInterval::acquireConstantStream(value);
+         inherited::initFrom(*in);
+         BaseFloatInterval::releaseConstantStream(in);
+      }
    TInstrumentedFloatInterval(float value)
-      {
-         if (!inherited::fSupportAtomic)
+      {  if (!inherited::fSupportAtomic)
             inherited::initFrom(value);
          else
             inherited::initFromAtomic(value);
       }
    TInstrumentedFloatInterval(double value)
-      {
-         if (!inherited::fSupportAtomic)
+      {  if (!inherited::fSupportAtomic)
             inherited::initFrom(value);
          else
             inherited::initFromAtomic(value);
@@ -1097,6 +1101,21 @@ TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation>::TInstrumentedFl
 typedef DDoubleInterval::TInstrumentedFloatInterval<DDoubleInterval::BuiltFloat, float> FloatInterval;
 typedef DDoubleInterval::TInstrumentedFloatInterval<DDoubleInterval::BuiltDouble, double> DoubleInterval;
 typedef DDoubleInterval::TInstrumentedFloatInterval<DDoubleInterval::BuiltLongDouble, long double> LongDoubleInterval;
+
+class ParseFloatInterval : public FloatInterval {
+  public:
+   ParseFloatInterval(const char* value) : FloatInterval(value, ValueFromString()) {}
+};
+
+class ParseDoubleInterval : public DoubleInterval {
+  public:
+   ParseDoubleInterval(const char* value) : DoubleInterval(value, ValueFromString()) {}
+};
+
+class ParseLongDoubleInterval : public LongDoubleInterval {
+  public:
+   ParseLongDoubleInterval(const char* value) : LongDoubleInterval(value, ValueFromString()) {}
+};
 
 } // end of namespace NumericalDomains
 

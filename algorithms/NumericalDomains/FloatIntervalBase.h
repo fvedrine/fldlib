@@ -97,6 +97,7 @@ class TCompareFloatInterval : public TypeBaseFloatInterval {
    friend class TCompareFloatInterval;
 
   public:
+   void initFrom(STG::IOObject::ISBase& in);
    void initFrom(TypeImplementation value);
    void initFromAtomic(TypeImplementation value);
 
@@ -213,6 +214,20 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
          };
       };
    };
+}
+
+template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
+inline void
+TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>::initFrom(STG::IOObject::ISBase& in) {
+   auto params = inherited::minParams();
+   params.setNearestRound();
+   params.setRoundToEven();
+   bfMin.readDecimal(in, params);
+   params.clear();
+   bfMax = bfMin;
+   DDoubleInterval::setContent(dValue, bfMin, false /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
+   adjustMinMax(dValue);
+   inherited::notifyForCompare(*this);
 }
 
 template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>

@@ -441,8 +441,14 @@ class TInstrumentedFloatZonotope : public TFloatZonotope<ExecutionPath, USizeMan
 
   public:
    typedef DAffine::MergeBranches MergeBranches;
+   struct ValueFromString {}; 
 
    TInstrumentedFloatZonotope() = default;
+   TInstrumentedFloatZonotope(const char* value, ValueFromString)
+      {  STG::IOObject::ISBase* in = ExecutionPath::acquireConstantStream(value);
+         inherited::initFrom(*in);
+         ExecutionPath::releaseConstantStream(in);
+      }
    TInstrumentedFloatZonotope(float value)
       {  if (!inherited::fSupportAtomic)
             inherited::initFrom(value);
@@ -1992,6 +1998,21 @@ typedef DAffine::TInstrumentedFloatZonotope<23, 8, float> FloatZonotope;
 typedef DAffine::TInstrumentedFloatZonotope<52, 11, double> DoubleZonotope;
 typedef DAffine::TInstrumentedFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa,
         LongDoubleFloatDigits::UBitSizeExponent, long double> LongDoubleZonotope;
+
+class ParseFloatZonotope : public FloatZonotope {
+  public:
+   ParseFloatZonotope(const char* value) : FloatZonotope(value, ValueFromString()) {}
+};
+
+class ParseDoubleZonotope : public DoubleZonotope {
+  public:
+   ParseDoubleZonotope(const char* value) : DoubleZonotope(value, ValueFromString()) {}
+};
+
+class ParseLongDoubleZonotope : public LongDoubleZonotope {
+  public:
+   ParseLongDoubleZonotope(const char* value) : LongDoubleZonotope(value, ValueFromString()) {}
+};
 
 } // end of namespace NumericalDomains
 

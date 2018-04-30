@@ -276,7 +276,9 @@ class TFloatExact {
 
   public:
    class ErrorParameter {};
+   struct ValueFromString {};
    TFloatExact();
+   TFloatExact(const char* value, ValueFromString);
    TFloatExact(float value);
    TFloatExact(float value, float error, ErrorParameter);
    TFloatExact(double value);
@@ -963,6 +965,21 @@ typedef DDoubleExactInterface::TFloatExact<LDBL_MANT_DIG-1,
       (LDBL_MAX_EXP == (1 << (16-2))) ? 15 /* leading 1 bit */
                                       : sizeof(long double)*8-LDBL_MANT_DIG,
       long double> LongDoubleExact;
+
+class ParseFloatExact : public FloatExact {
+  public:
+   ParseFloatExact(const char* value) : FloatExact(value, ValueFromString()) {}
+};
+
+class ParseDoubleExact : public DoubleExact {
+  public:
+   ParseDoubleExact(const char* value) : DoubleExact(value, ValueFromString()) {}
+};
+
+class ParseLongDoubleExact : public LongDoubleExact {
+  public:
+   ParseLongDoubleExact(const char* value) : LongDoubleExact(value, ValueFromString()) {}
+};
 
 } // end of namespace NumericalDomains
 

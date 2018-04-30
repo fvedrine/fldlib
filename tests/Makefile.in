@@ -72,8 +72,9 @@ analysis : diagnosis_exact diagnosis_interval diagnosis_affine diagnosis_affine_
 	rm -rf $(patsubst %.fluctuat.ii,%_fluctuat,$<)
 	mkdir $(patsubst %.fluctuat.ii,%_fluctuat,$<)
 	$(eval CUR := $(CURDIR))
+	cp @top_srcdir@/tests/fluctuat_project.rc $(patsubst %.fluctuat.ii,%_fluctuat,$<)/project.rc
 	-cd $(patsubst %.fluctuat.ii,%_fluctuat,$<)                                \
-      && two_analyzer -c $(CUR)/fluctuat_project.rc $(CUR)/$< && touch $(CUR)/$@
+      && two_analyzer -c project.rc $(CUR)/$< && touch $(CUR)/$@
 
 %.fluctuat_spec_done: %.fluctuat.ii
 	rm -rf $(patsubst %.fluctuat.ii,%_fluctuat_s,$<)
@@ -82,7 +83,7 @@ analysis : diagnosis_exact diagnosis_interval diagnosis_affine diagnosis_affine_
 	ifneq ("$(wildcard $<.rc)","")                                             \
 	   cp $<.rc $(patsubst %.fluctuat.ii,%_fluctuat_s,$<)/project.rc           \
 	else                                                                       \
-	   cp $(CUR)/fluctuat_project.rc $(patsubst %.fluctuat.ii,%_fluctuat_s,$<)/project.rc \
+	   cp @top_srcdir@/tests/fluctuat_project.rc $(patsubst %.fluctuat.ii,%_fluctuat_s,$<)/project.rc \
 	endif
 	-cd $(patsubst %.fluctuat.ii,%_fluctuat_s,$<)                              \
       && two_analyzer -c project.rc $(CUR)/$< && touch $(CUR)/$@

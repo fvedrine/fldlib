@@ -36,11 +36,13 @@ namespace NumericalDomains { namespace DDoubleExact {
 class ExecutionPath : public BaseExecutionPath {
   protected:
    class IFStream;
+   class IStringStream;
    class OFStream;
    class DebugStream;
 
    static STG::IOObject::OSBase* oTraceFile; // continuous computations
    static STG::IOObject::ISBase* iTraceFile; // continuous computations
+   static STG::IOObject::ISBase* iConstantStream;  // to read constant value from string
    static int uCurrentUnstableBranch;        // discrete decisions
    static int uNumberOfUnstableBranches;
 
@@ -83,6 +85,8 @@ class ExecutionPath : public BaseExecutionPath {
    static bool doesAssumeInput() { return !fSupportUnstableInLoop || iTraceFile != nullptr; }
    static bool setFollowFlow(bool doesFollow=true) { fDoesFollow = doesFollow; return doesFollow; }
    static void clearFollowFlow() { fDoesFollow = false; }
+   static STG::IOObject::ISBase* acquireConstantStream(const char* content);
+   static void releaseConstantStream(STG::IOObject::ISBase* in);
 
   protected:
    static bool hasOutput() { return oTraceFile; }

@@ -208,6 +208,17 @@ TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::queryLightDebu
 }
 
 #include "StandardClasses/UndefineNew.h"
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::TFloatInterval(const char* value, ValueFromString) {
+   typedef DDoubleInterval::TFloatInterval<DDoubleInterval::ExecutionPath, DDoubleInterval::TBuiltFloat<DDoubleInterval::LongDoubleFloatDigits::UBitSizeMantissa+1, USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   AssumeCondition(sizeof(Implementation) <= UFloatIntervalSize*sizeof(AlignType))
+   new (content) Implementation();
+   STG::IOObject::ISBase* in = DDoubleInterval::ExecutionPath::acquireConstantStream(value);
+   reinterpret_cast<Implementation*>(content)->initFrom(*in);
+   DDoubleInterval::ExecutionPath::releaseConstantStream(in);
+}
+
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatInterval<USizeMantissa, USizeExponent, TypeImplementation>::TFloatInterval() {
    typedef DDoubleInterval::TFloatInterval<DDoubleInterval::ExecutionPath, DDoubleInterval::TBuiltFloat<DDoubleInterval::LongDoubleFloatDigits::UBitSizeMantissa+1, USizeMantissa, USizeExponent>, TypeImplementation> Implementation;

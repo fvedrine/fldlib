@@ -4083,6 +4083,72 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
 DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
+      ::initFrom(STG::IOObject::ISBase& in) {
+   inherited::updateLocalState();
+
+   BuiltReal real;
+   auto& params = inherited::nearestParams();
+   real.readDecimal(in, params);
+   bool isDownApproximate = params.isDownApproximate(), isUpApproximate = params.isUpApproximate();
+   params.clear();
+
+   typename BuiltReal::FloatConversion conversion;
+   conversion.setSizeMantissa(real.bitSizeMantissa()).setSizeExponent(real.bitSizeExponent());
+   int sizeMantissa = (real.bitSizeMantissa() + DefineSizeofBaseTypeInBits - 1)/(DefineSizeofBaseTypeInBits);
+   for (int index = 0; index < sizeMantissa; ++index)
+      conversion.mantissa()[index] = real.getMantissa()[index];
+   int sizeExponent = (real.bitSizeExponent() + DefineSizeofBaseTypeInBits - 1)/(DefineSizeofBaseTypeInBits);
+   for (int index = 0; index < sizeExponent; ++index)
+      conversion.exponent()[index] = real.getBasicExponent()[index];
+   conversion.setNegative(real.isNegative());
+   bfMin.setFloat(conversion, params);
+   bfMax = bfMin;
+   if (params.isUpApproximate()) {
+      bfMin.setToPrevious();
+      DAffine::DefineSetContent(dValue, bfMax, typename TypeBaseFloatAffine::FloatDigitsHelper());
+   }
+   else {
+      bfMax.setToNext();
+      DAffine::DefineSetContent(dValue, bfMin, typename TypeBaseFloatAffine::FloatDigitsHelper());
+   };
+   params.clear();
+
+   if (!isDownApproximate && !isUpApproximate)
+      inherited::setCentral(real);
+   else {
+      BuiltReal otherReal = real;
+      if (isUpApproximate) {
+         otherReal.setToPrevious();
+         if (TypeBaseFloatAffine::doesAbsorbHighLevel())
+            inherited::setIntervalWithHighLevel(otherReal, real);
+         else
+            inherited::setInterval(otherReal, real);
+      }
+      else { // isDownApproximate
+         otherReal.setToNext();
+         if (TypeBaseFloatAffine::doesAbsorbHighLevel())
+            inherited::setIntervalWithHighLevel(real, otherReal);
+         else
+            inherited::setInterval(real, otherReal);
+      };
+   };
+   computeError();
+   computeRelativeError();
+   if (!inherited::doesComputeReal()) {
+      getSError().plusAssign(getRealDomain(), Equation::PCSourceRValue, symbolsManager());
+      getSRealDomain().clear(&symbolsManager());
+   };
+   if (!inherited::doesComputeError()) {
+      getSError().clear(&symbolsManager());
+      bfMin.clear();
+      bfMax.clear();
+   };
+   TypeBaseFloatAffine::notifyForCompare(*this);
+}
+
+DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
+void
+DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::initFrom(TypeImplementation value) {
    inherited::updateLocalState();
    dValue = value;

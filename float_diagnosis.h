@@ -48,6 +48,8 @@ typedef long double old_long_double;
 #define FSENSITIVITY(x)
 #define DSENSITIVITY(x)
 #define _FDL NumericalDomains::DAffine::BaseFloatAffine::setSourceLine(__FILE__, __LINE__);
+#define FFROM_STRING(x) NumericalDomains::FloatZonotope(#x, NumericalDomains::FloatZonotope::ValueFromString())
+#define DFROM_STRING(x) NumericalDomains::DoubleZonotope(#x, NumericalDomains::DoubleZonotope::ValueFromString())
 
 #ifdef FLOAT_PRINT_PATH
 #define FLOAT_PRINT_CURRENT_PATH(ident)                                                          \
@@ -234,6 +236,8 @@ inline double middle_of_double(double x, double y) { return (x+y)/2.0; }
 #define FSENSITIVITY(x)
 #define DSENSITIVITY(x)
 #define _FDL NumericalDomains::DDoubleInterval::ExecutionPath::setSourceLine(__FILE__, __LINE__);
+#define FFROM_STRING(x) NumericalDomains::FloatInterval(#x, NumericalDomains::FloatInterval::ValueFromString())
+#define DFROM_STRING(x) NumericalDomains::DoubleInterval(#x, NumericalDomains::DoubleInterval::ValueFromString())
 
 #ifdef FLOAT_PRINT_PATH
 #define FLOAT_PRINT_CURRENT_PATH(ident)                                                          \
@@ -334,6 +338,8 @@ typedef long double old_long_double;
 #define FSENSITIVITY(x)
 #define DSENSITIVITY(x)
 #define _FDL NumericalDomains::DDoubleExact::BaseFloatExact::setSourceLine(__FILE__, __LINE__);
+#define FFROM_STRING(x) NumericalDomains::FloatExact(#x, NumericalDomains::FloatExact::ValueFromString())
+#define DFROM_STRING(x) NumericalDomains::DoubleExact(#x, NumericalDomains::DoubleExact::ValueFromString())
 
 #ifdef FLOAT_PRINT_PATH
 #define FLOAT_PRINT_CURRENT_PATH(ident)                                                          \

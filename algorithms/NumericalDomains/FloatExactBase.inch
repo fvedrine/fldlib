@@ -32,6 +32,7 @@
 #ifndef DefineGeneric
 
 #define DefineFillContent fillContent
+#define DefineSetContent setContent
 #define DefineSizeofBaseTypeInBits                                   \
    (sizeof(unsigned int)*8)
 #define DefineBaseFloatExactContract TBaseFloatExactContract
@@ -40,6 +41,7 @@
 #else
 
 #define DefineFillContent gfillContent
+#define DefineSetContent gsetContent
 #define DefineSizeofBaseTypeInBits                                   \
    BaseStoreTraits::sizeBaseInBits()
 #define DefineBaseFloatExactContract TGBaseFloatExactContract
@@ -129,6 +131,7 @@ class DefineCompareFloatExact : public TypeBaseFloatExact {
 
   public:
    typedef TypeBuiltDouble BuiltDouble;
+   void initFrom(STG::IOObject::ISBase& in);
    void initFrom(TypeImplementation value);
    void retrieveRelativeError(BuiltReal& result) const;
    static void retrieveReal(const TypeBuiltDouble& source, BuiltReal& result);
@@ -204,6 +207,24 @@ class DefineCompareFloatExact : public TypeBaseFloatExact {
    void minAssign(const thisType& source);
    void medianAssign(const thisType& fstOther, const thisType& sndOther);
 };
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+inline void
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>
+      ::initFrom(STG::IOObject::ISBase& in) {
+   auto& params = inherited::nearestParams();
+   brReal.readDecimal(in, params);
+   params.clear();
+   retrieveImplementation(brReal, bfImplementation);
+   DDoubleExact::DefineSetContent(dValue, bfImplementation /*, false isUpper */, typename TypeBaseFloatExact::FloatDigitsHelper());
+
+   auto mode = inherited::getMode();
+   if (mode == inherited::SVNoReal)
+      brReal.clear();
+   else if (mode == inherited::SVNoImplementation)
+      bfImplementation.clear();
+   inherited::notifyForCompare(*this);
+}
 
 template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
 inline void
@@ -521,6 +542,7 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
 } // end of namespace DDoubleExact
 
 #undef DefineFillContent
+#undef DefineSetContent
 #undef DefineSizeofBaseTypeInBits
 #undef DefineBaseFloatExactContract
 #undef DefineCompareFloatExact

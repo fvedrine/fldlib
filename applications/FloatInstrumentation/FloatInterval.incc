@@ -52,6 +52,26 @@ class ExecutionPath::IFStream : public STG::IOObject::ISBase {
    #undef DefineDeclareIMethods
 };
 
+class ExecutionPath::IStringStream : public STG::IOObject::ISBase {
+  public:
+   typedef STG::IOObject::ISBase ISBase;
+
+  private:
+   std::istringstream isIn;
+
+  public:
+   IStringStream(const char* content) : isIn(content) {}
+   IStringStream(const IStringStream& source) = delete;
+
+   bool isValid() const { return true; }
+   virtual bool isStreamBased() const { return true; }
+   std::istringstream& inputStream() { return isIn; }
+
+   #define DefineDeclareIMethods
+   #include "StandardClasses/IOStreamMethods.inch"
+   #undef DefineDeclareIMethods
+};
+
 class ExecutionPath::OFStream : public STG::IOObject::OSBase {
   public:
    typedef STG::IOObject::OSBase OSBase;
@@ -101,6 +121,12 @@ class ExecutionPath::DebugStream : public STG::IOObject::OSBase {
 #undef DefineLinkStream
 #undef DefineTypeObject
 
+#define DefineTypeObject ExecutionPath::IStringStream
+#define DefineLinkStream isIn
+#include "StandardClasses/IOStreamMethods.inch"
+#undef DefineLinkStream
+#undef DefineTypeObject
+
 #undef DefineInlineIStreamMethods
 
 #define DefineInlineOStreamMethods
@@ -129,6 +155,14 @@ class ExecutionPath::DebugStream : public STG::IOObject::OSBase {
 #undef DefineTypeObject
 #undef DefineImplementsIStreamMethods
 
+#define DefineImplementsIStreamMethods
+#define DefineTypeObject ExecutionPath::IStringStream
+#define DefineLinkStream isIn
+#include "StandardClasses/IOStreamMethods.incc"
+#undef DefineLinkStream
+#undef DefineTypeObject
+#undef DefineImplementsIStreamMethods
+
    /* class OFStream */
 
 #define DefineImplementsOStreamMethods
@@ -145,6 +179,7 @@ class ExecutionPath::DebugStream : public STG::IOObject::OSBase {
 #undef DefineLinkStream
 #undef DefineTypeObject
 
+STG::IOObject::ISBase* ExecutionPath::iConstantStream = nullptr;
 STG::IOObject::OSBase* ExecutionPath::oTraceFile = nullptr;
 STG::IOObject::ISBase* ExecutionPath::iTraceFile = nullptr;
 ExecutionPath::PathExplorer ExecutionPath::pPathExplorer;
@@ -176,6 +211,20 @@ BuiltLongDouble ExecutionPath::brLongDoubleThresholdDomain;
 BuiltFloat ExecutionPath::brFloatMaximalAccuracy;
 BuiltDouble ExecutionPath::brDoubleMaximalAccuracy;
 BuiltLongDouble ExecutionPath::brLongDoubleMaximalAccuracy;
+
+STG::IOObject::ISBase*
+ExecutionPath::acquireConstantStream(const char* content) {
+   if (!iConstantStream)
+      iConstantStream = new IStringStream(content);
+   else {
+      ((IStringStream*) iConstantStream)->inputStream().str(content);
+      ((IStringStream*) iConstantStream)->inputStream().clear();
+   };
+   return iConstantStream;
+}
+
+void
+ExecutionPath::releaseConstantStream(STG::IOObject::ISBase* in) {}
 
 void
 ExecutionPath::initializeGlobals(const char* fileSuffix) {
@@ -352,6 +401,9 @@ ExecutionPath::finalizeGlobals() {
    if (iTraceFile)
       delete iTraceFile;
    iTraceFile = nullptr;
+   if (iConstantStream)
+      delete iConstantStream;
+   iConstantStream = nullptr;
 }
 
 bool

@@ -15,7 +15,7 @@ int main() {
   INIT_MAIN
   float t=0, delta;
   int i, n = 500;
-  delta = FEXACT(0.1);
+  delta = FFROM_STRING(0.1);
 
   for (i=0;i<n;i++) {
     t = t + delta;

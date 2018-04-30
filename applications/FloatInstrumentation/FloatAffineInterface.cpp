@@ -321,6 +321,16 @@ TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope(const char* value, ValueFromString) {
+   typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   AssumeCondition(sizeof(Implementation) <= UFloatZonotopeSize*sizeof(AlignType))
+   new (content) Implementation();
+   STG::IOObject::ISBase* in = DAffine::ExecutionPath::acquireConstantStream(value);
+   reinterpret_cast<Implementation*>(content)->initFrom(*in);
+   DAffine::ExecutionPath::releaseConstantStream(in);
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope(float value) {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
    AssumeCondition(sizeof(Implementation) <= UFloatZonotopeSize*sizeof(AlignType))

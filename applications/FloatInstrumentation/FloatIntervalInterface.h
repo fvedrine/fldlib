@@ -390,7 +390,9 @@ class TFloatInterval {
    typedef DDoubleIntervalInterface::MergeBranches MergeBranches;
 
   public:
+   struct ValueFromString {};
    TFloatInterval();
+   TFloatInterval(const char* value, ValueFromString);
    TFloatInterval(float value);
    TFloatInterval(double value);
    TFloatInterval(long double value);
@@ -1060,6 +1062,21 @@ typedef DDoubleIntervalInterface::TFloatInterval<LDBL_MANT_DIG-1,
       (LDBL_MAX_EXP == (1 << (16-2))) ? 15 /* leading 1 bit */
                                       : sizeof(long double)*8-LDBL_MANT_DIG,
       long double> LongDoubleInterval;
+
+class ParseFloatInterval : public FloatInterval {
+  public:
+   ParseFloatInterval(const char* value) : FloatInterval(value, ValueFromString()) {}
+};
+
+class ParseDoubleInterval : public DoubleInterval {
+  public:
+   ParseDoubleInterval(const char* value) : DoubleInterval(value, ValueFromString()) {}
+};
+
+class ParseLongDoubleInterval : public LongDoubleInterval {
+  public:
+   ParseLongDoubleInterval(const char* value) : LongDoubleInterval(value, ValueFromString()) {}
+};
 
 } // end of namespace NumericalDomains
 

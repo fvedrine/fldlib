@@ -64,6 +64,7 @@ class PathExplorer {
 class ExecutionPath : public BaseExecutionPath {
   public:
    class IFStream;
+   class IStringStream;
    class OFStream;
    class DebugStream;
 
@@ -113,6 +114,7 @@ class ExecutionPath : public BaseExecutionPath {
   protected:
    static STG::IOObject::OSBase* oTraceFile;       // continuous computations
    static STG::IOObject::ISBase* iTraceFile;       // continuous computations
+   static STG::IOObject::ISBase* iConstantStream;  // to read constant value from string
    static PathExplorer pPathExplorer;              // discrete computations
    static const char* szCurrentFile;
    static int uCurrentLine;
@@ -310,6 +312,10 @@ class ExecutionPath : public BaseExecutionPath {
 
    static bool followNewUnresolvedBranch(bool& isLastBranch);
    static unsigned followNewConversionBranch(unsigned conversion, bool& isLastBranch);
+
+  public:
+   static STG::IOObject::ISBase* acquireConstantStream(const char* content);
+   static void releaseConstantStream(STG::IOObject::ISBase* in);
 };
 
 inline bool
@@ -355,6 +361,5 @@ PathExplorer::isFinished() {
 }
 
 typedef ExecutionPath BaseFloatInterval;
-
 
 }} // end of namespace NumericalDomains::DDoubleInterval

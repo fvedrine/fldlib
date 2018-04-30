@@ -195,6 +195,17 @@ TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::queryDebugValue()
 }
 
 #include "StandardClasses/UndefineNew.h"
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::TFloatExact(const char* value, ValueFromString) {
+   typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
+   AssumeCondition(sizeof(Implementation) <= UFloatExactSize*sizeof(AlignType))
+   new (content) Implementation();
+   STG::IOObject::ISBase* in = DDoubleExact::ExecutionPath::acquireConstantStream(value);
+   reinterpret_cast<Implementation*>(content)->initFrom(*in);
+   DDoubleExact::ExecutionPath::releaseConstantStream(in);
+}
+
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 TFloatExact<USizeMantissa, USizeExponent, TypeImplementation>::TFloatExact() {
    typedef DDoubleExact::TFloatExact<DDoubleExact::ExecutionPath, DDoubleExact::TBuiltFloatExact<USizeMantissa, USizeExponent>, TypeImplementation> Implementation;
