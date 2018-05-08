@@ -305,7 +305,7 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    thisType median(TypeImplementation fst, TypeImplementation snd) const
       {  auto result(*this); result.medianAssign(thisType(fst), thisType(snd)); return result; }
 
-   void persist(const char* prefix) { inherited::notifyForPersistence(*this, prefix); }
+   void persist(const char* prefix) const { inherited::notifyForPersistence(*this, prefix); }
 
    friend std::ostream& operator<<(std::ostream& out, const thisType& source)
       {  return out << source.asImplementation(); }

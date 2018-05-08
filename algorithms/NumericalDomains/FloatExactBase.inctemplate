@@ -524,7 +524,7 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
       TypeBuiltDouble realInImplementation;
       retrieveImplementation(brReal, realInImplementation);
 
-      double real = 0;
+      TypeImplementation real = 0;
       DefineSetContent(real, realInImplementation /*, false isUpper */, typename TypeBaseFloatExact::FloatDigitsHelper());
       real = ::sin(real);
       TypeBuiltDouble conversion;
@@ -545,7 +545,7 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
       TypeBuiltDouble realInImplementation;
       retrieveImplementation(brReal, realInImplementation);
 
-      double real = 0;
+      TypeImplementation real = 0;
       DefineSetContent(real, realInImplementation /*, false isUpper */, typename TypeBaseFloatExact::FloatDigitsHelper());
       real = ::cos(real);
       TypeBuiltDouble conversion;
@@ -566,7 +566,7 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
       TypeBuiltDouble realInImplementation;
       retrieveImplementation(brReal, realInImplementation);
 
-      double real = 0;
+      TypeImplementation real = 0;
       DefineSetContent(real, realInImplementation /*, false isUpper */, typename TypeBaseFloatExact::FloatDigitsHelper());
       real = ::asin(real);
       TypeBuiltDouble conversion;
@@ -587,7 +587,7 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
       TypeBuiltDouble realInImplementation;
       retrieveImplementation(brReal, realInImplementation);
 
-      double real = 0;
+      TypeImplementation real = 0;
       DefineSetContent(real, realInImplementation /*, false isUpper */, typename TypeBaseFloatExact::FloatDigitsHelper());
       real = ::acos(real);
       TypeBuiltDouble conversion;
@@ -608,7 +608,7 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
       TypeBuiltDouble realInImplementation;
       retrieveImplementation(brReal, realInImplementation);
 
-      double real = 0;
+      TypeImplementation real = 0;
       DefineSetContent(real, realInImplementation /*, false isUpper */, typename TypeBaseFloatExact::FloatDigitsHelper());
       real = ::tan(real);
       TypeBuiltDouble conversion;
@@ -629,7 +629,7 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
       TypeBuiltDouble realInImplementation;
       retrieveImplementation(brReal, realInImplementation);
 
-      double real = 0;
+      TypeImplementation real = 0;
       DefineSetContent(real, realInImplementation /*, false isUpper */, typename TypeBaseFloatExact::FloatDigitsHelper());
       real = ::atan(real);
       TypeBuiltDouble conversion;
@@ -694,7 +694,7 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
       TypeBuiltDouble realInImplementation;
       retrieveImplementation(brReal, realInImplementation);
 
-      double real = 0;
+      TypeImplementation real = 0;
       DefineSetContent(real, realInImplementation /*, false isUpper */, typename TypeBaseFloatExact::FloatDigitsHelper());
       real = ::log10(real);
       TypeBuiltDouble conversion;
@@ -724,7 +724,7 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
       retrieveImplementation(brReal, realInImplementation);
       retrieveImplementation(value.brReal, sourceRealInImplementation);
 
-      double real = 0, sourceReal = 0;
+      TypeImplementation real = 0, sourceReal = 0;
       DefineSetContent(real, realInImplementation /*, false isUpper */, typename TypeBaseFloatExact::FloatDigitsHelper());
       DefineSetContent(sourceReal, sourceRealInImplementation /*, false isUpper */, typename TypeBaseFloatExact::FloatDigitsHelper());
       real = ::pow(real, sourceReal);
@@ -749,7 +749,7 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
       retrieveImplementation(brReal, realInImplementation);
       retrieveImplementation(value.brReal, sourceRealInImplementation);
 
-      double real = 0, sourceReal = 0;
+      TypeImplementation real = 0, sourceReal = 0;
       DefineSetContent(real, realInImplementation /*, false isUpper */, typename TypeBaseFloatExact::FloatDigitsHelper());
       DefineSetContent(sourceReal, sourceRealInImplementation /*, false isUpper */, typename TypeBaseFloatExact::FloatDigitsHelper());
       real = ::atan2(real, sourceReal);
