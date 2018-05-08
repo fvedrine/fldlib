@@ -36,6 +36,7 @@
 
 typedef NumericalDomains::DAffine::FloatDigitsHelper::TFloatDigits<long double> LongDoubleFloatDigits;
 
+template class Numerics::DInteger::TBigCellIntAlgo<Numerics::DInteger::TCellIntegerTraits<(FLOAT_REAL_BITS_NUMBER +8*sizeof(unsigned)-1)/(8*sizeof(unsigned))> >;
 template class Numerics::TBuiltDouble<NumericalDomains::DAffine::BuiltDoubleTraits<FLOAT_REAL_BITS_NUMBER, 23, 8> >;
 template class Numerics::TBuiltDouble<NumericalDomains::DAffine::BuiltDoubleTraits<FLOAT_REAL_BITS_NUMBER, 52, 11> >;
 template class Numerics::TBuiltDouble<NumericalDomains::DAffine::BuiltDoubleTraits<FLOAT_REAL_BITS_NUMBER, LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent> >;
@@ -63,6 +64,7 @@ typedef NumericalDomains::DAffine::FloatDigitsHelper::TFloatDigits<long double> 
 
 #if defined(FLOAT_GENERIC_BASE_LONG)
 
+template class Numerics::DInteger::TGBigCellIntAlgo<Numerics::UnsignedLongBaseStoreTraits, Numerics::DInteger::TGCellIntegerTraits<Numerics::UnsignedLongBaseStoreTraits, (FLOAT_REAL_BITS_NUMBER +8*sizeof(unsigned long)-1)/(8*sizeof(unsigned long))> >;
 template class Numerics::TGBuiltDouble<NumericalDomains::DAffine::GBuiltDoubleTraits<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, 23, 8> >;
 template class Numerics::TGBuiltDouble<NumericalDomains::DAffine::GBuiltDoubleTraits<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, 52, 11> >;
 template class Numerics::TGBuiltDouble<NumericalDomains::DAffine::GBuiltDoubleTraits<Numerics::UnsignedLongBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent> >;
@@ -85,6 +87,7 @@ template class NumericalDomains::DAffine::TGBuiltReal<Numerics::UnsignedLongBase
 
 #else // defined(FLOAT_GENERIC_BASE_UNSIGNED)
 
+template class Numerics::DInteger::TGBigCellIntAlgo<Numerics::UnsignedBaseStoreTraits, Numerics::DInteger::TGCellIntegerTraits<Numerics::UnsignedBaseStoreTraits, (FLOAT_REAL_BITS_NUMBER +8*sizeof(unsigned)-1)/(8*sizeof(unsigned))> >;
 template class Numerics::TGBuiltDouble<NumericalDomains::DAffine::GBuiltDoubleTraits<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, 23, 8> >;
 template class Numerics::TGBuiltDouble<NumericalDomains::DAffine::GBuiltDoubleTraits<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, 52, 11> >;
 template class Numerics::TGBuiltDouble<NumericalDomains::DAffine::GBuiltDoubleTraits<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent> >;
