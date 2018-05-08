@@ -17864,7 +17864,9 @@ fi
 if test "$realbitsnumber" != ""; then :
 
 
-$as_echo "#define FLOAT_REAL_BITS_NUMBER \$realbitsnumber" >>confdefs.h
+cat >>confdefs.h <<_ACEOF
+#define FLOAT_REAL_BITS_NUMBER $realbitsnumber
+_ACEOF
 
   FLOAT_REAL_BITS_NUMBER=-DFLOAT_REAL_BITS_NUMBER=$realbitsnumber
 
@@ -17883,7 +17885,9 @@ fi
 if test "$triggerpercent" != ""; then :
 
 
-$as_echo "#define FLOAT_TRIGGER_PERCENT \"\$triggerpercent/100.0\"" >>confdefs.h
+cat >>confdefs.h <<_ACEOF
+#define FLOAT_TRIGGER_PERCENT "$triggerpercent/100.0"
+_ACEOF
 
   FLOAT_TRIGGER_PERCENT=-DFLOAT_TRIGGER_PERCENT="$triggerpercent/100.0"
 

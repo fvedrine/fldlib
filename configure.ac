@@ -191,7 +191,7 @@ AS_IF([test "x$enable_constantexclusionfromabsorption" != "xno"], [
 ])
 
 AS_IF([test "$realbitsnumber" != ""], [
-  AC_DEFINE([FLOAT_REAL_BITS_NUMBER],[$realbitsnumber],[Define the number of bits for the mantissa of real numbers])
+  AC_DEFINE_UNQUOTED([FLOAT_REAL_BITS_NUMBER],[$realbitsnumber],[Define the number of bits for the mantissa of real numbers])
   AC_SUBST([FLOAT_REAL_BITS_NUMBER],[-DFLOAT_REAL_BITS_NUMBER=$realbitsnumber])
   AC_SUBST([HAVE_FLOAT_REAL_BITS_NUMBER],[1])
   AC_SUBST([VALUE_FLOAT_REAL_BITS_NUMBER],[$realbitsnumber])
@@ -200,7 +200,7 @@ AS_IF([test "$realbitsnumber" != ""], [
 ])
 
 AS_IF([test "$triggerpercent" != ""], [
-  AC_DEFINE([FLOAT_TRIGGER_PERCENT],["$triggerpercent/100.0"],[Replace the zonotope by the interval if the interval is xxx% better than the zonotope])
+  AC_DEFINE_UNQUOTED([FLOAT_TRIGGER_PERCENT],["$triggerpercent/100.0"],[Replace the zonotope by the interval if the interval is xxx% better than the zonotope])
   AC_SUBST([FLOAT_TRIGGER_PERCENT],[-DFLOAT_TRIGGER_PERCENT="$triggerpercent/100.0"])
   AC_SUBST([HAVE_FLOAT_TRIGGER_PERCENT],[1])
   AC_SUBST([VALUE_FLOAT_TRIGGER_PERCENT],["$triggerpercent/100.0"])
