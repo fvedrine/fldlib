@@ -15,16 +15,8 @@
 /* Define to write real numbers with the natural decimal writing */
 #undef FLOAT_LONG_WRITE
 
-/* Keep maximal relationships among variables to the detriment of constraints
-   */
-#undef FLOAT_PURE_ZONOTOPE
-
 /* Define the number of bits for the mantissa of real numbers */
 #undef FLOAT_REAL_BITS_NUMBER
-
-/* Replace the zonotope by the interval if the interval is xxx% better than
-   the zonotope */
-#undef FLOAT_TRIGGER_PERCENT
 
 /* Push the constraints onto a stack to apply them in an optimal but costly
    way */

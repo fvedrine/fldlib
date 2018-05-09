@@ -295,6 +295,7 @@ class ExecutionPath : public BaseExecutionPath {
    static bool fSupportVerbose;
    static bool fSupportThreshold;
    static bool fSupportFirstFollowFloat;
+   static bool fSupportPureZonotope;
    static BuiltReal brThreshold;
    static BuiltReal brThresholdDomain;
    static BuiltReal brMaximalAccuracy;
@@ -342,6 +343,7 @@ class ExecutionPath : public BaseExecutionPath {
    static bool doesSupportVerbose() { return fSupportVerbose; }
    static void setSupportThreshold() { fSupportThreshold = true; }
    static void setSupportFirstFollowFloat() { fSupportFirstFollowFloat = true; }
+   static void setSupportPureZonotope() { fSupportPureZonotope = true; }
    static void initializeGlobals(const char* fileSuffix);
    static void finalizeGlobals();
    static void setSimplificationTriggerPercent(double percent);
@@ -354,6 +356,7 @@ class ExecutionPath : public BaseExecutionPath {
       void setSupportVerbose() { ExecutionPath::setSupportVerbose(); }
       void setSupportThreshold() { ExecutionPath::setSupportThreshold(); }
       void setSupportFirstFollowFloat() { ExecutionPath::setSupportFirstFollowFloat(); }
+      void setSupportPureZonotope() { ExecutionPath::setSupportPureZonotope(); }
       void setResultFile(const char* fileSuffix) { initializeGlobals(fileSuffix); }
       ~Initialization() { finalizeGlobals(); }
       void setSimplificationTriggerPercent(double percent) { return ExecutionPath::setSimplificationTriggerPercent(percent); }
@@ -479,12 +482,7 @@ class ExecutionPath : public BaseExecutionPath {
    unsigned getLimitStartSymbolAbsorption() const { return FLOAT_ZONOTOPE_LIMIT_SYMBOL_ABSORPTION; }
    bool doesExcludeConstantFromSymbolAbsorption() const { return FLOAT_ZONOTOPE_DOES_EXCLUDE_CONSTANT_FROM_SYMBOL_ABSORPTION; }
 
-   bool isPureZonotope() const
-#ifdef FLOAT_PURE_ZONOTOPE
-      {  return true; }
-#else
-      {  return false; }
-#endif
+   bool isPureZonotope() const { return fSupportPureZonotope; }
    bool doesAllowSimplex() const { return FLOAT_ZONOTOPE_ALLOW_SIMPLEX; }
 
   protected:

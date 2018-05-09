@@ -14,16 +14,8 @@
 #define FLOAT_LONG_WRITE                                            1
 #endif
 
-#if @HAVE_FLOAT_PURE_ZONOTOPE@
-#define FLOAT_PURE_ZONOTOPE                                         1
-#endif
-
 #if @HAVE_FLOAT_REAL_BITS_NUMBER@
 #define FLOAT_REAL_BITS_NUMBER                                      @VALUE_FLOAT_REAL_BITS_NUMBER@
-#endif
-
-#if @HAVE_FLOAT_TRIGGER_PERCENT@
-#define FLOAT_TRIGGER_PERCENT                                       @VALUE_FLOAT_TRIGGER_PERCENT@
 #endif
 
 #if @HAVE_FLOAT_ZONOTOPE_ALLOW_SIMPLEX@

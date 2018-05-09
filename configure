@@ -635,9 +635,6 @@ ac_includes_default="\
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
-VALUE_FLOAT_TRIGGER_PERCENT
-HAVE_FLOAT_TRIGGER_PERCENT
-FLOAT_TRIGGER_PERCENT
 VALUE_FLOAT_REAL_BITS_NUMBER
 HAVE_FLOAT_REAL_BITS_NUMBER
 FLOAT_REAL_BITS_NUMBER
@@ -650,8 +647,6 @@ HAVE_FLOAT_ZONOTOPE_DOES_ABSORB_HIGH_LEVEL
 FLOAT_ZONOTOPE_DOES_ABSORB_HIGH_LEVEL
 HAVE_FLOAT_ZONOTOPE_ALLOW_SIMPLEX
 FLOAT_ZONOTOPE_ALLOW_SIMPLEX
-HAVE_FLOAT_PURE_ZONOTOPE
-FLOAT_PURE_ZONOTOPE
 HAVE_FLOAT_ALLOW_READ_EXCEPTION
 FLOAT_ALLOW_READ_EXCEPTION
 HAVE_FLOAT_LONG_WRITE
@@ -666,7 +661,6 @@ FLOAT_ALLOW_INTERFACE
 FLOAT_LIB_INTERFACE_FALSE
 FLOAT_LIB_INTERFACE_TRUE
 limitsymbolabsorption
-triggerpercent
 realbitsnumber
 HAVE_CLANG
 HAVE_GNUC
@@ -814,7 +808,6 @@ enable_readexception
 enable_genericlong
 enable_genericunsigned
 enable_longwrite
-enable_purezonotope
 enable_simplex
 enable_absorbhighlevel
 enable_constantexclusionfromabsorption
@@ -834,7 +827,6 @@ LT_SYS_LIBRARY_PATH
 CPP
 CXXCPP
 realbitsnumber
-triggerpercent
 limitsymbolabsorption'
 
 
@@ -1484,8 +1476,6 @@ Optional Features:
                           enable the use of unsigned int to store mantissa
                           bits
   --disable-longwrite     disable the natural decimal writing of real numbers
-  --enable-purezonotope   keep maximal relationships among variables to the
-                          detriment of constraints
   --enable-simplex        push the constraints onto a stack to apply them in
                           an optimal but costly way
   --enable-absorbhighlevel
@@ -1524,9 +1514,6 @@ Some influential environment variables:
   CXXCPP      C++ preprocessor
   realbitsnumber
               number of bits for the mantissa of real numbers
-  triggerpercent
-              if the interval is xxx% better than the zonotope then it
-              replaces the zonotope
   limitsymbolabsorption
               define the limit in binary digits from which a symbol is
               absorbed into a standard noise symbol
@@ -17637,14 +17624,6 @@ else
   enable_longwrite=yes
 fi
 
-# Check whether --enable-purezonotope was given.
-if test "${enable_purezonotope+set}" = set; then :
-  enableval=$enable_purezonotope;
-else
-  enable_purezonotope=no
-fi
-
-
 
 
 
@@ -17770,24 +17749,6 @@ else
 
 fi
 
-if test "x$enable_purezonotope" != "xno"; then :
-
-
-$as_echo "#define FLOAT_PURE_ZONOTOPE 1" >>confdefs.h
-
-  FLOAT_PURE_ZONOTOPE=-DFLOAT_PURE_ZONOTOPE
-
-  HAVE_FLOAT_PURE_ZONOTOPE=1
-
-  enable_genericlong=no
-
-else
-
-  HAVE_FLOAT_PURE_ZONOTOPE=0
-
-
-fi
-
 if test "x$enable_simplex" != "xno"; then :
 
 
@@ -17878,27 +17839,6 @@ _ACEOF
 else
 
   HAVE_FLOAT_REAL_BITS_NUMBER=0
-
-
-fi
-
-if test "$triggerpercent" != ""; then :
-
-
-cat >>confdefs.h <<_ACEOF
-#define FLOAT_TRIGGER_PERCENT "$triggerpercent/100.0"
-_ACEOF
-
-  FLOAT_TRIGGER_PERCENT=-DFLOAT_TRIGGER_PERCENT="$triggerpercent/100.0"
-
-  HAVE_FLOAT_TRIGGER_PERCENT=1
-
-  VALUE_FLOAT_TRIGGER_PERCENT="$triggerpercent/100.0"
-
-
-else
-
-  HAVE_FLOAT_TRIGGER_PERCENT=0
 
 
 fi

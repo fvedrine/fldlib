@@ -76,6 +76,12 @@
 #define FLOAT_INIT_SIMPLIFICATION 
 #endif
 
+#ifdef FLOAT_PURE_ZONOTOPE
+#define FLOAT_INIT_PURE_ZONOTOPE init.setSupportPureZonotope();
+#else
+#define FLOAT_INIT_PURE_ZONOTOPE
+#endif
+
 #ifdef FLOAT_LOOP_UNSTABLE
 #define INIT_MAIN                                                                                \
   NumericalDomains::FloatZonotope::Initialization init;                                          \
@@ -85,6 +91,7 @@
   FLOAT_INIT_THRESHOLD                                                                           \
   FLOAT_INIT_FIRST_FOLLOW_EXE                                                                    \
   FLOAT_INIT_SIMPLIFICATION                                                                      \
+  FLOAT_INIT_PURE_ZONOTOPE                                                                       \
   init.setResultFile(TOSTRING(PROG_NAME) FLOAT_PROG_SUFFIX);                                     \
   std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
   try {                                                                                          \
@@ -113,6 +120,7 @@
   FLOAT_INIT_THRESHOLD                                                                           \
   FLOAT_INIT_FIRST_FOLLOW_EXE                                                                    \
   FLOAT_INIT_SIMPLIFICATION                                                                      \
+  FLOAT_INIT_PURE_ZONOTOPE                                                                       \
   init.setResultFile(TOSTRING(PROG_NAME) FLOAT_PROG_SUFFIX);                                     \
   std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
   try {

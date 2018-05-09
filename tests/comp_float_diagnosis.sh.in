@@ -28,8 +28,7 @@ fi
 cxxflags=" -DFLOAT_DIAGNOSIS -I${FLOATDIAGNOSIS_INCLUDE} \
    -std=c++11 @FLOAT_ALLOW_READ_EXCEPTION@ \
    @FLOAT_GENERIC_BASE_LONG@ @FLOAT_GENERIC_BASE_UNSIGNED@ @FLOAT_LONG_WRITE@ \
-   @FLOAT_PURE_ZONOTOPE@ @FLOAT_REAL_BITS_NUMBER@ @FLOAT_TRIGGER_PERCENT@ \
-   @FLOAT_ZONOTOPE_ALLOW_SIMPLEX@ @FLOAT_ZONOTOPE_DOES_ABSORB_HIGH_LEVEL@ \
+   @FLOAT_REAL_BITS_NUMBER@ @FLOAT_ZONOTOPE_ALLOW_SIMPLEX@ @FLOAT_ZONOTOPE_DOES_ABSORB_HIGH_LEVEL@ \
    @FLOAT_ZONOTOPE_DOES_EXCLUDE_CONSTANT_FROM_SYMBOL_ABSORPTION@ @FLOAT_ZONOTOPE_LIMIT_SYMBOL_ABSORPTION@
    ${FLOATDIAGNOSIS_ICONFIG_INCLUDE} -I${FLOATDIAGNOSIS_INCLUDE}/utils -I${FLOATDIAGNOSIS_INCLUDE}/algorithms \
    -I${FLOATDIAGNOSIS_INCLUDE}/applications "
@@ -78,6 +77,13 @@ do
     elif [ "$param" == "-atomic" ]
     then
       cxxflags+=" -DFLOAT_ATOMIC"
+    elif [ "$param" == "-pure-zonotope" ]
+    then # keep maximal relationships among variables to the detriment of constraints
+      cxxflags+=" -DFLOAT_PURE_ZONOTOPE"
+    elif [ "$param" == "-create-interval-trigger-percent" ]
+    then # Replace the zonotope by the interval if the interval is xxx% better than the zonotope
+      cxxflags+=" -DFLOAT_TRIGGER_PERCENT="
+      has_include=1
     elif [ "$param" == "-keep-double" ]
     then
       cxxflags+=" -DFLOAT_KEEP_DOUBLE"

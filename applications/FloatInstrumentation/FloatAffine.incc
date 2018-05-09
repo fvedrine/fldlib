@@ -203,6 +203,7 @@ bool ExecutionPath::fSupportBacktrace = false;
 bool ExecutionPath::fSupportVerbose = false;
 bool ExecutionPath::fSupportThreshold = false;
 bool ExecutionPath::fSupportFirstFollowFloat = false;
+bool ExecutionPath::fSupportPureZonotope = false;
 BuiltReal ExecutionPath::brThreshold;
 BuiltReal ExecutionPath::brThresholdDomain;
 BuiltReal ExecutionPath::brMaximalAccuracy;

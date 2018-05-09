@@ -76,15 +76,9 @@ AC_ARG_ENABLE([genericunsigned],
 AC_ARG_ENABLE([longwrite],
    [AS_HELP_STRING([--disable-longwrite], [disable the natural decimal writing of real numbers])],
    [], [enable_longwrite=yes])
-AC_ARG_ENABLE([purezonotope],
-   [AS_HELP_STRING([--enable-purezonotope], [keep maximal relationships among variables to the detriment of constraints])],
-   [], [enable_purezonotope=no])
 
 AC_ARG_VAR(realbitsnumber,
 	AS_HELP_STRING([number of bits for the mantissa of real numbers])
-)
-AC_ARG_VAR(triggerpercent,
-	AS_HELP_STRING([if the interval is xxx% better than the zonotope then it replaces the zonotope])
 )
 
 AC_ARG_ENABLE([simplex],
@@ -145,15 +139,6 @@ AS_IF([test "x$enable_readexception" != "xno"], [
   AC_SUBST([HAVE_FLOAT_ALLOW_READ_EXCEPTION],[0])
 ])
 
-AS_IF([test "x$enable_purezonotope" != "xno"], [
-  AC_DEFINE([FLOAT_PURE_ZONOTOPE],[1],[Keep maximal relationships among variables to the detriment of constraints])
-  AC_SUBST([FLOAT_PURE_ZONOTOPE],[-DFLOAT_PURE_ZONOTOPE])
-  AC_SUBST([HAVE_FLOAT_PURE_ZONOTOPE],[1])
-  enable_genericlong=no
-],[
-  AC_SUBST([HAVE_FLOAT_PURE_ZONOTOPE],[0])
-])
-
 AS_IF([test "x$enable_simplex" != "xno"], [
   AC_DEFINE([FLOAT_ZONOTOPE_ALLOW_SIMPLEX],[1],[Push the constraints onto a stack to apply them in an optimal but costly way])
   AC_SUBST([FLOAT_ZONOTOPE_ALLOW_SIMPLEX],[-DFLOAT_ZONOTOPE_ALLOW_SIMPLEX])
@@ -197,15 +182,6 @@ AS_IF([test "$realbitsnumber" != ""], [
   AC_SUBST([VALUE_FLOAT_REAL_BITS_NUMBER],[$realbitsnumber])
 ],[
   AC_SUBST([HAVE_FLOAT_REAL_BITS_NUMBER],[0])
-])
-
-AS_IF([test "$triggerpercent" != ""], [
-  AC_DEFINE_UNQUOTED([FLOAT_TRIGGER_PERCENT],["$triggerpercent/100.0"],[Replace the zonotope by the interval if the interval is xxx% better than the zonotope])
-  AC_SUBST([FLOAT_TRIGGER_PERCENT],[-DFLOAT_TRIGGER_PERCENT="$triggerpercent/100.0"])
-  AC_SUBST([HAVE_FLOAT_TRIGGER_PERCENT],[1])
-  AC_SUBST([VALUE_FLOAT_TRIGGER_PERCENT],["$triggerpercent/100.0"])
-],[
-  AC_SUBST([HAVE_FLOAT_TRIGGER_PERCENT],[0])
 ])
 
 AC_CONFIG_FILES([Makefile])
