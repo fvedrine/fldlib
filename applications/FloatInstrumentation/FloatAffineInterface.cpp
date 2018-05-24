@@ -276,9 +276,9 @@ MergeBranches::MergeBranches(const char* file, int line) {
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
 MergeBranches&
-MergeBranches::operator<<(TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
+MergeBranches::operator<<(const TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value) {
    reinterpret_cast<DAffine::MergeBranches*>(content)->operator<<(
-         *reinterpret_cast<DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation>*>(value.content));
+         *reinterpret_cast<DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation>*>(const_cast<TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>&>(value).content));
    return *this;
 }
 
@@ -1260,11 +1260,17 @@ template class TFloatZonotope<23, 8, float>;
 template class TFloatZonotope<52, 11, double>;
 template class TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>;
 
+template TFloatZonotope<23, 8, float>::TFloatZonotope(TFloatZonotope<52, 11, double>&&);
 template TFloatZonotope<23, 8, float>::TFloatZonotope(const TFloatZonotope<52, 11, double>&);
+template TFloatZonotope<23, 8, float>::TFloatZonotope(TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>&&);
 template TFloatZonotope<23, 8, float>::TFloatZonotope(const TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>&);
+template TFloatZonotope<52, 11, double>::TFloatZonotope(TFloatZonotope<23, 8, float>&&);
 template TFloatZonotope<52, 11, double>::TFloatZonotope(const TFloatZonotope<23, 8, float>&);
+template TFloatZonotope<52, 11, double>::TFloatZonotope(TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>&&);
 template TFloatZonotope<52, 11, double>::TFloatZonotope(const TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>&);
+template TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>::TFloatZonotope(TFloatZonotope<23, 8, float>&&);
 template TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>::TFloatZonotope(const TFloatZonotope<23, 8, float>&);
+template TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>::TFloatZonotope(TFloatZonotope<52, 11, double>&&);
 template TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>::TFloatZonotope(const TFloatZonotope<52, 11, double>&);
 
 template TFloatZonotope<23, 8, float>& TFloatZonotope<23, 8, float>::operator=(const TFloatZonotope<52, 11, double>&);
@@ -1281,9 +1287,9 @@ template TFloatZonotope<52, 11, double>& TFloatZonotope<52, 11, double>::operato
 template TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>& TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>::operator=(TFloatZonotope<23, 8, float>&&);
 template TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>& TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>::operator=(TFloatZonotope<52, 11, double>&&);
 
-template MergeBranches& MergeBranches::operator<<(TFloatZonotope<23, 8, float>&);
-template MergeBranches& MergeBranches::operator<<(TFloatZonotope<52, 11, double>&);
-template MergeBranches& MergeBranches::operator<<(TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>&);
+template MergeBranches& MergeBranches::operator<<(const TFloatZonotope<23, 8, float>&);
+template MergeBranches& MergeBranches::operator<<(const TFloatZonotope<52, 11, double>&);
+template MergeBranches& MergeBranches::operator<<(const TFloatZonotope<LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent, long double>&);
 
 }} // end of namespace NumericalDomains::DAffineInterface
 

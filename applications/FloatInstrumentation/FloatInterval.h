@@ -574,6 +574,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
 
    friend thisType pow(const thisType& source, const thisType& value)
       {  auto result(std::move(source)); result.powAssign(value); return result; }
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType pow(const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
    friend thisType pow(long double source, const thisType& value)
       {  thisType result(source); result.powAssign(value); return result; }
    friend thisType pow(double source, const thisType& value)
@@ -593,6 +596,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    friend thisType pow(short source, const thisType& value)
       {  thisType result(source); result.powAssign(value); return result; }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType pow(const thisType& source, const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
    friend thisType pow(const thisType& source, long double value)
       {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
    friend thisType pow(const thisType& source, double value)
@@ -614,6 +620,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
 
    friend thisType powf(const thisType& source, const thisType& value)
       {  auto result(std::move(source)); result.powAssign(value); return result; }
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType powf(const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
    friend thisType powf(long double source, const thisType& value)
       {  thisType result(source); result.powAssign(value); return result; }
    friend thisType powf(double source, const thisType& value)
@@ -633,6 +642,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    friend thisType powf(short source, const thisType& value)
       {  thisType result(source); result.powAssign(value); return result; }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType powf(const thisType& source, const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
    friend thisType powf(const thisType& source, long double value)
       {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
    friend thisType powf(const thisType& source, double value)
@@ -654,6 +666,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
 
    friend thisType atan2(const thisType& source, const thisType& value)
       {  auto result(std::move(source)); result.atan2Assign(value); return result; }
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType atan2(const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
    friend thisType atan2(long double source, const thisType& value)
       {  thisType result(source); result.atan2Assign(value); return result; }
    friend thisType atan2(double source, const thisType& value)
@@ -673,6 +688,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    friend thisType atan2(short source, const thisType& value)
       {  thisType result(source); result.atan2Assign(value); return result; }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType atan2(const thisType& source, const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
    friend thisType atan2(const thisType& source, long double value)
       {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
    friend thisType atan2(const thisType& source, double value)
@@ -692,6 +710,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    friend thisType atan2(const thisType& source, short value)
       {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend bool operator<(const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
    friend bool operator<(long double fst, const thisType& snd) { return thisType(fst).operator<(snd); }
    friend bool operator<(double fst, const thisType& snd) { return thisType(fst).operator<(snd); }
    friend bool operator<(float fst, const thisType& snd) { return thisType(fst).operator<(snd); }
@@ -702,6 +723,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    friend bool operator<(unsigned short fst, const thisType& snd) { return thisType(fst).operator<(snd); }
    friend bool operator<(short fst, const thisType& snd) { return thisType(fst).operator<(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend bool operator<=(const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }    
    friend bool operator<=(long double fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
    friend bool operator<=(double fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
    friend bool operator<=(float fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
@@ -712,6 +736,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    friend bool operator<=(unsigned short fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
    friend bool operator<=(short fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend bool operator==(const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }    
    friend bool operator==(long double fst, const thisType& snd) { return thisType(fst).operator==(snd); }
    friend bool operator==(double fst, const thisType& snd) { return thisType(fst).operator==(snd); }
    friend bool operator==(float fst, const thisType& snd) { return thisType(fst).operator==(snd); }
@@ -722,6 +749,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    friend bool operator==(unsigned short fst, const thisType& snd) { return thisType(fst).operator==(snd); }
    friend bool operator==(short fst, const thisType& snd) { return thisType(fst).operator==(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend bool operator!=(const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }    
    friend bool operator!=(long double fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
    friend bool operator!=(double fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
    friend bool operator!=(float fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
@@ -732,6 +762,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    friend bool operator!=(unsigned short fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
    friend bool operator!=(short fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend bool operator>=(const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }    
    friend bool operator>=(long double fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
    friend bool operator>=(double fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
    friend bool operator>=(float fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
@@ -742,6 +775,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    friend bool operator>=(unsigned short fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
    friend bool operator>=(short fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend bool operator>(const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
    friend bool operator>(long double fst, const thisType& snd) { return thisType(fst).operator>(snd); }
    friend bool operator>(double fst, const thisType& snd) { return thisType(fst).operator>(snd); }
    friend bool operator>(float fst, const thisType& snd) { return thisType(fst).operator>(snd); }
@@ -752,6 +788,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    friend bool operator>(unsigned short fst, const thisType& snd) { return thisType(fst).operator>(snd); }
    friend bool operator>(short fst, const thisType& snd) { return thisType(fst).operator>(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType operator+(const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator+(snd); }    
    friend thisType operator+(long double fst, const thisType& snd) { return thisType(fst).operator+(snd); }
    friend thisType operator+(double fst, const thisType& snd) { return thisType(fst).operator+(snd); }
    friend thisType operator+(float fst, const thisType& snd) { return thisType(fst).operator+(snd); }
@@ -762,6 +801,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    friend thisType operator+(unsigned short fst, const thisType& snd) { return thisType(fst).operator+(snd); }
    friend thisType operator+(short fst, const thisType& snd) { return thisType(fst).operator+(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType operator-(const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator-(snd); }    
    friend thisType operator-(long double fst, const thisType& snd) { return thisType(fst).operator-(snd); }
    friend thisType operator-(double fst, const thisType& snd) { return thisType(fst).operator-(snd); }
    friend thisType operator-(float fst, const thisType& snd) { return thisType(fst).operator-(snd); }
@@ -772,6 +814,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    friend thisType operator-(unsigned short fst, const thisType& snd) { return thisType(fst).operator-(snd); }
    friend thisType operator-(short fst, const thisType& snd) { return thisType(fst).operator-(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType operator*(const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator*(snd); }    
    friend thisType operator*(long double fst, const thisType& snd) { return thisType(fst).operator*(snd); }
    friend thisType operator*(double fst, const thisType& snd) { return thisType(fst).operator*(snd); }
    friend thisType operator*(float fst, const thisType& snd) { return thisType(fst).operator*(snd); }
@@ -782,6 +827,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
    friend thisType operator*(unsigned short fst, const thisType& snd) { return thisType(fst).operator*(snd); }
    friend thisType operator*(short fst, const thisType& snd) { return thisType(fst).operator*(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType operator/(const TInstrumentedFloatInterval<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator/(snd); }    
    friend thisType operator/(long double fst, const thisType& snd) { return thisType(fst).operator/(snd); }
    friend thisType operator/(double fst, const thisType& snd) { return thisType(fst).operator/(snd); }
    friend thisType operator/(float fst, const thisType& snd) { return thisType(fst).operator/(snd); }
@@ -899,8 +947,7 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
          return result;
       }
    friend thisType fmod(const thisType& source, const thisType& value)
-      {  typedef thisType thisType;
-         auto divResult(source);
+      {  auto divResult(source);
          divResult /= value;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= value;
@@ -909,127 +956,118 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
          return multResult;
       }
    friend thisType fmod(long double source, const thisType& value)
-      {  typedef thisType thisType; thisType fst(source);
+      {  thisType fst(source);
          auto divResult(fst); divResult /= value;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= value; fst -= multResult;
          return fst;
       }
    friend thisType fmod(double source, const thisType& value)
-      {  typedef thisType thisType; thisType fst(source);
+      {  thisType fst(source);
          auto divResult(fst); divResult /= value;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= value; fst -= multResult;
          return fst;
       }
    friend thisType fmod(float source, const thisType& value)
-      {  typedef thisType thisType; thisType fst(source);
+      {  thisType fst(source);
          auto divResult(fst); divResult /= value;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= value; fst -= multResult;
          return fst;
       }
    friend thisType fmod(unsigned long source, const thisType& value)
-      {  typedef thisType thisType; thisType fst(source);
+      {  thisType fst(source);
          auto divResult(fst); divResult /= value;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= value; fst -= multResult;
          return fst;
       }
    friend thisType fmod(long source, const thisType& value)
-      {  typedef thisType thisType; thisType fst(source);
+      {  thisType fst(source);
          auto divResult(fst); divResult /= value;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= value; fst -= multResult;
          return fst;
       }
    friend thisType fmod(unsigned int source, const thisType& value)
-      {  typedef thisType thisType; thisType fst(source);
+      {  thisType fst(source);
          auto divResult(fst); divResult /= value;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= value; fst -= multResult;
          return fst;
       }
    friend thisType fmod(int source, const thisType& value)
-      {  typedef thisType thisType; thisType fst(source);
+      {  thisType fst(source);
          auto divResult(fst); divResult /= value;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= value; fst -= multResult;
          return fst;
       }
    friend thisType fmod(unsigned short source, const thisType& value)
-      {  typedef thisType thisType; thisType fst(source);
+      {  thisType fst(source);
          auto divResult(fst); divResult /= value;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= value; fst -= multResult;
          return fst;
       }
    friend thisType fmod(short source, const thisType& value)
-      {  typedef thisType thisType; thisType fst(source);
+      {  thisType fst(source);
          auto divResult(fst); divResult /= value;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= value; fst -= multResult;
          return fst;
       }
    friend thisType fmod(const thisType& source, long double value)
-      {  typedef thisType thisType;
-         auto divResult(source); thisType snd(value); divResult /= snd;
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= snd; multResult -= source; multResult.oppositeAssign();
          return multResult;
       }
    friend thisType fmod(const thisType& source, double value)
-      {  typedef thisType thisType;
-         auto divResult(source); thisType snd(value); divResult /= snd;
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= snd; multResult -= source; multResult.oppositeAssign();
          return multResult;
       }
    friend thisType fmod(const thisType& source, float value)
-      {  typedef thisType thisType;
-         auto divResult(source); thisType snd(value); divResult /= snd;
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= snd; multResult -= source; multResult.oppositeAssign();
          return multResult;
       }
    friend thisType fmod(const thisType& source, unsigned long value)
-      {  typedef thisType thisType;
-         auto divResult(source); thisType snd(value); divResult /= snd;
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= snd; multResult -= source; multResult.oppositeAssign();
          return multResult;
       }
    friend thisType fmod(const thisType& source, long value)
-      {  typedef thisType thisType;
-         auto divResult(source); thisType snd(value); divResult /= snd;
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= snd; multResult -= source; multResult.oppositeAssign();
          return multResult;
       }
    friend thisType fmod(const thisType& source, unsigned int value)
-      {  typedef thisType thisType;
-         auto divResult(source); thisType snd(value); divResult /= snd;
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= snd; multResult -= source; multResult.oppositeAssign();
          return multResult;
       }
    friend thisType fmod(const thisType& source, int value)
-      {  typedef thisType thisType;
-         auto divResult(source); thisType snd(value); divResult /= snd;
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= snd; multResult -= source; multResult.oppositeAssign();
          return multResult;
       }
    friend thisType fmod(const thisType& source, unsigned short value)
-      {  typedef thisType thisType;
-         auto divResult(source); thisType snd(value); divResult /= snd;
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= snd; multResult -= source; multResult.oppositeAssign();
          return multResult;
       }
    friend thisType fmod(const thisType& source, short value)
-      {  typedef thisType thisType;
-         auto divResult(source); thisType snd(value); divResult /= snd;
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
          thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
          multResult *= snd; multResult -= source; multResult.oppositeAssign();
          return multResult;

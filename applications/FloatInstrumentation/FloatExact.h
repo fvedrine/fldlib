@@ -343,6 +343,9 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
 
    friend thisType pow(const thisType& source, const thisType& value)
       {  auto result(std::move(source)); result.powAssign(value); return result; }
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType pow(const TInstrumentedFloat<TypeBuiltArgument, TypeImplementationArgument>& source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
    friend thisType pow(long double source, const thisType& value)
       {  thisType result(source); result.powAssign(value); return result; }
    friend thisType pow(double source, const thisType& value)
@@ -362,6 +365,9 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    friend thisType pow(short source, const thisType& value)
       {  thisType result(source); result.powAssign(value); return result; }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType pow(const thisType& source, const TInstrumentedFloat<TypeBuiltArgument, TypeImplementationArgument>& value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
    friend thisType pow(const thisType& source, long double value)
       {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
    friend thisType pow(const thisType& source, double value)
@@ -383,6 +389,9 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
 
    friend thisType powf(const thisType& source, const thisType& value)
       {  auto result(std::move(source)); result.powAssign(value); return result; }
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType powf(const TInstrumentedFloat<TypeBuiltArgument, TypeImplementationArgument>& source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
    friend thisType powf(long double source, const thisType& value)
       {  thisType result(source); result.powAssign(value); return result; }
    friend thisType powf(double source, const thisType& value)
@@ -402,6 +411,9 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    friend thisType powf(short source, const thisType& value)
       {  thisType result(source); result.powAssign(value); return result; }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType powf(const thisType& source, const TInstrumentedFloat<TypeBuiltArgument, TypeImplementationArgument>& value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
    friend thisType powf(const thisType& source, long double value)
       {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
    friend thisType powf(const thisType& source, double value)
@@ -423,6 +435,9 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
 
    friend thisType atan2(const thisType& source, const thisType& value)
       {  auto result(std::move(source)); result.atan2Assign(value); return result; }
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType atan2(const TInstrumentedFloat<TypeBuiltArgument, TypeImplementationArgument>& source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
    friend thisType atan2(long double source, const thisType& value)
       {  thisType result(source); result.atan2Assign(value); return result; }
    friend thisType atan2(double source, const thisType& value)
@@ -442,6 +457,9 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    friend thisType atan2(short source, const thisType& value)
       {  thisType result(source); result.atan2Assign(value); return result; }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType atan2(const thisType& source, const TInstrumentedFloat<TypeBuiltArgument, TypeImplementationArgument>& value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
    friend thisType atan2(const thisType& source, long double value)
       {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
    friend thisType atan2(const thisType& source, double value)
@@ -461,6 +479,9 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    friend thisType atan2(const thisType& source, short value)
       {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend bool operator<(const TInstrumentedFloat<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
    friend bool operator<(long double fst, const thisType& snd) { return thisType(fst).operator<(snd); }
    friend bool operator<(double fst, const thisType& snd) { return thisType(fst).operator<(snd); }
    friend bool operator<(float fst, const thisType& snd) { return thisType(fst).operator<(snd); }
@@ -471,6 +492,9 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    friend bool operator<(unsigned short fst, const thisType& snd) { return thisType(fst).operator<(snd); }
    friend bool operator<(short fst, const thisType& snd) { return thisType(fst).operator<(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend bool operator<=(const TInstrumentedFloat<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }    
    friend bool operator<=(long double fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
    friend bool operator<=(double fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
    friend bool operator<=(float fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
@@ -481,6 +505,9 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    friend bool operator<=(unsigned short fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
    friend bool operator<=(short fst, const thisType& snd) { return thisType(fst).operator<=(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend bool operator==(const TInstrumentedFloat<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }    
    friend bool operator==(long double fst, const thisType& snd) { return thisType(fst).operator==(snd); }
    friend bool operator==(double fst, const thisType& snd) { return thisType(fst).operator==(snd); }
    friend bool operator==(float fst, const thisType& snd) { return thisType(fst).operator==(snd); }
@@ -491,6 +518,9 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    friend bool operator==(unsigned short fst, const thisType& snd) { return thisType(fst).operator==(snd); }
    friend bool operator==(short fst, const thisType& snd) { return thisType(fst).operator==(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend bool operator!=(const TInstrumentedFloat<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }    
    friend bool operator!=(long double fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
    friend bool operator!=(double fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
    friend bool operator!=(float fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
@@ -501,6 +531,9 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    friend bool operator!=(unsigned short fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
    friend bool operator!=(short fst, const thisType& snd) { return thisType(fst).operator!=(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend bool operator>=(const TInstrumentedFloat<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }    
    friend bool operator>=(long double fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
    friend bool operator>=(double fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
    friend bool operator>=(float fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
@@ -511,6 +544,9 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    friend bool operator>=(unsigned short fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
    friend bool operator>=(short fst, const thisType& snd) { return thisType(fst).operator>=(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend bool operator>(const TInstrumentedFloat<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
    friend bool operator>(long double fst, const thisType& snd) { return thisType(fst).operator>(snd); }
    friend bool operator>(double fst, const thisType& snd) { return thisType(fst).operator>(snd); }
    friend bool operator>(float fst, const thisType& snd) { return thisType(fst).operator>(snd); }
@@ -521,6 +557,9 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    friend bool operator>(unsigned short fst, const thisType& snd) { return thisType(fst).operator>(snd); }
    friend bool operator>(short fst, const thisType& snd) { return thisType(fst).operator>(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType operator+(const TInstrumentedFloat<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator+(snd); }    
    friend thisType operator+(long double fst, const thisType& snd) { return thisType(fst).operator+(snd); }
    friend thisType operator+(double fst, const thisType& snd) { return thisType(fst).operator+(snd); }
    friend thisType operator+(float fst, const thisType& snd) { return thisType(fst).operator+(snd); }
@@ -531,6 +570,9 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    friend thisType operator+(unsigned short fst, const thisType& snd) { return thisType(fst).operator+(snd); }
    friend thisType operator+(short fst, const thisType& snd) { return thisType(fst).operator+(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType operator-(const TInstrumentedFloat<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator-(snd); }    
    friend thisType operator-(long double fst, const thisType& snd) { return thisType(fst).operator-(snd); }
    friend thisType operator-(double fst, const thisType& snd) { return thisType(fst).operator-(snd); }
    friend thisType operator-(float fst, const thisType& snd) { return thisType(fst).operator-(snd); }
@@ -541,6 +583,9 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    friend thisType operator-(unsigned short fst, const thisType& snd) { return thisType(fst).operator-(snd); }
    friend thisType operator-(short fst, const thisType& snd) { return thisType(fst).operator-(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType operator*(const TInstrumentedFloat<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator*(snd); }    
    friend thisType operator*(long double fst, const thisType& snd) { return thisType(fst).operator*(snd); }
    friend thisType operator*(double fst, const thisType& snd) { return thisType(fst).operator*(snd); }
    friend thisType operator*(float fst, const thisType& snd) { return thisType(fst).operator*(snd); }
@@ -551,6 +596,9 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
    friend thisType operator*(unsigned short fst, const thisType& snd) { return thisType(fst).operator*(snd); }
    friend thisType operator*(short fst, const thisType& snd) { return thisType(fst).operator*(snd); }
 
+   template <class TypeBuiltArgument, typename TypeImplementationArgument>
+   friend thisType operator/(const TInstrumentedFloat<TypeBuiltArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator/(snd); }    
    friend thisType operator/(long double fst, const thisType& snd) { return thisType(fst).operator/(snd); }
    friend thisType operator/(double fst, const thisType& snd) { return thisType(fst).operator/(snd); }
    friend thisType operator/(float fst, const thisType& snd) { return thisType(fst).operator/(snd); }

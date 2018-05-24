@@ -617,73 +617,364 @@ class TFloatInterval {
       {  auto result(std::move(source)); result.log10Assign(); return result; }
 
    friend thisType pow(const thisType& source, const thisType& value)
-      {  auto result(std::move(source)); result.powAssign(value); return result; }
-   template <typename TypeFst>
-   friend thisType pow(TypeFst source, const thisType& value)
+      {  auto result(source); result.powAssign(value); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(const TFloatInterval<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source, const thisType& value)
       {  thisType result(source); result.powAssign(value); return result; }
-   template <typename TypeSnd>
-   friend thisType pow(const thisType& source, TypeSnd value)
-      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(long double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(float source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(unsigned long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(unsigned int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(unsigned short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(const thisType& source, const TFloatInterval<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, long double value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, double value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, float value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, unsigned long value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, long value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, unsigned int value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, int value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, unsigned short value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, short value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+
    friend thisType powf(const thisType& source, const thisType& value)
-      {  auto result(std::move(source)); result.powAssign(value); return result; }
-   template <typename TypeFst>
-   friend thisType powf(TypeFst source, const thisType& value)
+      {  auto result(source); result.powAssign(value); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(const TFloatInterval<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source, const thisType& value)
       {  thisType result(source); result.powAssign(value); return result; }
-   template <typename TypeSnd>
-   friend thisType powf(const thisType& source, TypeSnd value)
-      {  auto result(std::move(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(long double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(float source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(unsigned long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(unsigned int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(unsigned short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(const thisType& source, const TFloatInterval<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, long double value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, double value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, float value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, unsigned long value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, long value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, unsigned int value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, int value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, unsigned short value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, short value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
 
    friend thisType atan2(const thisType& source, const thisType& value)
-      {  auto result(std::move(source)); result.atan2Assign(value); return result; }
-   template <typename TypeFst>
-   friend thisType atan2(TypeFst source, const thisType& value)
+      {  auto result(source); result.atan2Assign(value); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(const TFloatInterval<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source, const thisType& value)
       {  thisType result(source); result.atan2Assign(value); return result; }
-   template <typename TypeSnd>
-   friend thisType atan2(const thisType& source, TypeSnd value)
-      {  auto result(std::move(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(long double source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(double source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(float source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(unsigned long source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(long source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(unsigned int source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(int source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(unsigned short source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(short source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(const thisType& source, const TFloatInterval<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, long double value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, double value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, float value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, unsigned long value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, long value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, unsigned int value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, int value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, unsigned short value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, short value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
 
-   template <typename TypeFst>
-   friend bool operator<(TypeFst fst, const thisType& snd)
-      {  return thisType(fst).operator<(snd); }
-   template <typename TypeFst>
-   friend bool operator<=(TypeFst fst, const thisType& snd)
-      {  return thisType(fst).operator<=(snd); }
-   template <typename TypeFst>
-   friend bool operator==(TypeFst fst, const thisType& snd)
-      {  return thisType(fst).operator==(snd); }
-   template <typename TypeFst>
-   friend bool operator!=(TypeFst fst, const thisType& snd)
-      {  return thisType(fst).operator!=(snd); }
-   template <typename TypeFst>
-   friend bool operator>=(TypeFst fst, const thisType& snd)
-      {  return thisType(fst).operator>=(snd); }
-   template <typename TypeFst>
-   friend bool operator>(TypeFst fst, const thisType& snd)
-      {  return thisType(fst).operator>(snd); }
-   template <typename TypeFst>
-   friend thisType operator+(TypeFst fst, const thisType& snd)
-      {  return thisType(fst).operator+(snd); }
-   template <typename TypeFst>
-   friend thisType operator-(TypeFst fst, const thisType& snd)
-      {  return thisType(fst).operator-(snd); }
-   template <typename TypeFst>
-   friend thisType operator*(TypeFst fst, const thisType& snd)
-      {  return thisType(fst).operator*(snd); }
-   template <typename TypeFst>
-   friend thisType operator/(TypeFst fst, const thisType& snd)
-      {  return thisType(fst).operator/(snd); }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator<(const TFloatInterval<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(long double fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(double fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(float fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(long fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(int fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(short fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator<=(const TFloatInterval<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(long double fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(double fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(float fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(long fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(int fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(short fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator==(const TFloatInterval<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(long double fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(double fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(float fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(long fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(int fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(short fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator!=(const TFloatInterval<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(long double fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(double fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(float fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(long fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(int fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(short fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator>=(const TFloatInterval<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(long double fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(double fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(float fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(long fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(int fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(short fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator>(const TFloatInterval<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(long double fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(double fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(float fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(long fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(int fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(short fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator+(const TFloatInterval<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(long double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(float fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(unsigned long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(unsigned int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(unsigned short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator-(const TFloatInterval<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(long double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(float fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(unsigned long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(unsigned int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(unsigned short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator*(const TFloatInterval<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(long double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(float fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(unsigned long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(unsigned int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(unsigned short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator/(const TFloatInterval<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(long double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(float fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(unsigned long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(unsigned int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(unsigned short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+
    friend thisType floor(const thisType& fst) { return thisType(fst.asInt(RMLowest)); }
-   friend thisType floor(thisType&& fst) { return thisType(fst.asInt(RMLowest)); }
    friend thisType ceil(const thisType& fst) { return thisType(fst.asInt(RMHighest)); }
-   friend thisType ceil(thisType&& fst) { return thisType(fst.asInt(RMHighest)); }
    friend thisType trunc(const thisType& fst) { return thisType(fst.asInt(RMZero)); }
-   friend thisType trunc(thisType&& fst) { return thisType(fst.asInt(RMZero)); }
    friend thisType round(const thisType& fst) { return thisType(fst.asInt(RMNearest)); } 
-   friend thisType round(thisType&& fst) { return thisType(fst.asInt(RMNearest)); } 
    friend thisType rintf(const thisType& fst) { return thisType(fst.asInt(RMNearest /* fegetround */)); } 
-   friend thisType rintf(thisType&& fst) { return thisType(fst.asInt(RMNearest /* fegetround */)); } 
    friend thisType rint(const thisType& fst) { return thisType(fst.asInt(RMNearest /* fegetround */)); } 
-   friend thisType rint(thisType&& fst) { return thisType(fst.asInt(RMNearest /* fegetround */)); } 
+   friend thisType dis_floor(const thisType& fst) { return thisType(fst.asInt(RMLowest)); }
+   friend thisType dis_ceil(const thisType& fst) { return thisType(fst.asInt(RMHighest)); }
+   friend thisType dis_trunc(const thisType& fst) { return thisType(fst.asInt(RMZero)); }
+   friend thisType dis_round(const thisType& fst) { return thisType(fst.asInt(RMNearest)); } 
+   friend thisType dis_rintf(const thisType& fst) { return thisType(fst.asInt(RMNearest /* fegetround */)); } 
+   friend thisType dis_rint(const thisType& fst) { return thisType(fst.asInt(RMNearest /* fegetround */)); } 
+
    friend thisType fabs(const thisType& source)
       {  thisType result = source;
          // see float_diagnosis.h FLOAT_SPLIT_ALL FLOAT_MERGE_ALL

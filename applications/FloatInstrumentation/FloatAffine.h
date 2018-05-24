@@ -1061,17 +1061,106 @@ class TInstrumentedFloatZonotope : public TFloatZonotope<ExecutionPath, USizeMan
       {  thisType result(std::forward<thisType>(source)); result.powAssign(value, Equation::PCSourceRValue); return result; }
    friend thisType pow(thisType&& source, thisType&& value)
       {  thisType result(std::forward<thisType>(source)); result.powAssign(value, Equation::PCSourceXValue); return result; }
-   template <typename TypeFst>
-   friend thisType pow(TypeFst source, const thisType& value)
+
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source, const thisType& value)
       {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
-   template <typename TypeFst>
-   friend thisType pow(TypeFst source, thisType&& value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& source, const thisType& value)
+      {  thisType result(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>>(source));
+         result.powAssign(value, Equation::PCSourceRValue); return result;
+      }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source, thisType&& value)
       {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
-   template <typename TypeSnd>
-   friend thisType pow(const thisType& source, TypeSnd value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& source, thisType&& value)
+      {  thisType result(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>>(source));
+         result.powAssign(value, Equation::PCSourceXValue); return result;
+      }
+   friend thisType pow(long double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType pow(double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType pow(float source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType pow(unsigned long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType pow(long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType pow(unsigned int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType pow(int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType pow(unsigned short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType pow(short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType pow(long double source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType pow(double source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType pow(float source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType pow(unsigned long source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType pow(long source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType pow(unsigned int source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType pow(int source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType pow(unsigned short source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType pow(short source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(const thisType& source, const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& value)
       {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
-   template <typename TypeSnd>
-   friend thisType pow(thisType&& source, TypeSnd value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(thisType&& source, const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(const thisType& source, TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& value)
+      {  thisType result(source); result.powAssign(thisType(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(value)), Equation::PCSourceXValue); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(thisType&& source, TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(value)), Equation::PCSourceXValue); return result; }
+   friend thisType pow(const thisType& source, long double value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(const thisType& source, double value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(const thisType& source, float value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(const thisType& source, unsigned long value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(const thisType& source, long value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(const thisType& source, unsigned int value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(const thisType& source, int value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(const thisType& source, unsigned short value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(const thisType& source, short value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(thisType&& source, long double value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(thisType&& source, double value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(thisType&& source, float value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(thisType&& source, unsigned long value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(thisType&& source, long value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(thisType&& source, unsigned int value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(thisType&& source, int value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(thisType&& source, unsigned short value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType pow(thisType&& source, short value)
       {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
    friend thisType powf(const thisType& source, const thisType& value)
       {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
@@ -1081,17 +1170,105 @@ class TInstrumentedFloatZonotope : public TFloatZonotope<ExecutionPath, USizeMan
       {  thisType result(std::forward<thisType>(source)); result.powAssign(value, Equation::PCSourceRValue); return result; }
    friend thisType powf(thisType&& source, thisType&& value)
       {  thisType result(std::forward<thisType>(source)); result.powAssign(value, Equation::PCSourceXValue); return result; }
-   template <typename TypeFst>
-   friend thisType powf(TypeFst source, const thisType& value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source, const thisType& value)
       {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
-   template <typename TypeFst>
-   friend thisType powf(TypeFst source, thisType&& value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source, thisType&& value)
       {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
-   template <typename TypeSnd>
-   friend thisType powf(const thisType& source, TypeSnd value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& source, const thisType& value)
+      {  thisType result(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(source));
+         result.powAssign(value, Equation::PCSourceRValue); return result;
+      }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& source, thisType&& value)
+      {  thisType result(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(source));
+         result.powAssign(value, Equation::PCSourceXValue); return result;
+      }
+   friend thisType powf(long double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType powf(double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType powf(float source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType powf(unsigned long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType powf(long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType powf(unsigned int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType powf(int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType powf(unsigned short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType powf(short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceRValue); return result; }
+   friend thisType powf(long double source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType powf(double source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType powf(float source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType powf(unsigned long source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType powf(long source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType powf(unsigned int source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType powf(int source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType powf(unsigned short source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   friend thisType powf(short source, thisType&& value)
+      {  thisType result(source); result.powAssign(value, Equation::PCSourceXValue); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(const thisType& source, const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& value)
       {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
-   template <typename TypeSnd>
-   friend thisType powf(thisType&& source, TypeSnd value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(thisType&& source, const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(const thisType& source, TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& value)
+      {  thisType result(source); result.powAssign(thisType(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(value)), Equation::PCSourceXValue); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(thisType&& source, TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(value)), Equation::PCSourceXValue); return result; }
+   friend thisType powf(const thisType& source, long double value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(const thisType& source, double value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(const thisType& source, float value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(const thisType& source, unsigned long value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(const thisType& source, long value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(const thisType& source, unsigned int value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(const thisType& source, int value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(const thisType& source, unsigned short value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(const thisType& source, short value)
+      {  thisType result(source); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(thisType&& source, long double value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(thisType&& source, double value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(thisType&& source, float value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(thisType&& source, unsigned long value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(thisType&& source, long value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(thisType&& source, unsigned int value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(thisType&& source, int value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(thisType&& source, unsigned short value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType powf(thisType&& source, short value)
       {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value), Equation::PCSourceXValue); return result; }
    friend thisType atan2(const thisType& source, const thisType& value)
       {  thisType result(source); result.atan2Assign(value, Equation::PCSourceRValue); return result; }
@@ -1101,60 +1278,420 @@ class TInstrumentedFloatZonotope : public TFloatZonotope<ExecutionPath, USizeMan
       {  thisType result(std::forward<thisType>(source)); result.atan2Assign(value, Equation::PCSourceRValue); return result; }
    friend thisType atan2(thisType&& source, thisType&& value)
       {  thisType result(std::forward<thisType>(source)); result.atan2Assign(value, Equation::PCSourceXValue); return result; }
-   template <typename TypeFst>
-   friend thisType atan2(TypeFst source, const thisType& value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source, const thisType& value)
       {  thisType result(source); result.atan2Assign(value, Equation::PCSourceRValue); return result; }
-   template <typename TypeFst>
-   friend thisType atan2(TypeFst source, thisType&& value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source, thisType&& value)
       {  thisType result(source); result.atan2Assign(value, Equation::PCSourceXValue); return result; }
-   template <typename TypeSnd>
-   friend thisType atan2(const thisType& source, TypeSnd value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& source, const thisType& value)
+      {  thisType result(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(source)); result.atan2Assign(value, Equation::PCSourceRValue); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& source, thisType&& value)
+      {  thisType result(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(source)); result.atan2Assign(value, Equation::PCSourceXValue); return result; }
+   friend thisType atan2(long double source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceRValue); return result; }
+   friend thisType atan2(double source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceRValue); return result; }
+   friend thisType atan2(float source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceRValue); return result; }
+   friend thisType atan2(unsigned long source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceRValue); return result; }
+   friend thisType atan2(long source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceRValue); return result; }
+   friend thisType atan2(unsigned int source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceRValue); return result; }
+   friend thisType atan2(int source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceRValue); return result; }
+   friend thisType atan2(unsigned short source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceRValue); return result; }
+   friend thisType atan2(short source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceRValue); return result; }
+   friend thisType atan2(long double source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceXValue); return result; }
+   friend thisType atan2(double source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceXValue); return result; }
+   friend thisType atan2(float source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceXValue); return result; }
+   friend thisType atan2(unsigned long source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceXValue); return result; }
+   friend thisType atan2(long source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceXValue); return result; }
+   friend thisType atan2(unsigned int source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceXValue); return result; }
+   friend thisType atan2(int source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceXValue); return result; }
+   friend thisType atan2(unsigned short source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceXValue); return result; }
+   friend thisType atan2(short source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(value, Equation::PCSourceXValue); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(const thisType& source, const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& value)
       {  thisType result(source); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
-   template <typename TypeSnd>
-   friend thisType atan2(thisType&& source, TypeSnd value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(thisType&& source, const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(const thisType& source, TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& value)
+      {  thisType result(source); result.atan2Assign(thisType(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(value)), Equation::PCSourceXValue); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(thisType&& source, TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(value)), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(const thisType& source, long double value)
+      {  thisType result(source); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(const thisType& source, double value)
+      {  thisType result(source); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(const thisType& source, float value)
+      {  thisType result(source); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(const thisType& source, unsigned long value)
+      {  thisType result(source); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(const thisType& source, long value)
+      {  thisType result(source); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(const thisType& source, unsigned int value)
+      {  thisType result(source); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(const thisType& source, int value)
+      {  thisType result(source); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(const thisType& source, unsigned short value)
+      {  thisType result(source); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(const thisType& source, short value)
+      {  thisType result(source); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(thisType&& source, long double value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(thisType&& source, double value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(thisType&& source, float value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(thisType&& source, unsigned long value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(thisType&& source, long value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(thisType&& source, unsigned int value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(thisType&& source, int value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(thisType&& source, unsigned short value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
+   friend thisType atan2(thisType&& source, short value)
       {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value), Equation::PCSourceXValue); return result; }
 
-   template <typename TypeFst>
-   friend bool operator<(TypeFst fst, const thisType& snd)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator<(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
       {  return thisType(fst).operator<(snd); }    
-   template <typename TypeFst>
-   friend bool operator<=(TypeFst fst, const thisType& snd)
+   friend bool operator<(long double fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(double fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(float fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(long fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(int fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(short fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator<=(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
       {  return thisType(fst).operator<=(snd); }   
-   template <typename TypeFst>
-   friend bool operator==(TypeFst fst, const thisType& snd)
+   friend bool operator<=(long double fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(double fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(float fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(long fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(int fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(short fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator==(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
       {  return thisType(fst).operator==(snd); }   
-   template <typename TypeFst>
-   friend bool operator!=(TypeFst fst, const thisType& snd)
+   friend bool operator==(long double fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(double fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(float fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(long fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(int fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(short fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator!=(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
       {  return thisType(fst).operator!=(snd); }   
-   template <typename TypeFst>
-   friend bool operator>=(TypeFst fst, const thisType& snd)
+   friend bool operator!=(long double fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(double fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(float fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(long fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(int fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(short fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator>=(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
       {  return thisType(fst).operator>=(snd); }   
-   template <typename TypeFst>
-   friend bool operator>(TypeFst fst, const thisType& snd)
+   friend bool operator>=(long double fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(double fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(float fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(long fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(int fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(short fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator>(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
       {  return thisType(fst).operator>(snd); }    
-   template <typename TypeFst>
-   friend thisType operator+(TypeFst fst, const thisType& snd)
+   friend bool operator>(long double fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(double fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(float fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(long fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(int fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(short fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator+(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
       {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
-   template <typename TypeFst>
-   friend thisType operator+(TypeFst fst, thisType&& snd)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator+(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, thisType&& snd)
       {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
-   template <typename TypeFst>
-   friend thisType operator-(TypeFst fst, const thisType& snd)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator+(TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& fst, const thisType& snd)
+      {  thisType fstConvert(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(fst)); fstConvert.plusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator+(TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& fst, thisType&& snd)
+      {  thisType fstConvert(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(fst)); fstConvert.plusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator+(long double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator+(double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator+(float fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator+(unsigned long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator+(long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator+(unsigned int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator+(int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator+(unsigned short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator+(short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator+(long double fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator+(double fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator+(float fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator+(unsigned long fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator+(long fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator+(unsigned int fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator+(int fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator+(unsigned short fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator+(short fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.plusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator-(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
       {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
-   template <typename TypeFst>
-   friend thisType operator-(TypeFst fst, thisType&& snd)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator-(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, thisType&& snd)
       {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
-   template <typename TypeFst>
-   friend thisType operator*(TypeFst fst, const thisType& snd)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator-(TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& fst, const thisType& snd)
+      {  thisType fstConvert(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(fst)); fstConvert.minusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator-(TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& fst, thisType&& snd)
+      {  thisType fstConvert(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(fst)); fstConvert.minusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator-(long double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator-(double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator-(float fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator-(unsigned long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator-(long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator-(unsigned int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator-(int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator-(unsigned short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator-(short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator-(long double fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator-(double fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator-(float fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator-(unsigned long fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator-(long fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator-(unsigned int fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator-(int fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator-(unsigned short fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator-(short fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.minusAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator*(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
       {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceRValue); return fstConvert; }
-   template <typename TypeFst>
-   friend thisType operator*(TypeFst fst, thisType&& snd)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator*(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, thisType&& snd)
       {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceXValue); return fstConvert; }
-   template <typename TypeFst>
-   friend thisType operator/(TypeFst fst, const thisType& snd)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator*(TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& fst, const thisType& snd)
+      {  thisType fstConvert(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(fst)); fstConvert.multAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator*(TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& fst, thisType&& snd)
+      {  thisType fstConvert(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(fst)); fstConvert.multAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator*(long double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator*(double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator*(float fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator*(unsigned long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator*(long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator*(unsigned int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator*(int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator*(unsigned short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator*(short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator*(long double fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator*(double fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator*(float fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator*(unsigned long fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator*(long fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator*(unsigned int fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator*(int fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator*(unsigned short fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator*(short fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.multAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator/(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
       {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceRValue); return fstConvert; }
-   template <typename TypeFst>
-   friend thisType operator/(TypeFst fst, thisType&& snd)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator/(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator/(TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& fst, const thisType& snd)
+      {  thisType fstConvert(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(fst)); fstConvert.divAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator/(TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& fst, thisType&& snd)
+      {  thisType fstConvert(std::forward<TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(fst)); fstConvert.divAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator/(long double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator/(double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator/(float fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator/(unsigned long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator/(long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator/(unsigned int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator/(int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator/(unsigned short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator/(short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceRValue); return fstConvert; }
+   friend thisType operator/(long double fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator/(double fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator/(float fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator/(unsigned long fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator/(long fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator/(unsigned int fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator/(int fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator/(unsigned short fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceXValue); return fstConvert; }
+   friend thisType operator/(short fst, thisType&& snd)
       {  thisType fstConvert(fst); fstConvert.divAssign(snd, Equation::PCSourceXValue); return fstConvert; }
    friend thisType floor(const thisType& fst)
       {  return thisType(std::forward<thisType>(thisType(fst)).asInt(inherited::ReadParametersBase::RMLowest)); }
@@ -1283,7 +1820,150 @@ class TInstrumentedFloatZonotope : public TFloatZonotope<ExecutionPath, USizeMan
             NumericalDomains::DAffine::ExecutionPath::throwEmptyBranch(true);
          return result;
       }
+   friend thisType abs(const thisType& fst) { return fabs(fst); }
+   friend thisType abs(thisType&& fst) { return fabs(std::forward<thisType>(fst)); }
 
+   friend thisType fmod(const thisType& source, const thisType& value)
+      {  auto divResult(source);
+         divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value;
+         multResult -= source;
+         multResult.oppositeAssign();
+         return multResult;
+      }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType fmod(const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(long double source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(double source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(float source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(unsigned long source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(long source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(unsigned int source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(int source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(unsigned short source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   friend thisType fmod(short source, const thisType& value)
+      {  thisType fst(source);
+         auto divResult(fst); divResult /= value;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= value; fst -= multResult;
+         return fst;
+      }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType fmod(const thisType& source, const TInstrumentedFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, long double value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, double value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, float value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, unsigned long value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, long value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, unsigned int value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, int value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, unsigned short value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
+   friend thisType fmod(const thisType& source, short value)
+      {  auto divResult(source); thisType snd(value); divResult /= snd;
+         thisType multResult(divResult.asInt(thisType::ReadParametersBase::RMZero));
+         multResult *= snd; multResult -= source; multResult.oppositeAssign();
+         return multResult;
+      }
    friend int fld_finite(const thisType& source) { return tfinite(source.asImplementation()); }
    friend int fld_isfinite(const thisType& source) { return tisfinite(source.asImplementation()); }
    friend int fld_isnan(const thisType& source) { return tisnan(source.asImplementation()); }

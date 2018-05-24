@@ -101,7 +101,7 @@ class MergeBranches {
       {  return TPacker<TypeIterator>(iter, end); }
 
    template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-   MergeBranches& operator<<(TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value);
+   MergeBranches& operator<<(const TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>& value);
    template <class TypeIterator>
    MergeBranches& operator<<(TPacker<TypeIterator> packer)
       {  for (; packer.iter != packer.end; ++packer.iter)
@@ -114,21 +114,21 @@ class MergeBranches {
 template <typename TypeIterator, class TypeSaveMemory>
 class TPackedSaveMemory;
 
-template <typename T1, class TypeSaveMemory>
+template <class T1, class TypeSaveMemory>
 class TSaveMemory {
   public:
    T1 save;
    TypeSaveMemory next;
 
-   TSaveMemory(T1& saveArg, TypeSaveMemory nextArg)
+   TSaveMemory(const T1& saveArg, TypeSaveMemory nextArg)
       :  save(saveArg, typename T1::Record()), next(nextArg) {}
    TSaveMemory(const TSaveMemory<T1, TypeSaveMemory>& source)
       :  save(const_cast<T1&>(source.save), typename T1::Record()), next(source.next) {}
    TSaveMemory(TSaveMemory<T1, TypeSaveMemory>&& source)
       :  save(const_cast<T1&>(source.save), typename T1::Record()), next(source.next) {}
 
-   template <typename T>
-   TSaveMemory<T, TSaveMemory<T1, TypeSaveMemory> > operator<<(T& t)
+   template <class T>
+   TSaveMemory<T, TSaveMemory<T1, TypeSaveMemory> > operator<<(const T& t)
       {  return TSaveMemory<T, TSaveMemory<T1, TypeSaveMemory> >(t, *this); }
    template <typename TypeIterator>
    TPackedSaveMemory<TypeIterator, TSaveMemory<T1, TypeSaveMemory> > operator<<(MergeBranches::TPacker<TypeIterator> packer);
@@ -166,7 +166,7 @@ class TPackedSaveMemory {
    TPackedSaveMemory(const TPackedSaveMemory<TypeIterator, TypeSaveMemory>&) = default;
    TPackedSaveMemory(TPackedSaveMemory<TypeIterator, TypeSaveMemory>&&) = default;
 
-   template <typename T>
+   template <class T>
    TSaveMemory<T, TSaveMemory<TypeIterator, TypeSaveMemory> > operator<<(T& t)
       {  return TSaveMemory<T, TSaveMemory<TypeIterator, TypeSaveMemory> >(t, *this); }
    template <class TypeIteratorArgument>
@@ -194,7 +194,7 @@ class TPackedSaveMemory {
    bool getResult() const { return next.getResult(); }
 };
 
-template <typename T1, class TypeSaveMemory>
+template <class T1, class TypeSaveMemory>
 template <typename TypeIterator>
 inline
 TPackedSaveMemory<TypeIterator, TSaveMemory<T1, TypeSaveMemory> >
@@ -210,8 +210,8 @@ class SaveMemory {
   public:
    SaveMemory() : fResult(false) {}
 
-   template <typename T>
-   TSaveMemory<T, SaveMemory> operator<<(T& t)
+   template <class T>
+   TSaveMemory<T, SaveMemory> operator<<(const T& t)
       {  return TSaveMemory<T, SaveMemory>(t, *this); }
    template <class TypeIterator>
    TPackedSaveMemory<TypeIterator, SaveMemory> operator<<(MergeBranches::TPacker<TypeIterator> packer)
@@ -230,7 +230,7 @@ class SaveMemory {
 template <typename TypeIterator, class TypeMergeMemory>
 class TPackedMergeMemory;
 
-template <typename T1, class TypeMergeMemory>
+template <class T1, class TypeMergeMemory>
 class TMergeMemory {
   public:
    T1 merge;
@@ -240,8 +240,8 @@ class TMergeMemory {
    TMergeMemory(const TMergeMemory<T1, TypeMergeMemory>&) = default;
    TMergeMemory(TMergeMemory<T1, TypeMergeMemory>&&) = default;
 
-   template <typename T>
-   TMergeMemory<T, TMergeMemory<T1, TypeMergeMemory> > operator>>(T& t)
+   template <class T>
+   TMergeMemory<T, TMergeMemory<T1, TypeMergeMemory> > operator>>(const T& t)
       {  return TMergeMemory<T, TMergeMemory<T1, TypeMergeMemory> >(t, *this); }
    template <typename TypeIterator>
    TPackedMergeMemory<TypeIterator, TMergeMemory<T1, TypeMergeMemory> > operator>>(MergeBranches::TPacker<TypeIterator> packer);
@@ -263,7 +263,7 @@ class TMergeMemory {
          return next;
       }
    // to remove for the emission of compiler warnings
-   TypeMergeMemory& operator>>(const T1& aval)
+   TypeMergeMemory& operator<<(const T1& aval)
       {  T1& val = const_cast<T1&>(aval);
          if (isComplete()) {
             if (val.optimizeValue()) {
@@ -296,7 +296,7 @@ class TPackedMergeMemory {
    TPackedMergeMemory(const TPackedMergeMemory<TypeIterator, TypeMergeMemory>&) = default;
    TPackedMergeMemory(TPackedMergeMemory<TypeIterator, TypeMergeMemory>&&) = default;
 
-   template <typename T>
+   template <class T>
    TMergeMemory<T, TPackedMergeMemory<TypeIterator, TypeMergeMemory> > operator>>(T& t)
       {  return TMergeMemory<T, TPackedMergeMemory<TypeIterator, TypeMergeMemory> >(t, *this); }
    template <class TypeIteratorArgument>
@@ -344,7 +344,7 @@ class TPackedMergeMemory {
    bool isComplete() const { return next.isComplete(); }
 };
 
-template <typename T1, class TypeMergeMemory>
+template <class T1, class TypeMergeMemory>
 template <typename TypeIterator>
 inline
 TPackedMergeMemory<TypeIterator, TMergeMemory<T1, TypeMergeMemory> >
@@ -361,8 +361,8 @@ class MergeMemory {
   public:
    MergeMemory() : fFirst(true), fComplete(false) {}
 
-   template <typename T>
-   TMergeMemory<T, MergeMemory> operator>>(T& t)
+   template <class T>
+   TMergeMemory<T, MergeMemory> operator>>(const T& t)
       {  return TMergeMemory<T, MergeMemory>(t, *this); }
    template <typename TypeIterator>
    TPackedMergeMemory<TypeIterator, MergeMemory> operator>>(MergeBranches::TPacker<TypeIterator>&& packer)
@@ -862,18 +862,108 @@ class TFloatZonotope {
       {  thisType result(std::forward<thisType>(source)); result.powAssign(value); return result; }
    friend thisType pow(thisType&& source, thisType&& value)
       {  thisType result(std::forward<thisType>(source)); result.powAssign(std::forward<thisType>(value)); return result; }
-   template <typename TypeFst>
-   friend thisType pow(TypeFst source, const thisType& value)
+
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source, const thisType& value)
       {  thisType result(source); result.powAssign(value); return result; }
-   template <typename TypeFst>
-   friend thisType pow(TypeFst source, thisType&& value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& source, const thisType& value)
+      {  thisType result(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>>(source));
+         result.powAssign(value); return result;
+      }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source, thisType&& value)
       {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
-   template <typename TypeSnd>
-   friend thisType pow(const thisType& source, TypeSnd value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& source, thisType&& value)
+      {  thisType result(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>>(source));
+         result.powAssign(std::forward<thisType>(value)); return result;
+      }
+   friend thisType pow(long double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(float source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(unsigned long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(unsigned int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(unsigned short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType pow(long double source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType pow(double source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType pow(float source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType pow(unsigned long source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType pow(long source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType pow(unsigned int source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType pow(int source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType pow(unsigned short source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType pow(short source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(const thisType& source, const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& value)
       {  thisType result(source); result.powAssign(thisType(value)); return result; }
-   template <typename TypeSnd>
-   friend thisType pow(thisType&& source, TypeSnd value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(thisType&& source, const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& value)
       {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(const thisType& source, TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& value)
+      {  thisType result(source); result.powAssign(thisType(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(value))); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType pow(thisType&& source, TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(value))); return result; }
+   friend thisType pow(const thisType& source, long double value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, double value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, float value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, unsigned long value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, long value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, unsigned int value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, int value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, unsigned short value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(const thisType& source, short value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(thisType&& source, long double value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(thisType&& source, double value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(thisType&& source, float value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(thisType&& source, unsigned long value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(thisType&& source, long value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(thisType&& source, unsigned int value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(thisType&& source, int value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(thisType&& source, unsigned short value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType pow(thisType&& source, short value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+
    friend thisType powf(const thisType& source, const thisType& value)
       {  thisType result(source); result.powAssign(value); return result; }
    friend thisType powf(const thisType& source, thisType&& value)
@@ -882,18 +972,108 @@ class TFloatZonotope {
       {  thisType result(std::forward<thisType>(source)); result.powAssign(value); return result; }
    friend thisType powf(thisType&& source, thisType&& value)
       {  thisType result(std::forward<thisType>(source)); result.powAssign(std::forward<thisType>(value)); return result; }
-   template <typename TypeFst>
-   friend thisType powf(TypeFst source, const thisType& value)
+
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source, const thisType& value)
       {  thisType result(source); result.powAssign(value); return result; }
-   template <typename TypeFst>
-   friend thisType powf(TypeFst source, thisType&& value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& source, const thisType& value)
+      {  thisType result(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>>(source));
+         result.powAssign(value); return result;
+      }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source, thisType&& value)
       {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
-   template <typename TypeSnd>
-   friend thisType powf(const thisType& source, TypeSnd value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& source, thisType&& value)
+      {  thisType result(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>>(source));
+         result.powAssign(std::forward<thisType>(value)); return result;
+      }
+   friend thisType powf(long double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(double source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(float source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(unsigned long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(long source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(unsigned int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(int source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(unsigned short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(short source, const thisType& value)
+      {  thisType result(source); result.powAssign(value); return result; }
+   friend thisType powf(long double source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType powf(double source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType powf(float source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType powf(unsigned long source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType powf(long source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType powf(unsigned int source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType powf(int source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType powf(unsigned short source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   friend thisType powf(short source, thisType&& value)
+      {  thisType result(source); result.powAssign(std::forward<thisType>(value)); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(const thisType& source, const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& value)
       {  thisType result(source); result.powAssign(thisType(value)); return result; }
-   template <typename TypeSnd>
-   friend thisType powf(thisType&& source, TypeSnd value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(thisType&& source, const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& value)
       {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(const thisType& source, TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& value)
+      {  thisType result(source); result.powAssign(thisType(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(value))); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType powf(thisType&& source, TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(value))); return result; }
+   friend thisType powf(const thisType& source, long double value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, double value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, float value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, unsigned long value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, long value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, unsigned int value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, int value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, unsigned short value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(const thisType& source, short value)
+      {  thisType result(source); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(thisType&& source, long double value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(thisType&& source, double value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(thisType&& source, float value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(thisType&& source, unsigned long value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(thisType&& source, long value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(thisType&& source, unsigned int value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(thisType&& source, int value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(thisType&& source, unsigned short value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+   friend thisType powf(thisType&& source, short value)
+      {  thisType result(std::forward<thisType>(source)); result.powAssign(thisType(value)); return result; }
+
    friend thisType atan2(const thisType& source, const thisType& value)
       {  thisType result(source); result.atan2Assign(value); return result; }
    friend thisType atan2(const thisType& source, thisType&& value)
@@ -902,60 +1082,425 @@ class TFloatZonotope {
       {  thisType result(std::forward<thisType>(source)); result.atan2Assign(value); return result; }
    friend thisType atan2(thisType&& source, thisType&& value)
       {  thisType result(std::forward<thisType>(source)); result.atan2Assign(std::forward<thisType>(value)); return result; }
-   template <typename TypeFst>
-   friend thisType atan2(TypeFst source, const thisType& value)
+
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source, const thisType& value)
       {  thisType result(source); result.atan2Assign(value); return result; }
-   template <typename TypeFst>
-   friend thisType atan2(TypeFst source, thisType&& value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& source, const thisType& value)
+      {  thisType result(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>>(source));
+         result.atan2Assign(value); return result;
+      }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source, thisType&& value)
       {  thisType result(source); result.atan2Assign(std::forward<thisType>(value)); return result; }
-   template <typename TypeSnd>
-   friend thisType atan2(const thisType& source, TypeSnd value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& source, thisType&& value)
+      {  thisType result(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>>(source));
+         result.atan2Assign(std::forward<thisType>(value)); return result;
+      }
+   friend thisType atan2(long double source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(double source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(float source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(unsigned long source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(long source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(unsigned int source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(int source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(unsigned short source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(short source, const thisType& value)
+      {  thisType result(source); result.atan2Assign(value); return result; }
+   friend thisType atan2(long double source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(std::forward<thisType>(value)); return result; }
+   friend thisType atan2(double source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(std::forward<thisType>(value)); return result; }
+   friend thisType atan2(float source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(std::forward<thisType>(value)); return result; }
+   friend thisType atan2(unsigned long source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(std::forward<thisType>(value)); return result; }
+   friend thisType atan2(long source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(std::forward<thisType>(value)); return result; }
+   friend thisType atan2(unsigned int source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(std::forward<thisType>(value)); return result; }
+   friend thisType atan2(int source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(std::forward<thisType>(value)); return result; }
+   friend thisType atan2(unsigned short source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(std::forward<thisType>(value)); return result; }
+   friend thisType atan2(short source, thisType&& value)
+      {  thisType result(source); result.atan2Assign(std::forward<thisType>(value)); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(const thisType& source, const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& value)
       {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
-   template <typename TypeSnd>
-   friend thisType atan2(thisType&& source, TypeSnd value)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(thisType&& source, const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value)); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(const thisType& source, TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& value)
+      {  thisType result(source); result.atan2Assign(thisType(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(value))); return result; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType atan2(thisType&& source, TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(value))); return result; }
+   friend thisType atan2(const thisType& source, long double value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, double value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, float value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, unsigned long value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, long value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, unsigned int value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, int value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, unsigned short value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(const thisType& source, short value)
+      {  thisType result(source); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(thisType&& source, long double value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(thisType&& source, double value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(thisType&& source, float value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(thisType&& source, unsigned long value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(thisType&& source, long value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(thisType&& source, unsigned int value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(thisType&& source, int value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(thisType&& source, unsigned short value)
+      {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value)); return result; }
+   friend thisType atan2(thisType&& source, short value)
       {  thisType result(std::forward<thisType>(source)); result.atan2Assign(thisType(value)); return result; }
 
-   template <typename TypeFst>
-   friend bool operator<(TypeFst fst, const thisType& snd)
-      {  return thisType(fst).operator<(snd); }
-   template <typename TypeFst>
-   friend bool operator<=(TypeFst fst, const thisType& snd)
-      {  return thisType(fst).operator<=(snd); }
-   template <typename TypeFst>
-   friend bool operator==(TypeFst fst, const thisType& snd)
-      {  return thisType(fst).operator==(snd); }
-   template <typename TypeFst>
-   friend bool operator!=(TypeFst fst, const thisType& snd)
-      {  return thisType(fst).operator!=(snd); }
-   template <typename TypeFst>
-   friend bool operator>=(TypeFst fst, const thisType& snd)
-      {  return thisType(fst).operator>=(snd); }
-   template <typename TypeFst>
-   friend bool operator>(TypeFst fst, const thisType& snd)
-      {  return thisType(fst).operator>(snd); }
-   template <typename TypeFst>
-   friend thisType operator+(TypeFst fst, const thisType& snd)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator<(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(long double fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(double fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(float fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(long fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(int fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   friend bool operator<(short fst, const thisType& snd)
+      {  return thisType(fst).operator<(snd); }    
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator<=(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(long double fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(double fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(float fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(long fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(int fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   friend bool operator<=(short fst, const thisType& snd)
+      {  return thisType(fst).operator<=(snd); }   
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator==(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(long double fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(double fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(float fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(long fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(int fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   friend bool operator==(short fst, const thisType& snd)
+      {  return thisType(fst).operator==(snd); }   
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator!=(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(long double fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(double fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(float fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(long fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(int fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   friend bool operator!=(short fst, const thisType& snd)
+      {  return thisType(fst).operator!=(snd); }   
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator>=(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(long double fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(double fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(float fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(long fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(int fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   friend bool operator>=(short fst, const thisType& snd)
+      {  return thisType(fst).operator>=(snd); }   
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend bool operator>(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(long double fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(double fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(float fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(unsigned long fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(long fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(unsigned int fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(int fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(unsigned short fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   friend bool operator>(short fst, const thisType& snd)
+      {  return thisType(fst).operator>(snd); }    
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator+(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
       {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
-   template <typename TypeFst>
-   friend thisType operator+(TypeFst fst, thisType&& snd)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator+(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, thisType&& snd)
       {  thisType fstConvert(fst); fstConvert += std::forward<thisType>(snd); return fstConvert; }
-   template <typename TypeFst>
-   friend thisType operator-(TypeFst fst, const thisType& snd)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator+(TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& fst, const thisType& snd)
+      {  thisType fstConvert(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(fst)); fstConvert += snd; return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator+(TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& fst, thisType&& snd)
+      {  thisType fstConvert(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(fst)); fstConvert += std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator+(long double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(float fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(unsigned long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(unsigned int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(unsigned short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert += snd; return fstConvert; }
+   friend thisType operator+(long double fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert += std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator+(double fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert += std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator+(float fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert += std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator+(unsigned long fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert += std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator+(long fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert += std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator+(unsigned int fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert += std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator+(int fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert += std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator+(unsigned short fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert += std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator+(short fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert += std::forward<thisType>(snd); return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator-(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
       {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
-   template <typename TypeFst>
-   friend thisType operator-(TypeFst fst, thisType&& snd)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator-(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, thisType&& snd)
       {  thisType fstConvert(fst); fstConvert -= std::forward<thisType>(snd); return fstConvert; }
-   template <typename TypeFst>
-   friend thisType operator*(TypeFst fst, const thisType& snd)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator-(TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& fst, const thisType& snd)
+      {  thisType fstConvert(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(fst)); fstConvert -= snd; return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator-(TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& fst, thisType&& snd)
+      {  thisType fstConvert(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(fst)); fstConvert -= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator-(long double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(float fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(unsigned long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(unsigned int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(unsigned short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert -= snd; return fstConvert; }
+   friend thisType operator-(long double fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert -= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator-(double fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert -= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator-(float fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert -= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator-(unsigned long fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert -= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator-(long fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert -= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator-(unsigned int fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert -= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator-(int fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert -= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator-(unsigned short fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert -= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator-(short fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert -= std::forward<thisType>(snd); return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator*(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
       {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
-   template <typename TypeFst>
-   friend thisType operator*(TypeFst fst, thisType&& snd)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator*(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, thisType&& snd)
       {  thisType fstConvert(fst); fstConvert *= std::forward<thisType>(snd); return fstConvert; }
-   template <typename TypeFst>
-   friend thisType operator/(TypeFst fst, const thisType& snd)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator*(TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& fst, const thisType& snd)
+      {  thisType fstConvert(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(fst)); fstConvert *= snd; return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator*(TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& fst, thisType&& snd)
+      {  thisType fstConvert(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(fst)); fstConvert *= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator*(long double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(float fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(unsigned long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(unsigned int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(unsigned short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert *= snd; return fstConvert; }
+   friend thisType operator*(long double fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert *= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator*(double fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert *= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator*(float fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert *= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator*(unsigned long fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert *= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator*(long fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert *= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator*(unsigned int fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert *= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator*(int fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert *= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator*(unsigned short fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert *= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator*(short fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert *= std::forward<thisType>(snd); return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator/(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, const thisType& snd)
       {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
-   template <typename TypeFst>
-   friend thisType operator/(TypeFst fst, thisType&& snd)
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator/(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert /= std::forward<thisType>(snd); return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator/(TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& fst, const thisType& snd)
+      {  thisType fstConvert(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(fst)); fstConvert /= snd; return fstConvert; }
+   template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
+   friend thisType operator/(TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&& fst, thisType&& snd)
+      {  thisType fstConvert(std::forward<TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument> >(fst)); fstConvert /= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator/(long double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(double fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(float fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(unsigned long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(long fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(unsigned int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(int fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(unsigned short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(short fst, const thisType& snd)
+      {  thisType fstConvert(fst); fstConvert /= snd; return fstConvert; }
+   friend thisType operator/(long double fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert /= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator/(double fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert /= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator/(float fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert /= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator/(unsigned long fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert /= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator/(long fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert /= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator/(unsigned int fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert /= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator/(int fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert /= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator/(unsigned short fst, thisType&& snd)
+      {  thisType fstConvert(fst); fstConvert /= std::forward<thisType>(snd); return fstConvert; }
+   friend thisType operator/(short fst, thisType&& snd)
       {  thisType fstConvert(fst); fstConvert /= std::forward<thisType>(snd); return fstConvert; }
    friend thisType floor(const thisType& fst)
       {  return thisType(std::forward<thisType>(thisType(fst)).asInt(RMLowest)); }
@@ -997,8 +1542,8 @@ class TFloatZonotope {
          PathExplorer pathExplorer(
               ExecutionPath::queryMode(oldPathExplorer));
          ExecutionPath::setCurrentPathExplorer(&pathExplorer);
-         auto mergeMemory = MergeMemory() >> result;
-         auto saveMemory = SaveMemory() << result;
+         auto mergeMemory = MergeMemory() >> result >> end();
+         auto saveMemory = SaveMemory() << result << end();
          const char* sourceFile = __FILE__;
          int sourceLine = __LINE__;
          do {
@@ -1008,7 +1553,7 @@ class TFloatZonotope {
                if (result < 0)
                   result.oppositeAssign();
 
-               isCompleteFlow = MergeBranches(sourceFile, sourceLine) << result;
+               isCompleteFlow = MergeBranches(sourceFile, sourceLine) << result << end();
             } 
             catch (ExecutionPath::anticipated_termination&) {
                isCompleteFlow = false;
@@ -1023,8 +1568,8 @@ class TFloatZonotope {
                ExecutionPath::clearSynchronizationBranches();
             }
             ExecutionPath::setFollowFlow();
-         } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result)
-               && !(saveMemory.setCurrentResult(pathExplorer.isFinished(ExecutionPath::queryMode(oldPathExplorer))) >> result));
+         } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result << end())
+               && !(saveMemory.setCurrentResult(pathExplorer.isFinished(ExecutionPath::queryMode(oldPathExplorer))) >> result >> end()));
          ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
                oldSynchronisationFile, oldSynchronisationLine);
          ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
@@ -1049,8 +1594,8 @@ class TFloatZonotope {
          PathExplorer pathExplorer(
               ExecutionPath::queryMode(oldPathExplorer));
          ExecutionPath::setCurrentPathExplorer(&pathExplorer);
-         auto mergeMemory = MergeMemory() >> result;
-         auto saveMemory = SaveMemory() << result;
+         auto mergeMemory = MergeMemory() >> result >> end();
+         auto saveMemory = SaveMemory() << result << end();
          const char* sourceFile = __FILE__;
          int sourceLine = __LINE__;
          do {
@@ -1060,7 +1605,7 @@ class TFloatZonotope {
                if (result < 0)
                   result.oppositeAssign();
 
-               isCompleteFlow = MergeBranches(sourceFile, sourceLine) << result;
+               isCompleteFlow = MergeBranches(sourceFile, sourceLine) << result << end();
             } 
             catch (ExecutionPath::anticipated_termination&) {
                isCompleteFlow = false;
@@ -1075,8 +1620,8 @@ class TFloatZonotope {
                ExecutionPath::clearSynchronizationBranches();
             }
             ExecutionPath::setFollowFlow();
-         } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result)
-               && !(saveMemory.setCurrentResult(pathExplorer.isFinished(ExecutionPath::queryMode(oldPathExplorer))) >> result));
+         } while ((mergeMemory.setCurrentComplete(isCompleteFlow) << result << end())
+               && !(saveMemory.setCurrentResult(pathExplorer.isFinished(ExecutionPath::queryMode(oldPathExplorer))) >> result >> end()));
          ExecutionPath::setFollowFlow(oldDoesFollow, oldInputTraceFile,
                oldSynchronisationFile, oldSynchronisationLine);
          ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
