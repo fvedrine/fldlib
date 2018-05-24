@@ -459,13 +459,22 @@ TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope
 }
 
 template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope(const thisType& asource, Record) {
+void
+TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::setHolder(thisType& save) {
    typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
-   const Implementation& source = *reinterpret_cast<const Implementation*>(asource.content);
-   new (content) Implementation(source);
    if (DAffine::ExecutionPath::doesSupportUnstableInLoop()) {
-      const_cast<Implementation&>(source).getSRealDomain().setHolder(source.currentPathExplorer);
-      const_cast<Implementation&>(source).getSError().setHolder(source.currentPathExplorer);
+      reinterpret_cast<Implementation*>(content)->getSRealDomain().setHolder(reinterpret_cast<Implementation*>(content)->currentPathExplorer);
+      reinterpret_cast<Implementation*>(content)->getSError().setHolder(reinterpret_cast<Implementation*>(content)->currentPathExplorer);
+      reinterpret_cast<Implementation*>(save.content)->getSRealDomain().clearHolder();
+      reinterpret_cast<Implementation*>(save.content)->getSError().clearHolder();
+   };
+}
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+void
+TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::removeHolder() {
+   typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
+   if (DAffine::ExecutionPath::doesSupportUnstableInLoop()) {
       reinterpret_cast<Implementation*>(content)->getSRealDomain().clearHolder();
       reinterpret_cast<Implementation*>(content)->getSError().clearHolder();
    };
@@ -479,19 +488,6 @@ TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope
    if (DAffine::ExecutionPath::doesSupportUnstableInLoop()) {
       reinterpret_cast<Implementation*>(content)->getSRealDomain().setHolder(reinterpret_cast<Implementation*>(content)->currentPathExplorer);
       reinterpret_cast<Implementation*>(content)->getSError().setHolder(reinterpret_cast<Implementation*>(content)->currentPathExplorer);
-   };
-}
-
-template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
-TFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation>::TFloatZonotope(thisType&& asource, Record) {
-   typedef DAffine::TFloatZonotope<DAffine::ExecutionPath, USizeMantissa, USizeExponent, TypeImplementation> Implementation;
-   Implementation& source = *reinterpret_cast<Implementation*>(asource.content);
-   new (content) Implementation(std::move(source));
-   if (DAffine::ExecutionPath::doesSupportUnstableInLoop()) {
-      const_cast<Implementation&>(source).getSRealDomain().setHolder(source.currentPathExplorer);
-      const_cast<Implementation&>(source).getSError().setHolder(source.currentPathExplorer);
-      reinterpret_cast<Implementation*>(content)->getSRealDomain().clearHolder();
-      reinterpret_cast<Implementation*>(content)->getSError().clearHolder();
    };
 }
 

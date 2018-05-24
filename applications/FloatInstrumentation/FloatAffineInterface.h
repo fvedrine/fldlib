@@ -112,6 +112,27 @@ class MergeBranches {
    bool operator<<(end);
 };
 
+template<typename> struct thasEquationHolder { typedef int type; };
+
+struct EveryType {};
+struct AffineType : public EveryType {};
+
+template <typename T>
+void
+tremoveHolder(T&, EveryType) {}
+
+template <typename T>
+void
+tsetHolder(T&, T&, EveryType) {}
+
+template <typename T, typename thasEquationHolder<typename T::InstrumentedAffineType>::type=0>
+void
+tremoveHolder(T& save, AffineType) { save.removeHolder(); }
+
+template <typename T, typename thasEquationHolder<typename T::InstrumentedAffineType>::type=0>
+void
+tsetHolder(T& source, T& save, AffineType) { source.setHolder(save); }
+
 template <typename TypeIterator, class TypeSaveMemory>
 class TPackedSaveMemory;
 
@@ -122,11 +143,13 @@ class TSaveMemory {
    TypeSaveMemory next;
 
    TSaveMemory(const T1& saveArg, TypeSaveMemory nextArg)
-      :  save(saveArg, typename T1::Record()), next(nextArg) {}
+      :  save(saveArg), next(nextArg) { tsetHolder(const_cast<T1&>(saveArg), save, AffineType()); }
    TSaveMemory(const TSaveMemory<T1, TypeSaveMemory>& source)
-      :  save(const_cast<T1&>(source.save), typename T1::Record()), next(source.next) {}
+      :  save(std::move(const_cast<T1&>(source.save))), next(source.next)
+      {  tremoveHolder(save, AffineType()); }
    TSaveMemory(TSaveMemory<T1, TypeSaveMemory>&& source)
-      :  save(const_cast<T1&>(source.save), typename T1::Record()), next(source.next) {}
+      :  save(std::move(const_cast<T1&>(source.save))), next(source.next)
+      {  tremoveHolder(save, AffineType()); }
 
    template <class T>
    TSaveMemory<T, TSaveMemory<T1, TypeSaveMemory> > operator<<(const T& t)
@@ -161,11 +184,21 @@ class TPackedSaveMemory {
       :  next(nextArg)
       {  int count = end - iter;
          save.reserve(count);
-         for (; iter != end; ++iter)
+         for (; iter != end; ++iter) {
             save.push_back(*iter);
+            tsetHolder(const_cast<typename TypeIterator::value_type&>(*iter), save.back(), AffineType());
+         };
       }
-   TPackedSaveMemory(const TPackedSaveMemory<TypeIterator, TypeSaveMemory>&) = default;
-   TPackedSaveMemory(TPackedSaveMemory<TypeIterator, TypeSaveMemory>&&) = default;
+   TPackedSaveMemory(const TPackedSaveMemory<TypeIterator, TypeSaveMemory>& source)
+      :  save(source.save), next(source.next)
+      {  for (auto& element : save)
+            tremoveHolder(element, AffineType());
+      }
+   TPackedSaveMemory(TPackedSaveMemory<TypeIterator, TypeSaveMemory>&& source)
+      :  save(std::move(source.save)), next(std::move(source.next))
+      {  for (auto& element : save)
+            tremoveHolder(element, AffineType());
+      }
 
    template <class T>
    TSaveMemory<T, TSaveMemory<TypeIterator, TypeSaveMemory> > operator<<(T& t)
@@ -482,7 +515,10 @@ class TFloatZonotope {
    static void flushOut() { ExecutionPath::flushOut(); }
 
   public:
-   class Record {};
+   typedef thisType InstrumentedAffineType;
+   void setHolder(thisType& save);
+   void removeHolder();
+
    struct ValueFromString {}; 
 
    TFloatZonotope();
@@ -500,9 +536,7 @@ class TFloatZonotope {
    TFloatZonotope(unsigned value);
    TFloatZonotope(unsigned long value);
    TFloatZonotope(const thisType& source);
-   TFloatZonotope(const thisType& source, Record);
    TFloatZonotope(thisType&& source);
-   TFloatZonotope(thisType&& source, Record);
 
    template <int USizeMantissaArgument, int USizeExponentArgument, typename TypeImplementationArgument>
    TFloatZonotope(const TFloatZonotope<USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>& source);

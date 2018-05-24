@@ -67,6 +67,39 @@ typedef STG::IOObject::OSBase DiagnosisReadStream;
 template <typename TypeIterator, class TypeSaveMemory>
 class TPackedSaveMemory;
 
+template<typename> struct thasEquationHolder { typedef int type; };
+
+struct EveryType {};
+struct AffineType : public EveryType {};
+
+template <typename T>
+void
+tremoveHolder(T&, EveryType) {}
+
+template <typename T>
+void
+tsetHolder(T&, T&, EveryType) {}
+
+template <typename T, typename thasEquationHolder<typename T::InstrumentedAffineType>::type=0>
+void
+tremoveHolder(T& save, AffineType) {
+   if (save.doesSupportUnstableInLoop()) {
+      save.getSRealDomain().clearHolder();
+      save.getSError().clearHolder();
+   };
+}
+
+template <typename T, typename thasEquationHolder<typename T::InstrumentedAffineType>::type=0>
+void
+tsetHolder(T& source, T& save, AffineType) {
+   if (source.doesSupportUnstableInLoop()) {
+      source.getSRealDomain().setHolder(source.currentPathExplorer);
+      source.getSError().setHolder(source.currentPathExplorer);
+      save.getSRealDomain().clearHolder();
+      save.getSError().clearHolder();
+   };
+}
+
 template <typename T1, class TypeSaveMemory>
 class TSaveMemory {
   public:
@@ -75,27 +108,13 @@ class TSaveMemory {
 
    TSaveMemory(T1& saveArg, TypeSaveMemory nextArg)
       :  save(saveArg), next(nextArg)
-      {  if (saveArg.doesSupportUnstableInLoop()) {
-            saveArg.getSRealDomain().setHolder(saveArg.currentPathExplorer);
-            saveArg.getSError().setHolder(saveArg.currentPathExplorer);
-            save.getSRealDomain().clearHolder();
-            save.getSError().clearHolder();
-         };
-      }
+      {  tsetHolder(saveArg, save, AffineType()); }
    TSaveMemory(const TSaveMemory<T1, TypeSaveMemory>& source)
       :  save(source.save), next(source.next)
-      {  if (save.doesSupportUnstableInLoop()) {
-            save.getSRealDomain().clearHolder();
-            save.getSError().clearHolder();
-         };
-      }
+      {  tremoveHolder(save, AffineType()); }
    TSaveMemory(TSaveMemory<T1, TypeSaveMemory>&& source)
       :  save(std::move(source.save)), next(std::move(source.next))
-      {  if (save.doesSupportUnstableInLoop()) {
-            save.getSRealDomain().clearHolder();
-            save.getSError().clearHolder();
-         };
-      }
+      {  tremoveHolder(save, AffineType()); }
 
    template <typename T>
    TSaveMemory<T, TSaveMemory<T1, TypeSaveMemory> > operator<<(T& t)
@@ -134,28 +153,22 @@ class TPackedSaveMemory {
       :  next(nextArg)
       {  int count = end - iter;
          save.bookPlace(count);
-         for (; iter != end; ++iter)
+         for (; iter != end; ++iter) {
             save.insertAtEnd(*iter);
+            tsetHolder(*iter, save.referenceAt(save.count()-1), AffineType());
+         }
       }
    TPackedSaveMemory(const TPackedSaveMemory<TypeIterator, TypeSaveMemory>& source)
       :  save(source.save), next(source.next)
       {  int count = save.count();
-         if (count > 0 && save.referenceAt(0).doesSupportUnstableInLoop()) {
-            for (int index = 0; index < count; ++index) {
-               save.referenceAt(index).getSRealDomain().clearHolder();
-               save.referenceAt(index).getSError().clearHolder();
-            };
-         };
+         for (int index = 0; index < count; ++index)
+            tremoveHolder(save.referenceAt(index), AffineType());
       }
    TPackedSaveMemory(TPackedSaveMemory<TypeIterator, TypeSaveMemory>&& source)
       :  save(std::move(source.save)), next(std::move(source.next))
       {  int count = save.count();
-         if (count > 0 && save.referenceAt(0).doesSupportUnstableInLoop()) {
-            for (int index = 0; index < count; ++index) {
-               save.referenceAt(index).getSRealDomain().clearHolder();
-               save.referenceAt(index).getSError().clearHolder();
-            };
-         };
+         for (int index = 0; index < count; ++index)
+            tremoveHolder(save.referenceAt(index), AffineType());
       }
 
    template <typename T>
@@ -440,6 +453,7 @@ class TInstrumentedFloatZonotope : public TFloatZonotope<ExecutionPath, USizeMan
    friend class TMergeBranches<ExecutionPath>;
 
   public:
+   typedef thisType InstrumentedAffineType;
    typedef DAffine::MergeBranches MergeBranches;
    struct ValueFromString {}; 
 
