@@ -103,6 +103,7 @@ typedef long double old_long_double;
    auto _mergeMemory##ident = NumericalDomains::DAffine::MergeMemory() >> merge;                 \
    auto _saveMemory##ident = NumericalDomains::DAffine::SaveMemory() << save;                    \
    auto _oldSourceInfo##ident = NumericalDomains::DAffine::BaseFloatAffine::querySplitInfo();    \
+   bool _doesIterate##ident;                                                                     \
    do {                                                                                          \
       try {                                                                                      \
          _sourceFile##ident = __FILE__;                                                          \
@@ -128,6 +129,7 @@ typedef long double old_long_double;
    auto _mergeMemory##ident = NumericalDomains::DAffine::MergeMemory() >> merge;                 \
    auto _saveMemory##ident = NumericalDomains::DAffine::SaveMemory() << save;                    \
    auto _oldSourceInfo##ident = NumericalDomains::DAffine::BaseFloatAffine::querySplitInfo();    \
+   bool _doesIterate##ident;                                                                     \
    do {                                                                                          \
       try {                                                                                      \
          _sourceFile##ident = __FILE__;                                                          \
@@ -151,8 +153,10 @@ typedef long double old_long_double;
          NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();               \
       }                                                                                          \
       NumericalDomains::DAffine::ExecutionPath::setFollowFlow();                                 \
-   } while ((_mergeMemory##ident.setCurrentComplete(_isCompleteFlow##ident) << x)                \
-         && !(_saveMemory##ident.setCurrentResult(_pathExplorer##ident.isFinished(NumericalDomains::DAffine::ExecutionPath::queryMode(_oldPathExplorer##ident))) >> load));\
+      _doesIterate##ident = (_mergeMemory##ident.setCurrentComplete(_isCompleteFlow##ident) << x);\
+      if (_doesIterate##ident)                                                                   \
+         _doesIterate##ident = !(_saveMemory##ident.setCurrentResult(_pathExplorer##ident.isFinished(NumericalDomains::DAffine::ExecutionPath::queryMode(_oldPathExplorer##ident))) >> load);\
+   } while (_doesIterate##ident);                                                                \
    NumericalDomains::DAffine::ExecutionPath::setFollowFlow(_oldDoesFollow##ident, _oldInputTraceFile##ident,\
          _oldSynchronisationFile##ident, _oldSynchronisationLine##ident);                        \
    NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(_oldPathExplorer##ident);    \
@@ -177,8 +181,10 @@ typedef long double old_long_double;
          NumericalDomains::DAffine::ExecutionPath::clearSynchronizationBranches();               \
       }                                                                                          \
       NumericalDomains::DAffine::ExecutionPath::setFollowFlow();                                 \
-   } while ((_mergeMemory##ident.setCurrentComplete(_isCompleteFlow##ident) << x)                \
-         && !(_saveMemory##ident.setCurrentResult(_pathExplorer##ident.isFinished(_oldPathExplorer##ident->mode())) >> load));\
+      _doesIterate##ident = (_mergeMemory##ident.setCurrentComplete(_isCompleteFlow##ident) << x);\
+      if (_doesIterate##ident)                                                                   \
+         _doesIterate##ident = !(_saveMemory##ident.setCurrentResult(_pathExplorer##ident.isFinished(NumericalDomains::DAffine::ExecutionPath::queryMode(_oldPathExplorer##ident))) >> load);\
+   } while (_doesIterate##ident);                                                                \
    NumericalDomains::DAffine::ExecutionPath::setFollowFlow(_oldDoesFollow##ident, _oldInputTraceFile##ident,\
          _oldSynchronisationFile##ident, _oldSynchronisationLine##ident);                        \
    NumericalDomains::DAffine::ExecutionPath::setCurrentPathExplorer(_oldPathExplorer##ident);    \
