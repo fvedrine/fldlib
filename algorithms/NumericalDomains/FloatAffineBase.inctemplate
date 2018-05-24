@@ -3656,8 +3656,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 bool
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::restrictImplementationFromRealAndError() {
-   Equation implementation(getRealDomain());
-   implementation.plusAssign(getError(), Equation::PCSourceRValue, symbolsManager());
+   Equation implementation(getError());
+   implementation.plusAssign(getRealDomain(), Equation::PCSourceRValue, symbolsManager());
    BuiltReal extendedMin, extendedMax;
    implementation.retrieveBound(extendedMin, extendedMax, false /* hasExternalCoefficient */);
    typename BuiltReal::FloatConversion conversion;
@@ -4842,8 +4842,10 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       if (TypeBaseFloatAffine::getMode() != TypeBaseFloatAffine::MOnlyReal
             && !const_cast<thisType*>(this)->restrictImplementationFromRealAndError())
          TypeBaseFloatAffine::throwEmptyBranch(isUnstable);
-      const_cast<thisType*>(this)->restrictRealFromErrorAndImplementation();
-      const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
+      if (TypeBaseFloatAffine::getMode() == TypeBaseFloatAffine::MRealAndImplementation) {
+         const_cast<thisType*>(this)->restrictRealFromErrorAndImplementation();
+         const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
+      };
       TypeBaseFloatAffine::notifyForBranchCompare(*this, isUnstable);
       const_cast<thisType&>(source).updateLocalState();
       TypeBaseFloatAffine::notifyForBranchCompare(source, isUnstable);
@@ -4936,8 +4938,10 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       if (TypeBaseFloatAffine::getMode() != TypeBaseFloatAffine::MOnlyReal
             && !const_cast<thisType*>(this)->restrictImplementationFromRealAndError())
          TypeBaseFloatAffine::throwEmptyBranch(isUnstable);
-      const_cast<thisType*>(this)->restrictRealFromErrorAndImplementation();
-      const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
+      if (TypeBaseFloatAffine::getMode() == TypeBaseFloatAffine::MRealAndImplementation) {
+         const_cast<thisType*>(this)->restrictRealFromErrorAndImplementation();
+         const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
+      };
       TypeBaseFloatAffine::notifyForBranchCompare(*this, isUnstable);
       const_cast<thisType&>(source).updateLocalState();
       TypeBaseFloatAffine::notifyForBranchCompare(source, isUnstable);
@@ -5031,8 +5035,10 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       if (TypeBaseFloatAffine::getMode() != TypeBaseFloatAffine::MOnlyReal
             && !const_cast<thisType*>(this)->restrictImplementationFromRealAndError())
          TypeBaseFloatAffine::throwEmptyBranch(isUnstable);
-      const_cast<thisType*>(this)->restrictRealFromErrorAndImplementation();
-      const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
+      if (TypeBaseFloatAffine::getMode() == TypeBaseFloatAffine::MRealAndImplementation) {
+         const_cast<thisType*>(this)->restrictRealFromErrorAndImplementation();
+         const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
+      };
       TypeBaseFloatAffine::notifyForBranchCompare(*this, isUnstable);
       const_cast<thisType&>(source).updateLocalState();
       TypeBaseFloatAffine::notifyForBranchCompare(source, isUnstable);
@@ -5126,8 +5132,10 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       if (TypeBaseFloatAffine::getMode() != TypeBaseFloatAffine::MOnlyReal
             && !const_cast<thisType*>(this)->restrictImplementationFromRealAndError())
          TypeBaseFloatAffine::throwEmptyBranch(isUnstable);
-      const_cast<thisType*>(this)->restrictRealFromErrorAndImplementation();
-      const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
+      if (TypeBaseFloatAffine::getMode() == TypeBaseFloatAffine::MRealAndImplementation) {
+         const_cast<thisType*>(this)->restrictRealFromErrorAndImplementation();
+         const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
+      };
       TypeBaseFloatAffine::notifyForBranchCompare(*this, isUnstable);
       const_cast<thisType&>(source).updateLocalState();
       TypeBaseFloatAffine::notifyForBranchCompare(source, isUnstable);
@@ -5220,8 +5228,10 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       if (TypeBaseFloatAffine::getMode() != TypeBaseFloatAffine::MOnlyReal
             && !const_cast<thisType*>(this)->restrictImplementationFromRealAndError())
          TypeBaseFloatAffine::throwEmptyBranch(isUnstable);
-      const_cast<thisType*>(this)->restrictRealFromErrorAndImplementation();
-      const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
+      if (TypeBaseFloatAffine::getMode() == TypeBaseFloatAffine::MRealAndImplementation) {
+         const_cast<thisType*>(this)->restrictRealFromErrorAndImplementation();
+         const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
+      };
       TypeBaseFloatAffine::notifyForBranchCompare(*this, isUnstable);
       const_cast<thisType&>(source).updateLocalState();
       TypeBaseFloatAffine::notifyForBranchCompare(source, isUnstable);
@@ -5314,8 +5324,10 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       if (TypeBaseFloatAffine::getMode() != TypeBaseFloatAffine::MOnlyReal
             && !const_cast<thisType*>(this)->restrictImplementationFromRealAndError())
          TypeBaseFloatAffine::throwEmptyBranch(isUnstable);
-      const_cast<thisType*>(this)->restrictRealFromErrorAndImplementation();
-      const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
+      if (TypeBaseFloatAffine::getMode() == TypeBaseFloatAffine::MRealAndImplementation) {
+         const_cast<thisType*>(this)->restrictRealFromErrorAndImplementation();
+         const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
+      };
       TypeBaseFloatAffine::notifyForBranchCompare(*this, isUnstable);
       const_cast<thisType&>(source).updateLocalState();
       TypeBaseFloatAffine::notifyForBranchCompare(source, isUnstable);
@@ -5555,11 +5567,13 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          if (isApproximate)
             addSemiUlpToError();
          restrictImplementationFromRealAndError();
-         if (!TypeBaseFloatAffine::isPureZonotope()) {
-            restrictErrorFromRealAndImplementation();
-            restrictRealFromErrorAndImplementation();
+         if (TypeBaseFloatAffine::getMode() == TypeBaseFloatAffine::MRealAndImplementation) {
+            if (!TypeBaseFloatAffine::isPureZonotope()) {
+               restrictErrorFromRealAndImplementation();
+               restrictRealFromErrorAndImplementation();
+            };
+            restrictRelativeErrorFromRealAndError();
          };
-         restrictRelativeErrorFromRealAndError();
       };
    };
 
@@ -5664,7 +5678,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          if (isApproximate)
             addSemiUlpToError();
          restrictImplementationFromRealAndError();
-         if (!TypeBaseFloatAffine::isPureZonotope()) {
+         if (!TypeBaseFloatAffine::isPureZonotope()
+               && TypeBaseFloatAffine::getMode() == TypeBaseFloatAffine::MRealAndImplementation) {
             restrictErrorFromRealAndImplementation();
             restrictRealFromErrorAndImplementation();
          };
@@ -6309,6 +6324,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
                      mode, minParams, maxParams, roundMode))
                return result;
             const_cast<thisType*>(this)->mergeNoReal();
+            implementation = getError();
          };
       };
       if ((realPlusErrorResultMin <= realPlusErrorResultMax) && (result+1 < realPlusErrorResultMax)) {
@@ -6341,7 +6357,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          minParams.clear();
          subSemiUlp(newMin);
          Equation constraint(implementation);
-         constraint.getSCentral().plusAssign(newMin, maxParams);
+         constraint.getSCentral().minusAssign(newMin, maxParams);
          maxParams.clear();
          Symbol* constrainedSymbol = symbolsManager()
                .createDefinedSymbol(typename inherited::TemplateTraits(), constraint);
@@ -6393,7 +6409,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    if (implementationChoice
          && !const_cast<thisType*>(this)->restrictImplementationFromRealAndError())
       TypeBaseFloatAffine::throwEmptyBranch(isUnstable);
-   const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
+   if (TypeBaseFloatAffine::getMode() == TypeBaseFloatAffine::MRealAndImplementation)
+      const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
    TypeBaseFloatAffine::notifyForBranchCompare(*this, isUnstable);
    return result;
 }
@@ -6555,6 +6572,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
                      mode, minParams, maxParams, roundMode))
                return result;
             const_cast<thisType*>(this)->mergeNoReal();
+            implementation = getError();
          };
       };
       if ((realPlusErrorResultMin <= realPlusErrorResultMax) && (result+1 < realPlusErrorResultMax)) {
@@ -6587,7 +6605,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          minParams.clear();
          subSemiUlp(newMin);
          Equation constraint(implementation);
-         constraint.getSCentral().plusAssign(newMin, maxParams);
+         constraint.getSCentral().minusAssign(newMin, maxParams);
          maxParams.clear();
          Symbol* constrainedSymbol = symbolsManager()
                .createDefinedSymbol(typename inherited::TemplateTraits(), constraint);
@@ -6630,7 +6648,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    if (implementationChoice
          && !const_cast<thisType*>(this)->restrictImplementationFromRealAndError())
       TypeBaseFloatAffine::throwEmptyBranch(isUnstable);
-   const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
+   if (TypeBaseFloatAffine::getMode() == TypeBaseFloatAffine::MRealAndImplementation)
+      const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
    TypeBaseFloatAffine::notifyForBranchCompare(*this, isUnstable);
    return result;
 }
