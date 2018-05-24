@@ -4103,15 +4103,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    conversion.setNegative(real.isNegative());
    bfMin.setFloat(conversion, params);
    bfMax = bfMin;
-   if (params.isUpApproximate()) {
-      bfMin.setToPrevious();
-      DAffine::DefineSetContent(dValue, bfMax, typename TypeBaseFloatAffine::FloatDigitsHelper());
-   }
-   else {
-      bfMax.setToNext();
-      DAffine::DefineSetContent(dValue, bfMin, typename TypeBaseFloatAffine::FloatDigitsHelper());
-   };
-   params.clear();
+   DAffine::DefineSetContent(dValue, bfMax, typename TypeBaseFloatAffine::FloatDigitsHelper());
 
    if (!isDownApproximate && !isUpApproximate)
       inherited::setCentral(real);
@@ -4487,8 +4479,10 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    auto& maxParams = TypeBaseFloatAffine::maxParams();
    rmax.setFloat(conversion, maxParams);
    maxParams.clear();
-   if (inherited::doesComputeError())
+   if (inherited::doesComputeError()) {
       getSError().setInterval(rmin, rmax, symbolsManager());
+      computeRelativeError();
+   }
    else {
       Equation newError;
       newError.setInterval(rmin, rmax, symbolsManager());
