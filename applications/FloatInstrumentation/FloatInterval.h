@@ -115,8 +115,8 @@ class TPackedSaveMemory {
       }
    TPackedSaveMemory<TypeIterator, TypeSaveMemory>& operator<<(BaseExecutionPath::end) { return *this; }
 
-   TPackedSaveMemory<TypeIterator, TypeSaveMemory>& setCurrent(bool result)
-      {  next.setCurrent(result); return *this; }
+   TPackedSaveMemory<TypeIterator, TypeSaveMemory>& setCurrentResult(bool result)
+      {  next.setCurrentResult(result); return *this; }
    
    TypeSaveMemory& operator>>(MergeBranches::TPacker<TypeIterator>&& packer)
       {  if (!next.getResult()) {
@@ -216,10 +216,7 @@ class TPackedMergeMemory {
    TypeMergeMemory next;
 
    TPackedMergeMemory(TypeIterator iter, TypeIterator end, TypeMergeMemory nextArg)
-      :  next(nextArg)
-      {  int count = end - iter;
-         merge.bookPlace(count);
-      }
+      :  next(nextArg) {}
    TPackedMergeMemory(const TPackedMergeMemory<TypeIterator, TypeMergeMemory>&) = default;
    TPackedMergeMemory(TPackedMergeMemory<TypeIterator, TypeMergeMemory>&&) = default;
 
@@ -236,13 +233,14 @@ class TPackedMergeMemory {
 
    TypeMergeMemory& operator<<(MergeBranches::TPacker<TypeIterator>&& packer)
       {  int count = packer.end - packer.iter;
+         auto iter = packer.iter;
          if (next.isFirst()) {
-            AssumeCondition(merge.count() == 0 && merge.queryPlaces() == count)
-            for (; packer.iter != packer.end; ++packer.iter)
-               merge.insertAtEnd(*packer.iter);
+            AssumeCondition(merge.count() == 0)
+            merge.bookPlace(count);
+            for (; iter != packer.end; ++iter)
+               merge.insertAtEnd(*iter);
          }
          else {
-            auto iter = packer.iter;
             for (int index = 0; index < count; ++index) {
                merge.referenceAt(index).mergeWith(*iter);
                ++iter;
@@ -324,6 +322,9 @@ class TInstrumentedFloatInterval : public TFloatInterval<BaseFloatInterval, Type
   private:
    typedef TInstrumentedFloatInterval<TypeBuiltDouble, TypeImplementation> thisType;
    typedef TFloatInterval<BaseFloatInterval, TypeBuiltDouble, TypeImplementation> inherited;
+
+  public:
+   typedef DDoubleInterval::MergeBranches MergeBranches;
 
   public:
    TInstrumentedFloatInterval() {}

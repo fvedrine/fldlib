@@ -139,8 +139,8 @@ class TPackedSaveMemory {
       }
    TPackedSaveMemory(const TPackedSaveMemory<TypeIterator, TypeSaveMemory>& source)
       :  save(source.save), next(source.next)
-      {  if (save.doesSupportUnstableInLoop()) {
-            int count = save.count();
+      {  int count = save.count();
+         if (count > 0 && save.referenceAt(0).doesSupportUnstableInLoop()) {
             for (int index = 0; index < count; ++index) {
                save.referenceAt(index).getSRealDomain().clearHolder();
                save.referenceAt(index).getSError().clearHolder();
@@ -149,8 +149,8 @@ class TPackedSaveMemory {
       }
    TPackedSaveMemory(TPackedSaveMemory<TypeIterator, TypeSaveMemory>&& source)
       :  save(std::move(source.save)), next(std::move(source.next))
-      {  if (save.doesSupportUnstableInLoop()) {
-            int count = save.count();
+      {  int count = save.count();
+         if (count > 0 && save.referenceAt(0).doesSupportUnstableInLoop()) {
             for (int index = 0; index < count; ++index) {
                save.referenceAt(index).getSRealDomain().clearHolder();
                save.referenceAt(index).getSError().clearHolder();
@@ -300,10 +300,7 @@ class TPackedMergeMemory {
    TypeMergeMemory next;
 
    TPackedMergeMemory(TypeIterator iter, TypeIterator end, TypeMergeMemory nextArg)
-      :  next(nextArg)
-      {  int count = end - iter;
-         merge.bookPlace(count);
-      }
+      :  next(nextArg) {}
    TPackedMergeMemory(const TPackedMergeMemory<TypeIterator, TypeMergeMemory>&) = default;
    TPackedMergeMemory(TPackedMergeMemory<TypeIterator, TypeMergeMemory>&&) = default;
 
@@ -323,11 +320,13 @@ class TPackedMergeMemory {
    TypeMergeMemory& operator<<(MergeBranches::TPacker<TypeIterator>&& packer)
       {  int count = packer.end - packer.iter;
          if (next.isComplete()) {
+            auto iter = packer.iter;
             if (next.isFirst()) {
-               AssumeCondition(merge.count() == 0 && merge.queryPlaces() == count)
-               for (; packer.iter != packer.end; ++packer.iter) {
-                  if (packer.iter->optimizeValue()) {
-                     merge.insertAtEnd(*packer.iter);
+               AssumeCondition(merge.count() == 0)
+               merge.bookPlace(count);
+               for (; iter != packer.end; ++iter) {
+                  if (iter->optimizeValue()) {
+                     merge.insertAtEnd(*iter);
                      if (merge.slast().doesSupportUnstableInLoop()) {
                         merge.slast().getSRealDomain().clearHolder();
                         merge.slast().getSError().clearHolder();
@@ -338,7 +337,6 @@ class TPackedMergeMemory {
                };
             }
             else {
-               auto iter = packer.iter;
                for (int index = 0; index < count; ++index) {
                   if (iter->optimizeValue())
                      merge.referenceAt(index).mergeWith(*iter);
@@ -348,10 +346,12 @@ class TPackedMergeMemory {
                }
             }
          }
-         for (int index = 0; index < count; ++index) {
-            *packer.iter = merge[index];
-            ++packer.iter;
-         }
+         if (merge.count() > 0) {
+            for (int index = 0; index < count; ++index) {
+               *packer.iter = merge[index];
+               ++packer.iter;
+            }
+         };
          return next;
       }
    bool isFirst() const { return next.isFirst(); }

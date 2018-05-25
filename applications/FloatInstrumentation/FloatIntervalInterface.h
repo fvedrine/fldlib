@@ -38,6 +38,7 @@
 
 #include <iostream>
 #include <vector>
+#include <cassert>
 
 namespace NumericalDomains {
    
@@ -155,8 +156,8 @@ class TPackedSaveMemory {
       }
    TPackedSaveMemory<TypeIterator, TypeSaveMemory>& operator<<(end) { return *this; }
 
-   TPackedSaveMemory<TypeIterator, TypeSaveMemory>& setCurrent(bool result)
-      {  next.setCurrent(result); return *this; }
+   TPackedSaveMemory<TypeIterator, TypeSaveMemory>& setCurrentResult(bool result)
+      {  next.setCurrentResult(result); return *this; }
    
    TypeSaveMemory& operator>>(MergeBranches::TPacker<TypeIterator>&& packer)
       {  if (!next.getResult()) {
@@ -253,10 +254,7 @@ class TPackedMergeMemory {
    TypeMergeMemory next;
 
    TPackedMergeMemory(TypeIterator iter, TypeIterator end, TypeMergeMemory nextArg)
-      :  next(nextArg)
-      {  int count = end - iter;
-         merge.reserve(count);
-      }
+      :  next(nextArg) {}
    TPackedMergeMemory(const TPackedMergeMemory<TypeIterator, TypeMergeMemory>&) = default;
    TPackedMergeMemory(TPackedMergeMemory<TypeIterator, TypeMergeMemory>&&) = default;
 
@@ -273,13 +271,14 @@ class TPackedMergeMemory {
 
    TypeMergeMemory& operator<<(MergeBranches::TPacker<TypeIterator>&& packer)
       {  int count = packer.end - packer.iter;
+         auto iter = packer.iter;
          if (next.isFirst()) {
-            assert(merge.size() == 0 && merge.allocated() == count);
-            for (; packer.iter != packer.end; ++packer.iter)
-               merge.push_back(*packer.iter);
+            assert(merge.size() == 0);
+            merge.reserve(count);
+            for (; iter != packer.end; ++iter)
+               merge.push_back(*iter);
          }
          else {
-            auto iter = packer.iter;
             for (int index = 0; index < count; ++index) {
                merge[index].mergeWith(*iter);
                ++iter;

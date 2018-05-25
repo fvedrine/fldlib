@@ -38,6 +38,7 @@
 // #include <iosfwd>
 #include <iostream>
 #include <vector>
+#include <cassert>
 
 namespace NumericalDomains {
 
@@ -289,10 +290,7 @@ class TPackedMergeMemory {
    TypeMergeMemory next;
 
    TPackedMergeMemory(TypeIterator iter, TypeIterator end, TypeMergeMemory nextArg)
-      :  next(nextArg)
-      {  int count = end - iter;
-         merge.reserve(count);
-      }
+      :  next(nextArg) {}
    TPackedMergeMemory(const TPackedMergeMemory<TypeIterator, TypeMergeMemory>&) = default;
    TPackedMergeMemory(TPackedMergeMemory<TypeIterator, TypeMergeMemory>&&) = default;
 
@@ -311,20 +309,21 @@ class TPackedMergeMemory {
    TypeMergeMemory& operator<<(MergeBranches::TPacker<TypeIterator>&& packer)
       {  int count = packer.end - packer.iter;
          if (isComplete()) {
+            auto iter = packer.iter;
             if (next.isFirst()) {
-               assert(merge.size() == 0 && merge.allocated() == count);
-               for (; packer.iter != packer.end; ++packer.iter) {
-                  if (packer.iter->optimizeValue()) {
+               assert(merge.size() == 0);
+               merge.reserve(count);
+               for (; iter != packer.end; ++iter) {
+                  if (iter->optimizeValue()) {
                      typename TypeIterator::value_type val;
                      merge.push_back(val);
-                     merge.back().recordFrom(std::move(*packer.iter));
+                     merge.back().recordFrom(std::move(*iter));
                   }
                   else
                      next.setCurrentComplete(false);
                };
             }
             else {
-               auto iter = packer.iter;
                for (int index = 0; index < count; ++index) {
                   if (iter->optimizeValue())
                      merge[index].mergeWith(std::move(*iter));
@@ -334,10 +333,12 @@ class TPackedMergeMemory {
                }
             }
          };
-         for (int index = 0; index < count; ++index) {
-            *packer.iter = merge[index];
-            ++packer.iter;
-         }
+         if (merge.size() > 0) {
+            for (int index = 0; index < count; ++index) {
+               *packer.iter = merge[index];
+               ++packer.iter;
+            }
+         };
          return next;
       }
    bool isFirst() const { return next.isFirst(); }

@@ -39,6 +39,7 @@
 // #include <iosfwd>
 #include <iostream>
 #include <vector>
+#include <cassert>
 
 namespace NumericalDomains { namespace DDoubleExactInterface {
 
