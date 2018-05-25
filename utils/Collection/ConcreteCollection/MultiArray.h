@@ -237,12 +237,12 @@ class TMultiArray : public GenericMultiArray {
    typedef TMultiArrayCursor<TypeElement, TypeKey, TypeCast> thisCursorType;
    typedef GenericMultiArray inherited;
 
-   virtual const EnhancedObject& key(const EnhancedObject& element) const
+   virtual const EnhancedObject& key(const EnhancedObject& element) const override
       {  AssumeUncalled return *(const EnhancedObject*) nullptr; }
 
    LocationResult _locateKey(const EnhancedObject& source, const ExtendedLocateParameters& parameters,
          VirtualMultiSortedCollectionCursor* cursor, const VirtualMultiSortedCollectionCursor* start,
-         const VirtualMultiSortedCollectionCursor* end) const { AssumeUncalled return LocationResult(); }
+         const VirtualMultiSortedCollectionCursor* end) const override { AssumeUncalled return LocationResult(); }
 
   public:
    typedef TypeKey Key;
@@ -253,28 +253,28 @@ class TMultiArray : public GenericMultiArray {
    typedef TInitialNewValues<TypeElement, TypeCast> InitialNewValues;
 
   protected:
-   virtual bool acceptElement(const EnhancedObject& source) const { return true; }
+   virtual bool acceptElement(const EnhancedObject& source) const override { return true; }
 
-   virtual ComparisonResult _compareElement(const EnhancedObject& fst, const EnhancedObject& snd) const
+   virtual ComparisonResult _compareElement(const EnhancedObject& fst, const EnhancedObject& snd) const override
       { return TypeKey::compare(key((const TypeElement&) TypeCast::castFrom(fst)), key((const TypeElement&) TypeCast::castFrom(snd))); }
    LocationResult _locateKey(typename TypeKey::KeyType key, const ExtendedLocateParameters& parameters,
          Cursor* cursor=nullptr, const Cursor* start=nullptr, const Cursor* end=nullptr) const
       {  return tlocate<thisType, TypeElement, TypeKey, TypeCast>(*this, key, parameters, cursor, start, end); }
    virtual LocationResult _locate(const EnhancedObject& source, const ExtendedLocateParameters& parameters,
          VirtualMultiSortedCollectionCursor* cursor=nullptr, const VirtualMultiSortedCollectionCursor* start=nullptr,
-         const VirtualMultiSortedCollectionCursor* end=nullptr) const
+         const VirtualMultiSortedCollectionCursor* end=nullptr) const override
       {  return _locateKey(key((const TypeElement&) TypeCast::castFrom(source)), parameters,
             (Cursor*) cursor, (Cursor*) start, (Cursor*) end);
       }
 
-   virtual int _merge(const COL::ImplArray& source, int firstSourceIndex, int lastSourceIndex, bool doesDuplicate=false)
+   virtual int _merge(const COL::ImplArray& source, int firstSourceIndex, int lastSourceIndex, bool doesDuplicate=false) override
       {  return GenericMultiArray::tmerge(TemplateElementKeyCastParameters<TypeElement, TypeKey, TypeCast>(), source, firstSourceIndex, lastSourceIndex, doesDuplicate);
       }
    typename TypeKey::KeyType _queryKey(const ExtendedLocateParameters& parameters,
          const thisCursorType* cursor=nullptr) const
       { return TypeKey::key(getElement(parameters, cursor)); }
    virtual EnhancedObject* _getElement(const ExtendedLocateParameters& parameters,
-         const VirtualCollectionCursor* cursor) const
+         const VirtualCollectionCursor* cursor) const override
       { return TypeCast::castTo(_getElement(parameters, (thisCursorType*) cursor)); }
    TypeElement* _getElement(const ExtendedLocateParameters& parameters,
          const thisCursorType* cursor=nullptr) const
