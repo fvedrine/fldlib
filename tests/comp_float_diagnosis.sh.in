@@ -171,6 +171,29 @@ ldflags+=" @LDFLAGS@"
 
 shift ${opt_params_count}
 
+if [ ${opt_params_count} -eq 0 ]
+then
+  echo "usage: comp_float_diagnosis.sh -affine myprogram.cpp -o myprogram"
+  echo -e "\t-include headerfile.h\tto include headerfile.h before the instrumentation of float/double types"
+  echo -e "\t-progname \"basename\"\tto specify the output file"
+  echo -e "\t-threshold-detection\temit a warning when the relative error goes beyond a value specified in progname_diag_..._in"
+  echo -e "\t-keep-double\t\tdo not replace float/double, but use float_fld/double_fld to define the instrumented types"
+  echo -e "\t-exact\t\t\tto perform an exact arithmetic based analysis"
+  echo -e "\t-affine\t\t\tto perform an affine arithmetic based analysis"
+  echo -e "\t-scenario\t\tin affine mode, to choose a thin input scenario instead of the whole input intervals"
+  echo -e "\t-interval\t\tto perform an interval based analysis"
+  echo -e "\t-interface\t\tuse an interface for the library headers, which improves the compilation time"
+  echo -e "\t-optim\t\t\tto compile with the optimization flags"
+  echo -e "\t-atomic\t\t\tto forget the errors on the constant values"
+  echo -e "\t-loop\t\t\tloop over all possible execution paths"
+  echo -e "\t-print-path\t\tin the loop mode, show the current path which gives an estimate of the analysis time"
+  echo -e "\t-verbose\t\tlog all computations in the output file progname_diag_..._out"
+  echo -e "\t-pure-zonotope\t\tin affine mode, keep maximal relationships among variables to the detriment of constraints"
+  echo -e "\t-create-interval-trigger-percent x.xx\tin affine mode, replace the zonotope by the interval if the interval is x.xx% better than the zonotope"
+  echo -e "\t-limit-noise-symbols-number xxx\t\tin affine mode, for each variable, limit the number of noise symbols by 2*xxx"
+  exit 1
+fi
+
 if [ ${has_progname} -eq 0 ]
 then
   basefile=${1##*/}
