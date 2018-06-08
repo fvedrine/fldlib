@@ -85,7 +85,13 @@
 #ifdef FLOAT_PURE_ZONOTOPE
 #define FLOAT_INIT_PURE_ZONOTOPE init.setSupportPureZonotope();
 #else
-#define FLOAT_INIT_PURE_ZONOTOPE
+#define FLOAT_INIT_PURE_ZONOTOPE 
+#endif
+
+#ifdef FLOAT_TRACK
+#define FLOAT_INIT_TRACK init.setTrackErrorOrigin();
+#else
+#define FLOAT_INIT_TRACK 
 #endif
 
 #ifdef FLOAT_LIMIT_NOISE_SYMBOLS_NUMBER
@@ -106,10 +112,12 @@
   FLOAT_INIT_LIMIT_NOISE_SYMBOLS_NUMBER                                                          \
   FLOAT_INIT_PURE_ZONOTOPE                                                                       \
   FLOAT_INIT_BACKTRACE                                                                           \
+  FLOAT_INIT_TRACK                                                                               \
   init.setResultFile(TOSTRING(PROG_NAME) FLOAT_PROG_SUFFIX);                                     \
   std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
   try {                                                                                          \
      FLOAT_SPLIT_ALL(main, double::end(), double::end())
+
 #define END_MAIN                                                                                 \
      FLOAT_MERGE_ALL(main, double::end(), double::end())                                         \
   }                                                                                              \
@@ -137,6 +145,7 @@
   FLOAT_INIT_LIMIT_NOISE_SYMBOLS_NUMBER                                                          \
   FLOAT_INIT_PURE_ZONOTOPE                                                                       \
   FLOAT_INIT_BACKTRACE                                                                           \
+  FLOAT_INIT_TRACK                                                                               \
   init.setResultFile(TOSTRING(PROG_NAME) FLOAT_PROG_SUFFIX);                                     \
   std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
   try {

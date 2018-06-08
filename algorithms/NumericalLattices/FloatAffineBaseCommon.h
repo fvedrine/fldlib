@@ -186,6 +186,162 @@ class ConstrainedSymbol : public Symbol {
    virtual const char* getOwnPrefix() const { return "c_"; }
 };
 
+class VirtualExpressionBuilder : public EnhancedObject {
+  private:
+   COL::TVector<int> vuStack;
+
+  protected:
+   virtual void _pushSubExpression() {}
+   virtual void _pushZeroConstant() {}
+   virtual void _pushConstant(const void* value) {}
+   virtual void _addTerm(const void* coefficient, const Symbol& symbol) {}
+   virtual void _pushTerm(const void* coefficient, const Symbol& symbol) {}
+   virtual void _popSubExpression() {}
+   virtual void _applyOpposite() {}
+   virtual void _applyBinaryPlus() {}
+   virtual void _applyBinaryMinus() {}
+   virtual void _applyBinaryMult() {}
+   virtual void _applyBinaryDivide() {}
+   virtual void _applyUnarySquare() {}
+   virtual void _compareStrictBetween() {}
+   virtual void _applyQuadConditional() {}
+   virtual void _applySetMantissaToZero() {}
+   virtual void _clear() {}
+   virtual void _assumeCleared() {}
+   virtual void _duplicateExpression() {}
+   virtual void _moveUp(int shift) {}
+   virtual void _clearExpression(int index) {}
+
+  public:
+   VirtualExpressionBuilder() { vuStack.insertAtEnd(0); }
+   VirtualExpressionBuilder(const VirtualExpressionBuilder&) = default;
+   DefineCopy(VirtualExpressionBuilder)
+   DDefineAssign(VirtualExpressionBuilder)
+
+   void pushSubExpression() { vuStack.insertAtEnd(0); _pushSubExpression(); }
+   void pushZeroConstant() { ++vuStack.referenceAt(vuStack.count()-1); _pushZeroConstant(); }
+   template <class TypeReal>
+   void pushConstant(const TypeReal& value) { ++vuStack.referenceAt(vuStack.count()-1); _pushConstant(&value); }
+   template <class TypeReal>
+   void addTerm(const TypeReal& coefficient, const Symbol& symbol)
+      {  AssumeCondition(vuStack.elementAt(vuStack.count()-1) == 1)
+         _addTerm(&coefficient, symbol);
+      }
+   template <class TypeReal>
+   void pushTerm(const TypeReal& coefficient, const Symbol& symbol)
+      {  ++vuStack.referenceAt(vuStack.count()-1); _pushTerm(&coefficient, symbol); }
+   void popSubExpression()
+      {  AssumeCondition(vuStack.elementAt(vuStack.count()-1) == 1)
+         vuStack.removeAtEnd();
+         ++vuStack.referenceAt(vuStack.count()-1);
+         _popSubExpression();
+      }
+   void applyOpposite()
+      {  AssumeCondition(vuStack.elementAt(vuStack.count()-1) >= 1)
+         _applyOpposite();
+      }
+   void applyBinaryPlus()
+      {  AssumeCondition(vuStack.elementAt(vuStack.count()-1) >= 2)
+         --vuStack.referenceAt(vuStack.count()-1);
+         _applyBinaryPlus();
+      }
+   void applyBinaryMinus()
+      {  AssumeCondition(vuStack.elementAt(vuStack.count()-1) >= 2)
+         --vuStack.referenceAt(vuStack.count()-1);
+         _applyBinaryMinus();
+      }
+   void applyBinaryMult()
+      {  AssumeCondition(vuStack.elementAt(vuStack.count()-1) >= 2)
+         --vuStack.referenceAt(vuStack.count()-1);
+         _applyBinaryMult();
+      }
+   void applyUnarySquare()
+      {  AssumeCondition(vuStack.elementAt(vuStack.count()-1) >= 1)
+         _applyUnarySquare();
+      }
+   void applyBinaryDivide()
+      {  AssumeCondition(vuStack.elementAt(vuStack.count()-1) >= 2)
+         --vuStack.referenceAt(vuStack.count()-1);
+         _applyBinaryDivide();
+      }
+   void applySetMantissaToZero()
+      {  AssumeCondition(vuStack.elementAt(vuStack.count()-1) >= 1)
+         _applySetMantissaToZero();
+      }
+   void compareStrictBetween()
+      {  AssumeCondition(vuStack.elementAt(vuStack.count()-1) >= 3)
+         // should type the result with type int in {-1, 0, 1}
+         vuStack.referenceAt(vuStack.count()-1) -= 2;
+         _compareStrictBetween();
+         // this method should immediatly be followed by applyQuadConditional
+      }
+   void applyQuadConditional()
+      {  AssumeCondition(vuStack.elementAt(vuStack.count()-1) >= 4)
+         // this method should follow compare...Between
+         vuStack.referenceAt(vuStack.count()-1) -= 3;
+         _applyQuadConditional();
+      }
+   void clear()
+      {  vuStack.removeAll();
+         vuStack.insertAtEnd(0);
+         _clear();
+      }
+   void assumeCleared()
+      {  AssumeCondition(vuStack.count() == 1 && vuStack.elementAt(0) == 0)
+         _assumeCleared();
+      }
+   void duplicateExpression()
+      {  AssumeCondition(vuStack.elementAt(vuStack.count()-1) > 0)
+         ++vuStack.referenceAt(vuStack.count()-1);
+         _duplicateExpression();
+      }
+   void moveUp(int shift)
+      {  AssumeCondition(vuStack.elementAt(vuStack.count()-1) > shift)
+         _moveUp(shift);
+      }
+   void clearExpression(int index)
+      {  AssumeCondition(vuStack.elementAt(vuStack.count()-1) >= index)
+         --vuStack.referenceAt(vuStack.count()-1);
+         _clearExpression(index);
+      }
+
+   class Guard {
+     private:
+      VirtualExpressionBuilder* pebExpression;
+
+     public:
+      Guard(VirtualExpressionBuilder* expression) : pebExpression(expression) {}
+      ~Guard() { if (pebExpression) pebExpression->clear(); }
+      void release() { pebExpression = nullptr; }
+   };
+};
+
+class VirtualSymbolDefinitionTracker : public EnhancedObject {
+  protected:
+   virtual void _setDefinition(const void* coefficient, const Symbol& symbol, VirtualExpressionBuilder& expression) {}
+   virtual void _setAddDefinition(const void* coefficient, const Symbol& symbol, VirtualExpressionBuilder& expression) {}
+   virtual void _clearDefinition(VirtualExpressionBuilder& expression) {}
+
+  public:
+   DefineCopy(VirtualSymbolDefinitionTracker)
+
+   virtual VirtualExpressionBuilder* getExpressionBuilder() { return nullptr; }
+   template <class TypeReal>
+   void setDefinition(const TypeReal& coefficient, const Symbol& symbol, VirtualExpressionBuilder& expression)
+      {  _setDefinition(&coefficient, symbol, expression);
+         expression.clear();
+      }
+   template <class TypeReal>
+   void setAddDefinition(const TypeReal& coefficient,const Symbol& symbol, VirtualExpressionBuilder& expression)
+      {  _setDefinition(&coefficient, symbol, expression);
+         expression.clear();
+      }
+   void clearDefinition(VirtualExpressionBuilder& expression)
+      {  _clearDefinition(expression);
+         expression.clear();
+      }
+};
+
 class SymbolsManager : public EnhancedObject {
   private:
    typedef EnhancedObject inherited;
@@ -200,6 +356,7 @@ class SymbolsManager : public EnhancedObject {
    SymbolsManager(const SymbolsManager& source) : uHighLevelSymbolsCounter(0) {}
    DefineCopy(SymbolsManager)
 
+   virtual VirtualSymbolDefinitionTracker* getSymbolDefinitionTracker() { return nullptr; }
    void swap(SymbolsManager& source)
       {  lsCentralSymbols.swap(source.lsCentralSymbols);
          lsNoiseSymbols.swap(source.lsNoiseSymbols);
@@ -414,11 +571,12 @@ class SymbolsManager : public EnhancedObject {
          return result;
       }
    template <class TypeTraits>
-   void recordDefinedSymbol(TypeTraits traits, Symbol* symbol)
+   Symbol& recordDefinedSymbol(TypeTraits traits, Symbol* symbol)
       {  AssumeCondition(dynamic_cast<const typename TypeTraits::DefinedSymbol*>(symbol)
                && !symbol->hasOrder())
          lsDefinedSymbols.insertNewAtEnd(symbol);
          symbol->setOrder(lsDefinedSymbols.count());
+         return *symbol;
       }
    Symbol* createMarkedNoiseSymbol(int order)
       {  Symbol* result = new MarkedNoiseSymbol(order);

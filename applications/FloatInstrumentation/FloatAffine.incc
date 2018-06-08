@@ -204,6 +204,7 @@ bool ExecutionPath::fSupportVerbose = false;
 bool ExecutionPath::fSupportThreshold = false;
 bool ExecutionPath::fSupportFirstFollowFloat = false;
 bool ExecutionPath::fSupportPureZonotope = false;
+bool ExecutionPath::fTrackErrorOrigin = false;
 int ExecutionPath::uLimitNoiseSymbolsNumber = 0;
 
 BuiltReal ExecutionPath::brThreshold;
@@ -245,6 +246,218 @@ ExecutionPath::acquireConstantStream(const char* content) {
 
 void
 ExecutionPath::releaseConstantStream(STG::IOObject::ISBase* in) {}
+
+class ExecutionPath::ExpressionBuilder::Content
+   :  public std::vector<std::vector<std::string> > {
+  public:
+   Content() = default;
+   Content(const Content&) = default;
+   Content(Content&&) = default;
+};
+
+ExecutionPath::ExpressionBuilder::ExpressionBuilder()
+   :  pvContent(new Content())
+   {  ((Content*) pvContent)->push_back(std::vector<std::string>()); }
+
+ExecutionPath::ExpressionBuilder::~ExpressionBuilder()
+   {  if (pvContent) delete ((Content*) pvContent); }
+
+void
+ExecutionPath::ExpressionBuilder::_pushSubExpression()
+   {  ((Content*) pvContent)->push_back(std::vector<std::string>());
+      ((Content*) pvContent)->back().push_back("(");
+   }
+
+void
+ExecutionPath::ExpressionBuilder::_pushZeroConstant()
+   {  ((Content*) pvContent)->back().push_back("0"); }
+   
+void
+ExecutionPath::ExpressionBuilder::_pushConstant(const void* avalue)
+   {  DebugStream out;
+      const BuiltReal& value = *(const BuiltReal*) avalue;
+      value.writeDecimal(out);
+      ((Content*) pvContent)->back().push_back(out.content());
+   }
+
+void
+ExecutionPath::ExpressionBuilder::_addTerm(const void* acoefficient, const Symbol& symbol)
+   {  const BuiltReal& coefficient = *(const BuiltReal*) acoefficient;
+      DebugStream out;
+      out.put('+');
+      coefficient.writeDecimal(out);
+      out.put('*');
+      // out.writesome(symbol.getOwnPrefix());
+      out.writesome(Equation::getSymbolPrefix(symbol.getType()));
+      out.write(symbol.getOrder(), false /* isRaw */);
+      ((Content*) pvContent)->back().back() += out.content();
+   }
+
+void
+ExecutionPath::ExpressionBuilder::_pushTerm(const void* acoefficient, const Symbol& symbol)
+   {  const BuiltReal& coefficient = *(const BuiltReal*) acoefficient;
+      DebugStream out;
+      coefficient.writeDecimal(out);
+      out.put('*');
+      // out.writesome(symbol.getOwnPrefix());
+      out.writesome(Equation::getSymbolPrefix(symbol.getType()));
+      out.write(symbol.getOrder(), false /* isRaw */);
+      ((Content*) pvContent)->back().push_back(out.content());
+   }
+
+void
+ExecutionPath::ExpressionBuilder::_popSubExpression()
+   {  ((Content*) pvContent)->back().push_back(")");
+      std::string newContent;
+      for (const auto& content : ((Content*) pvContent)->back())
+         newContent += content;
+      ((Content*) pvContent)->pop_back();
+      ((Content*) pvContent)->back().push_back(newContent);
+   }
+
+void
+ExecutionPath::ExpressionBuilder::_applyOpposite()
+   {  ((Content*) pvContent)->back().back().insert(0, "-"); }
+
+void
+ExecutionPath::ExpressionBuilder::_applyBinaryPlus()
+   {  std::string last = ((Content*) pvContent)->back().back();
+      ((Content*) pvContent)->back().pop_back();
+      std::string first = ((Content*) pvContent)->back().back();
+      ((Content*) pvContent)->back().back() = std::string("(") + first + " + " + last + ")";
+   }
+
+void
+ExecutionPath::ExpressionBuilder::_applyBinaryMinus()
+   {  std::string last = ((Content*) pvContent)->back().back();
+      ((Content*) pvContent)->back().pop_back();
+      std::string first = ((Content*) pvContent)->back().back();
+      ((Content*) pvContent)->back().back() = std::string("(") + first + " - " + last + ")";
+   }
+
+void
+ExecutionPath::ExpressionBuilder::_applyBinaryMult()
+   {  std::string last = ((Content*) pvContent)->back().back();
+      ((Content*) pvContent)->back().pop_back();
+      std::string first = ((Content*) pvContent)->back().back();
+      ((Content*) pvContent)->back().back() = first + " * " + last;
+   }
+
+void
+ExecutionPath::ExpressionBuilder::_applyBinaryDivide()
+   {  std::string last = ((Content*) pvContent)->back().back();
+      ((Content*) pvContent)->back().pop_back();
+      std::string first = ((Content*) pvContent)->back().back();
+      ((Content*) pvContent)->back().back() = first + " / " + last;
+   }
+
+void
+ExecutionPath::ExpressionBuilder::_applyUnarySquare()
+   {  ((Content*) pvContent)->back().back() += " ** 2"; }
+
+void
+ExecutionPath::ExpressionBuilder::_compareStrictBetween()
+   {  std::string max = ((Content*) pvContent)->back().back();
+      ((Content*) pvContent)->back().pop_back();
+      std::string min = ((Content*) pvContent)->back().back();
+      ((Content*) pvContent)->back().pop_back();
+      std::string val = ((Content*) pvContent)->back().back();
+      ((Content*) pvContent)->back().back()
+         = std::string("(") + min + " < " + val + " < " + max + ")";
+   }
+
+void
+ExecutionPath::ExpressionBuilder::_applyQuadConditional()
+   {  std::string condition = ((Content*) pvContent)->back().back();
+      ((Content*) pvContent)->back().pop_back();
+      std::string greaterVal = ((Content*) pvContent)->back().back();
+      ((Content*) pvContent)->back().pop_back();
+      std::string inVal = ((Content*) pvContent)->back().back();
+      ((Content*) pvContent)->back().pop_back();
+      std::string lessVal = ((Content*) pvContent)->back().back();
+      ((Content*) pvContent)->back().back()
+         = std::string("(") + condition + " ? " + lessVal + " : " + inVal + " : " + greaterVal + ")";
+   }
+
+void
+ExecutionPath::ExpressionBuilder::_applySetMantissaToZero()
+   {  std::string& val = ((Content*) pvContent)->back().back();
+      val.insert(0, "|_");
+      val += "_|";
+   }
+
+void
+ExecutionPath::ExpressionBuilder::_clear()
+   {  ((Content*) pvContent)->clear();
+      ((Content*) pvContent)->push_back(std::vector<std::string>());
+   }
+
+void
+ExecutionPath::ExpressionBuilder::_assumeCleared()
+   {  AssumeCondition(((Content*) pvContent)->size() == 1
+         && ((Content*) pvContent)->back().empty())
+   }
+
+void
+ExecutionPath::ExpressionBuilder::_duplicateExpression()
+   {  auto& expressionVector = ((Content*) pvContent)->back();
+      expressionVector.push_back(expressionVector.back());
+   }
+
+void
+ExecutionPath::ExpressionBuilder::_moveUp(int shift)
+   {  auto& expressionVector = ((Content*) pvContent)->back();
+      std::string movedValue = expressionVector.back();
+      expressionVector.pop_back();
+      expressionVector.insert(expressionVector.cend()-shift, movedValue);
+   }
+
+void
+ExecutionPath::ExpressionBuilder::_clearExpression(int index)
+   {  auto& expressionVector = ((Content*) pvContent)->back();
+      expressionVector.erase(expressionVector.cend()-index-1);
+   }
+
+void
+ExecutionPath::ExpressionBuilder::write(STG::IOObject::OSBase& out) {
+   AssumeCondition(((Content*) pvContent)->size() == 1)
+   for (const auto& content : ((Content*) pvContent)->back())
+      out.writesome(content.c_str());
+}
+
+void
+ExecutionPath::SymbolDefinitionTracker::_setDefinition(const void* acoefficient, const Symbol& symbol,
+      VirtualExpressionBuilder& expression) {
+   const BuiltReal& coefficient = *(const BuiltReal*) acoefficient;
+   poDefinitionFile->put('\t');
+   // poDefinitionFile->writesome(symbol.getOwnPrefix());
+   poDefinitionFile->writesome(Equation::getSymbolPrefix(symbol.getType()));
+
+   poDefinitionFile->write(symbol.getOrder(), false /* isRaw */);
+   poDefinitionFile->writesome(" =_def (");
+   ((ExpressionBuilder&) expression).write(*poDefinitionFile);
+   poDefinitionFile->writesome(") / ");
+   DebugStream out;
+   coefficient.writeDecimal(out);
+   poDefinitionFile->writesome(out.content().c_str());
+   poDefinitionFile->put('\n');
+}
+
+void
+ExecutionPath::SymbolDefinitionTracker::_setAddDefinition(const void* acoefficient, const Symbol& symbol, VirtualExpressionBuilder& expression) {
+   const BuiltReal& coefficient = *(const BuiltReal*) acoefficient;
+   poDefinitionFile->put('\t');
+   // poDefinitionFile->writesome(symbol.getOwnPrefix());
+   poDefinitionFile->writesome(Equation::getSymbolPrefix(symbol.getType()));
+   poDefinitionFile->write(symbol.getOrder(), false /* isRaw */);
+   poDefinitionFile->writesome(" +=_def (");
+   ((ExpressionBuilder&) expression).write(*poDefinitionFile);
+   poDefinitionFile->writesome(") / ");
+   DebugStream out;
+   coefficient.writeDecimal(out);
+   poDefinitionFile->writesome(out.content().c_str());
+   poDefinitionFile->put('\n');
+}
 
 void
 ExecutionPath::initializeGlobals(const char* fileSuffix) {
@@ -314,6 +527,12 @@ ExecutionPath::initializeGlobals(const char* fileSuffix) {
       delete iTraceFile;
       iTraceFile = nullptr;
       fDoesFollow = false;
+   };
+   if (fTrackErrorOrigin) {
+      if (!pParams)
+         setParams();
+      if (oTraceFile)
+         pParams->absorbDefinitionTracker(new SymbolDefinitionTracker(*oTraceFile));
    };
 }
 

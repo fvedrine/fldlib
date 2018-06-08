@@ -36,7 +36,22 @@ namespace NumericalDomains { namespace DAffine {
 class BaseExecutionPathParams : public EnhancedObject {
   protected:
    Numerics::DDouble::Access::ReadParameters rpMinParams, rpMaxParams, rpNearestParams;
-   SymbolsManager smSymbolsManager;
+   class ExtendedSymbolsManager : public SymbolsManager {
+     private:
+      PNT::AutoPointer<VirtualSymbolDefinitionTracker> apsdtDefinitionTracker;
+
+     public:
+      ExtendedSymbolsManager() = default;
+      ExtendedSymbolsManager(const ExtendedSymbolsManager&) = default;
+      ExtendedSymbolsManager(ExtendedSymbolsManager&&) = default;
+
+      void absorbDefinitionTracker(VirtualSymbolDefinitionTracker* definitionTracker)
+         {  apsdtDefinitionTracker.absorbElement(definitionTracker); }
+      virtual VirtualSymbolDefinitionTracker* getSymbolDefinitionTracker() override
+         {  return apsdtDefinitionTracker.isValidPointer() ? &apsdtDefinitionTracker.getElement() : nullptr; }
+   };
+
+   ExtendedSymbolsManager smSymbolsManager;
    SymbolsManager::MergeTable mtInitialTable;
    bool fHasSimplificationTriggerPercent;
    BuiltReal brSimplificationTriggerPercent;
@@ -61,6 +76,8 @@ class BaseExecutionPathParams : public EnhancedObject {
       }
    bool hasSimplificationTriggerPercent() const { return fHasSimplificationTriggerPercent; }
    const BuiltReal& getSimplificationTriggerPercent() const { return brSimplificationTriggerPercent; }
+   void absorbDefinitionTracker(VirtualSymbolDefinitionTracker* definitionTracker)
+      {  smSymbolsManager.absorbDefinitionTracker(definitionTracker); }
 };
 
 class PathExplorer {
@@ -296,6 +313,7 @@ class ExecutionPath : public BaseExecutionPath {
    static bool fSupportThreshold;
    static bool fSupportFirstFollowFloat;
    static bool fSupportPureZonotope;
+   static bool fTrackErrorOrigin;
    static int uLimitNoiseSymbolsNumber;
    static BuiltReal brThreshold;
    static BuiltReal brThresholdDomain;
@@ -319,6 +337,58 @@ class ExecutionPath : public BaseExecutionPath {
 
    static BaseExecutionPathParams* pParams;
    static bool fClosedParams;
+
+   class ExpressionBuilder : public VirtualExpressionBuilder {
+     private:
+      class Content;
+      void* pvContent;
+
+     protected:
+      virtual void _pushSubExpression() override;
+      virtual void _pushZeroConstant() override;
+      virtual void _pushConstant(const void* avalue) override;
+      virtual void _addTerm(const void* acoefficient, const Symbol& symbol) override;
+      virtual void _pushTerm(const void* coefficient, const Symbol& symbol) override;
+      virtual void _popSubExpression() override;
+      virtual void _applyOpposite() override;
+      virtual void _applyBinaryPlus() override;
+      virtual void _applyBinaryMinus() override;
+      virtual void _applyBinaryMult() override;
+      virtual void _applyBinaryDivide() override;
+      virtual void _applyUnarySquare() override;
+      virtual void _compareStrictBetween() override;
+      virtual void _applyQuadConditional() override;
+      virtual void _applySetMantissaToZero() override;
+      virtual void _clear() override;
+      virtual void _assumeCleared() override;
+      virtual void _duplicateExpression() override;
+      virtual void _moveUp(int shift) override;
+      virtual void _clearExpression(int index) override;
+
+     public:
+      ExpressionBuilder();
+      ~ExpressionBuilder();
+
+      void write(STG::IOObject::OSBase& out);
+   };
+
+   class SymbolDefinitionTracker : public VirtualSymbolDefinitionTracker {
+     private:
+      STG::IOObject::OSBase* poDefinitionFile;
+      ExpressionBuilder ebExpressionBuilder;
+
+     protected:
+      virtual void _setDefinition(const void* acoefficient, const Symbol& symbol, VirtualExpressionBuilder& expression) override;
+      virtual void _setAddDefinition(const void* acoefficient, const Symbol& symbol, VirtualExpressionBuilder& expression) override;
+      virtual void _clearDefinition(VirtualExpressionBuilder& expression) override {}
+
+     public:
+      SymbolDefinitionTracker(STG::IOObject::OSBase& definitionFile) : poDefinitionFile(&definitionFile) {} 
+      SymbolDefinitionTracker(const SymbolDefinitionTracker& source) = default;
+      DefineCopy(SymbolDefinitionTracker)
+
+      virtual VirtualExpressionBuilder* getExpressionBuilder() override { return &ebExpressionBuilder; }
+   };
 
   public:
 #if !defined(FLOAT_GENERIC_BASE_UNSIGNED) && !defined(FLOAT_GENERIC_BASE_LONG)
@@ -345,13 +415,14 @@ class ExecutionPath : public BaseExecutionPath {
    static void setSupportThreshold() { fSupportThreshold = true; }
    static void setSupportFirstFollowFloat() { fSupportFirstFollowFloat = true; }
    static void setSupportPureZonotope() { fSupportPureZonotope = true; }
+   static void setTrackErrorOrigin() { fTrackErrorOrigin = true; }
    static bool hasLimitNoiseSymbolsNumber() { return uLimitNoiseSymbolsNumber > 0; }
    static int getLimitNoiseSymbolsNumber() { return uLimitNoiseSymbolsNumber; }
    static void setLimitNoiseSymbolsNumber(int limit) { uLimitNoiseSymbolsNumber = limit; }
+   static void setSimplificationTriggerPercent(double percent);
 
    static void initializeGlobals(const char* fileSuffix);
    static void finalizeGlobals();
-   static void setSimplificationTriggerPercent(double percent);
    class Initialization {
      public:
       Initialization() {}
@@ -362,10 +433,11 @@ class ExecutionPath : public BaseExecutionPath {
       void setSupportThreshold() { ExecutionPath::setSupportThreshold(); }
       void setSupportFirstFollowFloat() { ExecutionPath::setSupportFirstFollowFloat(); }
       void setSupportPureZonotope() { ExecutionPath::setSupportPureZonotope(); }
+      void setTrackErrorOrigin() { ExecutionPath::setTrackErrorOrigin(); }
       void setLimitNoiseSymbolsNumber(int limit) { ExecutionPath::setLimitNoiseSymbolsNumber(limit); }
       void setResultFile(const char* fileSuffix) { initializeGlobals(fileSuffix); }
-      ~Initialization() { finalizeGlobals(); }
       void setSimplificationTriggerPercent(double percent) { return ExecutionPath::setSimplificationTriggerPercent(percent); }
+      ~Initialization() { finalizeGlobals(); }
    };
 
    class anticipated_termination { public: anticipated_termination() {} };
@@ -490,6 +562,7 @@ class ExecutionPath : public BaseExecutionPath {
 
    bool isPureZonotope() const { return fSupportPureZonotope; }
    bool doesAllowSimplex() const { return FLOAT_ZONOTOPE_ALLOW_SIMPLEX; }
+   bool doesTrackErrorOrigin() const { return fTrackErrorOrigin; }
 
   protected:
    static void notifyPossibleSplit(const char* file, int line)

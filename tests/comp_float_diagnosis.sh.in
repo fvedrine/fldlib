@@ -80,6 +80,9 @@ do
     elif [ "$param" == "-pure-zonotope" ]
     then # keep maximal relationships among variables to the detriment of constraints
       cxxflags+=" -DFLOAT_PURE_ZONOTOPE"
+    elif [ "$param" == "-track" ]
+    then # keep maximal relationships among variables to the detriment of constraints
+      cxxflags+=" -DFLOAT_TRACK"
     elif [ "$param" == "-create-interval-trigger-percent" ]
     then # Replace the zonotope by the interval if the interval is xxx% better than the zonotope
       cxxflags+=" -DFLOAT_TRIGGER_PERCENT="
@@ -192,6 +195,7 @@ then
   echo -e "\t-print-path\t\tin the loop mode, show the current path which gives an estimate of the analysis time"
   echo -e "\t-verbose\t\tlog all computations in the output file progname_diag_..._out"
   echo -e "\t-pure-zonotope\t\tin affine mode, keep maximal relationships among variables to the detriment of constraints"
+  echo -e "\t-track\t\t\tin affine mode, keep the origin of noise symbols as expressions"
   echo -e "\t-create-interval-trigger-percent x.xx\tin affine mode, replace the zonotope by the interval if the interval is x.xx% better than the zonotope"
   echo -e "\t-limit-noise-symbols-number xxx\t\tin affine mode, for each variable, limit the number of noise symbols by 2*xxx"
   echo -e "\t-backtrace\t\twrite a backtrace at every warning"

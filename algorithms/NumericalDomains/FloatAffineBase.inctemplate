@@ -145,7 +145,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::optim
    auto& symbolsManager = thisType::symbolsManager();
    if (hasThisIntervalConstraint) {
       if (hasTopReal())
-         const_cast<thisType*>(this)->eRealDomain.setInterval(newMin, newMax, symbolsManager);
+         const_cast<thisType*>(this)->eRealDomain.setInterval(newMin, newMax, symbolsManager, nullptr);
       else {
          BuiltReal min, max;
          constraints().retrieveBound(eRealDomain, min, max);
@@ -161,13 +161,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::optim
             max.multAssign(9U, nearestParams);
             nearestParams.clear();
             if (diff < max)
-               const_cast<thisType*>(this)->eRealDomain.setInterval(newMin, newMax, symbolsManager);
+               const_cast<thisType*>(this)->eRealDomain.setInterval(newMin, newMax, symbolsManager, nullptr);
          };
       };
    };
    if (hasSourceIntervalConstraint) {
       if (source.hasTopReal())
-         const_cast<thisType&>(source).eRealDomain.setInterval(newSourceMin, newSourceMax, symbolsManager);
+         const_cast<thisType&>(source).eRealDomain.setInterval(newSourceMin, newSourceMax, symbolsManager, nullptr);
       else {
          BuiltReal min, max;
          constraints().retrieveBound(source.eRealDomain, min, max);
@@ -183,7 +183,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::optim
             max.multAssign(9U, nearestParams);
             nearestParams.clear();
             if (diff < max)
-               const_cast<thisType&>(source).eRealDomain.setInterval(newSourceMin, newSourceMax, symbolsManager);
+               const_cast<thisType&>(source).eRealDomain.setInterval(newSourceMin, newSourceMax, symbolsManager, nullptr);
          };
       };
    };
@@ -255,7 +255,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::optim
    auto& symbolsManager = thisType::symbolsManager();
    if (hasThisIntervalConstraint) {
       if (hasTopError())
-         const_cast<thisType*>(this)->eError.setInterval(newMinError, newMaxError, symbolsManager);
+         const_cast<thisType*>(this)->eError.setInterval(newMinError, newMaxError, symbolsManager, nullptr);
       else {
          BuiltReal min, max;
          constraints().retrieveBound(eError, min, max);
@@ -271,13 +271,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::optim
             max.multAssign(9U, nearestParams);
             nearestParams.clear();
             if (diff < max)
-               const_cast<thisType*>(this)->eError.setInterval(newMinError, newMaxError, symbolsManager);
+               const_cast<thisType*>(this)->eError.setInterval(newMinError, newMaxError, symbolsManager, nullptr);
          };
       };
    };
    if (hasSourceIntervalConstraint) {
       if (source.hasTopError())
-         const_cast<thisType&>(source).eError.setInterval(newSourceMinError, newSourceMaxError, symbolsManager);
+         const_cast<thisType&>(source).eError.setInterval(newSourceMinError, newSourceMaxError, symbolsManager, nullptr);
       else {
          BuiltReal min, max;
          constraints().retrieveBound(source.eError, min, max);
@@ -293,7 +293,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::optim
             max.multAssign(9U, nearestParams);
             nearestParams.clear();
             if (diff < max)
-               const_cast<thisType&>(source).eError.setInterval(newSourceMinError, newSourceMaxError, symbolsManager);
+               const_cast<thisType&>(source).eError.setInterval(newSourceMinError, newSourceMaxError, symbolsManager, nullptr);
          };
       };
    };
@@ -435,6 +435,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
             ? constraint.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraint.simplifyAllEquations(*constrainedSymbol, true, symbolsManager);
+         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraint.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraint, true);
          if ((!hasTopError() && errorChoice == TypeBaseFloatAffine::BCTrue)
@@ -446,6 +453,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
                      !hasInverseErrorFlow, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol,
                      !hasInverseErrorFlow, symbolsManager);
+            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+                  expressionBuilder->assumeCleared();
+                  constraintWithError.writeExpression(expressionBuilder);
+                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
+               };
+            };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
                constraints().pushConstraint().setFrom(constraintWithError, !hasInverseErrorFlow);
          };
@@ -473,6 +487,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
             ? constraint.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraint.simplifyAllEquations(*constrainedSymbol, false, symbolsManager);
+         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraint.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraint, false);
          if ((!hasTopError() && errorChoice == TypeBaseFloatAffine::BCFalse)
@@ -484,6 +505,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
                      hasInverseErrorFlow, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol,
                      hasInverseErrorFlow, symbolsManager);
+            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+                  expressionBuilder->assumeCleared();
+                  constraintWithError.writeExpression(expressionBuilder);
+                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
+               };
+            };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
                constraints().pushConstraint().setFrom(constraintWithError, hasInverseErrorFlow);
          };
@@ -510,6 +538,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
             ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, true,
                   symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
             : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, true, symbolsManager);
+         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraintWithError.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraintWithError, true);
          if (hasInverseRealFlow) {
@@ -520,6 +555,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
                      false /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraint.simplifyAllEquations(*constrainedRealSymbol,
                      false /* isNegative */, symbolsManager);
+            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+                  expressionBuilder->assumeCleared();
+                  constraint.writeExpression(expressionBuilder);
+                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedRealSymbol, *expressionBuilder);
+               };
+            };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
                constraints().pushConstraint().setFrom(constraint, false /* isNegative */);
          };
@@ -547,6 +589,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
             ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, false, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, false, symbolsManager);
+         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraintWithError.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraintWithError, false);
          if (hasInverseRealFlow) {
@@ -557,6 +606,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
                      true /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraint.simplifyAllEquations(*constrainedRealSymbol,
                      true /* isNegative */, symbolsManager);
+            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+                  expressionBuilder->assumeCleared();
+                  constraint.writeExpression(expressionBuilder);
+                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedRealSymbol, *expressionBuilder);
+               };
+            };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
                constraints().pushConstraint().setFrom(constraint, true /* isNegative */);
          };
@@ -704,6 +760,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
             ? constraint.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraint.simplifyAllEquations(*constrainedSymbol, true, symbolsManager);
+         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraint.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraint, true);
          if ((!hasTopError() && errorChoice == TypeBaseFloatAffine::BCTrue)
@@ -715,6 +778,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
                      !hasInverseErrorFlow, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol,
                      !hasInverseErrorFlow, symbolsManager);
+            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+                  expressionBuilder->assumeCleared();
+                  constraintWithError.writeExpression(expressionBuilder);
+                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
+               };
+            };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
                constraints().pushConstraint().setFrom(constraintWithError, !hasInverseErrorFlow);
          };
@@ -742,6 +812,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
             ? constraint.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraint.simplifyAllEquations(*constrainedSymbol, false, symbolsManager);
+         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraint.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraint, false);
          if ((!hasTopError() && errorChoice == TypeBaseFloatAffine::BCFalse)
@@ -753,6 +830,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
                      hasInverseErrorFlow, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol,
                      hasInverseErrorFlow, symbolsManager);
+            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+                  expressionBuilder->assumeCleared();
+                  constraintWithError.writeExpression(expressionBuilder);
+                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
+               };
+            };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
                constraints().pushConstraint().setFrom(constraintWithError, hasInverseErrorFlow);
          };
@@ -779,6 +863,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
             ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, true, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, true, symbolsManager);
+         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraintWithError.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraintWithError, true);
          if (hasInverseRealFlow) {
@@ -789,6 +880,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
                      false /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraint.simplifyAllEquations(*constrainedRealSymbol,
                      false /* isNegative */, symbolsManager);
+            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+                  expressionBuilder->assumeCleared();
+                  constraint.writeExpression(expressionBuilder);
+                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedRealSymbol, *expressionBuilder);
+               };
+            };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
                constraints().pushConstraint().setFrom(constraint, false /* isNegative */);
          };
@@ -816,6 +914,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
             ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, false, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, false, symbolsManager);
+         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraintWithError.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraintWithError, false);
          if (hasInverseRealFlow) {
@@ -826,6 +931,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
                      true /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraint.simplifyAllEquations(*constrainedRealSymbol,
                      true /* isNegative */, symbolsManager);
+            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+                  expressionBuilder->assumeCleared();
+                  constraint.writeExpression(expressionBuilder);
+                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedRealSymbol, *expressionBuilder);
+               };
+            };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
                constraints().pushConstraint().setFrom(constraint, true /* isNegative */);
          };
@@ -973,6 +1085,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
             ? constraint.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraint.simplifyAllEquations(*constrainedSymbol, false, symbolsManager);
+         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraint.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraint, false);
          if ((!hasTopError() && errorChoice == TypeBaseFloatAffine::BCTrue)
@@ -984,6 +1103,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
                      hasInverseErrorFlow, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol,
                      hasInverseErrorFlow, symbolsManager);
+            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+                  expressionBuilder->assumeCleared();
+                  constraintWithError.writeExpression(expressionBuilder);
+                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
+               };
+            };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
                constraints().pushConstraint().setFrom(constraintWithError, hasInverseErrorFlow);
          };
@@ -1011,6 +1137,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
             ? constraint.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraint.simplifyAllEquations(*constrainedSymbol, true, symbolsManager);
+         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraint.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraint, true);
          if ((!hasTopError() && errorChoice == TypeBaseFloatAffine::BCFalse)
@@ -1022,6 +1155,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
                      !hasInverseErrorFlow, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol,
                      !hasInverseErrorFlow, symbolsManager);
+            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+                  expressionBuilder->assumeCleared();
+                  constraintWithError.writeExpression(expressionBuilder);
+                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
+               };
+            };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
                constraints().pushConstraint().setFrom(constraintWithError, !hasInverseErrorFlow);
          };
@@ -1048,6 +1188,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
             ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, false, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, false, symbolsManager);
+         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraintWithError.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraintWithError, false);
          if (hasInverseRealFlow) {
@@ -1058,6 +1205,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
                      true /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraint.simplifyAllEquations(*constrainedRealSymbol,
                      true /* isNegative */, symbolsManager);
+            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+                  expressionBuilder->assumeCleared();
+                  constraint.writeExpression(expressionBuilder);
+                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedRealSymbol, *expressionBuilder);
+               };
+            };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
                constraints().pushConstraint().setFrom(constraint, true /* isNegative */);
          };
@@ -1085,6 +1239,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
             ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, true, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, true, symbolsManager);
+         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraintWithError.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraintWithError, true);
          if (hasInverseRealFlow) {
@@ -1095,6 +1256,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
                      false /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraint.simplifyAllEquations(*constrainedRealSymbol,
                      false /* isNegative */, symbolsManager);
+            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+                  expressionBuilder->assumeCleared();
+                  constraint.writeExpression(expressionBuilder);
+                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedRealSymbol, *expressionBuilder);
+               };
+            };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
                constraints().pushConstraint().setFrom(constraint, false /* isNegative */);
          };
@@ -1242,6 +1410,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
             ? constraint.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraint.simplifyAllEquations(*constrainedSymbol, false, symbolsManager);
+         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraint.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraint, false);
          if ((!hasTopError() && errorChoice == TypeBaseFloatAffine::BCTrue)
@@ -1253,6 +1428,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
                      hasInverseErrorFlow, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol,
                      hasInverseErrorFlow, symbolsManager);
+            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+                  expressionBuilder->assumeCleared();
+                  constraintWithError.writeExpression(expressionBuilder);
+                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
+               };
+            };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
                constraints().pushConstraint().setFrom(constraintWithError, hasInverseErrorFlow);
          };
@@ -1280,6 +1462,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
             ? constraint.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraint.simplifyAllEquations(*constrainedSymbol, true, symbolsManager);
+         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraint.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraint, true);
          if ((!hasTopError() && errorChoice == TypeBaseFloatAffine::BCFalse)
@@ -1291,6 +1480,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
                      !hasInverseErrorFlow, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol,
                      !hasInverseErrorFlow, symbolsManager);
+            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+                  expressionBuilder->assumeCleared();
+                  constraintWithError.writeExpression(expressionBuilder);
+                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
+               };
+            };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
                constraints().pushConstraint().setFrom(constraintWithError, !hasInverseErrorFlow);
          };
@@ -1317,6 +1513,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
             ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, false, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, false, symbolsManager);
+         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraintWithError.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraintWithError, false);
          if (hasInverseRealFlow) {
@@ -1327,6 +1530,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
                      true /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraint.simplifyAllEquations(*constrainedRealSymbol,
                      true /* isNegative */, symbolsManager);
+            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+                  expressionBuilder->assumeCleared();
+                  constraint.writeExpression(expressionBuilder);
+                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedRealSymbol, *expressionBuilder);
+               };
+            };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
                constraints().pushConstraint().setFrom(constraint, true /* isNegative */);
          };
@@ -1353,6 +1563,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
             ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, true, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, true, symbolsManager);
+         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraintWithError.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraintWithError, true);
          if (hasInverseRealFlow) {
@@ -1363,6 +1580,13 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
                      false /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraint.simplifyAllEquations(*constrainedRealSymbol,
                      false /* isNegative */, symbolsManager);
+            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
+               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+                  expressionBuilder->assumeCleared();
+                  constraint.writeExpression(expressionBuilder);
+                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedRealSymbol, *expressionBuilder);
+               };
+            };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
                constraints().pushConstraint().setFrom(constraint, false /* isNegative */);
          };
@@ -2103,14 +2327,14 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sinAs
       conversion.setNegative(maxBuilt.isNegative());
       maxReal.setFloat(conversion, maxParams);
       maxParams.clear();
-      eRealDomain.setInterval(minReal, maxReal, symbolsManager());
+      eRealDomain.setInterval(minReal, maxReal, symbolsManager(), nullptr);
    }
    if (doesComputeError()) {
       if (doesComputeReal()) {
          Equation coeff;
          BuiltReal one(0x1), minusOne(0x1);
          minusOne.opposite();
-         coeff.setInterval(minusOne, one, symbolsManager());
+         coeff.setInterval(minusOne, one, symbolsManager(), nullptr);
          eError.multAssign(coeff, Equation::PCSourceXValue, symbolsManager());
       }
       else {
@@ -2267,7 +2491,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sinAs
          conversion.setNegative(maxBuilt.isNegative());
          maxError.setFloat(conversion, maxParams);
          maxParams.clear();
-         eError.setInterval(minError, maxError, symbolsManager());
+         eError.setInterval(minError, maxError, symbolsManager(), nullptr);
       };
    };
 }
@@ -2441,14 +2665,14 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::cosAs
       conversion.setNegative(maxBuilt.isNegative());
       maxReal.setFloat(conversion, maxParams);
       maxParams.clear();
-      eRealDomain.setInterval(minReal, maxReal, symbolsManager());
+      eRealDomain.setInterval(minReal, maxReal, symbolsManager(), nullptr);
    }
    if (doesComputeError()) {
       if (doesComputeReal()) {
          Equation coeff;
          BuiltReal one(0x1), minusOne(0x1);
          minusOne.opposite();
-         coeff.setInterval(minusOne, one, symbolsManager());
+         coeff.setInterval(minusOne, one, symbolsManager(), nullptr);
          eError.multAssign(coeff, Equation::PCSourceXValue, symbolsManager());
       }
       else {
@@ -2616,7 +2840,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::cosAs
          conversion.setNegative(maxBuilt.isNegative());
          maxError.setFloat(conversion, maxParams);
          maxParams.clear();
-         eError.setInterval(minError, maxError, symbolsManager());
+         eError.setInterval(minError, maxError, symbolsManager(), nullptr);
       };
    };
 }
@@ -2689,7 +2913,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::asinA
       conversion.setNegative(maxBuilt.isNegative());
       maxReal.setFloat(conversion, maxParams);
       maxParams.clear();
-      eRealDomain.setInterval(minReal, maxReal, symbolsManager());
+      eRealDomain.setInterval(minReal, maxReal, symbolsManager(), nullptr);
    }
    if (doesComputeError()) {
       if (doesComputeReal()) {
@@ -2715,7 +2939,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::asinA
          BuiltReal minusDerived(derived);
          minusDerived.opposite();
          Equation coeff;
-         coeff.setInterval(minusDerived, derived, symbolsManager());
+         coeff.setInterval(minusDerived, derived, symbolsManager(), nullptr);
          eError.multAssign(coeff, Equation::PCSourceXValue, symbolsManager());
       }
       else {
@@ -2782,7 +3006,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::asinA
          conversion.setNegative(maxBuilt.isNegative());
          maxError.setFloat(conversion, maxParams);
          maxParams.clear();
-         eError.setInterval(minError, maxError, symbolsManager());
+         eError.setInterval(minError, maxError, symbolsManager(), nullptr);
       };
    };
 }
@@ -2857,7 +3081,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::acosA
       conversion.setNegative(maxBuilt.isNegative());
       maxReal.setFloat(conversion, maxParams);
       maxParams.clear();
-      eRealDomain.setInterval(minReal, maxReal, symbolsManager());
+      eRealDomain.setInterval(minReal, maxReal, symbolsManager(), nullptr);
    }
    if (doesComputeError()) {
       if (doesComputeReal()) {
@@ -2883,7 +3107,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::acosA
          BuiltReal minusDerived(derived);
          minusDerived.opposite();
          Equation coeff;
-         coeff.setInterval(minusDerived, derived, symbolsManager());
+         coeff.setInterval(minusDerived, derived, symbolsManager(), nullptr);
          eError.multAssign(coeff, Equation::PCSourceXValue, symbolsManager());
       }
       else {
@@ -2952,7 +3176,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::acosA
          conversion.setNegative(maxBuilt.isNegative());
          maxError.setFloat(conversion, maxParams);
          maxParams.clear();
-         eError.setInterval(minError, maxError, symbolsManager());
+         eError.setInterval(minError, maxError, symbolsManager(), nullptr);
       };
    };
 }
@@ -3015,14 +3239,14 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::atanA
       conversion.setNegative(maxBuilt.isNegative());
       maxReal.setFloat(conversion, maxParams);
       maxParams.clear();
-      eRealDomain.setInterval(minReal, maxReal, symbolsManager());
+      eRealDomain.setInterval(minReal, maxReal, symbolsManager(), nullptr);
    }
    if (doesComputeError()) {
       if (doesComputeReal()) {
          BuiltReal one(0x1), minusOne(0x1);
          minusOne.opposite();
          Equation coeff;
-         coeff.setInterval(minusOne, one, symbolsManager());
+         coeff.setInterval(minusOne, one, symbolsManager(), nullptr);
          eError.multAssign(coeff, Equation::PCSourceXValue, symbolsManager());
       }
       else {
@@ -3079,7 +3303,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::atanA
          conversion.setNegative(maxBuilt.isNegative());
          maxError.setFloat(conversion, maxParams);
          maxParams.clear();
-         eError.setInterval(minError, maxError, symbolsManager());
+         eError.setInterval(minError, maxError, symbolsManager(), nullptr);
       };
    };
 }
@@ -3373,7 +3597,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::powAs
                maxThis.multAssign(maxValue, inherited::maxParams());
                inherited::maxParams().clear();
                maxThis.expAssign(tmpMin, tmpMax, inherited::maxParams());
-               eError.setInterval(minThis, maxThis, symbolsManager());
+               eError.setInterval(minThis, maxThis, symbolsManager(), nullptr);
             };
             return;
          };
@@ -3394,7 +3618,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::powAs
                maxThisReal.multAssign(maxValueReal, inherited::maxParams());
                inherited::maxParams().clear();
                maxThisReal.expAssign(tmpMin, tmpMax, inherited::maxParams());
-               eRealDomain.setInterval(minThisReal, maxThisReal, symbolsManager());
+               eRealDomain.setInterval(minThisReal, maxThisReal, symbolsManager(), nullptr);
             };
             if (!maxThisImplementation.isZero()) {
                BuiltReal tmpMin, tmpMax;
@@ -3404,7 +3628,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::powAs
                inherited::maxParams().clear();
                maxThisImplementation.expAssign(tmpMin, tmpMax, inherited::maxParams());
                maxThisReal.opposite();
-               eError.setInterval(maxThisReal, maxThisImplementation, symbolsManager());
+               eError.setInterval(maxThisReal, maxThisImplementation, symbolsManager(), nullptr);
             };
             return;
          };
@@ -3422,7 +3646,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::powAs
             maxThis.multAssign(maxValue, inherited::maxParams());
             inherited::maxParams().clear();
             maxThis.expAssign(tmpMin, tmpMax, inherited::maxParams());
-            eRealDomain.setInterval(minThis, maxThis, symbolsManager());
+            eRealDomain.setInterval(minThis, maxThis, symbolsManager(), nullptr);
          };
          return;
       };
@@ -3529,7 +3753,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::atan2
       conversion.setNegative(maxBuilt.isNegative());
       maxReal.setFloat(conversion, maxParams);
       maxParams.clear();
-      eRealDomain.setInterval(minReal, maxReal, symbolsManager());
+      eRealDomain.setInterval(minReal, maxReal, symbolsManager(), nullptr);
    }
    if (doesComputeError()) {
       if (doesComputeReal()) {
@@ -3538,7 +3762,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::atan2
          Equation coeff;
          thisType approxResult(source);
          approxResult.divAssign(thisCopy, Equation::PCSourceRValue);
-         coeff.setInterval(minusOne, one, symbolsManager());
+         coeff.setInterval(minusOne, one, symbolsManager(), nullptr);
          approxResult.eError.multAssign(coeff, Equation::PCSourceXValue, symbolsManager());
          eError.swap(approxResult.eError);
       }
@@ -3629,7 +3853,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::atan2
          conversion.setNegative(maxBuilt.isNegative());
          maxError.setFloat(conversion, maxParams);
          maxParams.clear();
-         eError.setInterval(minError, maxError, symbolsManager());
+         eError.setInterval(minError, maxError, symbolsManager(), nullptr);
       };
    };
 }
@@ -3711,6 +3935,13 @@ TSimplificationRules DefineEquationTemplateParameters(URealBitsNumber)
          {  if (!source.isDefinition() && equation.getConditionSameBranch()(source))
                source.simplifyWith(definitionEquation, *definedSymbol, max, manager, false /* hasExternalCoefficient */);
          });
+      if (auto* symbolDefinitionTracker = manager.getSymbolDefinitionTracker()) {
+         if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+            expressionBuilder->assumeCleared();
+            definitionEquation.writeExpression(expressionBuilder);
+            symbolDefinitionTracker->setDefinition(BuiltReal(1U), *definedSymbol, *expressionBuilder);
+         };
+      };
    };
 }
 
@@ -3884,7 +4115,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    if (max == min)
       getSError().setCentral(max);
    else
-      getSError().setInterval(min, max, symbolsManager());
+      getSError().setInterval(min, max, symbolsManager(), nullptr);
    getSError().minusAssign(getRealDomain(), Equation::PCSourceRValue, symbolsManager());
 }
 
@@ -3960,9 +4191,21 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    bool doesConstraint = false;
    BuiltReal normalization = constraintMin->getDefinition().getNormalization(true, &doesConstraint);
    if (doesConstraint && getSRealDomain().simplifyWith(constraintMin->getDefinition(),
-         *constraintMin, normalization, symbolsManager()))
-      symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
+         *constraintMin, normalization, symbolsManager())) {
+      auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker();
+      VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker
+         ? symbolDefinitionTracker->getExpressionBuilder() : nullptr;
+      if (expressionBuilder) {
+         expressionBuilder->assumeCleared();
+         constraintMin->getSDefinition().writeExpression(expressionBuilder);
+      };
+      const auto& symbol = symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
             constraintMin.extractElement());
+      if (expressionBuilder) {
+         BuiltReal one(1U);
+         symbolDefinitionTracker->setDefinition(one, symbol, *expressionBuilder);
+      };
+   }
 
    for (int index = 0; index < sizeMantissa; ++index)
       conversion.mantissa()[index] = bfMax.getMantissa()[index];
@@ -3982,9 +4225,21 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    doesConstraint = false;
    normalization = constraintMax->getDefinition().getNormalization(false, &doesConstraint);
    if (doesConstraint && getSRealDomain().simplifyWith(constraintMax->getDefinition(),
-         *constraintMax, normalization, symbolsManager()))
-      symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
+         *constraintMax, normalization, symbolsManager())) {
+      auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker();
+      VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker
+         ? symbolDefinitionTracker->getExpressionBuilder() : nullptr;
+      if (expressionBuilder) {
+         expressionBuilder->assumeCleared();
+         constraintMax->getSDefinition().writeExpression(expressionBuilder);
+      };
+      const auto& symbol = symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
             constraintMax.extractElement());
+      if (expressionBuilder) {
+         BuiltReal one(1U);
+         symbolDefinitionTracker->setDefinition(one, symbol, *expressionBuilder);
+      };
+   };
 }
 
 DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
@@ -4052,9 +4307,21 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    bool doesConstraint = false;
    BuiltReal normalization = constraintMin->getDefinition().getNormalization(true, &doesConstraint);
    if (doesConstraint && getSError().simplifyWith(constraintMin->getDefinition(),
-         *constraintMin, normalization, symbolsManager()))
-      symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
+         *constraintMin, normalization, symbolsManager())) {
+      auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker();
+      VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker
+         ? symbolDefinitionTracker->getExpressionBuilder() : nullptr;
+      if (expressionBuilder) {
+         expressionBuilder->assumeCleared();
+         constraintMin->getSDefinition().writeExpression(expressionBuilder);
+      };
+      const auto& symbol = symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
             constraintMin.extractElement());
+      if (expressionBuilder) {
+         BuiltReal one(1U);
+         symbolDefinitionTracker->setDefinition(one, symbol, *expressionBuilder);
+      };
+   };
 
    for (int index = 0; index < sizeMantissa; ++index)
       conversion.mantissa()[index] = bfMax.getMantissa()[index];
@@ -4074,9 +4341,21 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    doesConstraint = false;
    normalization = constraintMax->getDefinition().getNormalization(false, &doesConstraint);
    if (doesConstraint && getSError().simplifyWith(constraintMax->getDefinition(),
-         *constraintMax, normalization, symbolsManager()))
-      symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
+         *constraintMax, normalization, symbolsManager())) {
+      auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker();
+      VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker
+         ? symbolDefinitionTracker->getExpressionBuilder() : nullptr;
+      if (expressionBuilder) {
+         expressionBuilder->assumeCleared();
+         constraintMax->getSDefinition().writeExpression(expressionBuilder);
+      };
+      const auto& symbol = symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
             constraintMax.extractElement());
+      if (expressionBuilder) {
+         BuiltReal one(1U);
+         symbolDefinitionTracker->setDefinition(one, symbol, *expressionBuilder);
+      };
+   };
 }
 
 DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
@@ -4111,9 +4390,21 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    BuiltReal normalization = constraintMin->getDefinition().getNormalization(minRelativeError.isNegative(),
          &doesConstraint);
    if (doesConstraint && getSRealDomain().simplifyWith(constraintMin->getDefinition(),
-         *constraintMin, normalization, symbolsManager()))
-      symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
+         *constraintMin, normalization, symbolsManager())) {
+      auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker();
+      VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker
+         ? symbolDefinitionTracker->getExpressionBuilder() : nullptr;
+      if (expressionBuilder) {
+         expressionBuilder->assumeCleared();
+         constraintMin->getSDefinition().writeExpression(expressionBuilder);
+      };
+      const auto& symbol = symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
             constraintMin.extractElement());
+      if (expressionBuilder) {
+         BuiltReal one(1U);
+         symbolDefinitionTracker->setDefinition(one, symbol, *expressionBuilder);
+      };
+   };
 
    for (int index = 0; index < sizeMantissa; ++index)
       conversion.mantissa()[index] = bfMaxRelativeError.getMantissa()[index];
@@ -4133,9 +4424,21 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    normalization = constraintMax->getDefinition().getNormalization(!minRelativeError.isNegative(),
          &doesConstraint);
    if (doesConstraint && getSRealDomain().simplifyWith(constraintMax->getDefinition(),
-         *constraintMax, normalization, symbolsManager()))
-      symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
+         *constraintMax, normalization, symbolsManager())) {
+      auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker();
+      VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker
+         ? symbolDefinitionTracker->getExpressionBuilder() : nullptr;
+      if (expressionBuilder) {
+         expressionBuilder->assumeCleared();
+         constraintMax->getSDefinition().writeExpression(expressionBuilder);
+      };
+      const auto& symbol = symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
             constraintMax.extractElement());
+      if (expressionBuilder) {
+         BuiltReal one(1U);
+         symbolDefinitionTracker->setDefinition(one, symbol, *expressionBuilder);
+      };
+   };
 }
 
 DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
@@ -4175,9 +4478,21 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    BuiltReal normalization = constraintMin->getDefinition().getNormalization(!isNegativeDomain,
          &doesConstraint);
    if (doesConstraint && getSError().simplifyWith(constraintMin->getDefinition(),
-         *constraintMin, normalization, symbolsManager()))
-      symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
+         *constraintMin, normalization, symbolsManager())) {
+      auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker();
+      VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker
+         ? symbolDefinitionTracker->getExpressionBuilder() : nullptr;
+      if (expressionBuilder) {
+         expressionBuilder->assumeCleared();
+         constraintMin->getSDefinition().writeExpression(expressionBuilder);
+      };
+      const auto& symbol = symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
             constraintMin.extractElement());
+      if (expressionBuilder) {
+         BuiltReal one(1U);
+         symbolDefinitionTracker->setDefinition(one, symbol, *expressionBuilder);
+      };
+   };
 
    for (int index = 0; index < sizeMantissa; ++index)
       conversion.mantissa()[index] = bfMaxRelativeError.getMantissa()[index];
@@ -4197,9 +4512,75 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    normalization = constraintMax->getDefinition().getNormalization(isNegativeDomain,
          &doesConstraint);
    if (doesConstraint && getSError().simplifyWith(constraintMax->getDefinition(),
-         *constraintMax, normalization, symbolsManager()))
-      symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
+         *constraintMax, normalization, symbolsManager())) {
+      auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker();
+      VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker
+         ? symbolDefinitionTracker->getExpressionBuilder() : nullptr;
+      if (expressionBuilder) {
+         expressionBuilder->assumeCleared();
+         constraintMax->getSDefinition().writeExpression(expressionBuilder);
+      };
+      const auto& symbol = symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
             constraintMax.extractElement());
+      if (expressionBuilder) {
+         BuiltReal one(1U);
+         symbolDefinitionTracker->setDefinition(one, symbol, *expressionBuilder);
+      };
+   };
+}
+
+DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
+typename DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
+   ::BuiltReal
+DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
+      ::getUpperMaxDenormalized() {
+   BuiltReal result(1U);
+   auto exponent = result.getBasicExponent();
+   exponent = 1U;
+   exponent <<= (USizeExponent-1);
+   exponent.minusAssign(2U);
+   result.getSBasicExponent().minusAssign(exponent);
+   return result;
+}
+
+DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
+typename DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
+   ::BuiltReal
+DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
+      ::getMinDenormalized() {
+   BuiltReal result(1U);
+   auto exponent = result.getBasicExponent();
+   exponent = 1U;
+   exponent <<= (USizeExponent-1);
+   exponent.plusAssign(USizeMantissa-2);
+   if (result.getSBasicExponent().minusAssign(exponent).hasCarry()) {
+      AssumeCondition(USizeExponent == result.bitSizeExponent()
+            && result.bitSizeMantissa() > USizeMantissa)
+      result.getSBasicExponent().clear();
+      result.getSMantissa() = 1U;
+      result.getSMantissa() <<= (result.bitSizeMantissa() - USizeMantissa);
+   };
+   return result;
+}
+
+DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
+typename DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
+   ::BuiltReal
+DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
+      ::getSemiMinDenormalizedValue() {
+   BuiltReal result(1U);
+   auto exponent = result.getBasicExponent();
+   exponent = 1U;
+   exponent <<= (USizeExponent-1);
+   exponent.plusAssign(USizeMantissa-1);
+   if (result.getSBasicExponent().minusAssign(exponent).hasCarry()) {
+      AssumeCondition(USizeExponent == result.bitSizeExponent()
+            && result.bitSizeMantissa() > USizeMantissa)
+      result.getSBasicExponent().clear();
+      result.getSMantissa() = 1U;
+      result.getSMantissa() <<= (result.bitSizeMantissa() - USizeMantissa - 1);
+   };
+   return result;
 }
 
 DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
@@ -4241,17 +4622,35 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
 
    BuiltReal maxError;
    BuiltReal min, max;
+   auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker();
+   VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker
+      ? symbolDefinitionTracker->getExpressionBuilder() : nullptr;
+   VirtualExpressionBuilder::Guard guard(expressionBuilder);
+   if (expressionBuilder) {
+      expressionBuilder->assumeCleared();
+      expressionBuilder->pushSubExpression();
+   };
    if (inherited::doesComputeReal()) {
       if (inherited::doesComputeError()) {
          Equation implementation(getRealDomain());
          implementation.plusAssign(getError(), Equation::PCSourceRValue, symbolsManager());
          implementation.retrieveBound(min, max, false /* hasExternalCoefficient */);
+         if (expressionBuilder)
+            implementation.writeExpression(expressionBuilder);
       }
-      else
+      else {
          getRealDomain().retrieveBound(min, max, false /* hasExternalCoefficient */);
+         if (expressionBuilder)
+            getRealDomain().writeExpression(expressionBuilder);
+      };
    }
-   else
+   else {
       getError().retrieveBound(min, max, false /* hasExternalCoefficient */);
+      if (expressionBuilder)
+         getError().writeExpression(expressionBuilder);
+   };
+   if (expressionBuilder)
+      expressionBuilder->popSubExpression();
 
    if (min.getBasicExponent() > max.getBasicExponent())
       max = min;
@@ -4260,15 +4659,86 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       if (maxError.getSBasicExponent().minusAssign(USizeMantissa+1).hasCarry()) {
          int shift = maxError.getSBasicExponent().neg()[0]+1;
          maxError.getSMantissa() = 1U;
-         if (USizeMantissa-shift > 0)
-            maxError.getSMantissa() <<= (USizeMantissa-shift);
+         if (URealBitsNumber-shift > 0)
+            maxError.getSMantissa() <<= (URealBitsNumber-shift);
          maxError.getSBasicExponent() = 0;
+      }
+      else if (maxError.getBasicExponent().isZero()) {
+         maxError.getSMantissa() = 1U;
+         maxError.getSMantissa() <<= (URealBitsNumber-1);
+      }
+      if (maxError.bitSizeExponent() > USizeExponent) {
+         BuiltReal minDenormalized = getMinDenormalized();
+         if (maxError.getBasicExponent() < minDenormalized.getBasicExponent())
+            maxError = getSemiMinDenormalizedValue();
       };
-      BuiltReal minError(maxError);
-      minError.opposite();
-
       Equation additionalError;
-      additionalError.setInterval(minError, maxError, symbolsManager());
+      Symbol* semiUlpSymbol = symbolsManager().createCentralSymbol();
+      typename Equation::GlobalElement* coefficient = additionalError.addElement(*semiUlpSymbol);
+      AssumeCondition(dynamic_cast<const typename Equation::Coefficient*>(coefficient))
+      ((typename Equation::Coefficient&) *coefficient).setValue(maxError);
+
+      if (expressionBuilder) { // expressionBuilder = { val_float }
+         PNT::AutoPointer<DefineDefinedSymbol DefineEquationTemplateParameters(URealBitsNumber) >
+            newSymbol((DefineDefinedSymbol DefineEquationTemplateParameters(URealBitsNumber)*)
+               symbolsManager().createUnrecordedDefinedSymbol(typename inherited::TemplateTraits()), PNT::Pointer::Init());
+         newSymbol->getSDefinition() = additionalError;
+         const auto& symbol = symbolsManager().recordDefinedSymbol(typename inherited::TemplateTraits(),
+               newSymbol.extractElement());
+         // [TODO] change the semantics: this prevents semiUlpSymbol to be reused since it is
+         //   now shared between additional error and the definition of symbol!
+         BuiltReal semiUlp(1U);
+         semiUlp.getSBasicExponent().minusAssign(USizeMantissa+1);
+         BuiltReal upperMaxDenormalized = getUpperMaxDenormalized();
+         BuiltReal oppositeOfUpperMaxDenormalized = upperMaxDenormalized;
+         oppositeOfUpperMaxDenormalized.opposite();
+         BuiltReal minDenormalized = getMinDenormalized();
+         if (min.isNegative() != max.isNegative()
+               || (!min.isNegative() ? min < upperMaxDenormalized
+                                     : max > oppositeOfUpperMaxDenormalized)) {
+            expressionBuilder->duplicateExpression();
+            // expressionBuilder = { val_float, val_float }
+            expressionBuilder->applySetMantissaToZero();
+            // expressionBuilder = { val_float, |_val_float_| }
+            expressionBuilder->pushConstant(semiUlp);
+            // expressionBuilder = { val_float, |_val_float_|, FLT_EPSILON/2 }
+            expressionBuilder->applyBinaryMult();
+            // expressionBuilder = { val_float, |_val_float_| * FLT_EPSILON/2 }
+            expressionBuilder->duplicateExpression();
+            expressionBuilder->applyOpposite();
+            // expressionBuilder = { val_float, |_val_float_| * FLT_EPSILON/2,
+            //                                            -|_val_float_| * FLT_EPSILON/2 }
+            expressionBuilder->pushConstant(getSemiMinDenormalizedValue());
+            // expressionBuilder = { val_float, |_val_float_| * FLT_EPSILON/2,
+            //                       -|_val_float_| * FLT_EPSILON/2, FLT_MIN }
+            expressionBuilder->moveUp(3);
+            expressionBuilder->moveUp(3);
+            expressionBuilder->moveUp(1);
+            // expressionBuilder = { -|_val_float_| * FLT_EPSILON/2,
+            //                       FLT_MIN, |_val_float_| * FLT_EPSILON/2, val_float }
+            expressionBuilder->pushConstant(oppositeOfUpperMaxDenormalized);
+            expressionBuilder->pushConstant(upperMaxDenormalized);
+            // expressionBuilder = { -|_val_float_| * FLT_EPSILON/2, FLT_MIN,
+            //    |_val_float_| * FLT_EPSILON/2, val_float, -FLT_MIN_NORMAL, +FLT_MIN_NORMAL }
+            expressionBuilder->compareStrictBetween();
+            // expressionBuilder = { -|_val_float_| * FLT_EPSILON/2, FLT_MIN,
+            //    |_val_float_| * FLT_EPSILON/2, -FLT_MIN_NORMAL < val_float < +FLT_MIN_NORMAL }
+            expressionBuilder->applyQuadConditional();
+            // expressionBuilder = { (val_float <= -FLT_MIN_NORMAL)
+            //    ? -|_val_float_| * FLT_EPSILON/2 : ((val_float <= FLT_MIN_NORMAL)
+            //    ? FLT_MIN : |_val_float_| * FLT_EPSILON/2) }
+         }
+         else {
+            expressionBuilder->applySetMantissaToZero(); // expressionBuilder = { |_val_float_| }
+            expressionBuilder->pushConstant(semiUlp);
+            expressionBuilder->applyBinaryMult(); // expressionBuilder = { |_val_float_|*ulp }
+         };
+         BuiltReal one(1U);
+         expressionBuilder->pushTerm(one, *semiUlpSymbol);
+         expressionBuilder->applyBinaryMult(); // expressionBuilder = { ulp(float)*[-1,1] }
+         symbolDefinitionTracker->setDefinition(one, symbol, *expressionBuilder);
+         guard.release();
+      };
       getSError().plusAssign(additionalError, Equation::PCSourceXValue, symbolsManager());
    };
 }
@@ -4362,14 +4832,14 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          if (TypeBaseFloatAffine::doesAbsorbHighLevel())
             inherited::setIntervalWithHighLevel(otherReal, real);
          else
-            inherited::setInterval(otherReal, real);
+            inherited::setInterval(otherReal, real, nullptr);
       }
       else { // isDownApproximate
          otherReal.setToNext();
          if (TypeBaseFloatAffine::doesAbsorbHighLevel())
             inherited::setIntervalWithHighLevel(real, otherReal);
          else
-            inherited::setInterval(real, otherReal);
+            inherited::setInterval(real, otherReal, nullptr);
       };
    };
    computeError();
@@ -4460,9 +4930,9 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          }
          else {
             if (bfMin.isPositive())
-               inherited::setInterval(realMin, realMax);
+               inherited::setInterval(realMin, realMax, nullptr);
             else
-               inherited::setInterval(realMax, realMin);
+               inherited::setInterval(realMax, realMin, nullptr);
          };
          typename BuiltReal::Exponent errorExponent = realMax.getBasicExponent();
          if (errorExponent.minusAssign(USizeMantissa+1).hasCarry()) {
@@ -4478,7 +4948,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          errorMax.getSBasicExponent() = errorExponent;
          BuiltReal errorMin(errorMax);
          errorMin.opposite();
-         inherited::setErrorInterval(errorMin, errorMax);
+         inherited::setErrorInterval(errorMin, errorMax, nullptr);
          computeRelativeError();
       };
    };
@@ -4728,12 +5198,12 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    rmax.setFloat(conversion, maxParams);
    maxParams.clear();
    if (inherited::doesComputeError()) {
-      getSError().setInterval(rmin, rmax, symbolsManager());
+      getSError().setInterval(rmin, rmax, symbolsManager(), nullptr);
       computeRelativeError();
    }
    else {
       Equation newError;
-      newError.setInterval(rmin, rmax, symbolsManager());
+      newError.setInterval(rmin, rmax, symbolsManager(), nullptr);
       getSError().plusAssign(newError, Equation::PCSourceXValue, symbolsManager());
    };
 }
@@ -6130,6 +6600,13 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
             ? constraintError.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager(),
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraintError.simplifyAllEquations(*constrainedSymbol, true, symbolsManager());
+         if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraintError.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraintError, true);
       };
@@ -6168,6 +6645,13 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          ? constraint.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager(),
                TypeBaseFloatAffine::getConditionSameBranch())
          : constraint.simplifyAllEquations(*constrainedSymbol, true, symbolsManager());
+      if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
+         if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+            expressionBuilder->assumeCleared();
+            constraint.writeExpression(expressionBuilder);
+            symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+         };
+      };
       if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
          constraints().pushConstraint().setFrom(constraint, true);
    }
@@ -6213,6 +6697,13 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
             ? constraintError.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager(),
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraintError.simplifyAllEquations(*constrainedSymbol, false, symbolsManager());
+         if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraintError.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraintError, false);
       };
@@ -6250,6 +6741,13 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          ? constraint.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager(),
                TypeBaseFloatAffine::getConditionSameBranch())
          : constraint.simplifyAllEquations(*constrainedSymbol, false, symbolsManager());
+      if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
+         if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+            expressionBuilder->assumeCleared();
+            constraint.writeExpression(expressionBuilder);
+            symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+         };
+      };
       if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
          constraints().pushConstraint().setFrom(constraint, false);
    }
@@ -6397,6 +6895,13 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          ? constraint.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager(),
                TypeBaseFloatAffine::getConditionSameBranch())
          : constraint.simplifyAllEquations(*constrainedSymbol, false, symbolsManager());
+      if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
+         if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+            expressionBuilder->assumeCleared();
+            constraint.writeExpression(expressionBuilder);
+            symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+         };
+      };
       if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
          constraints().pushConstraint().setFrom(constraint, false);
    }
@@ -6457,6 +6962,13 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          ? constraint.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager(),
                TypeBaseFloatAffine::getConditionSameBranch())
          : constraint.simplifyAllEquations(*constrainedSymbol, true, symbolsManager());
+      if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
+         if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+            expressionBuilder->assumeCleared();
+            constraint.writeExpression(expressionBuilder);
+            symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+         };
+      };
       if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
          constraints().pushConstraint().setFrom(constraint, true);
    }
@@ -6587,6 +7099,13 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
             ? constraint.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager(),
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraint.simplifyAllEquations(*constrainedSymbol, true, symbolsManager());
+         if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraint.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraint, true);
       };
@@ -6607,6 +7126,13 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
             ? constraint.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager(),
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraint.simplifyAllEquations(*constrainedSymbol, false, symbolsManager());
+         if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraint.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraint, false);
       };
@@ -6641,6 +7167,13 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
             ? constraint.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager(),
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraint.simplifyAllEquations(*constrainedSymbol, true, symbolsManager());
+         if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraint.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraint, true);
       };
@@ -6662,6 +7195,13 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
             ? constraint.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager(),
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraint.simplifyAllEquations(*constrainedSymbol, false, symbolsManager());
+         if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraint.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraint, false);
       };
@@ -6835,6 +7375,13 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
             ? constraint.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager(),
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraint.simplifyAllEquations(*constrainedSymbol, true, symbolsManager());
+         if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraint.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraint, true);
       };
@@ -6855,6 +7402,13 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
             ? constraint.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager(),
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraint.simplifyAllEquations(*constrainedSymbol, false, symbolsManager());
+         if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraint.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraint, false);
       };
@@ -6889,6 +7443,13 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
             ? constraint.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager(),
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraint.simplifyAllEquations(*constrainedSymbol, true, symbolsManager());
+         if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraint.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraint, true);
       };
@@ -6910,6 +7471,13 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
             ? constraint.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager(),
                   TypeBaseFloatAffine::getConditionSameBranch())
             : constraint.simplifyAllEquations(*constrainedSymbol, false, symbolsManager());
+         if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
+            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
+               expressionBuilder->assumeCleared();
+               constraint.writeExpression(expressionBuilder);
+               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
+            };
+         };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
             constraints().pushConstraint().setFrom(constraint, false);
       };

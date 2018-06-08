@@ -19,7 +19,8 @@ SOURCES =                                                                     \
    @top_srcdir@/tests/zero_sept.c @top_srcdir@/tests/doublemax.c              \
    @top_srcdir@/tests/interpolation_table2.c @top_srcdir@/tests/nbornaif.c    \
    @top_srcdir@/tests/simple2.c @top_srcdir@/tests/sqrtfonct.c                \
-   @top_srcdir@/tests/comparison8.c @top_srcdir@/tests/comparison_robustness.c
+   @top_srcdir@/tests/square.c @top_srcdir@/tests/comparison8.c 					\
+	@top_srcdir@/tests/comparison_robustness.c
 
 EXE = $(patsubst @top_srcdir@/tests/%.c,%.exe,$(SOURCES))
 DIAGNOSIS_EXACT_DONE = $(patsubst @top_srcdir@/tests/%.c,%.diagnosis_exact_done,$(SOURCES))
@@ -55,6 +56,9 @@ analysis : diagnosis_exact diagnosis_interval diagnosis_affine diagnosis_affine_
 
 %.instr_diagnosis_interval: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/@FLOAT_LIB_NAME@
 	-AUTOTEST=1 ./comp_float_diagnosis.sh -interval -optim @FLOAT_ALLOW_INTERFACE@ -atomic -loop $< -o $@
+
+square.instr_diagnosis_affine: @top_srcdir@/tests/square.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/@FLOAT_LIB_NAME@
+	-AUTOTEST=1 ./comp_float_diagnosis.sh -affine -track -optim @FLOAT_ALLOW_INTERFACE@ -atomic -loop $< -o $@
 
 %.instr_diagnosis_affine: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/@FLOAT_LIB_NAME@
 	-AUTOTEST=1 ./comp_float_diagnosis.sh -affine -optim @FLOAT_ALLOW_INTERFACE@ -atomic -loop $< -o $@

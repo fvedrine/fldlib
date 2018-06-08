@@ -79,6 +79,7 @@ class Pointer : public EnhancedObject {
    DDefineAssign(Pointer)
 
    virtual bool isValid() const override { return peoElement != nullptr; }
+   bool isValidPointer() const { return peoElement != nullptr; }
 };
 
 template<class Element, class Cast=SimpleCast>

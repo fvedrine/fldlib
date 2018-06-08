@@ -481,8 +481,9 @@ class DefineBaseFloatZonotope : public TypeBaseFloatAffine {
          svSpecial = SVNone;
          return *this;
       }
-   thisType& setErrorInterval(const BuiltReal& minError, const BuiltReal& maxError)
-      {  eError.setInterval(minError, maxError, symbolsManager());
+   thisType& setErrorInterval(const BuiltReal& minError, const BuiltReal& maxError,
+         VirtualExpressionBuilder* expressionBuilder)
+      {  eError.setInterval(minError, maxError, symbolsManager(), expressionBuilder);
          return *this;
       }
    thisType& setInputInterval(const BuiltReal& min, const BuiltReal& max)
@@ -490,8 +491,9 @@ class DefineBaseFloatZonotope : public TypeBaseFloatAffine {
          svSpecial = SVNone;
          return *this;
       }
-   thisType& setInterval(const BuiltReal& min, const BuiltReal& max)
-      {  eRealDomain.setInterval(min, max, symbolsManager());
+   thisType& setInterval(const BuiltReal& min, const BuiltReal& max,
+         VirtualExpressionBuilder* expressionBuilder)
+      {  eRealDomain.setInterval(min, max, symbolsManager(), expressionBuilder);
          svSpecial = SVNone;
          return *this;
       }
@@ -845,6 +847,12 @@ class DefineBasicFloatZonotope : public DefineBaseFloatZonotope DefineEquationTe
    typedef DefineEquation DefineEquationTemplateParameters(URealBitsNumber) Equation;
    typedef TSimplificationRules DefineEquationTemplateParameters(URealBitsNumber) SimplificationRules;
 
+  private:
+   BuiltReal getUpperMaxDenormalized();
+   BuiltReal getMinDenormalized();
+   BuiltReal getSemiMinDenormalizedValue();
+
+  public:
    void mergeWith(const thisType& source)
       {  inherited::mergeWith(source);
          dValue = source.dValue;
@@ -869,6 +877,7 @@ class DefineBasicFloatZonotope : public DefineBaseFloatZonotope DefineEquationTe
    void restrictErrorFromRealAndImplementation();
    void restrictRealFromErrorAndRelativeError();
    void restrictErrorFromRealAndRelativeError();
+
    void addSemiUlpToError(bool isBeforeValidImplementation=false);
    void addSemiUlp(BuiltReal& real) const;
    void subSemiUlp(BuiltReal& real) const;

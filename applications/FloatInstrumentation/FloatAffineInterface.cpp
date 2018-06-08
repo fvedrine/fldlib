@@ -31,6 +31,8 @@
 
 #include <fstream>
 #include <sstream>
+#include <vector>
+#include <string>
 
 #include "NumericalAnalysis/FloatAffineExecutionPath.h"
 #include "NumericalAnalysis/FloatAffineExecutionPath.template"
@@ -168,6 +170,11 @@ ExecutionPath::setSupportFirstFollowFloat() {
 void
 ExecutionPath::setSupportPureZonotope() {
    DAffine::ExecutionPath::setSupportPureZonotope();
+}
+
+void
+ExecutionPath::setTrackErrorOrigin() {
+   DAffine::ExecutionPath::setTrackErrorOrigin();
 }
 
 void

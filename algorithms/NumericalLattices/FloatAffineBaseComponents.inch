@@ -1048,18 +1048,21 @@ class DefineEquation
    void multAssignAddCrossFromSourceCoeff(const Cursor& thisCursor, const Cursor& sourceCursor,
          BuiltReal& newCrossCoeffValue, PNT::AutoPointer<Coefficient>& crossCoeffAdditions,
          bool& areAllHighLevel, BuiltReal& highLevelError, RealReadParameters& nearestParams,
-         RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient);
+         RealReadParameters& maxParams, SymbolsManager& manager,
+         VirtualExpressionBuilder* expressionBuilder, bool hasExternalCoefficient);
    void multAssignAddCrossFromThisCoeff(const Cursor& thisCursor, const Cursor& sourceCursor,
          BuiltReal& newCrossCoeffValue, PNT::AutoPointer<Coefficient>& crossCoeffAdditions,
          bool& areAllHighLevel, BuiltReal& highLevelError, RealReadParameters& nearestParams,
-         RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient);
+         RealReadParameters& maxParams, SymbolsManager& manager,
+         VirtualExpressionBuilder* expressionBuilder, bool hasExternalCoefficient);
    void multAssignAddCentralSquareAndCrossFromBothCoeffs(const Cursor& thisCursor,
          const Cursor& sourceCursor, bool areSymbolEquals, BuiltReal& newCentral,
          PNT::AutoPointer<Coefficient>& newCentralAdditions, BuiltReal& newSquareCoeffValue,
          PNT::AutoPointer<Coefficient>& squareCoeffAdditions, BuiltReal& newCrossCoeffValue,
          PNT::AutoPointer<Coefficient>& crossCoeffAdditions, bool& areAllHighLevel,
          BuiltReal& highLevelError, RealReadParameters& nearestParams,
-         RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient);
+         RealReadParameters& maxParams, SymbolsManager& manager,
+         VirtualExpressionBuilder* expressionBuilder, bool hasExternalCoefficient);
    void multAssignBothCoeffsWithCentrals(Cursor& thisCursor, const Cursor& sourceCursor,
          Symbol* thisSymbol, Symbol* sourceSymbol, const thisType& source, PolicyCall policyCall,
          SymbolsManager& manager, BuiltReal& referenceForAbsorption, Coefficient*& reusableCoeff,
@@ -1099,18 +1102,20 @@ class DefineEquation
          bool hasExternalCoefficient);
 
   protected:
-   bool inverseAssign(SymbolsManager& manager, BuiltReal& newCoeff, BuiltReal& highLevelError,
-         bool hasExternalCoefficient);
+   bool inverseAssign(SymbolsManager& manager, VirtualExpressionBuilder* expressionBuilder,
+         BuiltReal& newCoeff, BuiltReal& highLevelError, bool hasExternalCoefficient);
 
   public:
    void multAssign(const thisType& source, PolicyCall policyCall,
-         SymbolsManager& manager, BuiltReal& newCrossCoeffValue, BuiltReal& newSquareCoeffValue,
+         SymbolsManager& manager, VirtualExpressionBuilder* expressionBuilder,
+         BuiltReal& newCrossCoeffValue, BuiltReal& newSquareCoeffValue,
          BuiltReal& highLevelError, PNT::AutoPointer<Coefficient>& crossCoeffAdditions,
          PNT::AutoPointer<Coefficient>& squareCoeffAdditions, bool hasExternalCoefficient);
    void multAssign(const BuiltReal& value, SymbolsManager& manager, BuiltReal& highLevelError,
          bool hasExternalCoefficient);
    void addNoise(const BuiltReal& newCoeff, PNT::AutoPointer<Coefficient>& coeffAdditions,
-         BuiltReal& highLevelError, SymbolsManager& manager, int* marked, bool hasExternalCoefficient);
+         BuiltReal& highLevelError, SymbolsManager& manager,
+         VirtualExpressionBuilder* expressionBuilder, int* marked, bool hasExternalCoefficient);
    void divAssign(const BuiltReal& value, SymbolsManager& manager, BuiltReal& highLevelError,
          bool hasExternalCoefficient);
    void divAssign(unsigned value, SymbolsManager& manager, BuiltReal& highLevelError,
@@ -1198,7 +1203,8 @@ class DefineEquation
          apcCentralAdditions = valueAdditions;
          return *this;
       }
-   thisType& setInterval(const BuiltReal& min, const BuiltReal& max, SymbolsManager& manager);
+   thisType& setInterval(const BuiltReal& min, const BuiltReal& max, SymbolsManager& manager,
+         VirtualExpressionBuilder* expressionBuilder);
    thisType& setIntervalWithHighLevel(const BuiltReal& min, const BuiltReal& max, SymbolsManager& manager);
    thisType& setInputInterval(const BuiltReal& min, const BuiltReal& max, SymbolsManager& manager);
    thisType& addCoefficient(const BuiltReal& coefficient, Symbol& symbol, Coefficient** newCoeff=nullptr)
@@ -1249,7 +1255,6 @@ class DefineEquation
          addHighLevel(highLevelError, manager, hasExternalCoefficient);
       }
 
-
    bool inverseAssign(SymbolsManager& manager, int* marked=nullptr,
          bool hasExternalCoefficient=false);
    bool divAssign(const thisType& source, PolicyCall policyCall,
@@ -1273,6 +1278,15 @@ class DefineEquation
    bool simplifyAllEquationsIf(Symbol& symbol, bool isNegative, SymbolsManager& manager,
          std::function<bool(const DefineEquation DefineSEquationTemplateParameters(URealBitsNumber)&)> condition,
          bool hasExternalCoefficient=false) const;
+   void writeExpression(VirtualExpressionBuilder* expressionBuilder) const
+      {  if (expressionBuilder) {
+            expressionBuilder->pushConstant(dCentral);
+            Cursor cursor(*this);
+            while (cursor.setToNext())
+               expressionBuilder->addTerm(((const Coefficient&)
+                        cursor.globalElementAt()).getValue(), cursor.elementAt());
+         };
+      }
    void spatialMergeWith(const thisType& source, SymbolsManager& manager, bool hasExternalCoefficient=false);
    void temporalMergeWith(const thisType& source, SymbolsManager& manager, bool hasExternalCoefficient=false);
 };

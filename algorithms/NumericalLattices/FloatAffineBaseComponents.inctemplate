@@ -487,14 +487,20 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::invariant() co
 DefineEquationTemplateHeader(URealBitsNumber)
 DefineEquation DefineEquationTemplateParameters(URealBitsNumber)&
 DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::setInterval(
-      const BuiltReal& min, const BuiltReal& max, SymbolsManager& manager) {
+      const BuiltReal& min, const BuiltReal& max, SymbolsManager& manager,
+      VirtualExpressionBuilder* expressionBuilder) {
    auto& nearestParams = TypeBaseFloatAffine::nearestParams();
    auto& maxParams = TypeBaseFloatAffine::maxParams();
    clear(&manager);
    dCentral = min;
    if (max.compareValue(min) == CRGreater) {
       dCentral.plusAssign(max, nearestParams);
-      dCentral.divAssign(2, nearestParams);
+      dCentral.divAssign(2U, nearestParams);
+
+      if (expressionBuilder) {
+         expressionBuilder->pushConstant(dCentral);
+         expressionBuilder->applyBinaryMinus();
+      };
 
       Symbol* symbol = manager.createNoiseSymbol();
       GlobalElement* coefficient = addElement(*symbol);
@@ -503,16 +509,22 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::setInterval(
          BuiltReal coefficientValue(max);
          coefficientValue.minusAssign(dCentral, maxParams);
          ((Coefficient&) *coefficient).setValue(coefficientValue);
+         if (expressionBuilder)
+            manager.getSymbolDefinitionTracker()->setDefinition(coefficientValue, *symbol, *expressionBuilder);
       }
       else {
          BuiltReal coefficientValue(dCentral);
          coefficientValue.minusAssign(min, maxParams);
          ((Coefficient&) *coefficient).setValue(coefficientValue);
+         if (expressionBuilder)
+            manager.getSymbolDefinitionTracker()->setDefinition(coefficientValue, *symbol, *expressionBuilder);
       };
       maxParams.clear();
       nearestParams.clear();
       ++basicOperationCounter;
    }
+   else if (expressionBuilder)
+       manager.getSymbolDefinitionTracker()->clearDefinition(*expressionBuilder);
    return *this;
 }
 
@@ -525,7 +537,7 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::setIntervalWit
    if (max.compareValue(min) == CRGreater) {
       auto& nearestParams = TypeBaseFloatAffine::nearestParams();
       dCentral.plusAssign(max, nearestParams);
-      dCentral.divAssign(2, nearestParams);
+      dCentral.divAssign(2U, nearestParams);
 
       Symbol* symbol = manager.createHighLevelSymbol();
       GlobalElement* coefficient = addElement(*symbol);
@@ -557,7 +569,7 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::setInputInterv
    if (max.compareValue(min) == CRGreater) {
       auto& nearestParams = TypeBaseFloatAffine::nearestParams();
       dCentral.plusAssign(max, nearestParams);
-      dCentral.divAssign(2, nearestParams);
+      dCentral.divAssign(2U, nearestParams);
 
       Symbol* symbol = manager.createCentralSymbol();
       GlobalElement* coefficient = addElement(*symbol);
@@ -1261,11 +1273,16 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignAddC
       const Cursor& thisCursor, const Cursor& sourceCursor, BuiltReal& newCrossCoeffValue,
       PNT::AutoPointer<Coefficient>& crossCoeffAdditions, bool& areAllHighLevel,
       BuiltReal& highLevelError, RealReadParameters& nearestParams, RealReadParameters& maxParams,
-      SymbolsManager& manager, bool hasExternalCoefficient) {
+      SymbolsManager& manager, VirtualExpressionBuilder* expressionBuilder, bool hasExternalCoefficient) {
    Cursor thisCopyCursor(thisCursor);
    const Coefficient& sourceCoeff = (const Coefficient&) sourceCursor.globalElementAt();
    const BuiltReal& sourceCoeffValue = sourceCoeff.getValue();
    bool isSourceHighLevel = sourceCursor.elementAt().getType() == Symbol::THighLevel;
+   if (expressionBuilder) {
+      expressionBuilder->addTerm(sourceCoeffValue, sourceCursor.elementAt());
+      expressionBuilder->pushSubExpression();
+      expressionBuilder->pushZeroConstant();
+   };
    do {
       const Coefficient& thisCopyCoeff = (const Coefficient&) thisCopyCursor.globalElementAt();
       const BuiltReal& thisCopyCoeffValue = thisCopyCoeff.getValue();
@@ -1273,10 +1290,16 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignAddC
             && thisCopyCursor.elementAt().getType() != Symbol::THighLevel)
          areAllHighLevel = false;
       ++basicOperationCounter;
+      if (expressionBuilder)
+         expressionBuilder->addTerm(thisCopyCoeffValue, thisCopyCursor.elementAt());
       addAssignAbsProduct(newCrossCoeffValue, crossCoeffAdditions, sourceCoeff, sourceCoeffValue,
             thisCopyCoeff, thisCopyCoeffValue, highLevelError, nearestParams, maxParams, manager,
             hasExternalCoefficient);
    } while (thisCopyCursor.setToNext());
+   if (expressionBuilder) {
+      expressionBuilder->popSubExpression();
+      expressionBuilder->applyBinaryMult();
+   };
 }
 
 DefineEquationTemplateHeader(URealBitsNumber)
@@ -1285,21 +1308,32 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignAddC
       const Cursor& thisCursor, const Cursor& sourceCursor, BuiltReal& newCrossCoeffValue,
       PNT::AutoPointer<Coefficient>& crossCoeffAdditions, bool& areAllHighLevel,
       BuiltReal& highLevelError, RealReadParameters& nearestParams, RealReadParameters& maxParams,
-      SymbolsManager& manager, bool hasExternalCoefficient) {
+      SymbolsManager& manager, VirtualExpressionBuilder* expressionBuilder, bool hasExternalCoefficient) {
    Cursor sourceCopyCursor(sourceCursor);
    const Coefficient& thisCoeff = (const Coefficient&) thisCursor.globalElementAt();
    const BuiltReal& thisCoeffValue = thisCoeff.getValue();
    bool isThisHighLevel = thisCursor.elementAt().getType() == Symbol::THighLevel;
+   if (expressionBuilder) {
+      expressionBuilder->addTerm(thisCoeffValue, thisCursor.elementAt());
+      expressionBuilder->pushSubExpression();
+      expressionBuilder->pushZeroConstant();
+   };
    do {
       const Coefficient& sourceCopyCoeff = (const Coefficient&) sourceCopyCursor.globalElementAt();
       const BuiltReal& sourceCopyCoeffValue = sourceCopyCoeff.getValue();
       if (areAllHighLevel && !isThisHighLevel
             && sourceCopyCursor.elementAt().getType() != Symbol::THighLevel)
          areAllHighLevel = false;
+      if (expressionBuilder)
+         expressionBuilder->addTerm(sourceCopyCoeffValue, sourceCopyCursor.elementAt());
       addAssignAbsProduct(newCrossCoeffValue, crossCoeffAdditions, thisCoeff, thisCoeffValue,
             sourceCopyCoeff, sourceCopyCoeffValue, highLevelError, nearestParams, maxParams,
             manager, hasExternalCoefficient);
    } while (sourceCopyCursor.setToNext());
+   if (expressionBuilder) {
+      expressionBuilder->popSubExpression();
+      expressionBuilder->applyBinaryMult();
+   };
 }
 
 DefineEquationTemplateHeader(URealBitsNumber)
@@ -1310,7 +1344,8 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignAddC
       BuiltReal& newSquareCoeffValue, PNT::AutoPointer<Coefficient>& squareCoeffAdditions,
       BuiltReal& newCrossCoeffValue, PNT::AutoPointer<Coefficient>& crossCoeffAdditions,
       bool& areAllHighLevel, BuiltReal& highLevelError, RealReadParameters& nearestParams,
-      RealReadParameters& maxParams, SymbolsManager& manager, bool hasExternalCoefficient) {
+      RealReadParameters& maxParams, SymbolsManager& manager, VirtualExpressionBuilder* expressionBuilder,
+      bool hasExternalCoefficient) {
    if (areSymbolEquals) {
       const Coefficient& thisCoeff = (const Coefficient&) thisCursor.globalElementAt();
       const BuiltReal& thisCoeffValue = thisCoeff.getValue();
@@ -1320,6 +1355,27 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignAddC
       bool isSourceHighLevel = sourceCursor.elementAt().getType() == Symbol::THighLevel;
       if (areAllHighLevel && !isSourceHighLevel && !isThisHighLevel)
          areAllHighLevel = false;
+      if (expressionBuilder) {
+         BuiltReal one(1U);
+         expressionBuilder->pushSubExpression();
+         expressionBuilder->pushTerm(one, thisCursor.elementAt());
+         expressionBuilder->pushTerm(one, sourceCursor.elementAt());
+         expressionBuilder->applyBinaryMult();
+         one.divAssign(2U, nearestParams);
+         nearestParams.clear();
+         expressionBuilder->pushConstant(one);
+         expressionBuilder->applyBinaryMinus();
+         expressionBuilder->popSubExpression();
+
+         expressionBuilder->pushConstant(thisCoeffValue);
+         expressionBuilder->pushConstant(sourceCoeffValue);
+         expressionBuilder->applyBinaryMult();
+         expressionBuilder->applyBinaryMult();
+         expressionBuilder->applyBinaryPlus();
+
+         expressionBuilder->pushSubExpression();
+         expressionBuilder->pushZeroConstant();
+      };
       addAssignSemiProductToValue(newSquareCoeffValue, squareCoeffAdditions,
             thisCoeff, thisCoeffValue, sourceCoeff, sourceCoeffValue, newCentral,
             newCentralAdditions, highLevelError, nearestParams,
@@ -1340,6 +1396,12 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignAddC
                   areAllHighLevel = false;
                const Coefficient& sourceCopyCoeff = (const Coefficient&) sourceCopyCursor.globalElementAt();
                const BuiltReal& sourceCopyCoeffValue = sourceCopyCoeff.getValue();
+               if (expressionBuilder) {
+                  expressionBuilder->addTerm(sourceCopyCoeffValue, sourceCopyCursor.elementAt());
+                  expressionBuilder->pushZeroConstant();
+                  expressionBuilder->addTerm(thisCoeffValue, thisCursor.elementAt());
+                  expressionBuilder->applyBinaryMult();
+               };
                addAssignAbsProduct(newCrossCoeffValue, crossCoeffAdditions,
                      thisCoeff, thisCoeffValue, sourceCopyCoeff, sourceCopyCoeffValue,
                      highLevelError, nearestParams, maxParams, manager, hasExternalCoefficient);
@@ -1351,6 +1413,12 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignAddC
                   areAllHighLevel = false;
                const Coefficient& thisCopyCoeff = (const Coefficient&) thisCopyCursor.globalElementAt();
                const BuiltReal& thisCopyCoeffValue = thisCopyCoeff.getValue();
+               if (expressionBuilder) {
+                  expressionBuilder->addTerm(thisCopyCoeffValue, thisCopyCursor.elementAt());
+                  expressionBuilder->pushZeroConstant();
+                  expressionBuilder->addTerm(sourceCoeffValue, sourceCursor.elementAt());
+                  expressionBuilder->applyBinaryMult();
+               };
                addAssignAbsProduct(newCrossCoeffValue, crossCoeffAdditions,
                      sourceCoeff, sourceCoeffValue, thisCopyCoeff, thisCopyCoeffValue,
                      highLevelError, nearestParams, maxParams, manager, hasExternalCoefficient);
@@ -1368,6 +1436,16 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignAddC
                const BuiltReal& sourceCopyCoeffValue = sourceCopyCoeff.getValue();
                const Coefficient& thisCopyCoeff = (const Coefficient&) thisCopyCursor.globalElementAt();
                const BuiltReal& thisCopyCoeffValue = thisCopyCoeff.getValue();
+               if (expressionBuilder) {
+                  expressionBuilder->addTerm(sourceCopyCoeffValue, sourceCopyCursor.elementAt());
+                  expressionBuilder->pushZeroConstant();
+                  expressionBuilder->addTerm(thisCoeffValue, thisCursor.elementAt());
+                  expressionBuilder->applyBinaryMult();
+                  expressionBuilder->addTerm(thisCopyCoeffValue, thisCopyCursor.elementAt());
+                  expressionBuilder->pushZeroConstant();
+                  expressionBuilder->addTerm(sourceCoeffValue, sourceCursor.elementAt());
+                  expressionBuilder->applyBinaryMult();
+               };
                addAssignDoubleAbsProduct(newCrossCoeffValue, crossCoeffAdditions,
                      thisCoeff, thisCoeffValue, sourceCopyCoeff, sourceCopyCoeffValue,
                      sourceCoeff, sourceCoeffValue, thisCopyCoeff, thisCopyCoeffValue,
@@ -1382,6 +1460,11 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignAddC
                areAllHighLevel = false;
             const Coefficient& thisCopyCoeff = (const Coefficient&) thisCopyCursor.globalElementAt();
             const BuiltReal& thisCopyCoeffValue = thisCopyCoeff.getValue();
+            if (expressionBuilder) {
+               expressionBuilder->addTerm(thisCopyCoeffValue, thisCopyCursor.elementAt());
+               expressionBuilder->pushConstant(sourceCoeffValue);
+               expressionBuilder->applyBinaryMult();
+            };
             addAssignAbsProduct(newCrossCoeffValue, crossCoeffAdditions, sourceCoeff,
                   sourceCoeffValue, thisCopyCoeff, thisCopyCoeffValue, highLevelError,
                   nearestParams, maxParams, manager, hasExternalCoefficient);
@@ -1393,6 +1476,11 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignAddC
                areAllHighLevel = false;
             const Coefficient& sourceCopyCoeff = (const Coefficient&) sourceCopyCursor.globalElementAt();
             const BuiltReal& sourceCopyCoeffValue = sourceCopyCoeff.getValue();
+            if (expressionBuilder) {
+               expressionBuilder->addTerm(sourceCopyCoeffValue, sourceCopyCursor.elementAt());
+               expressionBuilder->pushConstant(thisCoeffValue);
+               expressionBuilder->applyBinaryMult();
+            };
             addAssignAbsProduct(newCrossCoeffValue, crossCoeffAdditions, thisCoeff, thisCoeffValue,
                   sourceCopyCoeff, sourceCopyCoeffValue, highLevelError, nearestParams, maxParams,
                   manager, hasExternalCoefficient);
@@ -1400,39 +1488,65 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignAddC
             ++basicOperationCounter;
          };
       };
+      if (expressionBuilder) {
+         expressionBuilder->popSubExpression();
+         expressionBuilder->applyBinaryPlus();
+      };
    }
    else {
       Cursor thisCopyCursor(thisCursor);
       bool isSourceHighLevel = sourceCursor.elementAt().getType() == Symbol::THighLevel;
       const Coefficient& sourceCoeff = (const Coefficient&) sourceCursor.globalElementAt();
       const BuiltReal& sourceCoeffValue = sourceCoeff.getValue();
+      if (expressionBuilder) {
+         expressionBuilder->addTerm(sourceCoeffValue, sourceCursor.elementAt());
+         expressionBuilder->pushSubExpression();
+         expressionBuilder->pushZeroConstant();
+      };
       do {
          if (areAllHighLevel && !isSourceHighLevel
                && thisCopyCursor.elementAt().getType() == Symbol::THighLevel)
             areAllHighLevel = false;
          const Coefficient& thisCopyCoeff = (const Coefficient&) thisCopyCursor.globalElementAt();
          const BuiltReal& thisCopyCoeffValue = thisCopyCoeff.getValue();
+         if (expressionBuilder)
+            expressionBuilder->addTerm(thisCopyCoeffValue, thisCopyCursor.elementAt());
          addAssignAbsProduct(newCrossCoeffValue, crossCoeffAdditions, sourceCoeff, sourceCoeffValue,
                thisCopyCoeff, thisCopyCoeffValue, highLevelError, nearestParams, maxParams, manager,
                hasExternalCoefficient);
          ++basicOperationCounter;
       } while (thisCopyCursor.setToNext());
+      if (expressionBuilder) {
+         expressionBuilder->popSubExpression();
+         expressionBuilder->applyBinaryMult();
+      };
 
       Cursor sourceCopyCursor(sourceCursor);
       bool isThisHighLevel = thisCursor.elementAt().getType() == Symbol::THighLevel;
       const Coefficient& thisCoeff = (const Coefficient&) thisCursor.globalElementAt();
       const BuiltReal& thisCoeffValue = thisCoeff.getValue();
+      if (expressionBuilder) {
+         expressionBuilder->addTerm(thisCoeffValue, thisCursor.elementAt());
+         expressionBuilder->pushSubExpression();
+         expressionBuilder->pushZeroConstant();
+      };
       do {
          if (areAllHighLevel && !isThisHighLevel
                && sourceCopyCursor.elementAt().getType() == Symbol::THighLevel)
             areAllHighLevel = false;
          const Coefficient& sourceCopyCoeff = (const Coefficient&) sourceCopyCursor.globalElementAt();
          const BuiltReal& sourceCopyCoeffValue = sourceCopyCoeff.getValue();
+         if (expressionBuilder)
+            expressionBuilder->addTerm(sourceCopyCoeffValue, sourceCopyCursor.elementAt());
          addAssignAbsProduct(newCrossCoeffValue, crossCoeffAdditions, thisCoeff, thisCoeffValue,
                sourceCopyCoeff, sourceCopyCoeffValue, highLevelError, nearestParams, maxParams,
                manager, hasExternalCoefficient);
          ++basicOperationCounter;
       } while (sourceCopyCursor.setToNext());
+      if (expressionBuilder) {
+         expressionBuilder->popSubExpression();
+         expressionBuilder->applyBinaryMult();
+      };
    };
 }
 
@@ -1610,14 +1724,14 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignSour
 DefineEquationTemplateHeader(URealBitsNumber)
 void
 DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssign(
-      const thisType& source, PolicyCall policyCall, SymbolsManager& manager,
+      const thisType& source, PolicyCall policyCall, SymbolsManager& manager, VirtualExpressionBuilder* expressionBuilder,
       BuiltReal& newCrossCoeffValue, BuiltReal& newSquareCoeffValue, BuiltReal& highLevelError,
       PNT::AutoPointer<Coefficient>& crossCoeffAdditions,
       PNT::AutoPointer<Coefficient>& squareCoeffAdditions,
       bool hasExternalCoefficient) {
    if (this == &source) {
       thisType sourceCopy(source);
-      multAssign(sourceCopy, PCSourceXValue, manager, newCrossCoeffValue, newSquareCoeffValue,
+      multAssign(sourceCopy, PCSourceXValue, manager, expressionBuilder, newCrossCoeffValue, newSquareCoeffValue,
             highLevelError, crossCoeffAdditions, squareCoeffAdditions, hasExternalCoefficient);
       return;
    };
@@ -1644,6 +1758,7 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssign(
    bool areAllHighLevel = TypeBaseFloatAffine::doesAbsorbHighLevel();
    BuiltReal newCentral;
    PNT::AutoPointer<Coefficient> newCentralAdditions;
+
    {  Cursor thisCursor(*this), sourceCursor(source);
       Symbol* thisSymbol = thisCursor.setToFirst() ? &thisCursor.elementSAt() : nullptr;
       Symbol* sourceSymbol = sourceCursor.setToFirst() ? &sourceCursor.elementSAt() : nullptr;
@@ -1663,7 +1778,7 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssign(
          if (compare == CRGreater) {
             multAssignAddCrossFromSourceCoeff(thisCursor, sourceCursor, newCrossCoeffValue,
                   crossCoeffAdditions, areAllHighLevel, highLevelError, nearestParams, maxParams,
-                  manager, hasExternalCoefficient);
+                  manager, expressionBuilder, hasExternalCoefficient);
             sourceSymbol = sourceCursor.setToNext() ? &sourceCursor.elementSAt() : nullptr;
             compare = sourceSymbol ? thisSymbol->compare(*sourceSymbol) : CRLess;
             ++basicOperationCounter;
@@ -1671,7 +1786,7 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssign(
          else if (compare == CRLess) {
             multAssignAddCrossFromThisCoeff(thisCursor, sourceCursor, newCrossCoeffValue,
                   crossCoeffAdditions, areAllHighLevel, highLevelError, nearestParams, maxParams,
-                  manager, hasExternalCoefficient);
+                  manager, expressionBuilder, hasExternalCoefficient);
             thisSymbol = thisCursor.setToNext() ? &thisCursor.elementSAt() : nullptr;
             compare = thisSymbol ? thisSymbol->compare(*sourceSymbol) : CRGreater;
             ++basicOperationCounter;
@@ -1682,7 +1797,7 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssign(
                   thisSymbol == sourceSymbol, newCentral, newCentralAdditions,
                   newSquareCoeffValue, squareCoeffAdditions,
                   newCrossCoeffValue, crossCoeffAdditions, areAllHighLevel, highLevelError,
-                  nearestParams, maxParams, manager, hasExternalCoefficient);
+                  nearestParams, maxParams, manager, expressionBuilder, hasExternalCoefficient);
             ++basicOperationCounter;
             if (thisCursor.setToNext()) {
                thisSymbol = &thisCursor.elementSAt();
@@ -1799,7 +1914,8 @@ DefineEquationTemplateHeader(URealBitsNumber)
 void
 DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addNoise(
       const BuiltReal& newCoeffValue, PNT::AutoPointer<Coefficient>& coeffAdditions,
-      BuiltReal& highLevelError, SymbolsManager& manager, int* marked, bool hasExternalCoefficient) {
+      BuiltReal& highLevelError, SymbolsManager& manager, VirtualExpressionBuilder* expressionBuilder,
+      int* marked, bool hasExternalCoefficient) {
    if ((!hasExternalCoefficient || !coeffAdditions.isValid()) ? !newCoeffValue.isZero() : coeffAdditions->isZero()) {
       bool isAdded = false;
       if (TypeBaseFloatAffine::getLimitStartSymbolAbsorption()) {
@@ -1841,6 +1957,11 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addNoise(
                      cursor, TypeBaseFloatAffine::minParams(), TypeBaseFloatAffine::maxParams(),
                      manager, hasExternalCoefficient);
                // cursor.setToNext(); // not useful
+               if (expressionBuilder) {
+                  expressionBuilder->addTerm(coeffValue, *oldSymbol);
+                  manager.getSymbolDefinitionTracker()->setDefinition(newCoeffValue, *newSymbol,
+                        *expressionBuilder);
+               };
                if (!oldSymbol->isReferenced())
                   manager.freeHighLevelSymbol((HighLevelSymbol*) oldSymbol);
             }
@@ -1855,6 +1976,9 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addNoise(
                }
                else
                   absorbGlobalElementAfter(coeffAdditions.extractElement(), cursor);
+               if (expressionBuilder)
+                  manager.getSymbolDefinitionTracker()->setDefinition(newCoeffValue, *newSymbol,
+                        *expressionBuilder);
                isAdded = true;
             }
          };
@@ -1892,6 +2016,9 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addNoise(
             }
             else
                absorbGlobalElementAfter(coeffAdditions.extractElement(), cursor);
+            if (expressionBuilder)
+               manager.getSymbolDefinitionTracker()->setDefinition(newCoeffValue, *newSymbol,
+                     *expressionBuilder);
          }
          else {
             auto& nearestParams = TypeBaseFloatAffine::nearestParams();
@@ -1905,9 +2032,16 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::addNoise(
                addAbsAssignToCoefficient(foundCoeff, foundCoeffValue, *coeffAdditions,
                      coeffAdditions->getValue(), highLevelError, nearestParams, manager,
                      hasExternalCoefficient);
+            if (expressionBuilder)
+               manager.getSymbolDefinitionTracker()->setAddDefinition(newCoeffValue, *foundSymbol,
+                     *expressionBuilder);
          };
       };
-   };
+   }
+   else {
+      if (expressionBuilder)
+         manager.getSymbolDefinitionTracker()->clearDefinition(*expressionBuilder);
+   }
 }
 
 DefineEquationTemplateHeader(URealBitsNumber)
@@ -1930,8 +2064,35 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssign(
 
    BuiltReal newCrossCoeffValue, newSquareCoeffValue, highLevelError;
    PNT::AutoPointer<Coefficient> crossCoeffAdditions, squareCoeffAdditions;
-   multAssign(source, policyCall, manager, newCrossCoeffValue, newSquareCoeffValue, highLevelError,
-         crossCoeffAdditions, squareCoeffAdditions, hasExternalCoefficient);
+   auto* symbolDefinitionTracker = manager.getSymbolDefinitionTracker();
+   VirtualExpressionBuilder* expressionBuilder = nullptr;
+   if (symbolDefinitionTracker) {
+      expressionBuilder = symbolDefinitionTracker->getExpressionBuilder();
+      if (expressionBuilder) {
+         expressionBuilder->assumeCleared();
+
+         if (!TypeBaseFloatAffine::isPureZonotope()) {
+            // in case of intervals are better
+            expressionBuilder->pushSubExpression();
+            expressionBuilder->pushConstant(dCentral);
+            Cursor cursor(*this);
+            while (cursor.setToNext())
+               expressionBuilder->addTerm(((const Coefficient&)
+                        cursor.globalElementAt()).getValue(), cursor.elementAt());
+            expressionBuilder->popSubExpression();
+            // end in case of intervals are better
+         };
+
+         expressionBuilder->pushSubExpression();
+         expressionBuilder->pushZeroConstant();
+      };
+   };
+   multAssign(source, policyCall, manager, expressionBuilder, newCrossCoeffValue, newSquareCoeffValue,
+         highLevelError, crossCoeffAdditions, squareCoeffAdditions, hasExternalCoefficient);
+
+   if (expressionBuilder)
+      expressionBuilder->popSubExpression();
+
    auto& maxParams = TypeBaseFloatAffine::maxParams();
    if (isHighLevel) {
       if (!hasExternalCoefficient || !crossCoeffAdditions.isValid()) {
@@ -1965,7 +2126,8 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssign(
       if (!isHighLevel)
          addAssignOptionCoefficient(newCrossCoeffValue, crossCoeffAdditions, newSquareCoeffValue,
                squareCoeffAdditions, maxParams, manager, hasExternalCoefficient);
-      addNoise(newCrossCoeffValue, crossCoeffAdditions, highLevelError, manager, marked, hasExternalCoefficient);
+      addNoise(newCrossCoeffValue, crossCoeffAdditions, highLevelError, manager, expressionBuilder,
+            marked, hasExternalCoefficient);
       addHighLevel(highLevelError, manager, hasExternalCoefficient);
    }
    else {
@@ -1992,11 +2154,27 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssign(
          if (!isHighLevel)
             addAssignOptionCoefficient(newCrossCoeffValue, crossCoeffAdditions, newSquareCoeffValue,
                   squareCoeffAdditions, maxParams, manager, hasExternalCoefficient);
-         addNoise(newCrossCoeffValue, crossCoeffAdditions, highLevelError, manager, marked, hasExternalCoefficient);
+         if (expressionBuilder)
+            expressionBuilder->clearExpression(1);
+         addNoise(newCrossCoeffValue, crossCoeffAdditions, highLevelError, manager, expressionBuilder,
+               marked, hasExternalCoefficient);
          addHighLevel(highLevelError, manager, hasExternalCoefficient);
       }
       else {
          auto& minParams = TypeBaseFloatAffine::minParams();
+         if (expressionBuilder) {
+            expressionBuilder->clearExpression(0);
+
+            expressionBuilder->pushSubExpression();
+            expressionBuilder->pushConstant(source.dCentral);
+            Cursor sourceCursor(source);
+            while (sourceCursor.setToNext())
+               expressionBuilder->addTerm(((const Coefficient&)
+                        sourceCursor.globalElementAt()).getValue(), sourceCursor.elementAt());
+            expressionBuilder->popSubExpression();
+            expressionBuilder->applyBinaryMult();
+         };
+
          if (thisMin.isPositive() || thisMin.isZero()) {
             if (sourceMin.isPositive() || sourceMin.isZero()) {
                thisMin.multAssign(sourceMin, minParams);
@@ -2077,7 +2255,7 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssign(
             };
          }
          clear(&manager);
-         setInterval(thisMin, thisMax, manager);
+         setInterval(thisMin, thisMax, manager, expressionBuilder);
       };
    }
 }
@@ -2143,7 +2321,8 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::inverseAssignC
 DefineEquationTemplateHeader(URealBitsNumber)
 bool
 DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::inverseAssign(
-      SymbolsManager& manager, BuiltReal& newCoeff, BuiltReal& highLevelError, bool hasExternalCoefficient) {
+      SymbolsManager& manager, VirtualExpressionBuilder* expressionBuilder,
+      BuiltReal& newCoeff, BuiltReal& highLevelError, bool hasExternalCoefficient) {
    BuiltReal referenceForAbsorption;
    if (TypeBaseFloatAffine::getLimitStartSymbolAbsorption()) {
       computeReferenceForAbsorption(referenceForAbsorption);
@@ -2181,6 +2360,10 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::inverseAssign(
    BuiltReal highLevelMax;
    Cursor cursor(*this);
    bool areAllHighLevel = TypeBaseFloatAffine::doesAbsorbHighLevel();
+   if (expressionBuilder) {
+      expressionBuilder->pushSubExpression();
+      expressionBuilder->pushZeroConstant();
+   };
    for (bool doesContinue = cursor.setToFirst(); doesContinue; doesContinue = cursor.setToNext()) {
       AssumeCondition(dynamic_cast<const Coefficient*>(&cursor.globalElementAt()))
       const Coefficient& coeff = (const Coefficient&) cursor.globalElementAt();
@@ -2188,8 +2371,12 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::inverseAssign(
       if (areAllHighLevel && cursor.elementAt().getType() != Symbol::THighLevel)
          areAllHighLevel = false;
       addAbsAssignToValue(max, coeff, coeffValue, highLevelMax, nearestParams, hasExternalCoefficient);
+      if (expressionBuilder)
+         expressionBuilder->addTerm(coeffValue, cursor.elementAt());
       ++basicOperationCounter;
    };
+   if (expressionBuilder)
+      expressionBuilder->popSubExpression();
    
    if (mayValueGreaterOrEqualMaxAbsCoeff(max, dCentral, apcCentralAdditions, hasExternalCoefficient))
       return false;
@@ -2240,6 +2427,15 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::inverseAssign(
 
    if (centralDiff.isZero() || centralDiff.isNegative())
       return false;
+
+   if (expressionBuilder) {
+      expressionBuilder->duplicateExpression();
+      expressionBuilder->applyUnarySquare();
+      expressionBuilder->moveUp(1);
+      expressionBuilder->pushConstant(dCentral);
+      expressionBuilder->applyBinaryPlus();
+      expressionBuilder->applyBinaryDivide();
+   };
 
    BuiltReal maxSquareDivideDiff(max), highLevelMaxSquareDivideDiff(highLevelMax);
    highLevelMaxSquareDivideDiff.multAssign(max, maxParams);
@@ -2319,6 +2515,11 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::inverseAssign(
    adjustComputation(newCoeff, highLevelNewCoeff);
    ++basicOperationCounter;
 
+   if (expressionBuilder) {
+      expressionBuilder->pushConstant(newCoeff);
+      expressionBuilder->applyBinaryMinus();
+   };
+
    {  // dCentral = 1/dCentral + maxSquareDivideDiff/(2*dCentral);
       BuiltReal newCentral(maxSquareDivideDiff), highLevelNewCentral(highLevelMaxSquareDivideDiff);
       highLevelNewCentral.divAssign(2, maxParams);
@@ -2361,11 +2562,21 @@ bool
 DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::inverseAssign(
       SymbolsManager& manager, int* marked, bool hasExternalCoefficient) {
    BuiltReal newCoeff, highLevelError;
-   if (!inverseAssign(manager, newCoeff, highLevelError, hasExternalCoefficient))
+   auto* symbolDefinitionTracker = manager.getSymbolDefinitionTracker();
+   VirtualExpressionBuilder* expressionBuilder = nullptr;
+   if (symbolDefinitionTracker) {
+      expressionBuilder = symbolDefinitionTracker->getExpressionBuilder();
+      if (expressionBuilder)
+         expressionBuilder->assumeCleared();
+   };
+   if (!inverseAssign(manager, expressionBuilder, newCoeff, highLevelError, hasExternalCoefficient)) {
+      if (expressionBuilder)
+         expressionBuilder->clear();
       return false;
+   }
 
    PNT::AutoPointer<Coefficient> coeffAdditions;
-   addNoise(newCoeff, coeffAdditions, highLevelError, manager, marked, hasExternalCoefficient);
+   addNoise(newCoeff, coeffAdditions, highLevelError, manager, expressionBuilder, marked, hasExternalCoefficient);
    addHighLevel(highLevelError, manager, hasExternalCoefficient);
    return true;
 }
@@ -2577,9 +2788,18 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::divAssign(
    else
       sourceInverse.inherited::assignFromGlobal(source);
 
+   auto* symbolDefinitionTracker = manager.getSymbolDefinitionTracker();
+   VirtualExpressionBuilder* expressionBuilder = nullptr;
+   if (symbolDefinitionTracker) {
+      expressionBuilder = symbolDefinitionTracker->getExpressionBuilder();
+      if (expressionBuilder)
+         expressionBuilder->assumeCleared();
+   };
+   VirtualExpressionBuilder::Guard guardExpressionBuilder(expressionBuilder);
+
    BuiltReal inverseNewCoeff, inverseHighLevel;
    GuardXValue guard(const_cast<thisType&>(source), policyCall == PCSourceXValue, manager);
-   if (!sourceInverse.inverseAssign(manager, inverseNewCoeff, inverseHighLevel, hasExternalCoefficient))
+   if (!sourceInverse.inverseAssign(manager, expressionBuilder, inverseNewCoeff, inverseHighLevel, hasExternalCoefficient))
       return false;
 
    BuiltReal maxSourceInverse(sourceInverse.dCentral);
@@ -2596,7 +2816,6 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::divAssign(
          };
       };
    };
-
    ++basicOperationCounter;
    if (maxSourceInverse.isNegative())
       maxSourceInverse.opposite();
@@ -2669,23 +2888,52 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::divAssign(
       };
    };
 
-   dCentral.setZero();
-   apcCentralAdditions.release();
    BuiltReal max;
    ++basicOperationCounter;
    Cursor cursor(*this);
+   if (expressionBuilder) {
+      expressionBuilder->pushSubExpression();
+      expressionBuilder->pushZeroConstant();
+   };
    for (bool doesContinue = cursor.setToFirst(); doesContinue; doesContinue = cursor.setToNext()) {
       AssumeCondition(dynamic_cast<const Coefficient*>(&cursor.globalElementAt()))
       const Coefficient& coeff = (const Coefficient&) cursor.globalElementAt();
       const BuiltReal& coeffValue = coeff.getValue();
       ++basicOperationCounter;
       addAbsAssignToValue(max, coeff, coeffValue, maxParams, hasExternalCoefficient);
+      if (expressionBuilder)
+         expressionBuilder->addTerm(coeffValue, cursor.elementAt());
    };
+   if (expressionBuilder) {
+      expressionBuilder->popSubExpression();
+      if (!TypeBaseFloatAffine::isPureZonotope()) {
+         // in case intervals are better
+         expressionBuilder->duplicateExpression();
+         expressionBuilder->pushConstant(dCentral);
+         expressionBuilder->applyBinaryPlus();
+         expressionBuilder->moveUp(2);
+         // end in case intervals are better
+      };
+      expressionBuilder->applyBinaryMult();
+      expressionBuilder->pushConstant(max);
+      expressionBuilder->applyBinaryDivide();
+   };
+   dCentral.setZero();
+   apcCentralAdditions.release();
 
    BuiltReal newCrossCoeffValue, newSquareCoeffValue;
    PNT::AutoPointer<Coefficient> crossCoeffAdditions, squareCoeffAdditions;
-   multAssign(sourceInverse, PCSourceXValue, manager, newCrossCoeffValue, newSquareCoeffValue,
+
+   if (expressionBuilder) {
+      expressionBuilder->pushSubExpression();
+      expressionBuilder->pushZeroConstant();
+   };
+   multAssign(sourceInverse, PCSourceXValue, manager, nullptr, newCrossCoeffValue, newSquareCoeffValue,
          highLevelError, crossCoeffAdditions, squareCoeffAdditions, hasExternalCoefficient);
+   if (expressionBuilder) {
+      expressionBuilder->popSubExpression();
+      expressionBuilder->applyBinaryPlus();
+   };
 
    if (!TypeBaseFloatAffine::isPureZonotope()) {
       BuiltReal decision;
@@ -2710,6 +2958,20 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::divAssign(
       if (shouldChooseInterval) {
          BuiltReal sourceMin, sourceMax;
          source.retrieveBound(sourceMin, sourceMax, hasExternalCoefficient);
+
+         if (expressionBuilder) {
+            expressionBuilder->clearExpression(0);
+            expressionBuilder->pushSubExpression();
+            expressionBuilder->pushConstant(source.dCentral);
+            Cursor sourceCursor(source);
+            for (bool doesContinue = sourceCursor.setToFirst(); doesContinue; doesContinue = sourceCursor.setToNext()) {
+               AssumeCondition(dynamic_cast<const Coefficient*>(&sourceCursor.globalElementAt()))
+               expressionBuilder->addTerm(((const Coefficient&)
+                        sourceCursor.globalElementAt()).getValue(), sourceCursor.elementAt());
+            };
+            expressionBuilder->popSubExpression();
+            expressionBuilder->applyBinaryDivide();
+         };
 
          auto& minParams = TypeBaseFloatAffine::minParams();
          if (thisMin.isPositive() || thisMin.isZero()) {
@@ -2789,9 +3051,12 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::divAssign(
          }
 
          clear(&manager);
-         setInterval(thisMin, thisMax, manager);
+         guardExpressionBuilder.release();
+         setInterval(thisMin, thisMax, manager, expressionBuilder);
          return true;
-      };
+      }
+      else if (expressionBuilder)
+         expressionBuilder->clearExpression(1);
    };
 
    addAssignOptionCoefficient(newCrossCoeffValue, crossCoeffAdditions, newSquareCoeffValue,
@@ -2822,7 +3087,8 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::divAssign(
    highLevelError.plusAssign(highLevelLinear, maxParams);
    maxParams.clear();
 
-   addNoise(newCrossCoeffValue, crossCoeffAdditions, highLevelError, manager, marked, hasExternalCoefficient);
+   guardExpressionBuilder.release();
+   addNoise(newCrossCoeffValue, crossCoeffAdditions, highLevelError, manager, expressionBuilder, marked, hasExternalCoefficient);
    addHighLevel(highLevelError, manager, hasExternalCoefficient);
    return true;
 }
@@ -3524,7 +3790,7 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::temporalMergeW
       adjustComputation(dCentral, thisHighLevelError);
       thisMax.minusAssign(thisMin, maxParams);
       maxParams.clear();
-      addNoise(thisMax, coeffAdditions, thisHighLevelError, manager, nullptr, hasExternalCoefficient);
+      addNoise(thisMax, coeffAdditions, thisHighLevelError, manager, nullptr, nullptr, hasExternalCoefficient);
 /* }; */
 }
 
@@ -3772,13 +4038,13 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::spatialMergeWi
       auto& nearestParams = TypeBaseFloatAffine::nearestParams();
       dCentral.plusAssign(thisConstantAddition, nearestParams);
       adjustComputation(dCentral, highLevelError);
-      addNoise(thisAddition, coeffAdditions, highLevelError, manager, nullptr, hasExternalCoefficient);
+      addNoise(thisAddition, coeffAdditions, highLevelError, manager, nullptr, nullptr, hasExternalCoefficient);
    }
    else if (sourceMin <= thisMin && sourceMax >= thisMax) {
       auto& nearestParams = TypeBaseFloatAffine::nearestParams();
       dCentral.plusAssign(sourceConstantAddition, nearestParams);
       adjustComputation(dCentral, highLevelError);
-      addNoise(sourceAddition, coeffAdditions, highLevelError, manager, nullptr, hasExternalCoefficient);
+      addNoise(sourceAddition, coeffAdditions, highLevelError, manager, nullptr, nullptr, hasExternalCoefficient);
    }
    else {
       if (thisMin > sourceMin)
@@ -3799,7 +4065,7 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::spatialMergeWi
       adjustComputation(dCentral, highLevelError);
       thisMax.minusAssign(thisMin, maxParams);
       maxParams.clear();
-      addNoise(thisMax, coeffAdditions, highLevelError, manager, nullptr, hasExternalCoefficient);
+      addNoise(thisMax, coeffAdditions, highLevelError, manager, nullptr, nullptr, hasExternalCoefficient);
    };
 }
 
