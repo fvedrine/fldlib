@@ -697,11 +697,7 @@ class DefineBaseFloatZonotope : public TypeBaseFloatAffine {
          if (doesComputeError())
             eError.divAssign(log10Value, symbolsManager());
       }
-   void powAssign(const thisType& value, typename Equation::PolicyCall policyCall)
-      {  logAssign();
-         multAssign(value, policyCall);
-         expAssign();
-      }
+   void powAssign(const thisType& value, typename Equation::PolicyCall policyCall);
    void atan2Assign(const thisType& value, typename Equation::PolicyCall policyCall);
 };
 

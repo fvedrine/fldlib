@@ -3112,7 +3112,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::logAs
    if ((hasError = doesComputeError()) != false) {
       if ((hasReal = doesComputeReal()) == false) {
          if (!eError.logAssign(symbolsManager()))
-            mergeTopReal();
+            mergeTopError();
       }
    }
    if (hasReal || doesComputeReal()) {
@@ -3349,6 +3349,83 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::logAs
          };
       };
    };
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+void
+DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::powAssign(
+      const thisType& value, typename Equation::PolicyCall policyCall) {
+   updateLocalState();
+   if (doesComputeError()) {
+      if (!doesComputeReal()) {
+         BuiltReal minThis, maxThis, minValue, maxValue;
+         eRealDomain.retrieveBound(minThis, maxThis, false /* hasExternalCoefficient */);
+         value.eRealDomain.retrieveBound(minValue, maxValue, false /* hasExternalCoefficient */);
+         if (minThis.isZero() && !minValue.isZero() && minValue.isPositive()) {
+            if (!maxThis.isZero()) {
+               BuiltReal tmpMin, tmpMax;
+               maxThis.logAssign(tmpMin, tmpMax, inherited::maxParams());
+               inherited::maxParams().clear();
+               maxThis.multAssign(maxValue, inherited::maxParams());
+               inherited::maxParams().clear();
+               maxThis.expAssign(tmpMin, tmpMax, inherited::maxParams());
+               eError.setInterval(minThis, maxThis, symbolsManager());
+            };
+            return;
+         };
+      }
+      else {
+         BuiltReal minThisReal, maxThisReal, minValueReal, maxValueReal;
+         BuiltReal minThisImplementation, maxThisImplementation, minValueImplementation, maxValueImplementation;
+         Equation implementation(eRealDomain), valueImplementation(value.eRealDomain);
+         implementation.plusAssign(eError, Equation::PCSourceRValue, symbolsManager(), false /* hasExternalCoefficient */);
+         implementation.retrieveBound(minThisImplementation, maxThisImplementation, false /* hasExternalCoefficient */);
+         valueImplementation.retrieveBound(minValueImplementation, maxValueImplementation, false /* hasExternalCoefficient */);
+         if ((minThisReal.isZero() && !minValueReal.isZero() && minValueReal.isPositive())
+              || (minThisImplementation.isZero() && !minValueImplementation.isZero() && minValueImplementation.isPositive())) {
+            if (!maxThisReal.isZero()) {
+               BuiltReal tmpMin, tmpMax;
+               maxThisReal.logAssign(tmpMin, tmpMax, inherited::maxParams());
+               inherited::maxParams().clear();
+               maxThisReal.multAssign(maxValueReal, inherited::maxParams());
+               inherited::maxParams().clear();
+               maxThisReal.expAssign(tmpMin, tmpMax, inherited::maxParams());
+               eRealDomain.setInterval(minThisReal, maxThisReal, symbolsManager());
+            };
+            if (!maxThisImplementation.isZero()) {
+               BuiltReal tmpMin, tmpMax;
+               maxThisImplementation.logAssign(tmpMin, tmpMax, inherited::maxParams());
+               inherited::maxParams().clear();
+               maxThisImplementation.multAssign(maxValueImplementation, inherited::maxParams());
+               inherited::maxParams().clear();
+               maxThisImplementation.expAssign(tmpMin, tmpMax, inherited::maxParams());
+               maxThisReal.opposite();
+               eError.setInterval(maxThisReal, maxThisImplementation, symbolsManager());
+            };
+            return;
+         };
+      }
+   }
+   else if (doesComputeReal()) {
+      BuiltReal minThis, maxThis, minValue, maxValue;
+      eRealDomain.retrieveBound(minThis, maxThis, false /* hasExternalCoefficient */);
+      value.eRealDomain.retrieveBound(minValue, maxValue, false /* hasExternalCoefficient */);
+      if (minThis.isZero() && !minValue.isZero() && minValue.isPositive()) {
+         if (!maxThis.isZero()) {
+            BuiltReal tmpMin, tmpMax;
+            maxThis.logAssign(tmpMin, tmpMax, inherited::maxParams());
+            inherited::maxParams().clear();
+            maxThis.multAssign(maxValue, inherited::maxParams());
+            inherited::maxParams().clear();
+            maxThis.expAssign(tmpMin, tmpMax, inherited::maxParams());
+            eRealDomain.setInterval(minThis, maxThis, symbolsManager());
+         };
+         return;
+      };
+   };
+   logAssign();
+   multAssign(value, policyCall);
+   expAssign();
 }
 
 DefineEquationTemplateHeader(URealBitsNumber)
