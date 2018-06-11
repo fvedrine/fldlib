@@ -2577,6 +2577,11 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::divAssign(
    else
       sourceInverse.inherited::assignFromGlobal(source);
 
+   BuiltReal inverseNewCoeff, inverseHighLevel;
+   GuardXValue guard(const_cast<thisType&>(source), policyCall == PCSourceXValue, manager);
+   if (!sourceInverse.inverseAssign(manager, inverseNewCoeff, inverseHighLevel, hasExternalCoefficient))
+      return false;
+
    BuiltReal maxSourceInverse(sourceInverse.dCentral);
    if (apcCentralAdditions.isValid()) {
       BuiltReal min;
@@ -2604,11 +2609,6 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::divAssign(
       ++basicOperationCounter;
       addAbsAssignToValue(maxSourceInverse, coeff, coeffValue, maxParams, hasExternalCoefficient);
    };
-
-   BuiltReal inverseNewCoeff, inverseHighLevel;
-   GuardXValue guard(const_cast<thisType&>(source), policyCall == PCSourceXValue, manager);
-   if (!sourceInverse.inverseAssign(manager, inverseNewCoeff, inverseHighLevel, hasExternalCoefficient))
-      return false;
 
    ++basicOperationCounter;
    auto& nearestParams = TypeBaseFloatAffine::nearestParams();
