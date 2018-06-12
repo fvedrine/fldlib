@@ -93,6 +93,11 @@ ExecutionPath::setSupportUnstableInLoop(bool value) {
 }
 
 void
+ExecutionPath::setSupportBacktrace() {
+   DDoubleExact::ExecutionPath::setSupportBacktrace();
+}
+
+void
 ExecutionPath::setSupportVerbose() {
    DDoubleExact::ExecutionPath::setSupportVerbose();
 }

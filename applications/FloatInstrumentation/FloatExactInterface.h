@@ -63,6 +63,7 @@ class ExecutionPath {
 
    static void setSupportAtomic();
    static void setSupportUnstableInLoop(bool value=true);
+   static void setSupportBacktrace();
    static void setSupportVerbose();
    static void setSupportThreshold();
    static void setSupportFirstFollowFloat();
@@ -73,6 +74,7 @@ class ExecutionPath {
       Initialization() {}
       void setSupportAtomic() { ExecutionPath::setSupportAtomic(); }
       void setSupportUnstableInLoop() { ExecutionPath::setSupportUnstableInLoop(); }
+      void setSupportBacktrace() { ExecutionPath::setSupportBacktrace(); }
       void setSupportVerbose() { ExecutionPath::setSupportVerbose(); }
       void setSupportThreshold() { ExecutionPath::setSupportThreshold(); }
       void setSupportFirstFollowFloat() { ExecutionPath::setSupportFirstFollowFloat(); }

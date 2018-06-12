@@ -328,6 +328,7 @@ class ExecutionPath {
   public:
    static void setSupportAtomic();
    static void setSupportUnstableInLoop(bool value = true);
+   static void setSupportBacktrace();
    static void setSupportVerbose();
    static void setSupportThreshold();
    static void setSupportFirstFollowFloat();
@@ -339,6 +340,7 @@ class ExecutionPath {
       void setSupportAtomic() { ExecutionPath::setSupportAtomic(); }
       void setSupportUnstableInLoop() { ExecutionPath::setSupportUnstableInLoop(); }
       void setSupportVerbose() { ExecutionPath::setSupportVerbose(); }
+      void setSupportBacktrace() { ExecutionPath::setSupportBacktrace(); }
       void setSupportThreshold() { ExecutionPath::setSupportThreshold(); }
       void setSupportFirstFollowFloat() { ExecutionPath::setSupportFirstFollowFloat(); }
       void setResultFile(const char* fileSuffix) { initializeGlobals(fileSuffix); }

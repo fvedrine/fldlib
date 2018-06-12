@@ -105,6 +105,11 @@ ExecutionPath::setSupportUnstableInLoop(bool value) {
 }
 
 void
+ExecutionPath::setSupportBacktrace() {
+   DDoubleInterval::ExecutionPath::setSupportBacktrace();
+}
+
+void
 ExecutionPath::setSupportVerbose() {
    DDoubleInterval::ExecutionPath::setSupportVerbose();
 }

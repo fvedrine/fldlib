@@ -421,26 +421,31 @@ class ExecutionPath {
    bool hasMultipleBranches() const;
    static void setSupportAtomic();
    static void setSupportUnstableInLoop(bool value=true);
+   static void setSupportBacktrace();
    static void setSupportVerbose();
    static void setSupportThreshold();
    static void setSupportFirstFollowFloat();
+   static void setSupportPureZonotope();
+   static void setLimitNoiseSymbolsNumber(int limit);
+   static void setSimplificationTriggerPercent(double percent);
+
    static void initializeGlobals(const char* fileSuffix);
    static void finalizeGlobals();
-   static void setSimplificationTriggerPercent(double percent);
    static bool doesSupportUnstableInLoop();
-   static void setLimitNoiseSymbolsNumber(int limit);
    class Initialization {
      public:
       Initialization() {}
       void setSupportAtomic() { ExecutionPath::setSupportAtomic(); }
       void setSupportUnstableInLoop() { ExecutionPath::setSupportUnstableInLoop(); }
+      void setSupportBacktrace() { ExecutionPath::setSupportBacktrace(); }
       void setSupportVerbose() { ExecutionPath::setSupportVerbose(); }
       void setSupportThreshold() { ExecutionPath::setSupportThreshold(); }
       void setSupportFirstFollowFloat() { ExecutionPath::setSupportFirstFollowFloat(); }
-      void setResultFile(const char* fileSuffix) { initializeGlobals(fileSuffix); }
-      ~Initialization() { finalizeGlobals(); }
-      void setSimplificationTriggerPercent(double percent) { ExecutionPath::setSimplificationTriggerPercent(percent); }
+      void setSupportPureZonotope() { ExecutionPath::setSupportPureZonotope(); }
       void setLimitNoiseSymbolsNumber(int limit) { ExecutionPath::setLimitNoiseSymbolsNumber(limit); }
+      void setResultFile(const char* fileSuffix) { initializeGlobals(fileSuffix); }
+      void setSimplificationTriggerPercent(double percent) { ExecutionPath::setSimplificationTriggerPercent(percent); }
+      ~Initialization() { finalizeGlobals(); }
    };
 
    class anticipated_termination { public: anticipated_termination() {} };

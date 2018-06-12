@@ -146,6 +146,11 @@ ExecutionPath::setSupportUnstableInLoop(bool value) {
 }
 
 void
+ExecutionPath::setSupportBacktrace() {
+   DAffine::ExecutionPath::setSupportBacktrace();
+}
+
+void
 ExecutionPath::setSupportVerbose() {
    DAffine::ExecutionPath::setSupportVerbose();
 }
@@ -158,6 +163,21 @@ ExecutionPath::setSupportThreshold() {
 void
 ExecutionPath::setSupportFirstFollowFloat() {
    DAffine::ExecutionPath::setSupportFirstFollowFloat();
+}
+
+void
+ExecutionPath::setSupportPureZonotope() {
+   DAffine::ExecutionPath::setSupportPureZonotope();
+}
+
+void
+ExecutionPath::setLimitNoiseSymbolsNumber(int limit) {
+   DAffine::ExecutionPath::setLimitNoiseSymbolsNumber(limit);
+}
+
+void
+ExecutionPath::setSimplificationTriggerPercent(double percent) {
+   DAffine::ExecutionPath::setSimplificationTriggerPercent(percent);
 }
 
 bool
@@ -173,16 +193,6 @@ ExecutionPath::initializeGlobals(const char* fileSuffix) {
 void
 ExecutionPath::finalizeGlobals() {
    DAffine::ExecutionPath::finalizeGlobals();
-}
-
-void
-ExecutionPath::setSimplificationTriggerPercent(double percent) {
-   DAffine::ExecutionPath::setSimplificationTriggerPercent(percent);
-}
-
-void
-ExecutionPath::setLimitNoiseSymbolsNumber(int limit) {
-   DAffine::ExecutionPath::setLimitNoiseSymbolsNumber(limit);
 }
 
 void
