@@ -427,7 +427,7 @@ class ExecutionPath : public BaseExecutionPath {
          };
       }
    static void assumeSourceLine()
-      {  if (fHasNewFile || fHasNewLine) {
+      {  if (doesAssumeInput() && (fHasNewFile || fHasNewLine)) {
             if (fHasNewFile)
                iTraceFile->assume(szCurrentFile);
             iTraceFile->assume(':');
