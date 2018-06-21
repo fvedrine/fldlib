@@ -133,6 +133,7 @@ class DefineCompareFloatExact : public TypeBaseFloatExact {
    typedef TypeBuiltDouble BuiltDouble;
    void initFrom(STG::IOObject::ISBase& in);
    void initFrom(TypeImplementation value);
+   void retrieveError(BuiltReal& result) const;
    void retrieveRelativeError(BuiltReal& result) const;
    static void retrieveReal(const TypeBuiltDouble& source, BuiltReal& result);
    static void retrieveImplementation(const BuiltReal& source, TypeBuiltDouble& result);
@@ -152,6 +153,11 @@ class DefineCompareFloatExact : public TypeBaseFloatExact {
    DefineCompareFloatExact& operator=(const DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltArgument, TypeImplementationArgument>& source)
       {  return operator=(thisType(source)); }
 
+   void setFromReal(const BuiltReal& realValue)
+      {  brReal = realValue;
+         retrieveImplementation(brReal, bfImplementation);
+         DefineSetContent(dValue, bfImplementation /*, false isUpper */, typename TypeBaseFloatExact::FloatDigitsHelper());
+      }
    const TypeBuiltDouble& implementation() const { return bfImplementation; }
    const BuiltReal& real() const { return brReal; }
    void clearReal() { brReal.clear(); }

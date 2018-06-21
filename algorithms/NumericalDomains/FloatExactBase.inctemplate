@@ -118,6 +118,15 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
 
 template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
 void
+DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::retrieveError(BuiltReal& result) const {
+   retrieveReal(bfImplementation, result);
+   auto& params = inherited::nearestParams();
+   result.minusAssign(brReal, params);
+   params.clear();
+}
+
+template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, typename TypeImplementation>
+void
 DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>::retrieveRelativeError(BuiltReal& result) const {
    retrieveReal(bfImplementation, result);
    if (!(result == brReal)) {
