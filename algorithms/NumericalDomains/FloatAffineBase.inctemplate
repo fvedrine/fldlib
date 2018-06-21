@@ -4739,6 +4739,47 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
 }
 
 DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
+void
+DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
+      ::setFromReal(const Equation& realDomain, typename Equation::PolicyCall policyCall) {
+   if (policyCall == Equation::PCSourceXValue)
+      getSRealDomain() = std::move(const_cast<Equation&>(realDomain));
+   else
+      getSRealDomain() = realDomain;
+   BuiltReal minReal, maxReal;
+   realDomain.retrieveBound(minReal, maxReal, false /* hasExternalCoefficient */);
+
+   typename BuiltReal::FloatConversion conversion;
+   conversion.setSizeMantissa(BuiltReal::BitSizeMantissa).setSizeExponent(BuiltReal::BitSizeExponent);
+   int sizeMantissa = (BuiltReal::BitSizeMantissa + DefineSizeofBaseTypeInBits - 1)/DefineSizeofBaseTypeInBits;
+   for (int index = 0; index < sizeMantissa; ++index)
+      conversion.mantissa()[index] = minReal.getMantissa()[index];
+   int sizeExponent = (BuiltReal::BitSizeExponent + DefineSizeofBaseTypeInBits - 1)/DefineSizeofBaseTypeInBits;
+   for (int index = 0; index < sizeExponent; ++index)
+      conversion.exponent()[index] = minReal.getBasicExponent()[index];
+   conversion.setNegative(minReal.isNegative());
+   auto& minParams = TypeBaseFloatAffine::minParams();
+   bfMin.setFloat(conversion, minParams);
+   minParams.clear();
+   for (int index = 0; index < sizeMantissa; ++index)
+      conversion.mantissa()[index] = maxReal.getMantissa()[index];
+   for (int index = 0; index < sizeExponent; ++index)
+      conversion.exponent()[index] = maxReal.getBasicExponent()[index];
+   conversion.setNegative(maxReal.isNegative());
+   auto& maxParams = TypeBaseFloatAffine::maxParams();
+   bfMax.setFloat(conversion, maxParams);
+   maxParams.clear();
+
+   getSError().clear();
+
+   TypeImplementation min=0, max=0;
+   DAffine::DefineSetContent(min, bfMin /*, false isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+   DAffine::DefineSetContent(max, bfMax /*, true isUpper */, typename TypeBaseFloatAffine::FloatDigitsHelper());
+   dValue = (min + max) / 2.0;
+   addSemiUlpToError();
+}
+
+DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
 inline
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::DefineBasicFloatZonotope(int value)

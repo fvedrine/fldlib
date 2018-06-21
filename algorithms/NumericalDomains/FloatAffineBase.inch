@@ -957,6 +957,7 @@ class DefineBasicFloatZonotope : public DefineBaseFloatZonotope DefineEquationTe
       {  return operator=(thisType(source)); }
 
    void setError(TypeImplementation errmin, TypeImplementation errmax);
+   void setFromReal(const Equation& realDomain, typename Equation::PolicyCall policyCall);
    bool operator<(const thisType& source) const;
    bool operator<=(const thisType& source) const;
    bool operator==(const thisType& source) const;
