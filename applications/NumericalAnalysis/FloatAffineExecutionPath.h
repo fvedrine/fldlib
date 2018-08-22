@@ -383,7 +383,7 @@ class TBaseFloatAffine : public TypeExecutionPath, public FloatDigitsHelper {
             inherited::assumeDivisionByZero();
          };
          if (inherited::hasOutput()) {
-            inherited::assumeSourceLine();
+            inherited::writeSourceLine();
             inherited::writeDivisionByZero();
          };
       }
