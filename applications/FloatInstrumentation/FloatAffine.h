@@ -2195,5 +2195,30 @@ class ParseLongDoubleZonotope : public LongDoubleZonotope {
 
 } // end of namespace NumericalDomains
 
+namespace COL { namespace DVector {
+
+template <int USizeMantissa, int USizeExponent, typename TypeImplementation>
+class TElementTraits<NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> > {
+  private:
+   typedef NumericalDomains::DAffine::TInstrumentedFloatZonotope<USizeMantissa, USizeExponent, TypeImplementation> TypeElement;
+
+  public:
+   static const bool FInitialCleared = true;
+   static void clear(TypeElement& element)
+      {  element = TypeElement(); }
+   static void clearAll(TypeElement* array, int count)
+      {  while (--count >= 0)
+            clear(array[count]);
+      }
+   static void copy(TypeElement& element, const TypeElement& source)
+      {  element = source; }
+   static void copyAll(TypeElement* array, const TypeElement* source, int count)
+      {  for (int index = 0; index < count; ++index)
+            copy(array[index], source[index]);
+      }
+};
+
+}} // end of namespace COL::DVector
+
 #endif // FloatInstrumentation_FloatAffineH
 
