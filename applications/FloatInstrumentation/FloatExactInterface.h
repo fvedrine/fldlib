@@ -395,6 +395,7 @@ class TFloatExact {
          auto saveMemory = SaveMemory() << *this << end();
          bool oldDoesFollow = ExecutionPath::doesFollowFlow();
          ExecutionPath::clearFollowFlow();
+         auto oldSourceInfo = ExecutionPath::querySplitInfo();
          do {
             sourceFile = __FILE__; sourceLine = __LINE__;
             BaseFloatExact::splitBranches(sourceFile, sourceLine);
@@ -406,6 +407,7 @@ class TFloatExact {
          } while(!(saveMemory.setCurrent(isCompleteFlow) >> *this >> end()));
          ExecutionPath::setFollowFlow(oldDoesFollow);
          ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+         ExecutionPath::splitBranches(oldSourceInfo.first, oldSourceInfo.second);
       }
    void continuousFlow(std::function<void (thisType& val, const thisType& arg)> funAssign, const thisType& anarg)
       {  bool oldSupportUnstableInLoop = ExecutionPath::doesSupportUnstableInLoop();
@@ -418,6 +420,7 @@ class TFloatExact {
             << *this << arg << end();
          bool oldDoesFollow = ExecutionPath::doesFollowFlow();
          ExecutionPath::clearFollowFlow();
+         auto oldSourceInfo = ExecutionPath::querySplitInfo();
          do {
             sourceFile = __FILE__; sourceLine = __LINE__;
             BaseFloatExact::splitBranches(sourceFile, sourceLine);
@@ -430,6 +433,7 @@ class TFloatExact {
          } while(!(saveMemory.setCurrent(isCompleteFlow) >> arg >> *this >> end()));
          ExecutionPath::setFollowFlow(oldDoesFollow);
          ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+         ExecutionPath::splitBranches(oldSourceInfo.first, oldSourceInfo.second);
       }
    void continuousFlow(std::function<void (thisType& val, const thisType& fstarg, const thisType& sndarg)> funAssign,
          const thisType& afstarg, const thisType& asndarg)
@@ -444,6 +448,7 @@ class TFloatExact {
             << *this << fstarg << sndarg << end();
          bool oldDoesFollow = ExecutionPath::doesFollowFlow();
          ExecutionPath::clearFollowFlow();
+         auto oldSourceInfo = ExecutionPath::querySplitInfo();
          do {
             sourceFile = __FILE__; sourceLine = __LINE__;
             BaseFloatExact::splitBranches(sourceFile, sourceLine);
@@ -456,6 +461,7 @@ class TFloatExact {
          } while(!(saveMemory.setCurrent(isCompleteFlow) >> sndarg >> fstarg >> *this >> end()));
          ExecutionPath::setFollowFlow(oldDoesFollow);
          ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+         ExecutionPath::splitBranches(oldSourceInfo.first, oldSourceInfo.second);
       }
 
    void absAssign();

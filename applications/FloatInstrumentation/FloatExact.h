@@ -301,6 +301,7 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
          auto saveMemory = SaveMemory() << *this << BaseExecutionPath::end();
          bool oldDoesFollow = ExecutionPath::doesFollowFlow();
          ExecutionPath::clearFollowFlow();
+         auto oldSourceInfo = BaseFloatExact::querySplitInfo();
          do {
             sourceFile = __FILE__; sourceLine = __LINE__;
             BaseFloatExact::splitBranches(sourceFile, sourceLine);
@@ -312,6 +313,7 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
          } while(!(saveMemory.setCurrent(isCompleteFlow) >> *this >> BaseExecutionPath::end()));
          ExecutionPath::setFollowFlow(oldDoesFollow);
          ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+         BaseFloatExact::splitBranches(oldSourceInfo.first, oldSourceInfo.second);
       }
    void continuousFlow(std::function<void (thisType& val, const thisType& arg)> funAssign, const thisType& anarg)
       {  bool oldSupportUnstableInLoop = ExecutionPath::doesSupportUnstableInLoop();
@@ -324,6 +326,7 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
             << *this << arg << BaseExecutionPath::end();
          bool oldDoesFollow = ExecutionPath::doesFollowFlow();
          ExecutionPath::clearFollowFlow();
+         auto oldSourceInfo = BaseFloatExact::querySplitInfo();
          do {
             sourceFile = __FILE__; sourceLine = __LINE__;
             BaseFloatExact::splitBranches(sourceFile, sourceLine);
@@ -336,6 +339,7 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
          } while(!(saveMemory.setCurrent(isCompleteFlow) >> arg >> *this >> BaseExecutionPath::end()));
          ExecutionPath::setFollowFlow(oldDoesFollow);
          ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+         BaseFloatExact::splitBranches(oldSourceInfo.first, oldSourceInfo.second);
       }
    void continuousFlow(std::function<void (thisType& val, const thisType& fstarg, const thisType& sndarg)> funAssign,
          const thisType& afstarg, const thisType& asndarg)
@@ -350,6 +354,7 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
             << *this << fstarg << sndarg << BaseExecutionPath::end();
          bool oldDoesFollow = ExecutionPath::doesFollowFlow();
          ExecutionPath::clearFollowFlow();
+         auto oldSourceInfo = BaseFloatExact::querySplitInfo();
          do {
             sourceFile = __FILE__; sourceLine = __LINE__;
             BaseFloatExact::splitBranches(sourceFile, sourceLine);
@@ -362,6 +367,7 @@ class TInstrumentedFloat : public TFloatExact<ExecutionPath, TypeBuiltDouble, Ty
          } while(!(saveMemory.setCurrent(isCompleteFlow) >> sndarg >> fstarg >> *this >> BaseExecutionPath::end()));
          ExecutionPath::setFollowFlow(oldDoesFollow);
          ExecutionPath::setSupportUnstableInLoop(oldSupportUnstableInLoop);
+         BaseFloatExact::splitBranches(oldSourceInfo.first, oldSourceInfo.second);
       }
 
    thisType abs() const
