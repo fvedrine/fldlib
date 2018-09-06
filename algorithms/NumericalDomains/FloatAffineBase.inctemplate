@@ -3892,6 +3892,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 bool
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::restrictImplementationFromRealAndError() {
+   if (inherited::hasTopReal() || inherited::hasTopError())
+      return true;
    Equation implementation(getError());
    implementation.plusAssign(getRealDomain(), Equation::PCSourceRValue, symbolsManager());
    BuiltReal extendedMin, extendedMax;
@@ -3935,6 +3937,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::restrictRealFromErrorAndImplementation() {
+   if (inherited::hasTopError())
+      return;
    typename BuiltReal::FloatConversion conversion;
    conversion.setSizeMantissa(USizeMantissa).setSizeExponent(USizeExponent);
    int sizeMantissa = (USizeMantissa + DefineSizeofBaseTypeInBits - 1)/(DefineSizeofBaseTypeInBits);
@@ -3987,6 +3991,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::restrictRelativeErrorFromRealAndError() {
+   if (inherited::hasTopReal() || inherited::hasTopError())
+      return;
    Equation relativeError(getError());
    if (relativeError.divAssign(getRealDomain(), Equation::PCSourceRValue, symbolsManager())) {
       BuiltReal min, max;
@@ -4023,6 +4029,8 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::restrictErrorFromRealAndImplementation() {
+   if (inherited::hasTopReal())
+      return;
    typename BuiltReal::FloatConversion conversion;
    conversion.setSizeMantissa(USizeMantissa).setSizeExponent(USizeExponent);
    int sizeMantissa = (USizeMantissa + DefineSizeofBaseTypeInBits - 1)/(DefineSizeofBaseTypeInBits);
@@ -4079,6 +4087,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       return;
    if (bfMinRelativeError.isInfty() || bfMaxRelativeError.isInfty())
       return;
+   if (inherited::hasTopError())
+      return;
    typename BuiltReal::FloatConversion conversion;
    conversion.setSizeMantissa(USizeMantissa).setSizeExponent(USizeExponent);
    int sizeMantissa = (USizeMantissa + DefineSizeofBaseTypeInBits - 1)/(DefineSizeofBaseTypeInBits);
@@ -4133,6 +4143,8 @@ void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::restrictErrorFromRealAndRelativeError() {
    if (bfMinRelativeError.isInfty() || bfMaxRelativeError.isInfty())
+      return;
+   if (inherited::hasTopReal())
       return;
    bool isNegativeDomain = false;
    {  BuiltReal min, max;
