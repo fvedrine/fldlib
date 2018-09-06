@@ -83,7 +83,7 @@ class GlobalElement : public Registration, public SharedPointer {
    DDefineAssign(GlobalElement)
    StaticInheritConversions(GlobalElement, inherited)
 
-   virtual void assignGlobal(const GlobalElement& source) {}
+   virtual void assignGlobal(const GlobalElement& /* source */) {}
    virtual bool isValid() const override { return SharedPointer::isValid(); }
    bool invariant() const
       {  return Registration::isValid() && SharedPointer::isValid() && pscParent; }

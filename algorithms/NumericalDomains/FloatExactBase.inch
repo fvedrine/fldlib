@@ -282,7 +282,7 @@ template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, 
 inline
 DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>
       ::DefineCompareFloatExact(int value)
-   :  dValue(value) {
+   :  dValue((TypeImplementation) value) {
    auto& params = inherited::nearestParams();
    auto mode = inherited::getMode();
    if (mode != inherited::SVNoImplementation) {
@@ -306,7 +306,7 @@ template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, 
 inline
 DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>
       ::DefineCompareFloatExact(long int value)
-   :  dValue(value) { // [TODO] to improve
+   :  dValue((TypeImplementation) value) { // [TODO] to improve
    auto& params = inherited::nearestParams();
    auto mode = inherited::getMode();
    if (mode != inherited::SVNoImplementation) {
@@ -330,7 +330,7 @@ template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, 
 inline
 DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>
       ::DefineCompareFloatExact(unsigned value)
-   :  dValue(value) {
+   :  dValue((TypeImplementation) value) {
    auto& params = inherited::nearestParams();
    auto mode = inherited::getMode();
    if (mode != inherited::SVNoImplementation) {
@@ -354,7 +354,7 @@ template <int URealBitsNumber, class TypeBaseFloatExact, class TypeBuiltDouble, 
 inline
 DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, TypeImplementation>
       ::DefineCompareFloatExact(unsigned long value)
-   :  dValue(value) { // [TODO] to improve
+   :  dValue((TypeImplementation) value) { // [TODO] to improve
    auto& params = inherited::nearestParams();
    auto mode = inherited::getMode();
    if (mode != inherited::SVNoImplementation) {
@@ -447,7 +447,7 @@ DefineCompareFloatExact<URealBitsNumber, TypeBaseFloatExact, TypeBuiltDouble, Ty
    if (hasNegativeSqrt)
       inherited::notifyForNegativeSqrt(*this);
 
-   dValue = ::sqrt((double) dValue);
+   dValue = (TypeImplementation) ::sqrt((double) dValue);
    inherited::notifyForCompare(*this);
 }
 

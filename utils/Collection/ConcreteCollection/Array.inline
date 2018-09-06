@@ -128,7 +128,13 @@ inline VirtualSortedCollection::LocationResult
 #else
 inline VirtualMultiSortedCollection::LocationResult
 #endif
-DefTypeCollection::tlocate(const TabType& thisArray, typename Key::KeyType key, const ExtendedLocateParameters& parameters,
+DefTypeCollection::tlocate(
+#ifndef DefTypeMultiSorted
+      const TabType& /* thisArray */,
+#else
+      const TabType& thisArray,
+#endif
+      typename Key::KeyType key, const ExtendedLocateParameters& parameters,
       DefTypeCursor* cursor, const DefTypeCursor* start, const DefTypeCursor* end) const {
    int localization = ImplArray::localize(key,
          TemplateElementEnhancedKeyCastParameters<ElementType, Key, Cast>(*this),

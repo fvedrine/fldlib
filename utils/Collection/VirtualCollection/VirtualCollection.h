@@ -244,7 +244,7 @@ class VirtualCollection
 
   protected:
    VirtualCollection() {}
-   VirtualCollection(const VirtualCollection& source, AddMode duplicate=AMNoDuplicate)
+   VirtualCollection(const VirtualCollection& source, AddMode /* duplicate */=AMNoDuplicate)
       :  AbstractCollection(source) {}
 
   public:
@@ -303,7 +303,7 @@ class VirtualCollection
 
   protected:
    // overload methods
-   virtual bool acceptElement(const EnhancedObject& asource) const { return true; }
+   virtual bool acceptElement(const EnhancedObject& /* asource */) const { return true; }
    friend class CollectionAccess;
    virtual void _fullAssign(const VirtualCollection& source, const ExtendedReplaceParameters& parameters);
    void pfullAssign(const VirtualCollection& source, const ExtendedReplaceParameters& parameters);
@@ -329,7 +329,7 @@ class VirtualCollection
    virtual void _moveAllTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
          const VirtualCollectionCursor* startCursor=nullptr, const VirtualCollectionCursor* endCursor=nullptr,
          VirtualCollectionCursor* destinationCursor=nullptr);
-   virtual void _swap(VirtualCollection& source) {}
+   virtual void _swap(VirtualCollection& /* source */) {}
 
    // remove methods
    virtual void _remove(const ExtendedSuppressParameters& parameters, VirtualCollectionCursor* cursor=nullptr);
@@ -345,12 +345,12 @@ class VirtualCollection
    // query methods
    int pqueryCount(const ExtendedLocateParameters& parameters,
          const VirtualCollectionCursor* startCursor=nullptr, const VirtualCollectionCursor* endCursor=nullptr) const;
-   virtual int _queryCount(const ExtendedLocateParameters& parameters,
-         const VirtualCollectionCursor* startCursor=nullptr, const VirtualCollectionCursor* endCursor=nullptr) const
+   virtual int _queryCount(const ExtendedLocateParameters& /* parameters */,
+         const VirtualCollectionCursor* /* startCursor */=nullptr, const VirtualCollectionCursor* /* endCursor */=nullptr) const
       { return 0; }
    // virtual int _queryCount() const { return 0; }
-   virtual EnhancedObject* _getElement(const ExtendedLocateParameters& parameters,
-         const VirtualCollectionCursor* cursor=nullptr) const;
+   virtual EnhancedObject* _getElement(const ExtendedLocateParameters& /* parameters */,
+         const VirtualCollectionCursor* /* cursor */=nullptr) const;
 
    template <class TElement, class TCast>
    class TemplateForeachParameters {
@@ -488,7 +488,7 @@ class VirtualCollectionCursor : public AbstractCursor {
      public:
       Position() {}
       Position(Direction dir) { mergeOwnField(dir); }
-      Position(const Position& source) : ExtendedParameters(source) {}
+      Position(const Position& source) : EnhancedObject(), ExtendedParameters(source) {}
       DefineCopy(Position)
       DDefineAssign(Position)
 
@@ -539,14 +539,14 @@ class VirtualCollectionCursor : public AbstractCursor {
    VirtualCollectionCursor(const VirtualCollectionCursor& source) : AbstractCursor(source) {}
 
    friend class CursorAccess;
-   virtual bool _isPositionned(const ExtendedLocateParameters& pos,
-         const VirtualCollectionCursor* cursor=nullptr) const
+   virtual bool _isPositionned(const ExtendedLocateParameters& /* pos */,
+         const VirtualCollectionCursor* /* cursor */=nullptr) const
       {  return false; }
-   virtual bool _position(const Position& pos) { return false; }
+   virtual bool _position(const Position& /* pos */) { return false; }
    virtual EnhancedObject* _getSElement() const { AssumeUncalled return nullptr; }
    virtual bool _isEqual(const AbstractCursor& cursor) const override
       {  return AbstractCursor::_isEqual(cursor); }
-   virtual void _gotoReference(const EnhancedObject& element) { AssumeUncalled }
+   virtual void _gotoReference(const EnhancedObject& /* element */) { AssumeUncalled }
 
   public:
    DefineCopy(VirtualCollectionCursor)

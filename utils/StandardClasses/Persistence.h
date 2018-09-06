@@ -191,19 +191,19 @@ class IOObject : public EnhancedObject {
       virtual bool isStringBased() const { return false; }
       virtual int gcount() { return 0; }
       virtual int get() { return EOF; }
-      virtual ISBase& get(char& ch) { return *this; }
+      virtual ISBase& get(char& /* ch */) { return *this; }
       virtual int peek() { return EOF; }
-      virtual int readsome(const STG::VirtualStringProperty& source, int n) { return 0; }
+      virtual int readsome(const STG::VirtualStringProperty& /* source */, int /* n */) { return 0; }
       virtual ISBase& unget() { return *this; }
       virtual ISBase& ignorespaces() { return *this; }
       virtual bool canread() { return true; }
       virtual bool good() { return true; }
       virtual int tellg() { return 0; }
-      virtual ISBase& seekg(int pos) { return *this; }
-      virtual ISBase& seekg(int pos, int origin) { return *this; }
+      virtual ISBase& seekg(int /* pos */) { return *this; }
+      virtual ISBase& seekg(int /* pos */, int /* origin */) { return *this; }
 
-      virtual ISBase& assume(char ch) { return *this; }
-      virtual ISBase& assume(void* chunk) { return *this; }
+      virtual ISBase& assume(char /* ch */) { return *this; }
+      virtual ISBase& assume(void* /* chunk */) { return *this; }
       ISBase& assume(const char* text)
          {  TChunk<char> chunk;
             chunk.string = const_cast<char*>(text);
@@ -211,36 +211,36 @@ class IOObject : public EnhancedObject {
             assume((void*) &chunk);
             return *this;
          }
-      virtual ISBase& assume(const VirtualStringProperty& text) { return *this; }
-      virtual ISBase& read(bool& b, bool isRaw) { return *this; }
-      virtual ISBase& read(char& ch, bool isRaw) { return *this; }
-      virtual ISBase& read(int& n, bool isRaw) { return *this; }
-      virtual ISBase& readHexa(int& n) { return *this; }
-      virtual ISBase& read(unsigned int& n, bool isRaw) { return *this; }
-      virtual ISBase& readHexa(unsigned int& n) { return *this; }
-      virtual ISBase& read(long int& n, bool isRaw) { return *this; }
-      virtual ISBase& readHexa(long int& n) { return *this; }
-      virtual ISBase& read(unsigned long int& n, bool isRaw) { return *this; }
-      virtual ISBase& readHexa(unsigned long int& n) { return *this; }
-      virtual ISBase& read(double& f, bool isRaw) { return *this; }
-      virtual ISBase& readchunk(void* chunk) { return *this; }
+      virtual ISBase& assume(const VirtualStringProperty& /* text */) { return *this; }
+      virtual ISBase& read(bool& /* b */, bool /* isRaw */) { return *this; }
+      virtual ISBase& read(char& /* ch */, bool /* isRaw */) { return *this; }
+      virtual ISBase& read(int& /* n */, bool /* isRaw */) { return *this; }
+      virtual ISBase& readHexa(int& /* n */) { return *this; }
+      virtual ISBase& read(unsigned int& /* n */, bool /* isRaw */) { return *this; }
+      virtual ISBase& readHexa(unsigned int& /* n */) { return *this; }
+      virtual ISBase& read(long int& /* n */, bool /* isRaw */) { return *this; }
+      virtual ISBase& readHexa(long int& /* n */) { return *this; }
+      virtual ISBase& read(unsigned long int& /* n */, bool /* isRaw */) { return *this; }
+      virtual ISBase& readHexa(unsigned long int& /* n */) { return *this; }
+      virtual ISBase& read(double& /* f */, bool /* isRaw */) { return *this; }
+      virtual ISBase& readchunk(void* /* chunk */) { return *this; }
       int readsome(char* buffer, int n)
          {  TChunk<char> chunk;
             chunk.string = buffer;
             chunk.length = n;
             readchunk((void*) &chunk);
-            return chunk.length;
+            return (int) chunk.length;
          }
-      virtual ISBase& read(const VirtualStringProperty& source, bool isRaw) { return *this; }
-      virtual ISBase& read(const VirtualStringProperty& source, int n, bool isRaw) { return *this; }
-      virtual ISBase& readall(const VirtualStringProperty& source) { return *this; }
+      virtual ISBase& read(const VirtualStringProperty& /* source */, bool /* isRaw */) { return *this; }
+      virtual ISBase& read(const VirtualStringProperty& /* source */, int /* n */, bool /* isRaw */) { return *this; }
+      virtual ISBase& readall(const VirtualStringProperty& /* source */) { return *this; }
       ISBase& readint(char& chState, bool isRaw)
          {  if (isRaw)
                read(chState, isRaw);
             else {
                int state = 0;
                read(state, isRaw);
-               chState = state;
+               chState = (char) state;
             };
             return *this;
          }
@@ -273,32 +273,32 @@ class IOObject : public EnhancedObject {
       OSBase& operator<<(const StringProperty& property)
          {  return property.isAll ? writeall(property.property) : write(property.property, false); }
 
-      virtual OSBase& put(char c) { return *this; }
+      virtual OSBase& put(char /* c */) { return *this; }
       virtual int tellp() { return 0; }
-      virtual OSBase& seekp(int pos) { return *this; }
-      virtual OSBase& seekp(int pos, int uOrigin) { return *this; }
-      virtual void assumealloc(int incsize) {}
+      virtual OSBase& seekp(int /* pos */) { return *this; }
+      virtual OSBase& seekp(int /* pos */, int /* uOrigin */) { return *this; }
+      virtual void assumealloc(int /* incsize */) {}
 
-      virtual OSBase& write(char ch, bool isRaw) { return *this; }
-      virtual OSBase& write(int n, bool isRaw) { return *this; }
-      virtual OSBase& writeHexa(int n) { return *this; }
-      virtual OSBase& write(unsigned int n, bool isRaw) { return *this; }
-      virtual OSBase& writeHexa(unsigned int n) { return *this; }
-      virtual OSBase& write(long int n, bool isRaw) { return *this; }
-      virtual OSBase& writeHexa(long int n) { return *this; }
-      virtual OSBase& write(unsigned long int n, bool isRaw) { return *this; }
-      virtual OSBase& writeHexa(unsigned long int n) { return *this; }
-      virtual OSBase& write(double f, bool isRaw) { return *this; }
-      virtual OSBase& write(bool b, bool isRaw) { return *this; }
-      virtual OSBase& writechunk(void* chunk) { return *this; }
+      virtual OSBase& write(char /* ch */, bool /* isRaw */) { return *this; }
+      virtual OSBase& write(int /* n */, bool /* isRaw */) { return *this; }
+      virtual OSBase& writeHexa(int /* n */) { return *this; }
+      virtual OSBase& write(unsigned int /* n */, bool /* isRaw */) { return *this; }
+      virtual OSBase& writeHexa(unsigned int /* n */) { return *this; }
+      virtual OSBase& write(long int /* n */, bool /* isRaw */) { return *this; }
+      virtual OSBase& writeHexa(long int /* n */) { return *this; }
+      virtual OSBase& write(unsigned long int /* n */, bool /* isRaw */) { return *this; }
+      virtual OSBase& writeHexa(unsigned long int /* n */) { return *this; }
+      virtual OSBase& write(double /* f */, bool /* isRaw */) { return *this; }
+      virtual OSBase& write(bool /* b */, bool /* isRaw */) { return *this; }
+      virtual OSBase& writechunk(void* /* chunk */) { return *this; }
       OSBase& writesome(const char* source)
          {  TChunk<char> chunk;
             chunk.string = const_cast<char*>(source);
             chunk.length = (int) strlen(source);
             return writechunk((void*) &chunk);
          }
-      virtual OSBase& write(const VirtualStringProperty& source, bool isRaw) { return *this; }
-      virtual OSBase& writeall(const VirtualStringProperty& source) { return *this; }
+      virtual OSBase& write(const VirtualStringProperty& /* source */, bool /* isRaw */) { return *this; }
+      virtual OSBase& writeall(const VirtualStringProperty& /* source */) { return *this; }
       virtual OSBase& flush() { return *this; } 
       OSBase& writeint(char state, bool isRaw=false)
          {  return isRaw ? write(state, isRaw) : write((int) state, isRaw); }
@@ -335,8 +335,8 @@ class IOObject : public EnhancedObject {
    };
 
   protected:
-   virtual void _read(ISBase& in, const FormatParameters& params) {}
-   virtual void _write(OSBase& out, const FormatParameters& params) const {}
+   virtual void _read(ISBase& /* in */, const FormatParameters& /* params */) {}
+   virtual void _write(OSBase& /* out */, const FormatParameters& /* params */) const {}
 
   public:
    IOObject() {}

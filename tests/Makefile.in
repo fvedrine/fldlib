@@ -60,6 +60,9 @@ analysis : diagnosis_exact diagnosis_interval diagnosis_affine diagnosis_affine_
 square.instr_diagnosis_affine: @top_srcdir@/tests/square.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/@FLOAT_LIB_NAME@
 	-AUTOTEST=1 ./comp_float_diagnosis.sh -affine -track -optim @FLOAT_ALLOW_INTERFACE@ -atomic -loop $< -o $@
 
+sqrtfonct.instr_diagnosis_affine: @top_srcdir@/tests/sqrtfonct.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/@FLOAT_LIB_NAME@
+	-AUTOTEST=1 ./comp_float_diagnosis.sh -affine -optim -limit-noise-symbols-number 20 @FLOAT_ALLOW_INTERFACE@ -atomic -loop $< -o $@
+
 %.instr_diagnosis_affine: @top_srcdir@/tests/%.c @top_srcdir@/tests/std_header.h $(DIAGNOSIS_INCLUDE_DIR)/float_diagnosis.h $(DIAGNOSIS_LIB_DIR)/@FLOAT_LIB_NAME@
 	-AUTOTEST=1 ./comp_float_diagnosis.sh -affine -optim @FLOAT_ALLOW_INTERFACE@ -atomic -loop $< -o $@
 

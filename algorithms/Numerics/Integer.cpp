@@ -116,8 +116,8 @@ BigInteger::_read(ISBase& in, const IOObject::FormatParameters& aparams) {
 
 void
 BigInteger::writeFullBinary(OSBase& out, const FormatParameters& params) const {
-   int index = ((params.getLength()+sizeof(unsigned int)*8-1) / (sizeof(unsigned int)*8));
-   int bitIndex = ((params.getLength()+sizeof(unsigned int)*8-1) % (sizeof(unsigned int)*8))+1;
+   int index = (int) ((params.getLength()+sizeof(unsigned int)*8-1) / (sizeof(unsigned int)*8));
+   int bitIndex = (int) ((params.getLength()+sizeof(unsigned int)*8-1) % (sizeof(unsigned int)*8))+1;
    
    while (--index >= 0) {
       unsigned int value = array(index) << (sizeof(unsigned int)*8 - bitIndex);
@@ -131,8 +131,8 @@ BigInteger::writeFullBinary(OSBase& out, const FormatParameters& params) const {
 
 void
 BigInteger::writeFullHexaDecimal(OSBase& out, const FormatParameters& params) const {
-   int index = ((params.getLength()+sizeof(unsigned int)*8-1) / (sizeof(unsigned int)*8));
-   int hexaIndex = ((params.getLength()+sizeof(unsigned int)*8-1) % (sizeof(unsigned int)*2))+1;
+   int index = (int) ((params.getLength()+sizeof(unsigned int)*8-1) / (sizeof(unsigned int)*8));
+   int hexaIndex = (int) ((params.getLength()+sizeof(unsigned int)*8-1) % (sizeof(unsigned int)*2))+1;
    
    while (--index >= 0) {
       unsigned int value = array(index) << (4*(sizeof(unsigned int)*2 - hexaIndex));
@@ -191,7 +191,7 @@ BigInteger::_write(OSBase& out, const IOObject::FormatParameters& aparams) const
             delete [] decimal;
       }
       else { // !params.isDecimal()
-         int index = (log_base_2()-1)/(sizeof(unsigned int)*8) + 1;
+         int index = (int) ((log_base_2()-1)/(sizeof(unsigned int)*8)) + 1;
          while ((index > 0) && (inheritedImplementation::operator[](--index) == 0U));
          if (inheritedImplementation::operator[](index) == 0U)
             out.put('0');
@@ -262,11 +262,11 @@ BigInteger::divNormalized(const BigInteger& source, int abitSize, NormalizedDivi
    AssumeCondition(log_base_2() <= bitSize && source.log_base_2() <= bitSize)
    if (!((bitSize % (8*sizeof(unsigned int))) == 0)) {
       Implementation::DivisionResult atomicResult;
-      int quotientCellSize = (bitSize + 8*sizeof(unsigned int) -1)/(8*sizeof(unsigned int));
+      int quotientCellSize = (int) ((bitSize + 8*sizeof(unsigned int) -1)/(8*sizeof(unsigned int)));
       atomicResult.quotient().adjustSize(quotientCellSize);
-      atomicResult.remainder().assertSize(bitSize/(8*sizeof(unsigned int))+1);
+      atomicResult.remainder().assertSize((int) (bitSize/(8*sizeof(unsigned int))+1));
       BigIntegerImplementation thisCells, sourceCells;
-      int sourceCellSize = bitSize/(8*sizeof(unsigned int))+1;
+      int sourceCellSize = (int) (bitSize/(8*sizeof(unsigned int))+1);
       thisCells.assertSize(sourceCellSize);
       sourceCells.assertSize(sourceCellSize);
       for (int numeratorIndex = 0; numeratorIndex < implementation().getSize(); ++numeratorIndex)
@@ -277,7 +277,7 @@ BigInteger::divNormalized(const BigInteger& source, int abitSize, NormalizedDivi
       sourceCells.setTrueBitArray(bitSize);
 
       thisCells.div(sourceCells, atomicResult);
-      int shift = (8*sizeof(unsigned int)- ((bitSize+8*sizeof(unsigned int)-1) % (8*sizeof(unsigned int))+1));
+      int shift = (int) ((8*sizeof(unsigned int)- ((bitSize+8*sizeof(unsigned int)-1) % (8*sizeof(unsigned int))+1)));
       unsigned int divLeft = atomicResult.quotient()[0] & ~(~0U << shift);
       ((BigIntegerImplementation&) atomicResult.quotient()) >>= shift;
 
@@ -316,9 +316,9 @@ BigInteger::divNormalized(const BigInteger& source, int abitSize, NormalizedDivi
    }
    else {
       inheritedImplementation::NormalizedDivisionResult atomicResult;
-      int quotientCellSize = (bitSize + 8*sizeof(unsigned int) -1)/(8*sizeof(unsigned int));
+      int quotientCellSize = (int) ((bitSize + 8*sizeof(unsigned int) -1)/(8*sizeof(unsigned int)));
       atomicResult.quotient().adjustSize(quotientCellSize);
-      atomicResult.remainder().assertSize(bitSize/(8*sizeof(unsigned int))+1);
+      atomicResult.remainder().assertSize((int) (bitSize/(8*sizeof(unsigned int))+1));
       implementation().divNormalized(source, atomicResult);
       for (int quotientIndex = 0; quotientIndex < atomicResult.quotient().getSize(); ++quotientIndex)
          result.quotient()[quotientIndex] = (unsigned) atomicResult.quotient()[quotientIndex];
@@ -345,16 +345,16 @@ BigInteger::div(const thisType& source, DivisionResult& result) const {
       };
       
       Implementation::DivisionResult implementationResult;
-      int size = (inheritedImplementation::log_base_2()
-            -source.inheritedImplementation::log_base_2())/(sizeof(unsigned int)*8)+1;
+      int size = (int) ((inheritedImplementation::log_base_2()
+            - source.inheritedImplementation::log_base_2())/(sizeof(unsigned int)*8)+1);
       implementationResult.quotient().adjustSize(size);
       inheritedImplementation::div(source, implementationResult);
-      int shift = implementationResult.quotient().getSize()*sizeof(unsigned int)*8 - implementationResult.comma();
+      int shift = (int) (implementationResult.quotient().getSize()*sizeof(unsigned int)*8 - implementationResult.comma());
       AssumeCondition(shift <= (int) (sizeof(unsigned int)*8 + 1))
       if (((const Implementation&) implementationResult.remainder()).isZero()
             && ((const Implementation&) implementationResult.quotient()).hasZero(shift)) {
          ((Implementation&) implementationResult.quotient()) >>= shift;
-         ((Implementation&) implementationResult.quotient()).bitArray(size*sizeof(unsigned int)*8-shift) = true;
+         ((Implementation&) implementationResult.quotient()).bitArray((int) (size*sizeof(unsigned int)*8-shift)) = true;
       }
       else if (shift > 0) {
          result.mergeRemainderField(1);
@@ -390,7 +390,7 @@ BigInteger::div(const thisType& source, DivisionResult& result) const {
          //    ((Implementation&) implementationResult.remainder()) = newRemainder;
          // };
          ((Implementation&) implementationResult.quotient()) >>= shift;
-         ((Implementation&) implementationResult.quotient()).bitArray(size*sizeof(unsigned int)*8-shift) = true;
+         ((Implementation&) implementationResult.quotient()).bitArray((int) (size*sizeof(unsigned int)*8-shift)) = true;
       };
 
       result.ppbiQuotient.absorbElement(new BigInteger());

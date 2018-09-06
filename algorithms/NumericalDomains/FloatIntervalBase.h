@@ -256,7 +256,7 @@ template <class TypeBuiltArgument, typename TypeImplementationArgument>
 inline
 TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>::TCompareFloatInterval(
       const TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltArgument, TypeImplementationArgument>& source)
-   :  dValue(source.dValue) {
+   :  dValue((TypeImplementation) source.dValue) {
    auto& minParams = inherited::minParams();
    auto& maxParams = inherited::maxParams();
    typename inherited::FloatConversion conversion;
@@ -342,7 +342,7 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
 template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
 inline
 TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>::TCompareFloatInterval(int value)
-   :  dValue(value) {
+   :  dValue((TypeImplementation) value) {
    auto& minParams = inherited::minParams();
    auto& maxParams = inherited::maxParams();
    typename TypeBuiltDouble::IntConversion conversion;
@@ -358,7 +358,7 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
 template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
 inline
 TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>::TCompareFloatInterval(long int value)
-   :  dValue(value) { // [TODO] to improve
+   :  dValue((TypeImplementation) value) { // [TODO] to improve
    auto& minParams = inherited::minParams();
    auto& maxParams = inherited::maxParams();
    typename TypeBuiltDouble::IntConversion conversion;
@@ -374,7 +374,7 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
 template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
 inline
 TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>::TCompareFloatInterval(unsigned value)
-   :  dValue(value) {
+   :  dValue((TypeImplementation) value) {
    auto& minParams = inherited::minParams();
    auto& maxParams = inherited::maxParams();
    typename TypeBuiltDouble::IntConversion conversion;
@@ -390,7 +390,7 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
 template <int UMaxBitsNumber, class TypeBaseFloatInterval, class TypeBuiltDouble, typename TypeImplementation>
 inline
 TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, TypeImplementation>::TCompareFloatInterval(unsigned long value)
-   :  dValue(value) { // [TODO] to improve
+   :  dValue((TypeImplementation) value) { // [TODO] to improve
    auto& minParams = inherited::minParams();
    auto& maxParams = inherited::maxParams();
    typename TypeBuiltDouble::IntConversion conversion;
@@ -444,8 +444,8 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
    TypeImplementation min, max;
    DDoubleInterval::setContent(min, bfMin, false /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
    DDoubleInterval::setContent(max, bfMax, true /* isUpper */, typename TypeBaseFloatInterval::FloatDigitsHelper());
-   min = ::sqrt(min);
-   max = ::sqrt(max);
+   min = (TypeImplementation) ::sqrt((double) min);
+   max = (TypeImplementation) ::sqrt((double) max);
 
    DDoubleInterval::fillContent(bfMin, min, typename TypeBaseFloatInterval::FloatDigitsHelper());
    DDoubleInterval::fillContent(bfMax, max, typename TypeBaseFloatInterval::FloatDigitsHelper());
@@ -454,7 +454,7 @@ TCompareFloatInterval<UMaxBitsNumber, TypeBaseFloatInterval, TypeBuiltDouble, Ty
    if (hasNegativeSqrt)
       inherited::notifyForNegativeSqrt(*this);
 
-   dValue = ::sqrt((double) dValue);
+   dValue = (TypeImplementation) ::sqrt((double) dValue);
    inherited::notifyForCompare(*this);
 }
 

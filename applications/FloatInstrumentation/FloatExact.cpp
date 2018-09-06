@@ -56,11 +56,11 @@
 
 namespace NumericalDomains { namespace DDoubleExact {
 
-template <> int tfinite(long double val) { return finite(val); }
+template <> int tfinite(long double val) { return finite((double) val); }
 template <> int tfinite(double val) { return finite(val); }
 template <> int tfinite(float val) { return finite(val); }
 
-template <> int tisfinite(long double val) { return isfinite(val); }
+template <> int tisfinite(long double val) { return isfinite((double) val); }
 template <> int tisfinite(double val) { return isfinite(val); }
 template <> int tisfinite(float val) { return isfinite(val); }
 

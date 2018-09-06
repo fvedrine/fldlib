@@ -202,7 +202,7 @@ VirtualMultiSortedCollection::KeyLocationResult::setToIndex(VirtualMultiSortedCo
    }
 
 inline VirtualMultiSortedCollection::LocationResult
-VirtualMultiSortedCollection::_locateKey(const EnhancedObject& source, const ExtendedLocateParameters& parameters,
+VirtualMultiSortedCollection::_locateKey(const EnhancedObject& /* source */, const ExtendedLocateParameters& /* parameters */,
       VirtualMultiSortedCollectionCursor* cursor, const VirtualMultiSortedCollectionCursor* start,
       const VirtualMultiSortedCollectionCursor* end) const {
    AssumeCondition((!cursor || (&cursor->getSSupport() == this))

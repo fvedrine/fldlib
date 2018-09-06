@@ -316,18 +316,18 @@ class DefineBigCellIntAlgo : public DInteger::Access, protected IntegerTraits
       BitArray& operator=(bool value)
          {  if (value)
 #ifndef DefineGeneric
-               pitArray->array(uIndex/DefineSizeofBaseTypeInBits) 
+               pitArray->array((int) (uIndex/DefineSizeofBaseTypeInBits))
                   |= (1U << (uIndex%DefineSizeofBaseTypeInBits));
 #else
-               BaseStoreTraits::setTrueBit(pitArray->array(uIndex/DefineSizeofBaseTypeInBits),
+               BaseStoreTraits::setTrueBit(pitArray->array((int) (uIndex/DefineSizeofBaseTypeInBits)),
                   uIndex%DefineSizeofBaseTypeInBits);
 #endif
             else
 #ifndef DefineGeneric
-               pitArray->array(uIndex/DefineSizeofBaseTypeInBits)
+               pitArray->array((int) (uIndex/DefineSizeofBaseTypeInBits))
                   &= ~(1U << (uIndex%DefineSizeofBaseTypeInBits));
 #else
-               BaseStoreTraits::setFalseBit(pitArray->array(uIndex/DefineSizeofBaseTypeInBits),
+               BaseStoreTraits::setFalseBit(pitArray->array((int) (uIndex/DefineSizeofBaseTypeInBits)),
                   uIndex%DefineSizeofBaseTypeInBits);
 #endif
             return *this;
@@ -335,11 +335,11 @@ class DefineBigCellIntAlgo : public DInteger::Access, protected IntegerTraits
       operator bool() const
          {  
 #ifndef DefineGeneric
-            return (pitArray->array(uIndex/DefineSizeofBaseTypeInBits)
+            return (pitArray->array((int) (uIndex/DefineSizeofBaseTypeInBits))
                   & (1U << (uIndex%DefineSizeofBaseTypeInBits)))
                ? true : false;
 #else
-            return BaseStoreTraits::getBit(pitArray->array(uIndex/DefineSizeofBaseTypeInBits),
+            return BaseStoreTraits::getBit(pitArray->array((int) (uIndex/DefineSizeofBaseTypeInBits)),
                uIndex%DefineSizeofBaseTypeInBits);
 #endif
          }
@@ -349,54 +349,54 @@ class DefineBigCellIntAlgo : public DInteger::Access, protected IntegerTraits
    bool bitArray(int index) const
       {  
 #ifndef DefineGeneric
-         return (array(index/DefineSizeofBaseTypeInBits) & (1U << (index%DefineSizeofBaseTypeInBits)))
+         return (array((int) (index/DefineSizeofBaseTypeInBits)) & (1U << (index%DefineSizeofBaseTypeInBits)))
             ? true : false;
 #else
-         return BaseStoreTraits::getBit(array(index/DefineSizeofBaseTypeInBits),
+         return BaseStoreTraits::getBit(array((int) (index/DefineSizeofBaseTypeInBits)),
                index%DefineSizeofBaseTypeInBits);
 #endif
       }
    bool cbitArray(int index) const
       {  
 #ifndef DefineGeneric
-         return (array(index/DefineSizeofBaseTypeInBits) & (1U << (index%DefineSizeofBaseTypeInBits)))
+         return (array((int) (index/DefineSizeofBaseTypeInBits)) & (1U << (index%DefineSizeofBaseTypeInBits)))
             ? true : false;
 #else
-         return BaseStoreTraits::getBit(array(index/DefineSizeofBaseTypeInBits),
+         return BaseStoreTraits::getBit(array((int) (index/DefineSizeofBaseTypeInBits)),
                index%DefineSizeofBaseTypeInBits);
 #endif
       }
    void setBitArray(int index, bool value)
       {  if (value)
 #ifndef DefineGeneric
-            array(index/DefineSizeofBaseTypeInBits) |= (1U << (index%DefineSizeofBaseTypeInBits));
+            array((int) (index/DefineSizeofBaseTypeInBits)) |= (1U << (index%DefineSizeofBaseTypeInBits));
 #else
-            BaseStoreTraits::setTrueBit(array(index/DefineSizeofBaseTypeInBits),
+            BaseStoreTraits::setTrueBit(array((int) (index/DefineSizeofBaseTypeInBits)),
                index%DefineSizeofBaseTypeInBits);
 #endif
          else
 #ifndef DefineGeneric
-            array(index/DefineSizeofBaseTypeInBits) &= ~(1U << (index%DefineSizeofBaseTypeInBits));
+            array((int) (index/DefineSizeofBaseTypeInBits)) &= ~(1U << (index%DefineSizeofBaseTypeInBits));
 #else
-            BaseStoreTraits::setFalseBit(array(index/DefineSizeofBaseTypeInBits),
+            BaseStoreTraits::setFalseBit(array((int) (index/DefineSizeofBaseTypeInBits)),
                index%DefineSizeofBaseTypeInBits);
 #endif
       }
    void setTrueBitArray(int index)
       {  
 #ifndef DefineGeneric
-         array(index/DefineSizeofBaseTypeInBits) |= (1U << (index%DefineSizeofBaseTypeInBits));
+         array((int) (index/DefineSizeofBaseTypeInBits)) |= (1U << (index%DefineSizeofBaseTypeInBits));
 #else
-         BaseStoreTraits::setTrueBit(array(index/DefineSizeofBaseTypeInBits),
+         BaseStoreTraits::setTrueBit(array((int) (index/DefineSizeofBaseTypeInBits)),
             index%DefineSizeofBaseTypeInBits);
 #endif
       }
    void setFalseBitArray(int index)
       {  
 #ifndef DefineGeneric
-         array(index/DefineSizeofBaseTypeInBits) &= ~(1U << (index%DefineSizeofBaseTypeInBits));
+         array((int) (index/DefineSizeofBaseTypeInBits)) &= ~(1U << (index%DefineSizeofBaseTypeInBits));
 #else
-         BaseStoreTraits::setFalseBit(array(index/DefineSizeofBaseTypeInBits),
+         BaseStoreTraits::setFalseBit(array((int) (index/DefineSizeofBaseTypeInBits)),
             index%DefineSizeofBaseTypeInBits);
 #endif
       }
@@ -806,7 +806,7 @@ DefineBigCellInt DefineBigCellTemplateParameters(IntegerTraits)::operator/=(cons
    div(source, result);
    if (result.comma() > 0) {
       IntegerTraits::operator=(result.quotient());
-      operator>>=(inherited::getSize()*DefineSizeofBaseTypeInBits-result.comma());
+      operator>>=((int) (inherited::getSize()*DefineSizeofBaseTypeInBits-result.comma()));
       setTrueBitArray(result.comma());
    }
    else if (result.comma() == 0)
@@ -826,7 +826,7 @@ DefineBigCellInt DefineBigCellTemplateParameters(IntegerTraits)::operator/(const
    if (result.comma() > 0) {
       auto& promotedResult = (DefineBigCellInt DefineBigCellTemplateParameters(typename inherited::QuotientResult)&)
             result.quotient();
-      int shift = result.quotient().getSize()*DefineSizeofBaseTypeInBits-result.comma();
+      int shift = (int) (result.quotient().getSize()*DefineSizeofBaseTypeInBits-result.comma());
       promotedResult >>= shift;
       promotedResult.setTrueBitArray(result.comma());
    }
@@ -847,9 +847,9 @@ DefineBigCellInt DefineBigCellTemplateParameters(IntegerTraits)::operator%=(cons
    if (result.comma() > 0) {
       auto& promotedResult = (DefineBigCellInt DefineBigCellTemplateParameters(typename inherited::QuotientResult)&)
             result.quotient();
-      promotedResult >>= (inherited::getSize()*DefineSizeofBaseTypeInBits-result.comma());
+      promotedResult >>= (int) (inherited::getSize()*DefineSizeofBaseTypeInBits-result.comma());
 #ifndef DefineGeneric
-      result.quotient()[result.comma()/DefineSizeofBaseTypeInBits]
+      result.quotient()[(int) (result.comma()/DefineSizeofBaseTypeInBits)]
             |= (1U << (result.comma() % DefineSizeofBaseTypeInBits));
 #else
       BaseStoreTraits::setTrueBit(result.quotient()[result.comma()/DefineSizeofBaseTypeInBits],
@@ -1231,7 +1231,7 @@ class DefineBigInt
       {  return ArrayCells(cells()).divAssign(source).remainder(); }
    thisType& operator%=(const thisType& source) { cells() %= source.cells(); return *this; }
 
-   int log_base_2() const { return cells().log_base_2(); }
+   int log_base_2() const { return (int) cells().log_base_2(); }
    typedef typename ArrayCells::FormatParameters FormatParameters;
    void write(STG::IOObject::OSBase& out, const FormatParameters& params) const
       {  cells().write(out, params); }

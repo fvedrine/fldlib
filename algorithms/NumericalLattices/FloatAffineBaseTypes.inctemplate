@@ -79,7 +79,7 @@ DefineBuiltReal DefineSingleTemplateParameters(URealBitsNumber)::sqrtAssign(Base
       BaseDouble ulp;
       ulp.setBasicExponent(inherited::getBasicExponent());
       if (ulp.getSBasicExponent().minusAssign(inherited::BitSizeMantissa).hasCarry()) {
-         int shift = ulp.getSBasicExponent().neg()[0]+1;
+         int shift = (int) ulp.getSBasicExponent().neg()[0]+1;
          ulp.getSMantissa() = 1U;
          if (inherited::BitSizeMantissa-shift-1 > 0)
             ulp.getSMantissa() <<= (inherited::BitSizeMantissa-shift-1);

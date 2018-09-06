@@ -114,7 +114,7 @@ class ExtensibleCellIntegerTraits {
    void assertSize(int newSize) { adjustSize(newSize); }
    void setSize(int exactSize) { if (exactSize < viIntArray.count()) viIntArray.removeAllBetween(exactSize, -1); }
    void setBitSize(int exactSize)
-      {  int size = (exactSize + 8*sizeof(unsigned)-1)/(8*sizeof(unsigned));
+      {  int size = (int) ((exactSize + 8*sizeof(unsigned)-1)/(8*sizeof(unsigned)));
          int count = viIntArray.count();
          if (size > count)
             bookPlace(size-count);
@@ -267,12 +267,12 @@ class BigInteger : public STG::IOObject, public DInteger::BigIntegerImplementati
          return *this;
       }
    thisType& neg(int shift)
-      {  inheritedImplementation::assertSize((shift+8*sizeof(unsigned int)-1)/(8*sizeof(unsigned int)));
+      {  inheritedImplementation::assertSize((int) ((shift+8*sizeof(unsigned int)-1)/(8*sizeof(unsigned int))));
          inheritedImplementation::neg(shift);
          return *this;
       }
    thisType& clear(int shift)
-      {  inheritedImplementation::assertSize((shift+8*sizeof(unsigned int)-1)/(8*sizeof(unsigned int)));
+      {  inheritedImplementation::assertSize((int) ((shift+8*sizeof(unsigned int)-1)/(8*sizeof(unsigned int))));
          inheritedImplementation::clear(shift);
          return *this;
       }
@@ -281,19 +281,19 @@ class BigInteger : public STG::IOObject, public DInteger::BigIntegerImplementati
          return *this;
       }
    thisType& saturate(int shift)
-      {  inheritedImplementation::assertSize((shift+8*sizeof(unsigned int)-1)/(8*sizeof(unsigned int)));
+      {  inheritedImplementation::assertSize((int) ((shift+8*sizeof(unsigned int)-1)/(8*sizeof(unsigned int))));
          inheritedImplementation::saturate(shift);
          return *this;
       }
 
    thisType& operator<<=(int shift)
-      {  inheritedImplementation::assertSize((log_base_2()+shift+8*sizeof(unsigned int)-1)/(8*sizeof(unsigned int)));
+      {  inheritedImplementation::assertSize((int) ((log_base_2()+shift+8*sizeof(unsigned int)-1)/(8*sizeof(unsigned int))));
          inheritedImplementation::operator<<=(shift);
          return *this;
       }
    thisType& operator>>=(int shift) { inheritedImplementation::operator>>=(shift); return *this; }
    void leftShiftLocal(int index, int shift)
-      {  inheritedImplementation::assertSize((log_base_2()+shift+8*sizeof(unsigned int)-1)/(8*sizeof(unsigned int)));
+      {  inheritedImplementation::assertSize((int) ((log_base_2()+shift+8*sizeof(unsigned int)-1)/(8*sizeof(unsigned int))));
          inheritedImplementation::leftShiftLocal(shift, index);
       }
    void rightShiftLocal(int index, int shift)
@@ -418,9 +418,9 @@ class BigInteger : public STG::IOObject, public DInteger::BigIntegerImplementati
    bool hasZero(unsigned int nb) const { return inheritedImplementation::hasZero(nb); }
    void swap(thisType& source) { inheritedImplementation::swap(source); }
 
-   int getBitSize() const { return inheritedImplementation::getSize()*8*sizeof(unsigned int); }
-   void adjustBitSize(int newSize) { inheritedImplementation::adjustSize((newSize + 8*sizeof(unsigned int) - 1)/(8*sizeof(unsigned int))); }
-   void assertBitSize(int newSize) { inheritedImplementation::assertSize((newSize + 8*sizeof(unsigned int) - 1)/(8*sizeof(unsigned int))); }
+   int getBitSize() const { return (int) (inheritedImplementation::getSize()*8*sizeof(unsigned int)); }
+   void adjustBitSize(int newSize) { inheritedImplementation::adjustSize((int) ((newSize + 8*sizeof(unsigned int) - 1)/(8*sizeof(unsigned int)))); }
+   void assertBitSize(int newSize) { inheritedImplementation::assertSize((int) ((newSize + 8*sizeof(unsigned int) - 1)/(8*sizeof(unsigned int)))); }
    void setBitSize(int exactSize) { inheritedImplementation::setBitSize(exactSize); }
    unsigned int getValueAt(int bitFirst, int bitLength);
    void setValueAt(int bitFirst, int bitLength, unsigned int value);
@@ -462,10 +462,10 @@ class BigInteger : public STG::IOObject, public DInteger::BigIntegerImplementati
 inline unsigned int
 BigInteger::getValueAt(int bitFirst, int bitLength) {
    TBigCellInt<DInteger::TCellIntegerTraits<2> > value;
-   int arrayIndex = bitFirst/(8*sizeof(unsigned int));
+   int arrayIndex = (int) (bitFirst/(8*sizeof(unsigned int)));
    value[0] = carray(arrayIndex);
    value[1] = carray(arrayIndex+1);
-   value >>= (bitFirst - arrayIndex*(8*sizeof(unsigned int)));
+   value >>= (int) ((bitFirst - arrayIndex*(8*sizeof(unsigned int))));
    TBigCellInt<DInteger::TCellIntegerTraits<2> > mask = 0U;
    (mask.neg() <<= bitLength).neg();
    value &= mask;
@@ -476,11 +476,11 @@ inline void
 BigInteger::setValueAt(int bitFirst, int bitLength, unsigned int value) {
    assertBitSize(bitFirst + bitLength);
    TBigCellInt<DInteger::TCellIntegerTraits<2> > valueCells;
-   int arrayIndex = bitFirst/(8*sizeof(unsigned int));
+   int arrayIndex = (int) (bitFirst/(8*sizeof(unsigned int)));
    valueCells[0] = carray(arrayIndex);
    valueCells[1] = carray(arrayIndex+1);
    TBigCellInt<DInteger::TCellIntegerTraits<2> > mask = 0U;
-   int shift = (bitFirst - arrayIndex*(8*sizeof(unsigned int)));
+   int shift = (int) ((bitFirst - arrayIndex*(8*sizeof(unsigned int))));
    ((mask.neg() <<= bitLength).neg() <<= shift).neg();
    valueCells &= mask;
    (mask = value) <<= shift;

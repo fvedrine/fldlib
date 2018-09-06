@@ -74,7 +74,7 @@ namespace DFloatDigitsHelper {
          = (LDBL_MAX_EXP == (1 << (16-2))) ? 16 /* leading 1 bit */
             : sizeof(long double)*8-LDBL_MANT_DIG;
    };
-};
+}
 
 class FloatDigitsHelper {
   public:
@@ -115,9 +115,9 @@ class ExecutionPathContract : public BaseExecutionPath {
    bool doesFollowFlow() const { return false; }
    bool hasOutput() const { return false; }
 
-   void assumeDomain(char prefix) const {}
-   void assumeDomain(const char* prefix) const {}
-   void assumePrefixDomain(const char* prefix) const {}
+   void assumeDomain(char /* prefix */) const {}
+   void assumeDomain(const char* /* prefix */) const {}
+   void assumePrefixDomain(const char* /* prefix */) const {}
    template <class TypeImplementation, class TypeParameters>
    void readValueFromInput(TypeImplementation& result, const TypeParameters& params) const {}
    template <class TypeImplementation, class TypeParameters>
@@ -127,9 +127,9 @@ class ExecutionPathContract : public BaseExecutionPath {
          const TypeParameters& params) const {}
    void assumeUnsolvedBranch() {}
 
-   void writeDomain(char prefix) const {}
-   void writeDomain(const char* prefix) const {}
-   void writePrefixDomain(const char* prefix) const {}
+   void writeDomain(char /* prefix */) const {}
+   void writeDomain(const char* /* prefix */) const {}
+   void writePrefixDomain(const char* /* prefix */) const {}
    template <class TypeImplementation, class TypeParameters>
    void writeValueToOutput(const TypeImplementation& value, const TypeParameters& params) const {}
    void writeUnsolvedBranch() {}
@@ -158,8 +158,8 @@ class ExecutionPathContract : public BaseExecutionPath {
    template <class TypeBuiltDouble>
    void updateThresholdDetection(const TypeBuiltDouble& relativeError, const TypeBuiltDouble& meanValue) const;
 
-   bool followNewUnresolvedBranch(bool& isLastBranch) const { return true; }
-   unsigned followNewConversionBranch(unsigned conversion, bool& isLastBranch) const { return 0; }
+   bool followNewUnresolvedBranch(bool& /* isLastBranch */) const { return true; }
+   unsigned followNewConversionBranch(unsigned /* conversion */, bool& /* isLastBranch */) const { return 0; }
 };
 
 template <class TypeExecutionPath>
@@ -217,7 +217,7 @@ class TBaseFloatInterval : public TypeExecutionPath {
          };
       }
    template <class TFloatInterval>
-   void notifyForDivisionByZero(const TFloatInterval& source) const
+   void notifyForDivisionByZero(const TFloatInterval& /* source */) const
       {  if (inherited::hasOutput()) {
             inherited::writeSourceLine();
             inherited::writeDivisionByZero();
@@ -228,7 +228,7 @@ class TBaseFloatInterval : public TypeExecutionPath {
          };
       }
    template <class TFloatInterval>
-   void notifyForNegativeSqrt(const TFloatInterval& source) const
+   void notifyForNegativeSqrt(const TFloatInterval& /* source */) const
       {  if (inherited::hasOutput()) {
             inherited::writeSourceLine();
             inherited::writeNegativeSqrt();
@@ -239,7 +239,7 @@ class TBaseFloatInterval : public TypeExecutionPath {
          };
       }
    template <class TFloatInterval>
-   void notifyForNegativePow(const TFloatInterval& source) const
+   void notifyForNegativePow(const TFloatInterval& /* source */) const
       {  if (inherited::hasOutput()) {
             inherited::writeSourceLine();
             inherited::writeNegativePow();
@@ -250,7 +250,7 @@ class TBaseFloatInterval : public TypeExecutionPath {
          };
       }
    template <class TFloatInterval>
-   void notifyForNegativeOrNulLog(const TFloatInterval& source) const
+   void notifyForNegativeOrNulLog(const TFloatInterval& /* source */) const
       {  if (inherited::hasOutput()) {
             inherited::writeSourceLine();
             inherited::writeNegativeOrNulLog();

@@ -464,16 +464,16 @@ class TInstrumentedFloatZonotope : public TFloatZonotope<ExecutionPath, USizeMan
          ExecutionPath::releaseConstantStream(in);
       }
    TInstrumentedFloatZonotope(float value)
-      {  if (!inherited::fSupportAtomic)
-            inherited::initFrom(value);
+      {  if (!inherited::fSupportAtomic && inherited::oTraceFile)
+            inherited::initFrom((TypeImplementation) value);
          else
-            inherited::initFromAtomic(value);
+            inherited::initFromAtomic((TypeImplementation) value);
       }
    TInstrumentedFloatZonotope(double value)
-      {  if (!inherited::fSupportAtomic)
-            inherited::initFrom(value);
+      {  if (!inherited::fSupportAtomic && inherited::oTraceFile)
+            inherited::initFrom((TypeImplementation) value);
          else
-            inherited::initFromAtomic(value);
+            inherited::initFromAtomic((TypeImplementation) value);
       }
    TInstrumentedFloatZonotope(long double value);
    TInstrumentedFloatZonotope(TypeImplementation min, TypeImplementation max)
@@ -769,11 +769,11 @@ class TInstrumentedFloatZonotope : public TFloatZonotope<ExecutionPath, USizeMan
    explicit operator int() const
       {  return inherited::asInt(inherited::ReadParametersBase::RMZero); }
    explicit operator short int() const
-      {  return inherited::asInt(inherited::ReadParametersBase::RMZero); }
+      {  return (short int) inherited::asInt(inherited::ReadParametersBase::RMZero); }
    explicit operator unsigned() const
       {  return inherited::asUnsigned(inherited::ReadParametersBase::RMZero); }
    explicit operator short unsigned() const
-      {  return inherited::asUnsigned(inherited::ReadParametersBase::RMZero); }
+      {  return (short unsigned) inherited::asUnsigned(inherited::ReadParametersBase::RMZero); }
    explicit operator long int() const
       {  return inherited::asLong(inherited::ReadParametersBase::RMZero); }
    explicit operator unsigned long() const

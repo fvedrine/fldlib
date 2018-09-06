@@ -71,7 +71,7 @@ VirtualCollection::_add(EnhancedObject* object, const ExtendedInsertionParameter
 }
 
 inline void
-VirtualCollection::_addAll(const VirtualCollection& source, const ExtendedInsertionParameters& parameters,
+VirtualCollection::_addAll(const VirtualCollection& source, const ExtendedInsertionParameters& /* parameters */,
       VirtualCollectionCursor* cursor, const VirtualCollectionCursor* startSource,
       const VirtualCollectionCursor* endSource) {
    AssumeCondition(((cursor == nullptr) || (&cursor->getSSupport() == this))
@@ -89,7 +89,7 @@ VirtualCollection::_moveTo(VirtualCollection& destination,
 }
 
 inline void
-VirtualCollection::_moveAllTo(VirtualCollection& destination, const ExtendedReplaceParameters& parameters,
+VirtualCollection::_moveAllTo(VirtualCollection& destination, const ExtendedReplaceParameters& /* parameters */,
       const VirtualCollectionCursor* startCursor, const VirtualCollectionCursor* endCursor,
       VirtualCollectionCursor* destinationCursor) {
    AssumeCondition(((startCursor == nullptr) || (&startCursor->getSSupport() == this))
@@ -105,7 +105,7 @@ VirtualCollection::_remove(const ExtendedSuppressParameters& parameters,
 }
 
 inline void
-VirtualCollection::_removeAll(const ExtendedSuppressParameters& parameters,
+VirtualCollection::_removeAll(const ExtendedSuppressParameters& /* parameters */,
       const VirtualCollectionCursor* start, const VirtualCollectionCursor* end) {
    AssumeCondition((start == nullptr) || (&start->getSSupport() == this))
    AssumeCondition((end == nullptr) || (&end->getSSupport() == this))
@@ -121,7 +121,7 @@ VirtualCollection::_replace(EnhancedObject* object,
 }
 
 inline EnhancedObject*
-VirtualCollection::_getElement(const ExtendedLocateParameters& parameters,
+VirtualCollection::_getElement(const ExtendedLocateParameters& /* parameters */,
       const VirtualCollectionCursor* cursor) const {
    AssumeCondition((cursor == nullptr) || (&cursor->getSSupport() == this))
    return nullptr;

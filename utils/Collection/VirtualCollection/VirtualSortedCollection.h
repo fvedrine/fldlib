@@ -108,7 +108,7 @@ class VirtualSortedCollection : public VirtualCollection {
    class SimpleKey {
      public:
       SimpleKey() {}
-      SimpleKey(const VirtualSortedCollection& support) {}
+      SimpleKey(const VirtualSortedCollection& /* support */) {}
       typedef EnhancedObject TypeOfKey; // only useful for collections with keys deriving from EnhancedObject
       typedef const EnhancedObject& KeyType;
       typedef const EnhancedObject& ControlKeyType;
@@ -173,7 +173,7 @@ class VirtualSortedCollectionCursor : public VirtualCollectionCursor {
 InlineCollectionForAbstractCollect(VirtualSortedCollection, VirtualSortedCollectionCursor)
 
 inline VirtualSortedCollection::LocationResult
-VirtualSortedCollection::_locateKey(const EnhancedObject& source, const ExtendedLocateParameters& parameters,
+VirtualSortedCollection::_locateKey(const EnhancedObject& /* source */, const ExtendedLocateParameters& /* parameters */,
       VirtualSortedCollectionCursor* cursor, const VirtualSortedCollectionCursor* start,
       const VirtualSortedCollectionCursor* end) const {
    AssumeCondition((!cursor || (&cursor->getSSupport() == this))

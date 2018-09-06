@@ -44,7 +44,7 @@
 
 namespace NumericalDomains { namespace DAffine {
 
-template <> int tfinite(long double val) { return finite(val); }
+template <> int tfinite(long double val) { return finite((double) val); }
 template <> int tfinite(double val) { return finite(val); }
 template <> int tfinite(float val) { return finite(val); }
 

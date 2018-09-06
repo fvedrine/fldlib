@@ -71,7 +71,7 @@ class SortedArray : public GenericSortedArray {
    typedef typename Key::TypeOfKey TypeOfKey;
 
   protected:
-   virtual bool acceptElement(const EnhancedObject& source) const override { return true; }
+   virtual bool acceptElement(const EnhancedObject& /* source */) const override { return true; }
    virtual EnhancedObject* _getElement(const ExtendedLocateParameters& parameters,
          const VirtualCollectionCursor* cursor) const override
       {  return Cast::castTo(_getElement(parameters, (thisCursorType*) cursor)); }

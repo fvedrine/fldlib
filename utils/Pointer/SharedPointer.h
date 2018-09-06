@@ -50,7 +50,7 @@ class TPointerNotification : public EnhancedObject {
    const TypePointer* pspOrigin;
 
   protected:
-   virtual void _update(TypePointer& call) {}
+   virtual void _update(TypePointer& /* call */) {}
 
   public:
    TPointerNotification() : pspOrigin(nullptr) {}
@@ -222,7 +222,7 @@ SharedPointer::SharedPointer(SharedElement* element, Init)
    {  AssumeAllocation(element) element->lock(*this); }
 
 inline
-SharedPointer::SharedPointer(const SharedPointer& source)
+SharedPointer::SharedPointer(const SharedPointer& source) : Pointer(), COL::ImplListElement()
    {  if (source.SharedPointer::isValid()) source.getElement().lock(*this); }
 
 inline

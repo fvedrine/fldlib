@@ -55,7 +55,7 @@ class UnsignedLongBaseStoreTraits {
       {  memcpy(target, source, count*sizeof(unsigned long)); }
    static int sizeBaseInBits() { return 8*sizeof(unsigned long); }
    static int minCellsCountToStoreBits(int bitsNumber)
-      {  return (bitsNumber + 8*sizeof(unsigned long) - 1) / (8*sizeof(unsigned long)); } 
+      {  return (int) ((bitsNumber + 8*sizeof(unsigned long) - 1) / (8*sizeof(unsigned long))); } 
    static void swapArray(unsigned long* target, unsigned long* source, int count)
       {  unsigned long temp;
          for (int i = 0; i < count; ++i) {
@@ -292,7 +292,7 @@ class TGBasicCellIntegerTraits : public BaseStoreTraits {
 
    static int getSize() { return UCellSize; }
    void normalize() {}
-   void adjustSize(int newSize) { AssumeUncalled }
+   void adjustSize(int /* newSize */) { AssumeUncalled }
    void assertSize(int newSize) { AssumeCondition(newSize <= UCellSize) }
    void setSize(int exactSize) { AssumeCondition(exactSize == UCellSize) }
    void setBitSize(int exactSize)
@@ -467,7 +467,7 @@ class TGBigCellInt<BaseStoreTraits, DInteger::TGCellIntegerTraits<BaseStoreTrait
    thisType& operator=(BaseTypeConstReference value) { svalue() = value; return *this; }
 
    BaseTypeConstReference operator[](int index) const { return value(); }
-   BaseTypeReference& operator[](int index) { return value(); }
+   BaseTypeReference& operator[](int /* index */) { return value(); }
    ComparisonResult compare(const thisType& source) const
       {  return (value() < source.value()) ? CRLess
             : ((value() > source.value()) ? CRGreater : CREqual);
@@ -575,7 +575,8 @@ class TGBasicCellIntegerTraits<UnsignedBaseStoreTraits,
   public:
    TGBasicCellIntegerTraits() : ulValue(0) {}
    TGBasicCellIntegerTraits(unsigned int value) : ulValue(value) {}
-   TGBasicCellIntegerTraits(const thisType& source) : ulValue(source.ulValue) {}
+   TGBasicCellIntegerTraits(const thisType& source)
+      :  GCellIntegerTraitsContract<UnsignedBaseStoreTraits>(), ulValue(source.ulValue) {}
    thisType& operator=(const thisType& source) { ulValue = source.ulValue; return *this; }
    thisType& operator=(unsigned int source) { ulValue = source; return *this; }
    class ArrayProperty {
@@ -693,11 +694,11 @@ class TGBasicCellIntegerTraits<UnsignedBaseStoreTraits,
       operator unsigned() const
          {  unsigned result;
             if (uIndex == 0)
-               result = *pulValue;
+               result = (unsigned) *pulValue;
             else {
                unsigned long long int val = *pulValue;
                val >>= (sizeof(unsigned)*8);
-               result = val;
+               result = (unsigned) val;
             }
             return result;
          }
@@ -710,11 +711,11 @@ class TGBasicCellIntegerTraits<UnsignedBaseStoreTraits,
       {  AssumeCondition(index >= 0)
          unsigned int result;
          if (index == 0)
-            result = ulValue;
+            result = (unsigned int) ulValue;
          else if (index == 1) {
             unsigned long long int val = ulValue;
             val >>= (sizeof(unsigned)*8);
-            result = val;
+            result = (unsigned int) val;
          }
          else
             result = 0;
@@ -732,7 +733,7 @@ class TGBasicCellIntegerTraits<UnsignedBaseStoreTraits,
 
    static int getSize() { return 2; }
    void normalize() {}
-   void adjustSize(int newSize) { AssumeUncalled }
+   void adjustSize(int /* newSize */) { AssumeUncalled }
    void assertSize(int newSize) { AssumeCondition(newSize <= 2) }
    void setSize(int exactSize) { AssumeCondition(exactSize == 2) }
    void setBitSize(int exactSize) { AssumeCondition((exactSize + 8*sizeof(unsigned)-1)/(8*sizeof(unsigned)) == 2) }
@@ -804,16 +805,16 @@ class TGBigCellInt<UnsignedBaseStoreTraits,
             return *this;
          }
       operator unsigned int() const
-         {  return (*plluValue >> (uIndex*4*sizeof(unsigned int)))
-               & ~(~0ULL << 4*sizeof(unsigned int));
+         {  return (unsigned int) ((*plluValue >> (uIndex*4*sizeof(unsigned int)))
+               & ~(~0ULL << 4*sizeof(unsigned int)));
          }
    };
    friend class MidArray;
    MidArray midArray(int index) { return MidArray(*this, index); }
    unsigned int midArray(int index) const
       {  AssumeCondition(index < 4)
-         return (value() >> (index*4*sizeof(unsigned int)))
-               & ~(~0ULL << 4*sizeof(unsigned int));
+         return (unsigned int) ((value() >> (index*4*sizeof(unsigned int)))
+               & ~(~0ULL << 4*sizeof(unsigned int)));
       }
    unsigned int cmidArray(int index) const { return midArray(index); }
    void setMidArray(int index, unsigned int value)
@@ -975,7 +976,7 @@ class TGBigCellInt<UnsignedBaseStoreTraits,
       {  value() %= source.value(); return *this; }
 
    unsigned int log_base_2() const { return log_base_2(value()); }
-   unsigned int getValue() const { return value(); }
+   unsigned int getValue() const { return (unsigned int) value(); }
    bool isAtomic() const { return !carray(1); }
    void swap(thisType& source) { inherited::swap(source); }
    void clear() { value() = 0U; }

@@ -274,15 +274,15 @@ class ExecutionPath : public BaseExecutionPath {
             writeBackTrace(*oTraceFile);
       }
 
-   static BuiltFloat& threshold(const BuiltFloat& source) { return brFloatThreshold; }
-   static BuiltDouble& threshold(const BuiltDouble& source) { return brDoubleThreshold; }
-   static BuiltLongDouble& threshold(const BuiltLongDouble& source) { return brLongDoubleThreshold; }
-   static BuiltFloat& thresholdDomain(const BuiltFloat& source) { return brFloatThresholdDomain; }
-   static BuiltDouble& thresholdDomain(const BuiltDouble& source) { return brDoubleThresholdDomain; }
-   static BuiltLongDouble& thresholdDomain(const BuiltLongDouble& source) { return brLongDoubleThresholdDomain; }
-   static BuiltFloat& maximalAccuracy(const BuiltFloat& source) { return brFloatMaximalAccuracy; }
-   static BuiltDouble& maximalAccuracy(const BuiltDouble& source) { return brDoubleMaximalAccuracy; }
-   static BuiltLongDouble& maximalAccuracy(const BuiltLongDouble& source) { return brLongDoubleMaximalAccuracy; }
+   static BuiltFloat& threshold(const BuiltFloat& /* source */) { return brFloatThreshold; }
+   static BuiltDouble& threshold(const BuiltDouble& /* source */) { return brDoubleThreshold; }
+   static BuiltLongDouble& threshold(const BuiltLongDouble& /* source */) { return brLongDoubleThreshold; }
+   static BuiltFloat& thresholdDomain(const BuiltFloat& /* source */) { return brFloatThresholdDomain; }
+   static BuiltDouble& thresholdDomain(const BuiltDouble& /* source */) { return brDoubleThresholdDomain; }
+   static BuiltLongDouble& thresholdDomain(const BuiltLongDouble& /* source */) { return brLongDoubleThresholdDomain; }
+   static BuiltFloat& maximalAccuracy(const BuiltFloat& /* source */) { return brFloatMaximalAccuracy; }
+   static BuiltDouble& maximalAccuracy(const BuiltDouble& /* source */) { return brDoubleMaximalAccuracy; }
+   static BuiltLongDouble& maximalAccuracy(const BuiltLongDouble& /* source */) { return brLongDoubleMaximalAccuracy; }
 
    template <class TypeBuiltDouble>
    static void assumeThresholdDetection(const TypeBuiltDouble& relativeError, const TypeBuiltDouble& real)
@@ -341,8 +341,8 @@ PathExplorer::isFinished() {
       }
       else { // conversion
          AssumeCondition(uCurrentStackPosition >= (int) uLastLogCases)
-         int index = ((uCurrentStackPosition-uLastLogCases) + 8*sizeof(unsigned) - 1)/(8*sizeof(unsigned));
-         int shiftIndex = (uCurrentStackPosition-uLastLogCases) % (8*sizeof(unsigned));
+         int index = (int) (((uCurrentStackPosition-uLastLogCases) + 8*sizeof(unsigned) - 1)/(8*sizeof(unsigned)));
+         int shiftIndex = (int) ((uCurrentStackPosition-uLastLogCases) % (8*sizeof(unsigned)));
          if ((int) (8*sizeof(unsigned) - shiftIndex) < (int) uLastLogCases) {
             biStackTrace[index] &= ~(~(~0U << uLastLogCases) << shiftIndex);
             biStackTrace[index] |= uLastResult << shiftIndex;

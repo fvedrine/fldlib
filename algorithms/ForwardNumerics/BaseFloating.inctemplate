@@ -141,21 +141,21 @@ DefineBuiltAccess::trightShift(
    };
 #ifndef DefineGeneric
    if ((((bitSizeMantissa-1) % DefineSizeofBaseTypeInBits)+1) >= (shift % DefineSizeofBaseTypeInBits))
-      mantissa[(bitSizeMantissa-shift) / DefineSizeofBaseTypeInBits]
+      mantissa[(int) ((bitSizeMantissa-shift) / DefineSizeofBaseTypeInBits)]
          |= (value << ((bitSizeMantissa-shift) % DefineSizeofBaseTypeInBits));
    else {
-      mantissa[(bitSizeMantissa-shift) / DefineSizeofBaseTypeInBits]
+      mantissa[(int) ((bitSizeMantissa-shift) / DefineSizeofBaseTypeInBits)]
          |= (value << (bitSizeMantissa-shift) % DefineSizeofBaseTypeInBits);
-      mantissa[(bitSizeMantissa-shift) / DefineSizeofBaseTypeInBits + 1]
+      mantissa[(int) ((bitSizeMantissa-shift) / DefineSizeofBaseTypeInBits + 1)]
          = (value >> (DefineSizeofBaseTypeInBits - (bitSizeMantissa-shift) % DefineSizeofBaseTypeInBits));
    };
 #else
    BaseStoreTraits::storeIntoHighPart(value,
       (bitSizeMantissa-shift) % DefineSizeofBaseTypeInBits,
-      mantissa[(bitSizeMantissa-shift) / DefineSizeofBaseTypeInBits]);
+      mantissa[(int) ((bitSizeMantissa-shift) / DefineSizeofBaseTypeInBits)]);
    if ((((bitSizeMantissa-1) % (DefineSizeofBaseTypeInBits))+1)
          < (shift % (DefineSizeofBaseTypeInBits)))
-      mantissa[(bitSizeMantissa-shift) / DefineSizeofBaseTypeInBits + 1]
+      mantissa[(int) ((bitSizeMantissa-shift) / DefineSizeofBaseTypeInBits + 1)]
          = BaseStoreTraits::getHighPart(value, DefineSizeofBaseTypeInBits
             - (bitSizeMantissa-shift) % (DefineSizeofBaseTypeInBits));
 #endif
@@ -233,8 +233,8 @@ DefineBuiltDouble<TypeTraits>::setChunk(const void* chunk, bool isChunkLittleEnd
 
    unsigned char* mask = &localChunk[0];
    int mantissaIndex = 0,
-       lastMantissaIndex = (sizeMantissa + DefineSizeofBaseTypeInBits - 1)
-            / DefineSizeofBaseTypeInBits - 1;
+       lastMantissaIndex = (int) ((sizeMantissa + DefineSizeofBaseTypeInBits - 1)
+            / DefineSizeofBaseTypeInBits) - 1;
    int charInMantissa = 0;
    if (isBigEndian)
       charInMantissa = ((DefineSizeofBaseTypeInBits+7)/8 - 1);
@@ -267,8 +267,8 @@ LExponent:
 
    mask = &localChunk[0];
    int exponentIndex = 0,
-       lastExponentIndex = (sizeExponent + DefineSizeofBaseTypeInBits - 1)
-            / DefineSizeofBaseTypeInBits - 1;
+       lastExponentIndex = (int) ((sizeExponent + DefineSizeofBaseTypeInBits - 1)
+            / DefineSizeofBaseTypeInBits) - 1;
    int charInExponent = 0;
    if (!isBigEndian)
       charInExponent = ((DefineSizeofBaseTypeInBits+7)/8 - 1);
@@ -308,12 +308,12 @@ LEnd:
       if (sizeExponent % DefineSizeofBaseTypeInBits == 0)
          biExponent <<= 1;
       else
-         biExponent >>= ((lastExponentIndex + 1)*DefineSizeofBaseTypeInBits - sizeExponent - 1);
+         biExponent >>= (int) ((lastExponentIndex + 1)*DefineSizeofBaseTypeInBits - sizeExponent - 1);
       if (*mask & 0x80)
          biExponent.setTrueBitArray(0);
    }
    else
-      biExponent >>= ((lastExponentIndex + 1)*DefineSizeofBaseTypeInBits - sizeExponent - 1);
+      biExponent >>= (int) ((lastExponentIndex + 1)*DefineSizeofBaseTypeInBits - sizeExponent - 1);
    
    biExponent.normalize();
 }
@@ -330,8 +330,8 @@ DefineBuiltDouble<TypeTraits>::fillChunk(void* chunk, bool isChunkLittleEndian) 
 
    unsigned char* mask = &localChunk[0];
    int mantissaIndex = 0,
-       lastMantissaIndex = (sizeMantissa + DefineSizeofBaseTypeInBits - 1)
-            / (DefineSizeofBaseTypeInBits) - 1;
+       lastMantissaIndex = (int) ((sizeMantissa + DefineSizeofBaseTypeInBits - 1)
+            / (DefineSizeofBaseTypeInBits)) - 1;
    int charInMantissa = 0;
    if (isBigEndian)
       charInMantissa = ((DefineSizeofBaseTypeInBits+7)/8 - 1);
@@ -367,8 +367,8 @@ DefineBuiltDouble<TypeTraits>::fillChunk(void* chunk, bool isChunkLittleEndian) 
 LExponent:
    mask = &localChunk[0];
    int exponentIndex = 0,
-       lastExponentIndex = (sizeExponent + DefineSizeofBaseTypeInBits - 1)
-            / DefineSizeofBaseTypeInBits - 1;
+       lastExponentIndex = (int) ((sizeExponent + DefineSizeofBaseTypeInBits - 1)
+            / DefineSizeofBaseTypeInBits) - 1;
    int charInExponent = 0;
    if (!isBigEndian)
       charInExponent = ((DefineSizeofBaseTypeInBits+7)/8 - 1);
@@ -384,11 +384,11 @@ LExponent:
       if (sizeExponent % DefineSizeofBaseTypeInBits == 0)
          copyExponent >>= 1;
       else
-         copyExponent.leftShiftAssign((lastExponentIndex + 1)*DefineSizeofBaseTypeInBits
+         copyExponent.leftShiftAssign((int) ((lastExponentIndex + 1)*DefineSizeofBaseTypeInBits)
                - sizeExponent - 1);
    }
    else
-      copyExponent.leftShiftAssign((lastExponentIndex + 1)*DefineSizeofBaseTypeInBits
+      copyExponent.leftShiftAssign((int) ((lastExponentIndex + 1)*DefineSizeofBaseTypeInBits)
             - sizeExponent - 1);
 
    int exponentChar = (sizeExponent + 7) / 8;
@@ -398,11 +398,12 @@ LExponent:
          if (exponentChar == 0)
             goto LEnd;
 #ifndef DefineGeneric
-         *mask |= (unsigned char) (copyExponent[exponentIndex] >> (charInExponent*8));
+         unsigned int aval = (unsigned int) (copyExponent[exponentIndex] >> (charInExponent*8));
 #else
-         *mask |= (unsigned char) BaseStoreTraits::getHighPart(copyExponent[exponentIndex],
-               charInExponent*8);
+         unsigned int aval = (unsigned int) BaseStoreTraits::getHighPart(copyExponent[exponentIndex], charInExponent*8);
 #endif
+         unsigned char val = (unsigned char) aval;
+         *mask |= val;
          if (isBigEndian)
             ++charInExponent;
          else
@@ -485,7 +486,7 @@ DefineBuiltDouble<TypeTraits>::setFloat(const FloatConversion& value, ReadParame
          return;
       };
       if (value.getSizeMantissa() < bitSizeMantissa()) {
-         for (int index = (value.getSizeMantissa()-1)/DefineSizeofBaseTypeInBits; 
+         for (int index = (int) ((value.getSizeMantissa()-1)/DefineSizeofBaseTypeInBits);
                index >= 0; --index)
             biMantissa[index] = (DefineBaseType) value.mantissa()[index];
          biMantissa.normalize();
@@ -494,7 +495,7 @@ DefineBuiltDouble<TypeTraits>::setFloat(const FloatConversion& value, ReadParame
       else { // value.getSizeMantissa() >= bitSizeMantissa()
          typename FloatConversion::Mantissa mantissa(value.mantissa());
          mantissa >>= (value.getSizeMantissa()-bitSizeMantissa());
-         for (int index = (bitSizeMantissa()-1)/DefineSizeofBaseTypeInBits; 
+         for (int index = (int) ((bitSizeMantissa()-1)/DefineSizeofBaseTypeInBits);
                index >= 0; --index)
             biMantissa[index] = (DefineBaseType) mantissa[index];
          if (params.keepSignalingConversion() && biMantissa.isZero()) {
@@ -515,7 +516,7 @@ DefineBuiltDouble<TypeTraits>::setFloat(const FloatConversion& value, ReadParame
       int logMantissa = value.isZeroExponent() ? value.mantissa().log_base_2()
          : (value.getSizeMantissa() + 1);
 
-      for (int index = (value.getSizeExponent()-1)/DefineSizeofBaseTypeInBits; 
+      for (int index = (int) ((value.getSizeExponent()-1)/DefineSizeofBaseTypeInBits);
             index >= 0; --index)
          biExponent[index] = (DefineBaseType) value.exponent()[index];
       biExponent.normalize();
@@ -527,7 +528,7 @@ DefineBuiltDouble<TypeTraits>::setFloat(const FloatConversion& value, ReadParame
       if (value.isZeroExponent()) 
          biExponent.sub(value.getSizeMantissa() - logMantissa);
 
-      for (int index = (value.getSizeMantissa()-1)/DefineSizeofBaseTypeInBits; 
+      for (int index = (int) ((value.getSizeMantissa()-1)/DefineSizeofBaseTypeInBits);
             index >= 0; --index)
          biMantissa[index] = (DefineBaseType) value.mantissa()[index];
       biMantissa <<= (bitSizeMantissa() - logMantissa + 1);
@@ -567,7 +568,7 @@ DefineBuiltDouble<TypeTraits>::setFloat(const FloatConversion& value, ReadParame
             };
             return;
          };
-         for (int index = (bitSizeExponent()-1)/DefineSizeofBaseTypeInBits; 
+         for (int index = (int) ((bitSizeExponent()-1)/DefineSizeofBaseTypeInBits);
                index >= 0; --index)
             biExponent[index] = (DefineBaseType) newExponent[index];
          biExponent.normalize();
@@ -603,7 +604,7 @@ DefineBuiltDouble<TypeTraits>::setFloat(const FloatConversion& value, ReadParame
                };
             };
          };
-         for (int index = (bitSizeMantissa()-1)/DefineSizeofBaseTypeInBits; 
+         for (int index = (int) ((bitSizeMantissa()-1)/DefineSizeofBaseTypeInBits);
                index >= 0; --index)
             biMantissa[index] = (DefineBaseType) mantissa[index];
          biMantissa.normalize();
@@ -613,8 +614,8 @@ DefineBuiltDouble<TypeTraits>::setFloat(const FloatConversion& value, ReadParame
          newExponent.neg().inc();
          if (newExponent < bitSizeMantissa()) {
             typename FloatConversion::Mantissa mantissa = value.mantissa();
-            int shift = (value.getSizeMantissa() - bitSizeMantissa())
-                  + newExponent.getValue() + 1;
+            int shift = (int) ((value.getSizeMantissa() - bitSizeMantissa())
+                  + newExponent.getValue() + 1);
             if (shift > 0) {
                if (DefineRightShift(
 #ifdef DefineGeneric
@@ -631,7 +632,7 @@ DefineBuiltDouble<TypeTraits>::setFloat(const FloatConversion& value, ReadParame
             }
             else
                params.setUnderflow();
-            for (int index = (bitSizeMantissa()-1)/DefineSizeofBaseTypeInBits; 
+            for (int index = (int) ((bitSizeMantissa()-1)/DefineSizeofBaseTypeInBits);
                   index >= 0; --index)
                biMantissa[index] = (DefineBaseType) mantissa[index];
             biMantissa.normalize();
@@ -657,13 +658,13 @@ DefineBuiltDouble<TypeTraits>::setFloat(const FloatConversion& value, ReadParame
       };
    }
    else { // value.getSizeExponent() == bitSizeExponent()
-      for (int index = (value.getSizeExponent()-1)/DefineSizeofBaseTypeInBits; 
+      for (int index = (int) ((value.getSizeExponent()-1)/DefineSizeofBaseTypeInBits);
             index >= 0; --index)
          biExponent[index] = (DefineBaseType) value.exponent()[index];
       biExponent.normalize();
 
       if (value.getSizeMantissa() <= bitSizeMantissa()) {
-         for (int index = (value.getSizeMantissa()-1)/DefineSizeofBaseTypeInBits; 
+         for (int index = (int) ((value.getSizeMantissa()-1)/DefineSizeofBaseTypeInBits);
                index >= 0; --index)
             biMantissa[index] = (DefineBaseType) value.mantissa()[index];
          biMantissa <<= (bitSizeMantissa() - value.getSizeMantissa());
@@ -701,7 +702,7 @@ DefineBuiltDouble<TypeTraits>::setFloat(const FloatConversion& value, ReadParame
                return;
             };
          };
-         for (int index = (bitSizeMantissa()-1)/DefineSizeofBaseTypeInBits; 
+         for (int index = (int) ((bitSizeMantissa()-1)/DefineSizeofBaseTypeInBits);
                index >= 0; --index)
             biMantissa[index] = (DefineBaseType) sourceMantissa[index];
          biMantissa.normalize();
@@ -765,7 +766,7 @@ DefineBuiltDouble<TypeTraits>::retrieveInteger(IntConversion& result, ReadParame
 #ifdef DefineGeneric
                typename TypeTraits::BaseStoreTraits(),
 #endif
-               localResult, bitSizeMantissa()-digits.getValue(), 0x1, params,
+               localResult, bitSizeMantissa()- (int) digits.getValue(), 0x1, params,
                fNegative, bitSizeMantissa()).hasCarry()
             || ((bitSizeMantissa() > result.getMaxDigits())
                && localResult.cbitArray(result.getMaxDigits()))) {
@@ -782,8 +783,8 @@ DefineBuiltDouble<TypeTraits>::retrieveInteger(IntConversion& result, ReadParame
       };
    }
    else {
-      localResult <<= (digits.getValue()-bitSizeMantissa());
-      localResult.setTrueBitArray(digits.getValue());
+      localResult <<= (int) (digits.getValue()-bitSizeMantissa());
+      localResult.setTrueBitArray((int) digits.getValue());
    };
    for (int index = 0; index < (int) ((result.getSize()-1)/DefineSizeofBaseTypeInBits+1);
          ++index)
@@ -864,7 +865,7 @@ DefineBuiltDouble<TypeTraits>::plusAssignSureNN(const thisType& source, ReadPara
             params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
          return *this;
       };
-      int shift = (source.biExponent - biExponent).getValue();
+      int shift = (int) (source.biExponent - biExponent).getValue();
       biExponent = source.biExponent;
       bool hasOverflow = DefineRightShift(
 #ifdef DefineGeneric
@@ -966,7 +967,7 @@ DefineBuiltDouble<TypeTraits>::plusAssignSureNN(const thisType& source, ReadPara
          params.setApproximate(doesAdd ? ReadParameters::Up : ReadParameters::Down);
       return *this;
    };
-   int shift = (biExponent - source.biExponent).getValue();
+   int shift = (int) (biExponent - source.biExponent).getValue();
    Mantissa sourceMantissa = source.biMantissa;
    if (DefineRightShift(
 #ifdef DefineGeneric
@@ -1070,7 +1071,7 @@ DefineBuiltDouble<TypeTraits>::plusAssignSureND(const thisType& source, ReadPara
 #ifdef DefineGeneric
             typename TypeTraits::BaseStoreTraits(),
 #endif
-            sourceMantissa, biExponent.getValue() - 1, 0x0, params,
+            sourceMantissa, (int) biExponent.getValue() - 1, 0x0, params,
             fNegative, bitSizeMantissa()).hasCarry()
          || biMantissa.add(sourceMantissa).hasCarry()) {
       DefineRightShift(
@@ -1186,7 +1187,7 @@ DefineBuiltDouble<TypeTraits>::plusAssignSureDN(const thisType& source, ReadPara
 #ifdef DefineGeneric
          typename TypeTraits::BaseStoreTraits(),
 #endif
-         biMantissa, source.biExponent.getValue() - 1, 0x0, params,
+         biMantissa, (int) source.biExponent.getValue() - 1, 0x0, params,
          fNegative, bitSizeMantissa()).hasCarry();
    if (biMantissa.add(source.biMantissa).hasCarry() || hasOverflow) {
       DefineRightShift(
@@ -1270,8 +1271,8 @@ DefineBuiltDouble<TypeTraits>::minusAssignSureNN(const thisType& source, ReadPar
          Exponent shiftExponent = getBasicExponent(shift);
          if (biExponent <= shiftExponent)
 #endif
-         {  biMantissa >>= (shift-biExponent.getValue()+1);
-            biMantissa.setTrueBitArray(bitSizeMantissa()-(shift-biExponent.getValue()+1));
+         {  biMantissa >>= (int) (shift-biExponent.getValue()+1);
+            biMantissa.setTrueBitArray((int) (bitSizeMantissa()-(shift-biExponent.getValue()+1)));
             biExponent.clear();
             params.setUnderflow();
          }
@@ -1351,7 +1352,7 @@ DefineBuiltDouble<TypeTraits>::minusAssignSureNN(const thisType& source, ReadPar
       return *this;
    };
 
-   int shift = (biExponent - source.biExponent).getValue();
+   int shift = (int) (biExponent - source.biExponent).getValue();
    Mantissa sourceMantissa(source.biMantissa);
    if (shift == 1) {
       bool hasMinor = sourceMantissa.cbitArray(0);
@@ -1373,8 +1374,8 @@ DefineBuiltDouble<TypeTraits>::minusAssignSureNN(const thisType& source, ReadPar
             biMantissa <<= newShift;
 
          if (biExponent <= newShift) {
-            biMantissa >>= (newShift-biExponent.getValue()+1);
-            biMantissa.setTrueBitArray(bitSizeMantissa()-(newShift-biExponent.getValue()+1));
+            biMantissa >>= (int) (newShift-biExponent.getValue()+1);
+            biMantissa.setTrueBitArray((int) (bitSizeMantissa()-(newShift-biExponent.getValue()+1)));
             biExponent = 0;
             params.setUnderflow();
          }
@@ -1555,7 +1556,7 @@ DefineBuiltDouble<TypeTraits>::minusAssignSureND(const thisType& source, ReadPar
       return *this;
    };
 
-   int sourceShift = biExponent.getValue()-1;
+   int sourceShift = (int) biExponent.getValue()-1;
    if (sourceShift == 0) {
       if (biMantissa.sub(source.biMantissa).hasCarry()) {
          biExponent = 0;
@@ -1875,13 +1876,16 @@ DefineBuiltDouble<TypeTraits>&
 DefineBuiltDouble<TypeTraits>::multAssign(DefineBaseTypeConstReference value,
       ReadParameters& params) {
    if (value != 0) {
-      int valueDigits = log_base_2(value);
+#ifndef DefineGeneric
+      typedef UnsignedBaseStoreTraits BaseStoreTraits;
+#endif
+      int valueDigits = BaseStoreTraits::log_base_2(value);
       if (isNormalized()) {
          typename TypeTraits::ExtendedMantissa mantissa(biMantissa);
          typename TypeTraits::ExtendedMantissa::Carry carry = mantissa.multAssign(value);
          if (carry.hasCarry()) {
-            AssumeCondition((valueDigits == log_base_2(carry.carry()))
-                  || (valueDigits == 1+log_base_2(carry.carry())))
+            AssumeCondition((valueDigits == BaseStoreTraits::log_base_2(carry.carry()))
+                  || (valueDigits == 1+ BaseStoreTraits::log_base_2(carry.carry())))
 #ifndef DefineGeneric
             if ((carry.carry() & (1U << (valueDigits-1))) == 0)
 #else
@@ -1928,7 +1932,7 @@ DefineBuiltDouble<TypeTraits>::multAssign(DefineBaseTypeConstReference value,
       else if (biExponent.isZero()) {
          typename TypeTraits::Mantissa::Carry carry = biMantissa.multAssign(value);
          if (carry.hasCarry()) {
-            int shift = log_base_2(carry.carry())-1;
+            int shift = BaseStoreTraits::log_base_2(carry.carry())-1;
             if (shift > 0) {
                if (DefineRightShift(
 #ifdef DefineGeneric
@@ -2200,7 +2204,7 @@ DefineBuiltDouble<TypeTraits>::multAssignNN(const thisType& source, const MultPa
 #ifdef DefineGeneric
                typename TypeTraits::BaseStoreTraits(),
 #endif
-               biMantissa, subExponent.getValue()+1, 0x1, params,
+               biMantissa, (int) subExponent.getValue()+1, 0x1, params,
                fNegative, bitSizeMantissa()).hasCarry()) {
             biExponent.inc();
             params.clearUnderflow();
@@ -2328,7 +2332,7 @@ DefineBuiltDouble<TypeTraits>::multAssignND(const thisType& source, const MultPa
 #ifdef DefineGeneric
                typename TypeTraits::BaseStoreTraits(),
 #endif
-               biMantissa, biExponent.getValue()+1, 0x1, params, fNegative, bitSizeMantissa()).hasCarry()) {
+               biMantissa, (int) biExponent.getValue()+1, 0x1, params, fNegative, bitSizeMantissa()).hasCarry()) {
             biExponent = 0x1;
             params.clearUnderflow();
             return *this;
@@ -2459,7 +2463,7 @@ DefineBuiltDouble<TypeTraits>::multAssignDN(const thisType& source, const MultPa
 #ifdef DefineGeneric
                typename TypeTraits::BaseStoreTraits(),
 #endif
-               biMantissa, biExponent.getValue()+1, 0x1, params, fNegative, bitSizeMantissa()).hasCarry()) {
+               biMantissa, (int) biExponent.getValue()+1, 0x1, params, fNegative, bitSizeMantissa()).hasCarry()) {
             params.clearUnderflow();
             biExponent = 1U;
             return *this;
@@ -2865,18 +2869,21 @@ DefineBuiltDouble<TypeTraits>::multAssignDouble(const thisType& source, ReadPara
 template <class TypeTraits>
 DefineBuiltDouble<TypeTraits>&
 DefineBuiltDouble<TypeTraits>::divAssign(DefineBaseTypeConstReference value, ReadParameters& params) {
-   AssumeCondition((value > 0)
 #ifndef DefineGeneric
-         && (value < (1U << (sizeof(unsigned int)*4)))
+   AssumeCondition((value > 0)
+         && (value < (1U << (sizeof(unsigned int)*4))))
 #else
-         && BaseStoreTraits::isZeroValue(BaseStoreTraits::getMidHighPart(value))
+   AssumeCondition((value > 0)
+         && BaseStoreTraits::isZeroValue(BaseStoreTraits::getMidHighPart(value)))
 #endif
-      )
    if (isNormalized()) {
       typename TypeTraits::ExtendedMantissa mantissa(biMantissa);
       typename TypeTraits::ExtendedMantissa::AtomicDivisionResult result = mantissa.divAssign(value);
+#if !defined(DefineGeneric) && (!defined(DefineDebugLevel) || DefineDebugLevel != 1)
+      typedef UnsignedBaseStoreTraits BaseStoreTraits;
+#endif
       int shift = (bitSizeMantissa()+1 - mantissa.log_base_2());
-      AssumeCondition((log_base_2(value) == shift) || (log_base_2(value) == (shift+1)))
+      AssumeCondition((BaseStoreTraits::log_base_2(value) == shift) || (BaseStoreTraits::log_base_2(value) == (shift+1)))
       DefineBaseType leftQuotient = 0x0;
       if ((shift == (int) (DefineSizeofBaseTypeInBits/2+1))
 #ifndef DefineGeneric
@@ -2913,7 +2920,7 @@ DefineBuiltDouble<TypeTraits>::divAssign(DefineBaseTypeConstReference value, Rea
       Exponent shiftExponent(typename Exponent::Basic(), bitSizeExponent(), shift);
       if (biExponent <= shiftExponent)
 #endif
-      {  int leftshift = shift-biExponent.getValue() + 1;
+      {  int leftshift = shift-(int) biExponent.getValue() + 1;
          bool doesAdd = false;
          bool isRoundToEven = false;
          bool isApproximate = false;
@@ -3066,7 +3073,7 @@ DefineBuiltDouble<TypeTraits>::divAssignNN(const thisType& source, ReadParameter
          biExponent.clear();
          params.setUnderflow();
          if (subExponent < Exponent(typename Exponent::Basic(), bitSizeExponent(), bitSizeMantissa())) {
-            int shift = subExponent.getValue()+1;
+            int shift = (int) subExponent.getValue()+1;
             ReadParameters newParams(params);
             if (isApproximate)
                newParams.clearRoundToEven();
@@ -3286,7 +3293,7 @@ DefineBuiltDouble<TypeTraits>::divAssignDN(const thisType& source, ReadParameter
 #ifdef DefineGeneric
                typename TypeTraits::BaseStoreTraits(),
 #endif
-               biMantissa, subExponent.getValue(), 0x1, newParams, fNegative, bitSizeMantissa()).hasCarry()) {
+               biMantissa, (int) subExponent.getValue(), 0x1, newParams, fNegative, bitSizeMantissa()).hasCarry()) {
             biExponent.inc();
             params.clearUnderflow();
          };
@@ -3336,7 +3343,7 @@ DefineBuiltDouble<TypeTraits>::divAssignDN(const thisType& source, ReadParameter
 #ifdef DefineGeneric
                typename TypeTraits::BaseStoreTraits(),
 #endif
-               biMantissa, -result.comma() - subExponent.getValue(), 0x1,
+               biMantissa, -result.comma() - (int) subExponent.getValue(), 0x1,
                newParams, fNegative, bitSizeMantissa()).hasCarry())
             biExponent.inc();
          if (!newParams.isApproximate() && doesAdd
@@ -3703,7 +3710,7 @@ DefineBuiltDouble<TypeTraits>::readDecimal(STG::IOObject::ISBase& in, ReadParame
             exponent.multAssign(0xa, params);
          if (isNegativeExponent && !subExponentValue && (exponent.biExponent > biExponent)) {
             exponent.biExponent -= TypeTraits::getZeroExponent(biExponent);
-            subExponentValue += exponent.biExponent.getValue();
+            subExponentValue += (int) exponent.biExponent.getValue();
             exponent.biExponent = TypeTraits::getZeroExponent(biExponent);
          };
       };
@@ -3745,7 +3752,7 @@ DefineBuiltDouble<TypeTraits>::readDecimal(STG::IOObject::ISBase& in, ReadParame
 #ifdef DefineGeneric
                typename TypeTraits::BaseStoreTraits(),
 #endif
-               biMantissa, subExponent.getValue()+1, 0x1, params, fNegative, bitSizeMantissa()).hasCarry())
+               biMantissa, (int) subExponent.getValue()+1, 0x1, params, fNegative, bitSizeMantissa()).hasCarry())
             biExponent.inc();
          if (biExponent.isZero())
             params.setUnderflow();
@@ -3962,7 +3969,7 @@ DefineBuiltDouble<TypeTraits>::writeDecimal(STG::IOObject::OSBase& out) const {
       params.setNearestRound();
       unsigned int writeValue = 0;
       if (source.hasPositiveOrNullExponent()) {
-         int localExponent = source.queryExponent().getValue();
+         int localExponent = (int) source.queryExponent().getValue();
          if (localExponent == 0)
             writeValue = 1;
          else if (localExponent == 1)

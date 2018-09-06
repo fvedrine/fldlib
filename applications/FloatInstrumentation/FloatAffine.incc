@@ -278,7 +278,7 @@ ExecutionPath::acquireConstantStream(const char* content) {
 }
 
 void
-ExecutionPath::releaseConstantStream(STG::IOObject::ISBase* in) {}
+ExecutionPath::releaseConstantStream(STG::IOObject::ISBase* /* in */) {}
 
 class ExecutionPath::ExpressionBuilder::Content
    :  public std::vector<std::vector<std::string> > {
@@ -503,7 +503,7 @@ ExecutionPath::initializeGlobals(const char* fileSuffix) {
       new TGConstraintsSet<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_BITS_NUMBER, BaseFloatAffine>()
 #endif
    );
-   int suffixLength = strlen(fileSuffix);
+   int suffixLength = (int) strlen(fileSuffix);
    char* file = (char*) malloc(suffixLength+5);
    strcpy(file, fileSuffix);
    strcpy(file+suffixLength, "_out");
@@ -527,9 +527,9 @@ ExecutionPath::initializeGlobals(const char* fileSuffix) {
             iTraceFile->assume("maximal accuracy: ");
             BuiltReal::ReadParameters defaultParams;
             brThreshold.read(*iTraceFile, defaultParams);
-            char ch = iTraceFile->get();
+            char ch = (char) iTraceFile->get();
             if (ch == ' ') {
-               ch = iTraceFile->get();
+               ch = (char) iTraceFile->get();
                if (ch == 's') {
                   iTraceFile->unget();
                   ch = ' ';
@@ -537,7 +537,7 @@ ExecutionPath::initializeGlobals(const char* fileSuffix) {
                else {
                   defaultParams.clear();
                   brThresholdDomain.read(*iTraceFile, defaultParams);
-                  ch = iTraceFile->get();
+                  ch = (char) iTraceFile->get();
                };
             };
             if (ch == ' ') {
@@ -607,8 +607,8 @@ ExecutionPath::finalizeGlobals() {
          }
          else { // conversion
             AssumeCondition(pPathExplorer.currentStackPosition() >= (int) pPathExplorer.lastLogCases())
-            int index = (pPathExplorer.currentStackPosition()-pPathExplorer.lastLogCases())/(8*sizeof(unsigned));
-            int shiftIndex = (pPathExplorer.currentStackPosition()-pPathExplorer.lastLogCases()) % (8*sizeof(unsigned));
+            int index = (int) ((pPathExplorer.currentStackPosition()-pPathExplorer.lastLogCases())/(8*sizeof(unsigned)));
+            int shiftIndex = (int) ((pPathExplorer.currentStackPosition()-pPathExplorer.lastLogCases()) % (8*sizeof(unsigned)));
             if ((int) (8*sizeof(unsigned) - shiftIndex) > (int) pPathExplorer.lastLogCases()) {
                pPathExplorer.stackTrace()[index] &= ~(~(~0U << pPathExplorer.lastLogCases()) << shiftIndex);
                pPathExplorer.stackTrace()[index] |= pPathExplorer.lastResult() << shiftIndex;
@@ -919,8 +919,8 @@ ExecutionPath::followNewConversionBranch(unsigned conversion, bool& realChoice,
       unsigned& alternativeResult) {
    unsigned result;
    int number = Numerics::DInteger::Access::log_base_2(conversion);
-   int index = currentPathExplorer->currentStackPosition()/(8*sizeof(unsigned));
-   int shiftIndex = currentPathExplorer->currentStackPosition() % (8*sizeof(unsigned));
+   int index = (int) (currentPathExplorer->currentStackPosition()/(8*sizeof(unsigned)));
+   int shiftIndex = (int) (currentPathExplorer->currentStackPosition() % (8*sizeof(unsigned)));
    bool initialDoesFollow = fDoesFollow;
    if (fDoesFollow) {
       result = (currentPathExplorer->stackTrace()[index] >> shiftIndex);

@@ -98,14 +98,16 @@ static const int URealBitSizeExponent
       : sizeof(long double)*8-LDBL_MANT_DIG;
 
 DefineSingleTemplateHeader(URealBitsNumber)
+#ifndef DefineGeneric
 class DefineFloatConversion : public DefineBuiltAccess
       ::TFloatConversion DefineMantissaExponentTemplateParameters(
-#ifndef DefineGeneric
-      (URealBitsNumber+(8*sizeof(unsigned))+5-1)/(8*sizeof(unsigned)), 2
+      (URealBitsNumber+(8*sizeof(unsigned))+5-1)/(8*sizeof(unsigned)), 2)
 #else
-      (URealBitsNumber+BaseStoreTraits::USizeBaseInBits+5-1)/BaseStoreTraits::USizeBaseInBits, 2
+class DefineFloatConversion : public DefineBuiltAccess
+      ::TFloatConversion DefineMantissaExponentTemplateParameters(
+      (URealBitsNumber+BaseStoreTraits::USizeBaseInBits+5-1)/BaseStoreTraits::USizeBaseInBits, 2)
 #endif
-   ) {
+{
   public:
    DefineFloatConversion() {}
    DefineFloatConversion(const DefineFloatConversion DefineSingleTemplateParameters(URealBitsNumber)& source) = default;
@@ -390,27 +392,27 @@ DefineSetContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble,
       DefineBaseType exponent = builtDouble.getBasicExponent()[0];
 #if defined(__GNUC__) && !defined(__clang__)
       int shiftAssert = FloatDigits::UBitSizeExponent;
-      AssumeCondition((shiftAssert >= (int) DefineSizeofBaseTypeInBits)
 #ifndef DefineGeneric
-            || (((~0U << shiftAssert) & exponent) == 0)
+      AssumeCondition((shiftAssert >= (int) DefineSizeofBaseTypeInBits)
+            || (((~0U << shiftAssert) & exponent) == 0))
 #else
-            || BaseStoreTraits::isZeroValue(BaseStoreTraits::getHighPart(exponent, shiftAssert))
+      AssumeCondition((shiftAssert >= (int) DefineSizeofBaseTypeInBits)
+            || BaseStoreTraits::isZeroValue(BaseStoreTraits::getHighPart(exponent, shiftAssert)))
 #endif
-         )
 #else
 #if defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshift-count-overflow"
 #endif
 
-      AssumeCondition(((int) FloatDigits::UBitSizeExponent >= (int) DefineSizeofBaseTypeInBits)
 #ifndef DefineGeneric
-            || (((~0U << FloatDigits::UBitSizeExponent) & exponent) == 0)
+      AssumeCondition(((int) FloatDigits::UBitSizeExponent >= (int) DefineSizeofBaseTypeInBits)
+            || (((~0U << FloatDigits::UBitSizeExponent) & exponent) == 0))
 #else
+      AssumeCondition(((int) FloatDigits::UBitSizeExponent >= (int) DefineSizeofBaseTypeInBits)
             || BaseStoreTraits::isZeroValue(BaseStoreTraits::getHighPart(exponent,
-                  FloatDigits::UBitSizeExponent))
+                  FloatDigits::UBitSizeExponent)))
 #endif
-         )
       // AssumeCondition((TypeBuiltDouble::BitSizeExponent == DefineSizeofBaseTypeInBits)
       //    #ifndef DefineGeneric
       //       || (((~1U << (TypeBuiltDouble::BitSizeExponent-1)) & exponent) == 0)
@@ -425,20 +427,24 @@ DefineSetContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble,
 #endif
 
 #ifndef DefineGeneric
-      *mask |= exponent >> shift;
+      unsigned int aval = (unsigned int) (exponent >> shift);
 #else
-      *mask |= BaseStoreTraits::getHighPart(exponent, shift);
+      unsigned int aval = (unsigned int) BaseStoreTraits::getHighPart(exponent, shift);
 #endif
+      unsigned char val = (unsigned char) aval;
+      *mask |= val;
       while ((shift -= 8) >= 0) {
          if (!DefineIsBigEndian())
             --mask;
          else
             ++mask;
 #ifndef DefineGeneric
-         *mask |= exponent >> shift;
+         aval = (unsigned int) (exponent >> shift);
 #else
-         *mask |= BaseStoreTraits::getHighPart(exponent, shift);
+         aval = (unsigned int) BaseStoreTraits::getHighPart(exponent, shift);
 #endif
+         val = (unsigned char) aval;
+         *mask |= val;
       };
       if (!DefineIsBigEndian())
          --mask;
@@ -446,10 +452,12 @@ DefineSetContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble,
          ++mask;
       if (shift > -8)
 #ifndef DefineGeneric
-         *mask |= exponent << (-shift);
+         aval = (unsigned int) (exponent << (-shift));
 #else
-         *mask |= BaseStoreTraits::getStoreHighPart(exponent, -shift);
+         aval = (unsigned int) BaseStoreTraits::getStoreHighPart(exponent, -shift);
 #endif
+         val = (unsigned char) aval;
+         *mask |= val;
    }
 
    {  DefineBaseType* mask = (DefineBaseType*) doubleContent;

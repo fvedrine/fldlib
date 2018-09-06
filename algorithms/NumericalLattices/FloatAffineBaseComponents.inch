@@ -126,13 +126,14 @@ static const int URealBitSizeExponent
 
 DefineSingleTemplateHeader(URealBitsNumber)
 class DefineFloatConversion : public Numerics::DDouble::DefineBuiltAccess
-      ::TFloatConversion DefineMantissaExponentTemplateParameters((
 #ifndef DefineGeneric
-         URealBitsNumber+(8*sizeof(unsigned))+5-1)/(8*sizeof(unsigned)),
+      ::TFloatConversion DefineMantissaExponentTemplateParameters((
+         URealBitsNumber+(8*sizeof(unsigned))+5-1)/(8*sizeof(unsigned)), 2)
 #else
-         URealBitsNumber+BaseStoreTraits::USizeBaseInBits+5-1) / BaseStoreTraits::USizeBaseInBits,
+      ::TFloatConversion DefineMantissaExponentTemplateParameters((
+         URealBitsNumber+BaseStoreTraits::USizeBaseInBits+5-1) / BaseStoreTraits::USizeBaseInBits, 2)
 #endif
-         2) {
+{
   public:
    DefineFloatConversion() {}
    DefineFloatConversion(const DefineFloatConversion DefineSingleTemplateParameters(URealBitsNumber)& source) = default;
@@ -341,13 +342,13 @@ DefineSetContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble,
       DefineBaseType exponent = builtDouble.getBasicExponent()[0];
 #if defined(__GNUC__) && !defined(__clang__)
       int shiftAssert = FloatDigits::UBitSizeExponent;
-      AssumeCondition((shiftAssert >= (int) DefineSizeofBaseTypeInBits)
 #ifndef DefineGeneric
-            || (((~0U << shiftAssert) & exponent) == 0)
+      AssumeCondition((shiftAssert >= (int) DefineSizeofBaseTypeInBits)
+            || (((~0U << shiftAssert) & exponent) == 0))
 #else
-            || BaseStoreTraits::isZeroValue(BaseStoreTraits::getHighPart(exponent, shiftAssert))
+      AssumeCondition((shiftAssert >= (int) DefineSizeofBaseTypeInBits)
+            || BaseStoreTraits::isZeroValue(BaseStoreTraits::getHighPart(exponent, shiftAssert)))
 #endif
-         )
 #else
 #if defined(__clang__)
 #pragma GCC diagnostic push
@@ -376,31 +377,38 @@ DefineSetContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble,
 #endif
 
 #ifndef DefineGeneric
-      *mask |= exponent >> shift;
+      unsigned int aval = (unsigned int) (exponent >> shift);
 #else
-      *mask |= BaseStoreTraits::getHighPart(exponent, shift);
+      unsigned int aval = (unsigned int) BaseStoreTraits::getHighPart(exponent, shift);
 #endif
+      unsigned char val = (unsigned char) aval;
+      *mask |= val;
       while ((shift -= 8) >= 0) {
          if (!DefineIsBigEndian())
             --mask;
          else
             ++mask;
 #ifndef DefineGeneric
-         *mask |= exponent >> shift;
+         aval = (unsigned int) exponent >> shift;
 #else
-         *mask |= BaseStoreTraits::getHighPart(exponent, shift);
+         aval = (unsigned int) BaseStoreTraits::getHighPart(exponent, shift);
 #endif
+         val = (unsigned char) aval;
+         *mask |= val;
       };
       if (!DefineIsBigEndian())
          --mask;
       else
          ++mask;
-      if (shift > -8)
+      if (shift > -8) {
 #ifndef DefineGeneric
-         *mask |= exponent << (-shift);
+         aval = (unsigned int) (exponent << (-shift));
 #else
-         *mask |= BaseStoreTraits::getStoreHighPart(exponent, -shift);
+         aval = (unsigned int) BaseStoreTraits::getStoreHighPart(exponent, -shift);
 #endif
+         val = (unsigned char) aval;
+         *mask |= val;
+      };
    }
 
    {  DefineBaseType* mask = (DefineBaseType*) doubleContent;
@@ -603,7 +611,7 @@ class DefineEquation
             equation.adjustComputation(max, highLevelError);
          }
       virtual void addAbsToValue(BuiltReal& max, RealReadParameters& maxParams,
-            const Equation& equation) const
+            const Equation& /* equation */) const
          {  if (dReal.isPositive())
                max.plusAssign(dReal, maxParams);
             else
@@ -611,7 +619,7 @@ class DefineEquation
             maxParams.clear();
          }
       virtual void addAbsSignToValue(BuiltReal& max, bool isNegative, RealReadParameters& params,
-            const Equation& equation) const
+            const Equation& /* equation */) const
          {  if (dReal.isPositive() == isNegative)
                max.minusAssign(dReal, params);
             else
@@ -624,7 +632,7 @@ class DefineEquation
                max.opposite();
          }
       virtual void plusAssign(const Coefficient& source, BuiltReal& highLevelError,
-            RealReadParameters& nearestParams, SymbolsManager& manager, const Equation& equation)
+            RealReadParameters& nearestParams, SymbolsManager& /* manager */, const Equation& equation)
          {  dReal.plusAssign(source.dReal, nearestParams);
             equation.adjustComputation(dReal, highLevelError);
          }
@@ -634,7 +642,7 @@ class DefineEquation
             equation.adjustComputation(dReal, highLevelError);
          }
       virtual void minusAssign(const Coefficient& source, BuiltReal& highLevelError,
-            RealReadParameters& nearestParams, SymbolsManager& manager, const Equation& equation)
+            RealReadParameters& nearestParams, SymbolsManager& /* manager */, const Equation& equation)
          {  dReal.minusAssign(source.dReal, nearestParams);
             equation.adjustComputation(dReal, highLevelError);
          }
@@ -644,7 +652,7 @@ class DefineEquation
             equation.adjustComputation(dReal, highLevelError);
          }
       virtual void plusAbsAssign(const Coefficient& source, BuiltReal& highLevelError,
-            RealReadParameters& nearestParams, SymbolsManager& manager, const Equation& equation)
+            RealReadParameters& nearestParams, SymbolsManager& /* manager */, const Equation& equation)
          {  if (dReal.isPositive() == source.dReal.isPositive())
                dReal.plusAssign(source.dReal, nearestParams);
             else
@@ -681,7 +689,7 @@ class DefineEquation
          }
 
       virtual void plusMaxAbsAssign(const Coefficient& source, RealReadParameters& minParams,
-            RealReadParameters& maxParams, SymbolsManager& manager, const Equation& equation)
+            RealReadParameters& maxParams, SymbolsManager& /* manager */, const Equation& /* equation */)
          {  if (dReal.isPositive() == source.dReal.isPositive())
                dReal.plusAssign(source.dReal, dReal.isPositive() ? maxParams : minParams);
             else
@@ -689,7 +697,7 @@ class DefineEquation
             (dReal.isPositive() ? maxParams : minParams).clear();
          }
       virtual void plusMaxAbsAssignValue(const BuiltReal& source, RealReadParameters& minParams,
-            RealReadParameters& maxParams, const Equation& equation)
+            RealReadParameters& maxParams, const Equation& /* equation */)
          {  if (dReal.isPositive() == source.isPositive())
                dReal.plusAssign(source, dReal.isPositive() ? maxParams : minParams);
             else
@@ -697,7 +705,7 @@ class DefineEquation
             (dReal.isPositive() ? maxParams : minParams).clear();
          }
       virtual void plusMaxCoabsAssign(const Coefficient& source, RealReadParameters& minParams,
-            RealReadParameters& maxParams, const Equation& equation)
+            RealReadParameters& maxParams, const Equation& /* equation */)
          {  if (dReal.isPositive() == source.dReal.isPositive())
                dReal.plusAssign(source.dReal, dReal.isPositive() ? maxParams : minParams);
             else {
@@ -718,46 +726,46 @@ class DefineEquation
       //    }
       virtual void oppositeAssign() { dReal.opposite(); }
       virtual void multAssign(const Coefficient& source, BuiltReal& highLevelError,
-            RealReadParameters& nearestParams, RealReadParameters& maxParams,
-            SymbolsManager& manager, const Equation& equation)
+            RealReadParameters& nearestParams, RealReadParameters& /* maxParams */,
+            SymbolsManager& /* manager */, const Equation& equation)
          {  dReal.multAssign(source.dReal, nearestParams);
             equation.adjustComputation(dReal, highLevelError);
          }
       virtual void multAssignValue(const BuiltReal& value, BuiltReal& highLevelError,
-            RealReadParameters& nearestParams, SymbolsManager& manager, const Equation& equation)
+            RealReadParameters& nearestParams, SymbolsManager& /* manager */, const Equation& equation)
          {  dReal.multAssign(value, nearestParams);
             equation.adjustComputation(dReal, highLevelError);
          }
       virtual void divAssign(const Coefficient& source, BuiltReal& highLevelError,
-            RealReadParameters& nearestParams, SymbolsManager& manager, const Equation& equation)
+            RealReadParameters& nearestParams, SymbolsManager& /* manager */, const Equation& equation)
          {  dReal.divAssign(source.dReal, nearestParams);
             equation.adjustComputation(dReal, highLevelError);
          }
       virtual void divAssignValue(const BuiltReal& value, BuiltReal& highLevelError,
-            RealReadParameters& nearestParams, SymbolsManager& manager, const Equation& equation)
+            RealReadParameters& nearestParams, SymbolsManager& /* manager */, const Equation& equation)
          {  dReal.divAssign(value, nearestParams);
             equation.adjustComputation(dReal, highLevelError);
          }
       virtual void divAssignValue(unsigned value, BuiltReal& highLevelError,
-            RealReadParameters& nearestParams, SymbolsManager& manager, const Equation& equation)
+            RealReadParameters& nearestParams, SymbolsManager& /* manager */, const Equation& equation)
          {  dReal.divAssign(value, nearestParams);
             equation.adjustComputation(dReal, highLevelError);
          }
       virtual void sqrtAssign(typename BuiltReal::BaseDouble& errorMinCentral,
             typename BuiltReal::BaseDouble& errorMaxCentral, RealReadParameters& nearestParams,
-            SymbolsManager& manager)
+            SymbolsManager& /* manager */)
          {  dReal.sqrtAssign(errorMinCentral, errorMaxCentral, nearestParams);
             nearestParams.clear();
          }
       virtual void expAssign(typename BuiltReal::BaseDouble& errorMinCentral,
             typename BuiltReal::BaseDouble& errorMaxCentral, RealReadParameters& nearestParams,
-            SymbolsManager& manager)
+            SymbolsManager& /* manager */)
          {  dReal.expAssign(errorMinCentral, errorMaxCentral, nearestParams);
             nearestParams.clear();
          }
       virtual void logAssign(typename BuiltReal::BaseDouble& errorMinCentral,
             typename BuiltReal::BaseDouble& errorMaxCentral, RealReadParameters& nearestParams,
-            SymbolsManager& manager)
+            SymbolsManager& /* manager */)
          {  dReal.logAssign(errorMinCentral, errorMaxCentral, nearestParams);
             nearestParams.clear();
          }
@@ -2954,7 +2962,7 @@ class DefineConstraint : public PNT::MngElement, public STG::IOObject {
   protected:
    virtual ComparisonResult _compare(const EnhancedObject& asource) const override
       {  return inherited::_compare(asource); }
-   virtual void _write(OSBase& out, const STG::IOObject::FormatParameters& params) const override
+   virtual void _write(OSBase& /* out */, const STG::IOObject::FormatParameters& /* params */) const override
       {  AssumeUnimplemented }
 
   public:

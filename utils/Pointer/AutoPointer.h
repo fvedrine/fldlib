@@ -143,6 +143,6 @@ TAutoPointer<Element>::swap(TAutoPointer<Element>& source) {
    peElement = temp;
 }
 
-};
+}
 
 #endif // PNT_AutoPointerH

@@ -144,7 +144,7 @@ class ExtendedLocateParameters
    ExtendedLocateParameters(RelativePosition position = RPUndefined)
       {  mergeRelativePositionField(position); }
    ExtendedLocateParameters(const ExtendedLocateParameters& source)
-      :  ExtendedParameters(source) {}
+      :  EnhancedObject(), ExtendedParameters(source), Definitions() {}
    DefineCopy(ExtendedLocateParameters)
    DDefineAssign(ExtendedLocateParameters)
 

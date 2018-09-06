@@ -763,7 +763,7 @@ TBaseFloatAffine<TypeExecutionPath>::retrieveBranch(int cases,
 template <class TypeExecutionPath>
 unsigned
 TBaseFloatAffine<TypeExecutionPath>::getConversionValue(unsigned realNumber, unsigned implementationNumber,
-      unsigned firstReal, unsigned lastReal, unsigned firstImplementation, unsigned lastImplementation,
+      unsigned firstReal, unsigned /* lastReal */, unsigned firstImplementation, unsigned /* lastImplementation */,
       unsigned commonNumber, unsigned firstCommon, unsigned lastCommon, unsigned executionResult,
       unsigned result, bool realChoice, bool implementationChoice) {
    unsigned addition;

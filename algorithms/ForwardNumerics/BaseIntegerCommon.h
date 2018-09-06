@@ -79,7 +79,7 @@ class UnsignedBaseStoreTraits {
       {  memcpy(target, source, count*sizeof(unsigned int)); }
    static int sizeBaseInBits() { return 8*sizeof(unsigned); }
    static int minCellsCountToStoreBits(int bitsNumber)
-      {  return (bitsNumber + 8*sizeof(unsigned) - 1) / (8*sizeof(unsigned)); } 
+      {  return (int) ((bitsNumber + 8*sizeof(unsigned) - 1) / (8*sizeof(unsigned))); } 
 
    static void swapArray(unsigned int* target, unsigned int* source, int count)
       {  unsigned int temp;

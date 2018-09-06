@@ -228,7 +228,7 @@ class DefineBuiltDoubleTraits : public DDouble::DefineBuiltAccess {
       class Basic { public : Basic() {} };
       
       Exponent() {}
-      Exponent(Basic, int exponentSize, DefineBaseTypeConstReference basicValue) : inherited(basicValue) {}
+      Exponent(Basic, int /* exponentSize */, DefineBaseTypeConstReference basicValue) : inherited(basicValue) {}
       Exponent(Min)  {}
       Exponent(Max)  { inherited::neg(); }
       Exponent(Zero) { inherited::neg(); inherited::bitArray(UBitSizeExponent-1) = false; }
@@ -300,11 +300,11 @@ class DefineBuiltDoubleTraits : public DDouble::DefineBuiltAccess {
 
       int getSize() const { return DefineSizeofBaseTypeInBits; }
       int getMaxDigits() const
-         { return fUnsigned ? DefineSizeofBaseTypeInBits : (DefineSizeofBaseTypeInBits-1); }
+         {  return (int) (fUnsigned ? DefineSizeofBaseTypeInBits : (DefineSizeofBaseTypeInBits-1)); }
       bool isUnsigned() const { return fUnsigned; }
       bool isSigned() const   { return !fUnsigned; }
       int asInt() const { AssumeCondition(!fUnsigned) return (int) uResult; }
-      unsigned int asUnsignedInt() const { AssumeCondition(fUnsigned) return uResult; }
+      unsigned int asUnsignedInt() const { AssumeCondition(fUnsigned) return (unsigned int) uResult; }
       DefineBaseType& sresult() { return uResult; }
       void opposite() { AssumeCondition(!fUnsigned) uResult = (~uResult + 1); }
       bool isPositive() const { return fUnsigned || ((int) uResult >= 0); }
@@ -314,7 +314,7 @@ class DefineBuiltDoubleTraits : public DDouble::DefineBuiltAccess {
 #ifndef DefineGeneric
          {  return DInteger::Access::log_base_2(uResult); }
 #else
-         {  return UnsignedBaseStoreTraits::log_base_2(uResult); }
+         {  return (int) BaseStoreTraits::log_base_2(uResult); }
 #endif
       bool hasZero(int digits) const
 #ifndef DefineGeneric
@@ -719,7 +719,7 @@ class DefineBuiltDouble : protected DDouble::Access, protected TypeTraits {
             biMantissa = 0x1;
          else {
             biMantissa.clear();
-            biMantissa.bitArray(biExponent.getValue()-1) = true;
+            biMantissa.bitArray((int) biExponent.getValue()-1) = true;
             biExponent.clear();
          };
       }

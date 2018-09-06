@@ -66,12 +66,12 @@ class ExecutionPath : public BaseExecutionPath {
    static bool fHasNewFile, fHasNewLine;
 
    template <class TypeReal>
-   static COL::TVector<TypeReal>& realSynchronisationVector(const TypeReal& real)
+   static COL::TVector<TypeReal>& realSynchronisationVector(const TypeReal& /* real */)
       {  static COL::TVector<TypeReal> result;
          return result;
       }
    template <class TypeImplementation>
-   static COL::TVector<TypeImplementation>& implementationSynchronisationVector(const TypeImplementation& implementation)
+   static COL::TVector<TypeImplementation>& implementationSynchronisationVector(const TypeImplementation& /* implementation */)
       {  static COL::TVector<TypeImplementation> result;
          return result;
       }

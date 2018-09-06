@@ -149,7 +149,7 @@ class GenericList : public VirtualCollection, private ImplList {
    GenericList() : uCount(0) {}
    GenericList(const GenericList& source, AddMode dupMode=AMNoDuplicate,
          const VirtualCast* retrieveRegistrationFromCopy=nullptr)
-      :  VirtualCollection(source, dupMode), uCount(0)
+      :  VirtualCollection(source, dupMode), ImplList(), uCount(0)
       {  try {
             ImplList::assign((const ImplList&) source, true, retrieveRegistrationFromCopy);
             uCount = source.uCount;

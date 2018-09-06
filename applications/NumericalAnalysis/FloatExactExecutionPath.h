@@ -82,7 +82,7 @@ namespace DFloatDigitsHelper {
          = (LDBL_MAX_EXP == (1 << (16-2))) ? 16 /* leading 1 bit */
             : sizeof(long double)*8-LDBL_MANT_DIG;
    };
-};
+}
 
 class FloatDigitsHelper {
   public:
@@ -143,10 +143,10 @@ class ExecutionPathContract : public BaseExecutionPath {
    bool hasOutput() const { return false; }
    bool doesAssumeInput() const { return true; }
 
-   void assumeDomain(char prefix) const {}
-   void assumeDomain(const char* prefix) const {}
-   void assumePrefixDomain(const char* prefix) const {}
-   void assumeDomainUntil(char delimiter) const {}
+   void assumeDomain(char /* prefix */) const {}
+   void assumeDomain(const char* /* prefix */) const {}
+   void assumePrefixDomain(const char* /* prefix */) const {}
+   void assumeDomainUntil(char /* delimiter */) const {}
    template <class TypeImplementation, class TypeParameters>
    void readValueFromInput(TypeImplementation& result, const TypeParameters& params) const {}
    template <class TypeImplementation, class TypeParameters>
@@ -154,11 +154,11 @@ class ExecutionPathContract : public BaseExecutionPath {
          const TypeImplementation& readValue, const char* readPrefix,
          const TypeImplementation& expectedValue, const char* expectedPrefix,
          const TypeParameters& params) const {}
-   void emitErrorFromInput(const char* message) {}
+   void emitErrorFromInput(const char* /* message */) {}
 
-   void writeDomain(char prefix) const {}
-   void writeDomain(const char* prefix) const {}
-   void writePrefixDomain(const char* prefix) const {}
+   void writeDomain(char /* prefix */) const {}
+   void writeDomain(const char* /* prefix */) const {}
+   void writePrefixDomain(const char* /* prefix */) const {}
    template <class TypeImplementation, class TypeParameters>
    void writeValueToOutput(const TypeImplementation& value, const TypeParameters& params) const {}
    void writeSourceLine() const {}
@@ -173,17 +173,17 @@ class ExecutionPathContract : public BaseExecutionPath {
    void writeNegativeOrNulLog() const {}
    void assumeSourceLine() const {}
 
-   void assumeThresholdDetection(const BuiltReal& relativeError, const BuiltReal& value) const {}
-   void updateThresholdDetection(const BuiltReal& relativeError, const BuiltReal& value) const {}
+   void assumeThresholdDetection(const BuiltReal& /* relativeError */, const BuiltReal& /* value */) const {}
+   void updateThresholdDetection(const BuiltReal& /* relativeError */, const BuiltReal& /* value */) const {}
    bool hasThreshold() const { return false; }
-   bool updateMaximalAccuracy(const BuiltReal& relativeError, const BuiltReal& value) const { return false; }
+   bool updateMaximalAccuracy(const BuiltReal& /* relativeError */, const BuiltReal& /* value */) const { return false; }
 
-   void notifyPossibleSplit(const char* file, int line) const {}
+   void notifyPossibleSplit(const char* /* file */, int /* line */) const {}
    void notifyPossibleMerge() const {}
    void notifySplitWithSynchronization() const {}
    void followNewUnstableBranch() const {}
    void alternateUnstableBranch() const {}
-   bool isSynchronizedWith(const char* file, int line) const { return false; }
+   bool isSynchronizedWith(const char* /* file */, int /* line */) const { return false; }
    bool hasSynchronization() const { return false; }
    bool synchronizeCurrentFlow() const { return true; }
    template <class TypeImplementation, class ImplReadParameters, class TypeReal, class RealReadParameters>
@@ -331,7 +331,7 @@ class TBaseFloatExact : public TypeExecutionPath {
          };
       }
    template <class TFloatExact>
-   void notifyForDivisionByZero(const TFloatExact& source) const
+   void notifyForDivisionByZero(const TFloatExact& /* source */) const
       {  if (inherited::hasOutput()) {
             inherited::writeSourceLine();
             inherited::writeDivisionByZero();
@@ -342,7 +342,7 @@ class TBaseFloatExact : public TypeExecutionPath {
          };
       }
    template <class TFloatExact>
-   void notifyForNegativeSqrt(const TFloatExact& source) const
+   void notifyForNegativeSqrt(const TFloatExact& /* source */) const
       {  if (inherited::hasOutput()) {
             inherited::writeSourceLine();
             inherited::writeNegativeSqrt();
@@ -353,7 +353,7 @@ class TBaseFloatExact : public TypeExecutionPath {
          };
       }
    template <class TFloatExact>
-   void notifyForNegativePow(const TFloatExact& source) const
+   void notifyForNegativePow(const TFloatExact& /* source */) const
       {  if (inherited::hasOutput()) {
             inherited::writeSourceLine();
             inherited::writeNegativePow();
@@ -364,7 +364,7 @@ class TBaseFloatExact : public TypeExecutionPath {
          };
       }
    template <class TFloatExact>
-   void notifyForNegativeOrNulLog(const TFloatExact& source) const
+   void notifyForNegativeOrNulLog(const TFloatExact& /* source */) const
       {  if (inherited::hasOutput()) {
             inherited::writeSourceLine();
             inherited::writeNegativeOrNulLog();

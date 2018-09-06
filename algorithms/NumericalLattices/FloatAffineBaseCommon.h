@@ -193,9 +193,9 @@ class VirtualExpressionBuilder : public EnhancedObject {
   protected:
    virtual void _pushSubExpression() {}
    virtual void _pushZeroConstant() {}
-   virtual void _pushConstant(const void* value) {}
-   virtual void _addTerm(const void* coefficient, const Symbol& symbol) {}
-   virtual void _pushTerm(const void* coefficient, const Symbol& symbol) {}
+   virtual void _pushConstant(const void* /* value */) {}
+   virtual void _addTerm(const void* /* coefficient */, const Symbol& /* symbol */) {}
+   virtual void _pushTerm(const void* /* coefficient */, const Symbol& /* symbol */) {}
    virtual void _popSubExpression() {}
    virtual void _applyOpposite() {}
    virtual void _applyBinaryPlus() {}
@@ -209,8 +209,8 @@ class VirtualExpressionBuilder : public EnhancedObject {
    virtual void _clear() {}
    virtual void _assumeCleared() {}
    virtual void _duplicateExpression() {}
-   virtual void _moveUp(int shift) {}
-   virtual void _clearExpression(int index) {}
+   virtual void _moveUp(int /* shift */) {}
+   virtual void _clearExpression(int /* index */) {}
 
   public:
    VirtualExpressionBuilder() { vuStack.insertAtEnd(0); }
@@ -318,9 +318,9 @@ class VirtualExpressionBuilder : public EnhancedObject {
 
 class VirtualSymbolDefinitionTracker : public EnhancedObject {
   protected:
-   virtual void _setDefinition(const void* coefficient, const Symbol& symbol, VirtualExpressionBuilder& expression) {}
-   virtual void _setAddDefinition(const void* coefficient, const Symbol& symbol, VirtualExpressionBuilder& expression) {}
-   virtual void _clearDefinition(VirtualExpressionBuilder& expression) {}
+   virtual void _setDefinition(const void* /* coefficient */, const Symbol& /* symbol */, VirtualExpressionBuilder& /* expression */) {}
+   virtual void _setAddDefinition(const void* /* coefficient */, const Symbol& /* symbol */, VirtualExpressionBuilder& /* expression */) {}
+   virtual void _clearDefinition(VirtualExpressionBuilder& /* expression */) {}
 
   public:
    DefineCopy(VirtualSymbolDefinitionTracker)
@@ -353,7 +353,8 @@ class SymbolsManager : public EnhancedObject {
 
   public:
    SymbolsManager() : uHighLevelSymbolsCounter(0) {}
-   SymbolsManager(const SymbolsManager& source) : uHighLevelSymbolsCounter(0) {}
+   SymbolsManager(const SymbolsManager& /* source */)
+      :  EnhancedObject(), uHighLevelSymbolsCounter(0) {}
    DefineCopy(SymbolsManager)
 
    virtual VirtualSymbolDefinitionTracker* getSymbolDefinitionTracker() { return nullptr; }
@@ -559,19 +560,19 @@ class SymbolsManager : public EnhancedObject {
       }
    int getHighLevelSymbolOrder() const { return uHighLevelSymbolsCounter+1; }
    template <class TypeTraits>
-   Symbol* createDefinedSymbol(TypeTraits traits, const typename TypeTraits::Equation& definition)
+   Symbol* createDefinedSymbol(TypeTraits /* traits */, const typename TypeTraits::Equation& definition)
       {  Symbol* result = new typename TypeTraits::DefinedSymbol(definition);
          lsDefinedSymbols.insertNewAtEnd(result);
          result->setOrder(lsDefinedSymbols.count());
          return result;
       }
    template <class TypeTraits>
-   Symbol* createUnrecordedDefinedSymbol(TypeTraits traits)
+   Symbol* createUnrecordedDefinedSymbol(TypeTraits /* traits */)
       {  Symbol* result = new typename TypeTraits::DefinedSymbol(typename TypeTraits::Equation());
          return result;
       }
    template <class TypeTraits>
-   Symbol& recordDefinedSymbol(TypeTraits traits, Symbol* symbol)
+   Symbol& recordDefinedSymbol(TypeTraits /* traits */, Symbol* symbol)
       {  AssumeCondition(dynamic_cast<const typename TypeTraits::DefinedSymbol*>(symbol)
                && !symbol->hasOrder())
          lsDefinedSymbols.insertNewAtEnd(symbol);
@@ -674,7 +675,8 @@ class ClosedSymbolsSet : public EnhancedObject {
 
   public:
    ClosedSymbolsSet() : uClosedCounter(0) {}
-   ClosedSymbolsSet(const ClosedSymbolsSet& source) : uClosedCounter(0) {}
+   ClosedSymbolsSet(const ClosedSymbolsSet& /* source */)
+      :  EnhancedObject(), uClosedCounter(0) {}
    DefineCopy(ClosedSymbolsSet)
 
    Symbol* createClosedSymbol(int level)

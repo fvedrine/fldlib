@@ -217,11 +217,11 @@ ExecutionPath::acquireConstantStream(const char* content) {
 }
 
 void
-ExecutionPath::releaseConstantStream(STG::IOObject::ISBase* in) {}
+ExecutionPath::releaseConstantStream(STG::IOObject::ISBase* /* in */) {}
 
 void
 ExecutionPath::initializeGlobals(const char* fileSuffix) {
-   int suffixLength = strlen(fileSuffix);
+   int suffixLength = (int) strlen(fileSuffix);
    char* file = (char*) malloc(suffixLength+5);
    strcpy(file, fileSuffix);
    strcpy(file+suffixLength, "_out");
@@ -244,9 +244,9 @@ ExecutionPath::initializeGlobals(const char* fileSuffix) {
             iTraceFile->assume("maximal accuracy: ");
             BuiltReal::ReadParameters defaultParams;
             brThreshold.read(*iTraceFile, defaultParams);
-            char ch = iTraceFile->get();
+            char ch = (char) iTraceFile->get();
             if (ch == ' ') {
-               ch = iTraceFile->get();
+               ch = (char) iTraceFile->get();
                if (ch == 's') {
                   iTraceFile->unget();
                   ch = ' ';
@@ -254,7 +254,7 @@ ExecutionPath::initializeGlobals(const char* fileSuffix) {
                else {
                   defaultParams.clear();
                   brThresholdDomain.read(*iTraceFile, defaultParams);
-                  ch = iTraceFile->get();
+                  ch = (char) iTraceFile->get();
                };
             };
             if (ch == ' ') {

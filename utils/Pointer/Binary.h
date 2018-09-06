@@ -171,8 +171,8 @@ class ImplBinaryNode {
 
   public:
    ImplBinaryNode() : pibnLeft(nullptr), pibnRight(nullptr) {}
-   ImplBinaryNode(const ImplBinaryNode& source) : pibnLeft(nullptr), pibnRight(nullptr) {}
-   ImplBinaryNode& operator=(const ImplBinaryNode& source) { return *this; }
+   ImplBinaryNode(const ImplBinaryNode& /* source */) : pibnLeft(nullptr), pibnRight(nullptr) {}
+   ImplBinaryNode& operator=(const ImplBinaryNode& /* source */) { return *this; }
 
    template <typename KeyType, class ElementType, class TabType, class Cast>
    bool tisValid(const TabType& tab) const
@@ -851,7 +851,7 @@ class ImplExtendedBinaryNode : public ImplBinaryNode, protected ExtendedParamete
   public:
    ImplExtendedBinaryNode() {}
    ImplExtendedBinaryNode(const ImplExtendedBinaryNode& source)
-      :  ImplBinaryNode(source) {}
+      :  ImplBinaryNode(source), ExtendedParameters() {}
    ImplExtendedBinaryNode& operator=(const ImplExtendedBinaryNode& source)
       {  return (ImplExtendedBinaryNode&) ImplBinaryNode::operator=(source); }
 };

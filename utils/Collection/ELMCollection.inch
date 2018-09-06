@@ -1808,7 +1808,13 @@
       }
 #else // DefImplementsNativeMethods
    DefTemplate inline bool
-   DefTypeCollection::gotoAny(DefTypeCursor& cursor, const DefTypeElement& element, RelativePosition pos) const
+   DefTypeCollection::gotoAny(DefTypeCursor& cursor, const DefTypeElement& element,
+#ifndef DefTypeMultiSorted
+         RelativePosition /* pos */
+#else
+         RelativePosition pos
+#endif
+         ) const
       {  
 #ifndef DefTypeMultiSorted
          return _locate(*DefTypeCCastToCollectHandler(&element), ExtendedLocateParameters(VirtualCollection::RPExact), &cursor);
@@ -1827,7 +1833,13 @@
 #endif // !DefExcludeElement -> DefTypeSorted,  DefJustInline, !DefTypeInheritedCollection, !DefJustDeclare, !DefCursor
 #if defined(DefTypeKey) && (!defined(DefBaseMultipleInterface) || defined(DefNeedLocate))
    DefTemplate inline bool
-   DefTypeCollection::gotoAnyKey(DefTypeCursor& cursor, DefTypeKey key, RelativePosition pos) const
+   DefTypeCollection::gotoAnyKey(DefTypeCursor& cursor, DefTypeKey key,
+#ifndef DefTypeMultiSorted
+         RelativePosition /* pos */
+#else
+         RelativePosition pos
+#endif
+         ) const
       {  
 #ifndef DefTypeMultiSorted
          return _locateKey(key, ExtendedLocateParameters(VirtualCollection::RPExact), &cursor);

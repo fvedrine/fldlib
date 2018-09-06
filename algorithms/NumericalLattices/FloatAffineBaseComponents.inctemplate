@@ -76,7 +76,7 @@ DefineEquationServices DefineEquationTemplateParameters(URealBitsNumber)::adjust
       BuiltReal semiUlp;
       semiUlp.setBasicExponent(computationResult.getBasicExponent());
       if (semiUlp.getSBasicExponent().minusAssign(BuiltReal::BitSizeMantissa+1).hasCarry()) {
-         int shift = semiUlp.getSBasicExponent().neg()[0]+1;
+         int shift = (int) semiUlp.getSBasicExponent().neg()[0]+1;
          semiUlp.getSMantissa() = 1U;
          if (BuiltReal::BitSizeMantissa-shift-1 > 0)
             semiUlp.getSMantissa() <<= (BuiltReal::BitSizeMantissa-shift-1);
@@ -94,16 +94,16 @@ void
 DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::_read(ISBase& in,
       const STG::IOObject::FormatParameters& aparams) {
    const auto& params = (const ReadParameters&) aparams;
-   char ch = in.get();
+   char ch = (char) in.get();
    while (isspace(ch))
-      ch = in.get();
+      ch = (char) in.get();
    in.unget();
    BuiltReal value;
    value.read(in, const_cast<ReadParameters&>(params));
    const_cast<ReadParameters&>(params).clear();
-   ch = in.get();
+   ch = (char) in.get();
    while (isspace(ch))
-      ch = in.get();
+      ch = (char) in.get();
    bool endRead = false;
    if (!(ch == '+' || ch == '*' || ch == '-')) {
       dCentral = value;
@@ -116,15 +116,15 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::_read(ISBase& 
       if (ch == '+' || ch == '-') {
          isNegative = ch == '-';
          dCentral = value;
-         ch = in.get();
+         ch = (char) in.get();
          while (isspace(ch))
-            ch = in.get();
+            ch = (char) in.get();
          in.unget();
          value.read(in, const_cast<ReadParameters&>(params));
          const_cast<ReadParameters&>(params).clear();
-         ch = in.get();
+         ch = (char) in.get();
          while (isspace(ch))
-            ch = in.get();
+            ch = (char) in.get();
       };
 
       while (!endRead) {
@@ -134,11 +134,11 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::_read(ISBase& 
             in.unget();
             throw STG::EReadError();
          };
-         ch = in.get();
+         ch = (char) in.get();
          while (isspace(ch))
-            ch = in.get();
+            ch = (char) in.get();
          if (ch == 'e') {
-            ch = in.get();
+            ch = (char) in.get();
             if (ch != '_')
                throw STG::EReadError();
             int index=0;
@@ -148,10 +148,10 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::_read(ISBase& 
                : params.symbolsManager().findCentralSymbol(index));
          }
          else if (ch == 'u') {
-            ch = in.get();
+            ch = (char) in.get();
             bool isMarked = ch == 'm';
             if (isMarked)
-               ch = in.get();
+               ch = (char) in.get();
             if (ch != '_')
                throw STG::EReadError();
             int index=0;
@@ -161,7 +161,7 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::_read(ISBase& 
                : params.symbolsManager().findNoiseSymbol(index));
          }
          else if (ch == 'h') {
-            ch = in.get();
+            ch = (char) in.get();
             if (ch != '_')
                throw STG::EReadError();
             int index=0;
@@ -181,23 +181,23 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::_read(ISBase& 
          //       ? params.symbolsManager().findClosedSymbol(index));
          // }
          else if (ch == 'd') {
-            ch = in.get();
+            ch = (char) in.get();
             if (ch != '_')
                throw STG::EReadError();
             int index=0;
             in >> index;
             thisType definition;
             if (params.hasMergeTable() && params.doesReadDefinition()) {
-               ch = in.get();
+               ch = (char) in.get();
                while (isspace(ch))
-                  ch = in.get();
+                  ch = (char) in.get();
                if (ch != '{')
                   throw STG::EReadError();
                thisType definition;
                definition.read(in, params);
-               ch = in.get();
+               ch = (char) in.get();
                while (isspace(ch))
-                  ch = in.get();
+                  ch = (char) in.get();
                if (ch != '}')
                   throw STG::EReadError();
             }
@@ -208,9 +208,9 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::_read(ISBase& 
          }
          else
             throw STG::EReadError();
-         ch = in.get();
+         ch = (char) in.get();
          while (isspace(ch))
-            ch = in.get();
+            ch = (char) in.get();
          if (!(ch == '+' || ch == '*' || ch == '-')) {
             in.unget();
             endRead = true;
@@ -220,23 +220,23 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::_read(ISBase& 
             isNegative = false;
             if (ch == '+' || ch == '-') {
                isNegative = ch == '-';
-               ch = in.get();
+               ch = (char) in.get();
                while (isspace(ch))
-                  ch = in.get();
+                  ch = (char) in.get();
                in.unget();
                value.read(in, const_cast<ReadParameters&>(params));
                const_cast<ReadParameters&>(params).clear();
-               ch = in.get();
+               ch = (char) in.get();
                while (isspace(ch))
-                  ch = in.get();
+                  ch = (char) in.get();
             };
          };
       };
    };
 
-   ch = in.get();
+   ch = (char) in.get();
    while (isspace(ch))
-      ch = in.get();
+      ch = (char) in.get();
    if (ch != '=')
       throw STG::EReadError();
    in.assume(" [");

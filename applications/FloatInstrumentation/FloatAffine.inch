@@ -272,8 +272,8 @@ class PathExplorer {
             }
             else { // conversion
                AssumeCondition(uCurrentStackPosition >= (int) uLastLogCases)
-               int index = (uCurrentStackPosition-uLastLogCases)/(8*sizeof(unsigned));
-               int shiftIndex = (uCurrentStackPosition-uLastLogCases) % (8*sizeof(unsigned));
+               int index = (int) ((uCurrentStackPosition-uLastLogCases)/(8*sizeof(unsigned)));
+               int shiftIndex = (int) ((uCurrentStackPosition-uLastLogCases) % (8*sizeof(unsigned)));
                if ((int) (8*sizeof(unsigned) - shiftIndex) > (int) uLastLogCases) {
                   biStackTrace[index] &= ~(~(~0U << uLastLogCases) << shiftIndex);
                   biStackTrace[index] |= uLastResult << shiftIndex;
@@ -401,7 +401,7 @@ class ExecutionPath : public BaseExecutionPath {
      protected:
       virtual void _setDefinition(const void* acoefficient, const Symbol& symbol, VirtualExpressionBuilder& expression) override;
       virtual void _setAddDefinition(const void* acoefficient, const Symbol& symbol, VirtualExpressionBuilder& expression) override;
-      virtual void _clearDefinition(VirtualExpressionBuilder& expression) override {}
+      virtual void _clearDefinition(VirtualExpressionBuilder& /* expression */) override {}
 
      public:
       SymbolDefinitionTracker(STG::IOObject::OSBase& definitionFile) : poDefinitionFile(&definitionFile) {} 
@@ -586,7 +586,7 @@ class ExecutionPath : public BaseExecutionPath {
 #endif
       constraints() { return *apcsConstraints; }
 
-   void persist(const char* prefix) {}
+   void persist(const char* /* prefix */) {}
    bool doesAbsorbHighLevel() const { return FLOAT_ZONOTOPE_DOES_ABSORB_HIGH_LEVEL; }
    unsigned getLimitStartSymbolAbsorption() const { return FLOAT_ZONOTOPE_LIMIT_SYMBOL_ABSORPTION; }
    bool doesExcludeConstantFromSymbolAbsorption() const { return FLOAT_ZONOTOPE_DOES_EXCLUDE_CONSTANT_FROM_SYMBOL_ABSORPTION; }
@@ -1109,8 +1109,8 @@ class ExecutionPath : public BaseExecutionPath {
             currentPathExplorer->mode() = MRealAndImplementation;
          if (hasSelection) {
             if (!fDoesFollow) {
-               int index = currentPathExplorer->currentStackPosition()/(8*sizeof(unsigned));
-               int shiftIndex = currentPathExplorer->currentStackPosition() % (8*sizeof(unsigned));
+               int index = (int) (currentPathExplorer->currentStackPosition()/(8*sizeof(unsigned)));
+               int shiftIndex = (int) (currentPathExplorer->currentStackPosition() % (8*sizeof(unsigned)));
                currentPathExplorer->lastResult() = selection;
                currentPathExplorer->lastLogCases() = Numerics::DInteger::Access::log_base_2(numberOfSelections);
                currentPathExplorer->lastResultCases() = numberOfSelections;
@@ -1214,8 +1214,8 @@ class ExecutionPath : public BaseExecutionPath {
          int numberOfFloatBranches, int numberOfRealBranches)
       {  if (currentPathExplorer->mode() == MOnlyImplementation && numberOfRealBranches > 1) {
             int number = Numerics::DInteger::Access::log_base_2(numberOfRealBranches-1);
-            int index = currentPathExplorer->currentStackPosition()/(8*sizeof(unsigned));
-            int shiftIndex = currentPathExplorer->currentStackPosition() % (8*sizeof(unsigned));
+            int index = (int) (currentPathExplorer->currentStackPosition()/(8*sizeof(unsigned)));
+            int shiftIndex = (int) (currentPathExplorer->currentStackPosition() % (8*sizeof(unsigned)));
             realSelection = (currentPathExplorer->stackTrace()[index] >> shiftIndex);
             if ((int) (8*sizeof(unsigned) - shiftIndex) < number)
                realSelection |= (currentPathExplorer->stackTrace()[index+1] & ~(~0U << shiftIndex)) << (8*sizeof(unsigned) - shiftIndex);
@@ -1223,8 +1223,8 @@ class ExecutionPath : public BaseExecutionPath {
          }
          else if (currentPathExplorer->mode() == MOnlyReal && numberOfFloatBranches > 1) {
             int number = Numerics::DInteger::Access::log_base_2(numberOfFloatBranches-1);
-            int index = currentPathExplorer->currentStackPosition()/(8*sizeof(unsigned));
-            int shiftIndex = currentPathExplorer->currentStackPosition() % (8*sizeof(unsigned));
+            int index = (int) (currentPathExplorer->currentStackPosition()/(8*sizeof(unsigned)));
+            int shiftIndex = (int) (currentPathExplorer->currentStackPosition() % (8*sizeof(unsigned)));
             floatSelection = (currentPathExplorer->stackTrace()[index] >> shiftIndex);
             if ((int) (8*sizeof(unsigned) - shiftIndex) < number)
                floatSelection |= (currentPathExplorer->stackTrace()[index+1] & ~(~0U << shiftIndex)) << (8*sizeof(unsigned) - shiftIndex);
@@ -1327,7 +1327,7 @@ class ExecutionPath::EquationHolder : public ExecutionPath::Equation {
 inline std::function<bool(const ExecutionPath::Equation&)>
 ExecutionPath::getConditionSameBranch() {
    if (!fSupportUnstableInLoop)
-      return [](const Equation& equation){ return true; };
+      return [](const Equation& /* equation */){ return true; };
 
    return [](const Equation& equation)
       {  bool result = equation.isStoredVariable();

@@ -55,7 +55,7 @@ template <typename TypeElement>
 class TElementTraits {
   public:
    static const bool FInitialCleared = true;
-   static void clear(TypeElement& element) {}
+   static void clear(TypeElement& /* element */) {}
    static void clearAll(TypeElement* array, int count)
       {  while (--count >= 0)
             clear(array[count]);
@@ -71,7 +71,7 @@ template <typename TypeElement>
 class TSystemElementTraits {
   public:
    static const bool FInitialCleared = true;
-   static void clear(TypeElement& element) {}
+   static void clear(TypeElement& /* element */) {}
    static void clearAll(TypeElement* array, int count)
       {  if (count > 0)
             memset(array, 0, count*sizeof(TypeElement));

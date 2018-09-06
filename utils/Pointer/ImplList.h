@@ -52,10 +52,10 @@ class VirtualCastWithElement : public VirtualCast {
    void setCastWithElement(bool isValid=true) { mergeOwnField(isValid ? 1 : 0); }
 
   protected:
-   virtual EnhancedObject* _castFrom(EnhancedObject* copyObject,
-         EnhancedObject* sourceCollectionObject) const { AssumeUncalled return nullptr; }
-   virtual EnhancedObject* _castTo(EnhancedObject* collectionObject,
-         EnhancedObject* sourceCopyObject) const { AssumeUncalled return nullptr; }
+   virtual EnhancedObject* _castFrom(EnhancedObject* /* copyObject */,
+         EnhancedObject* /* sourceCollectionObject */) const { AssumeUncalled return nullptr; }
+   virtual EnhancedObject* _castTo(EnhancedObject* /* collectionObject */,
+         EnhancedObject* /* sourceCopyObject */) const { AssumeUncalled return nullptr; }
    virtual EnhancedObject* _castFrom(EnhancedObject* copyObject) const
       {  return _castFrom(copyObject, nullptr); }
    virtual EnhancedObject* _castTo(EnhancedObject* collectionObject) const

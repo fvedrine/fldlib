@@ -349,7 +349,7 @@ TBaseFloatExact<TypeExecutionPath>::writeCompare(const TFloatExact& source, cons
 template <class TypeExecutionPath>
 template <class TFloatExact>
 void
-TBaseFloatExact<TypeExecutionPath>::writeBranchCompare(const TFloatExact& source, const BuiltReal& diff) const {
+TBaseFloatExact<TypeExecutionPath>::writeBranchCompare(const TFloatExact& source, const BuiltReal& /* diff */) const {
    typedef typename TFloatExact::BuiltDouble TypeBuiltDouble;
    BaseExecutionPath::SpecialValue mode = inherited::getMode();
    AssumeCondition(mode != BaseExecutionPath::SVNone)

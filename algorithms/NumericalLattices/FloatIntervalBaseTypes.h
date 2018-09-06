@@ -111,7 +111,7 @@ isBigEndian() {
 template <class TypeBuiltDouble, typename TypeImplementation, class TypeFloatDigitsHelper>
 void
 fillContent(TypeBuiltDouble& builtDouble, const TypeImplementation& source, const TypeFloatDigitsHelper&) {
-   int sourceSizeInSizeofUnsigned = (sizeof(source) + sizeof(unsigned) - 1)/sizeof(unsigned);
+   static const int sourceSizeInSizeofUnsigned = (sizeof(source) + sizeof(unsigned) - 1)/sizeof(unsigned);
    unsigned doubleContent[sourceSizeInSizeofUnsigned];
    doubleContent[sourceSizeInSizeofUnsigned-1] = 0;
    memcpy(&doubleContent[0], &source, sizeof(source));
@@ -119,7 +119,7 @@ fillContent(TypeBuiltDouble& builtDouble, const TypeImplementation& source, cons
    {  unsigned* mask = (unsigned*) doubleContent;
       if (isBigEndian())
          mask += sourceSizeInSizeofUnsigned-1;
-      int lastCellIndex = (builtDouble.bitSizeMantissa() - 2)/(8*sizeof(unsigned));
+      int lastCellIndex = (int) ((builtDouble.bitSizeMantissa() - 2)/(8*sizeof(unsigned)));
       int mantissaIndex = lastCellIndex+1-sourceSizeInSizeofUnsigned;
       if (mantissaIndex < 0)
          mantissaIndex = 0;
@@ -130,7 +130,7 @@ fillContent(TypeBuiltDouble& builtDouble, const TypeImplementation& source, cons
          else
             ++mask;
       };
-      int shift = (builtDouble.bitSizeMantissa()-1) % (sizeof(unsigned)*8);
+      int shift = (int) ((builtDouble.bitSizeMantissa()-1) % (sizeof(unsigned)*8));
       builtDouble.getSMantissa()[lastCellIndex] = (shift == 0) ? *mask
          : ((*mask) & ~((~0U) << shift));
       builtDouble.getSMantissa() <<= 1;
@@ -202,20 +202,24 @@ setContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble, bool 
 #endif
 #endif
 
-      *mask |= exponent >> shift;
+      unsigned char val = (unsigned char) (exponent >> shift);
+      *mask |= val;
       while ((shift -= 8) >= 0) {
          if (!isBigEndian())
             --mask;
          else
             ++mask;
-         *mask |= exponent >> shift;
+         val = (unsigned char) (exponent >> shift);
+         *mask |= val;
       };
       if (!isBigEndian())
          --mask;
       else
          ++mask;
-      if (shift > -8)
-         *mask |= exponent << (-shift);
+      if (shift > -8) {
+         val = (unsigned char) (exponent << (-shift));
+         *mask |= val;
+      };
    }
 
    {  typename TypeBuiltDouble::Mantissa mantissa = builtDouble.getMantissa();
@@ -228,8 +232,8 @@ setContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble, bool 
       unsigned int* mask = (unsigned int*) doubleContent;
       if (isBigEndian())
          mask += ((sizeof(result)-1)/sizeof(unsigned int));
-      int lastCellIndex = (builtDouble.bitSizeMantissa() - 2)/(8*sizeof(unsigned int));
-      int mantissaIndex = lastCellIndex-((sizeof(result)-1)/sizeof(unsigned int));
+      int lastCellIndex = (int) ((builtDouble.bitSizeMantissa() - 2)/(8*sizeof(unsigned int)));
+      int mantissaIndex = (int) (lastCellIndex-((sizeof(result)-1)/sizeof(unsigned int)));
       if (mantissaIndex < 0)
          mantissaIndex = 0;
       for (; mantissaIndex < lastCellIndex; ++mantissaIndex) {
@@ -239,7 +243,7 @@ setContent(TypeImplementation& result, const TypeBuiltDouble& builtDouble, bool 
          else
             ++mask;
       };
-      int shift = (builtDouble.bitSizeMantissa()-1) % (sizeof(unsigned int)*8);
+      int shift = (int) ((builtDouble.bitSizeMantissa()-1) % (sizeof(unsigned int)*8));
       if (shift == 0)
          *mask = mantissa[lastCellIndex];
       else

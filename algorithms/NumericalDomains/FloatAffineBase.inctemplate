@@ -1365,7 +1365,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sinAs
          if (min < -PI * 1000.0)
             isTop = true;
          else {
-            kmin = (min + PI/2) / PI;
+            kmin = (int) ((min + PI/2) / PI);
             min -= PI * kmin;
             if (min < -PI/2) {
                --kmin;
@@ -1381,7 +1381,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sinAs
          if (min > PI * 1000.0)
             isTop = true;
          else {
-            kmin = (min + PI/2) / PI;
+            kmin = (int) ((min + PI/2) / PI);
             min -= PI * kmin;
             if (min < -PI/2) {
                --kmin;
@@ -1397,7 +1397,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sinAs
          if (max < -PI * 1000.0)
             isTop = true;
          else {
-            kmax = (max + PI/2) / PI;
+            kmax = (int) ((max + PI/2) / PI);
             max -= PI * kmax;
             if (max < -PI/2) {
                --kmax;
@@ -1413,7 +1413,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sinAs
          if (max > PI * 1000.0)
             isTop = true;
          else {
-            kmax = (max + PI/2) / PI;
+            kmax = (int) ((max + PI/2) / PI);
             max -= PI * kmax;
             if (max < -PI/2) {
                --kmax;
@@ -1529,7 +1529,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sinAs
             if (min < -PI * 1000.0)
                isTop = true;
             else {
-               kmin = (min + PI/2) / PI;
+               kmin = (int) ((min + PI/2) / PI);
                min -= PI * kmin;
                if (min < -PI/2) {
                   --kmin;
@@ -1545,7 +1545,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sinAs
             if (min > PI * 1000.0)
                isTop = true;
             else {
-               kmin = (min + PI/2) / PI;
+               kmin = (int) ((min + PI/2) / PI);
                min -= PI * kmin;
                if (min < -PI/2) {
                   --kmin;
@@ -1561,7 +1561,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sinAs
             if (max < -PI * 1000.0)
                isTop = true;
             else {
-               kmax = (max + PI/2) / PI;
+               kmax = (int) ((max + PI/2) / PI);
                max -= PI * kmax;
                if (max < -PI/2) {
                   --kmax;
@@ -1577,7 +1577,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sinAs
             if (max > PI * 1000.0)
                isTop = true;
             else {
-               kmax = (max + PI/2) / PI;
+               kmax = (int) ((max + PI/2) / PI);
                max -= PI * kmax;
                if (max < -PI/2) {
                   --kmax;
@@ -1692,7 +1692,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::cosAs
          if (min < -PI * 1000.0)
             isTop = true;
          else {
-            kmin = (min / PI + 0.5);
+            kmin = (int) (min / PI + 0.5);
             min -= PI * kmin;
             if (min < -PI/2) {
                --kmin;
@@ -1708,7 +1708,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::cosAs
          if (min > PI * 1000.0)
             isTop = true;
          else {
-            kmin = (min / PI + 0.5);
+            kmin = (int) (min / PI + 0.5);
             min -= PI * kmin;
             if (min < -PI/2) {
                --kmin;
@@ -1724,7 +1724,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::cosAs
          if (max < -PI * 1000.0)
             isTop = true;
          else {
-            kmax = (max / PI + 0.5);
+            kmax = (int) (max / PI + 0.5);
             max -= PI * kmax;
             if (max < -PI/2) {
                --kmax;
@@ -1740,7 +1740,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::cosAs
          if (max > PI * 1000.0)
             isTop = true;
          else {
-            kmax = (max / PI + 0.5);
+            kmax = (int) (max / PI + 0.5);
             max -= PI * kmax;
             if (max < -PI/2) {
                --kmax;
@@ -1867,7 +1867,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::cosAs
             if (min < -PI * 1000.0)
                isTop = true;
             else {
-               kmin = (min / PI + 0.5);
+               kmin = (int) (min / PI + 0.5);
                min -= PI * kmin;
                if (min < -PI/2) {
                   --kmin;
@@ -1883,7 +1883,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::cosAs
             if (min > PI * 1000.0)
                isTop = true;
             else {
-               kmin = (min / PI + 0.5);
+               kmin = (int) (min / PI + 0.5);
                min -= PI * kmin;
                if (min < -PI/2) {
                   --kmin;
@@ -1899,7 +1899,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::cosAs
             if (max < -PI * 1000.0)
                isTop = true;
             else {
-               kmax = (max / PI + 0.5);
+               kmax = (int) (max / PI + 0.5);
                max -= PI * kmax;
                if (max < -PI/2) {
                   --kmax;
@@ -1915,7 +1915,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::cosAs
             if (max > PI * 1000.0)
                isTop = true;
             else {
-               kmax = (max / PI + 0.5);
+               kmax = (int) (max / PI + 0.5);
                max -= PI * kmax;
                if (max < -PI/2) {
                   --kmax;
@@ -3017,7 +3017,7 @@ DefineEquationTemplateHeader(URealBitsNumber)
 class TSimplificationRules DefineEquationTemplateParameters(URealBitsNumber)
    ::EquationCoefficientKey {
   public:
-   EquationCoefficientKey(const COL::VirtualMultiSortedCollection& support) {}
+   EquationCoefficientKey(const COL::VirtualMultiSortedCollection& /* support */) {}
    typedef BuiltReal KeyType;
    typedef BuiltReal ControlKeyType;
    static KeyType key(const typename Equation::Coefficient& coefficient)
@@ -3812,7 +3812,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    if (!max.isInftyExponent()) {
       maxError.setBasicExponent(max.getBasicExponent());
       if (maxError.getSBasicExponent().minusAssign(USizeMantissa+1).hasCarry()) {
-         int shift = maxError.getSBasicExponent().neg()[0]+1;
+         int shift = (int) maxError.getSBasicExponent().neg()[0]+1;
          maxError.getSMantissa() = 1U;
          if (URealBitsNumber-shift > 0)
             maxError.getSMantissa() <<= (URealBitsNumber-shift);
@@ -3907,7 +3907,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    BuiltReal semiUlp;
    semiUlp.setBasicExponent(real.getBasicExponent());
    if (semiUlp.getSBasicExponent().minusAssign(USizeMantissa+1).hasCarry()) {
-      int shift = semiUlp.getSBasicExponent().neg()[0]+1;
+      int shift = (int) semiUlp.getSBasicExponent().neg()[0]+1;
       semiUlp.getSMantissa() = 1U;
       if (USizeMantissa-shift > 0)
          semiUlp.getSMantissa() <<= (USizeMantissa-shift);
@@ -3927,7 +3927,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    BuiltReal semiUlp;
    semiUlp.setBasicExponent(real.getBasicExponent());
    if (semiUlp.getSBasicExponent().minusAssign(USizeMantissa+1).hasCarry()) {
-      int shift = semiUlp.getSBasicExponent().neg()[0]+1;
+      int shift = (int) semiUlp.getSBasicExponent().neg()[0]+1;
       semiUlp.getSMantissa() = 1U;
       if (USizeMantissa-shift > 0)
          semiUlp.getSMantissa() <<= (USizeMantissa-shift);
@@ -4092,7 +4092,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          typename BuiltReal::Exponent errorExponent = realMax.getBasicExponent();
          if (errorExponent.minusAssign(USizeMantissa+1).hasCarry()) {
             errorExponent.neg().inc();
-            int shift = errorExponent[0];
+            int shift = (int) errorExponent[0];
             diffMantissa <<= (USizeMantissa-1-shift);
             errorExponent = 0U;
          }
@@ -4408,7 +4408,7 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 inline
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::DefineBasicFloatZonotope(int value)
-   :  dValue(value) {
+   :  dValue((TypeImplementation) value) {
    inherited::updateLocalState();
    typename BuiltDouble::IntConversion conversion;
    conversion.setSigned();
@@ -4474,7 +4474,7 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 inline
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::DefineBasicFloatZonotope(long int value)
-   :  dValue(value) { // [TODO] to improve
+   :  dValue((TypeImplementation) value) { // [TODO] to improve
    inherited::updateLocalState();
    typename BuiltDouble::IntConversion conversion;
    conversion.setSigned();
@@ -4541,7 +4541,7 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 inline
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::DefineBasicFloatZonotope(unsigned value)
-   :  dValue(value) {
+   :  dValue((TypeImplementation) value) {
    inherited::updateLocalState();
    typename BuiltDouble::IntConversion conversion;
    conversion.setUnsigned();
@@ -4608,7 +4608,7 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 inline
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::DefineBasicFloatZonotope(unsigned long value)
-   :  dValue(value) { // [TODO] to improve
+   :  dValue((TypeImplementation) value) { // [TODO] to improve
    inherited::updateLocalState();
    typename BuiltDouble::IntConversion conversion;
    conversion.setUnsigned();
@@ -6239,8 +6239,8 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          TypeConversion result, bool realChoice, bool implementationChoice,
          TypeConversion alternativeResult, bool hasMultipleResults, bool hasValidAlternative,
          typename inherited::EquationHolder& implementation, TypeConversion realResultMin,
-         TypeConversion realResultMax, TypeConversion implementationResultMin,
-         TypeConversion implementationResultMax, TypeConversion realPlusErrorResultMin,
+         TypeConversion realResultMax, TypeConversion /* implementationResultMin */,
+         TypeConversion /* implementationResultMax */, TypeConversion realPlusErrorResultMin,
          TypeConversion realPlusErrorResultMax, TypeConversion implementationBoundResultMin,
          TypeConversion implementationBoundResultMax) {
    auto& minParams = TypeBaseFloatAffine::minParams();
@@ -6521,7 +6521,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
          << *this) >> *this;
    bool isApproximate = !this->isFourPower();
-   dValue = ::sqrt((double) dValue);
+   dValue = (TypeImplementation) ::sqrt((double) dValue);
    inherited::sqrtAssign();
    if (!this->hasNoError()) {
       if (bfMin.isNegative() && !bfMin.isZero()) {
@@ -6551,7 +6551,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       ::sinAssign() {
    auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
          << *this) >> *this;
-   dValue = ::sin((double) dValue);
+   dValue = (TypeImplementation) ::sin((double) dValue);
    inherited::sinAssign();
    if (this->doesComputeError())
       addSemiUlpToError(true /* isBeforeValidImplementation */);
@@ -6568,7 +6568,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       ::cosAssign() {
    auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
          << *this) >> *this;
-   dValue = ::cos((double) dValue);
+   dValue = (TypeImplementation) ::cos((double) dValue);
    inherited::cosAssign();
    if (this->doesComputeError())
       addSemiUlpToError(true /* isBeforeValidImplementation */);
@@ -6585,7 +6585,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       ::asinAssign() {
    auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
          << *this) >> *this;
-   dValue = ::asin((double) dValue);
+   dValue = (TypeImplementation) ::asin((double) dValue);
    inherited::asinAssign();
    if (this->doesComputeError())
       addSemiUlpToError(true /* isBeforeValidImplementation */);
@@ -6602,7 +6602,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       ::acosAssign() {
    auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
          << *this) >> *this;
-   dValue = ::acos((double) dValue);
+   dValue = (TypeImplementation) ::acos((double) dValue);
    inherited::acosAssign();
    if (this->doesComputeError())
       addSemiUlpToError(true /* isBeforeValidImplementation */);
@@ -6619,7 +6619,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       ::tanAssign() {
    auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
          << *this) >> *this;
-   dValue = ::tan((double) dValue);
+   dValue = (TypeImplementation) ::tan((double) dValue);
    inherited::tanAssign();
    if (this->doesComputeError())
       addSemiUlpToError(true /* isBeforeValidImplementation */);
@@ -6636,7 +6636,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       ::atanAssign() {
    auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
          << *this) >> *this;
-   dValue = ::atan((double) dValue);
+   dValue = (TypeImplementation) ::atan((double) dValue);
    inherited::atanAssign();
 
 /* typedef Numerics::DefineTaylorDouble<
@@ -6680,7 +6680,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
          << *this) >> *this;
    bool isApproximate = !this->isZero();
-   dValue = ::exp((double) dValue);
+   dValue = (TypeImplementation) ::exp((double) dValue);
    inherited::expAssign();
 
    if (!this->hasNoError()) {
@@ -6723,7 +6723,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
    auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
          << *this) >> *this;
    bool isApproximate = !this->isOne();
-   dValue = ::log((double) dValue);
+   dValue = (TypeImplementation) ::log((double) dValue);
    inherited::logAssign();
    if (bfMin.isNegative() && !bfMin.isZero()) {
       // [TODO] should be in FloatZonotope::logAssign
@@ -6771,7 +6771,7 @@ void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::log10Assign() {
    bool isApproximate = !this->isOne();
-   dValue = ::log10((double) dValue);
+   dValue = (TypeImplementation) ::log10((double) dValue);
    inherited::log10Assign();
    if (!this->hasNoError()) {
       if (bfMin.isNegative() && !bfMin.isZero()) {
@@ -6821,7 +6821,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       ::powAssign(const thisType& source, typename Equation::PolicyCall policyCall) {
    auto simplificationRules = (SimplificationRules(TypeBaseFloatAffine::getLimitNoiseSymbolsNumber())
          << *this << source) >> *this;
-   dValue = ::pow((double) dValue, (double) source.dValue);
+   dValue = (TypeImplementation) ::pow((double) dValue, (double) source.dValue);
    inherited::powAssign(source, policyCall);
    if (this->doesComputeError())
       addSemiUlpToError(true /* isBeforeValidImplementation */);
@@ -6836,7 +6836,7 @@ DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExpo
 void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::atan2Assign(const thisType& source, typename Equation::PolicyCall policyCall) {
-   dValue = ::atan2((double) dValue, (double) source.dValue);
+   dValue = (TypeImplementation) ::atan2((double) dValue, (double) source.dValue);
    inherited::atan2Assign(source, policyCall);
    if (this->doesComputeError())
       addSemiUlpToError(true /* isBeforeValidImplementation */);

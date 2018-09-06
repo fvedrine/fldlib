@@ -84,7 +84,7 @@ namespace DFloatDigitsHelper {
          = (LDBL_MAX_EXP == (1 << (16-2))) ? 16 /* leading 1 bit */
             : sizeof(long double)*8-LDBL_MANT_DIG;
    };
-};
+}
 
 class FloatDigitsHelper {
   public:
@@ -136,7 +136,7 @@ class ExecutionPathContract : public BaseExecutionPath {
    static SymbolsManager smSymbolsManager;
    static SymbolsManager::MergeTable mtInitialTable;
 
-   static void notifyPossibleSplit(const char* file, int line) {}
+   static void notifyPossibleSplit(const char* /* file */, int /* line */) {}
    static void notifyPossibleMerge() {}
    Mode getMode() const { return MRealAndImplementation; }
    bool doesFollow() const { return false; }
@@ -147,10 +147,10 @@ class ExecutionPathContract : public BaseExecutionPath {
    bool hasSimplificationTriggerPercent() const { return false; }
    BuiltReal getSimplificationTriggerPercent() const { return BuiltReal(); }
 
-   void assumeDomain(char prefix) const {}
-   void assumeDomain(const char* prefix) const {}
-   void assumePrefixDomain(const char* prefix) const {}
-   void assumeDomainUntil(char delimiter) const {}
+   void assumeDomain(char /* prefix */) const {}
+   void assumeDomain(const char* /* prefix */) const {}
+   void assumePrefixDomain(const char* /* prefix */) const {}
+   void assumeDomainUntil(char /* delimiter */) const {}
    template <class TypeAffine, class ImplReadParameters, class ImplWriteParameters,
          class EquationReadParameters, class EquationWriteParameters,
          class HighLevelUpdateVector>
@@ -171,11 +171,11 @@ class ExecutionPathContract : public BaseExecutionPath {
          const TypeImplementation& minReadValue, const TypeImplementation& maxReadValue, const char* readPrefix,
          const TypeImplementation& minExpectedValue, const TypeImplementation& maxExpectedValue, const char* expectedPrefix,
          const TypeParameters& params) const {}
-   void emitErrorFromInput(const char* message) const {}
+   void emitErrorFromInput(const char* /* message */) const {}
 
-   void writeDomain(char prefix) const {}
-   void writeDomain(const char* prefix) const {}
-   void writePrefixDomain(const char* prefix) const {}
+   void writeDomain(char /* prefix */) const {}
+   void writeDomain(const char* /* prefix */) const {}
+   void writePrefixDomain(const char* /* prefix */) const {}
    template <class TypeImplementation, class TypeParameters>
    void writeValueToOutput(const TypeImplementation& value, const TypeParameters& params) const {}
 
@@ -193,13 +193,13 @@ class ExecutionPathContract : public BaseExecutionPath {
    void writeSourceLine() const {}
    void assumeSourceLine() const {}
 
-   void throwEmptyBranch(bool isUnstable) const {}
+   void throwEmptyBranch(bool /* isUnstable */) const {}
    template <class TypeFloatAffine>
    void assumeThresholdDetection(const TypeFloatAffine& source) const {}
    template <class TypeFloatAffine>
    void updateThresholdDetection(const TypeFloatAffine& source) const {}
 
-   void persist(const char* prefix) const {}
+   void persist(const char* /* prefix */) const {}
    bool doesAbsorbHighLevel() const { return false; }
    unsigned getLimitStartSymbolAbsorption() const { return 48; }
    bool doesExcludeConstantFromSymbolAbsorption() const { return false; }
@@ -212,22 +212,22 @@ class ExecutionPathContract : public BaseExecutionPath {
    bool hasLimitNoiseSymbolsNumber() { return false; }
    int getLimitNoiseSymbolsNumber() { return 0; }
 
-   void followNewBranch(int cases, BooleanChoice& realChoice, BooleanChoice& errorChoice,
-         bool doesChooseDefaultErrorChoice, BooleanChoice defaultErrorChoice) const {}
-   unsigned followNewConversionBranch(unsigned conversion, bool& realChoice,
-         bool& implementationChoice, unsigned realNumber, unsigned implementationNumber,
-         unsigned commonNumber, unsigned firstRealCommon, unsigned firstImplementationCommon) const
+   void followNewBranch(int /* cases */, BooleanChoice& /* realChoice */, BooleanChoice& /* errorChoice */,
+         bool /* doesChooseDefaultErrorChoice */, BooleanChoice /* defaultErrorChoice */) const {}
+   unsigned followNewConversionBranch(unsigned /* conversion */, bool& /* realChoice */,
+         bool& /* implementationChoice */, unsigned /* realNumber */, unsigned /* implementationNumber */,
+         unsigned /* commonNumber */, unsigned /* firstRealCommon */, unsigned /* firstImplementationCommon */) const
       {  return 0; }
 
    void notifySplitWithSynchronization() const {}
-   bool isSynchronizedWith(const char* file, int line) const { return false; }
+   bool isSynchronizedWith(const char* /* file */, int /* line */) const { return false; }
    bool hasSynchronization() const { return false; }
-   bool synchronizeCurrentFlow(unsigned& floatSelection, unsigned& realSelection,
-         int numberOfFloatBranches, int numberOfRealBranches) const { return true; }
-   void readUntilBranchNumbers(int& numberOfFloatBranches, int& numberOfRealBranches) const {}
-   void selectBranch(unsigned& floatSelection, unsigned& realSelection,
-         int numberOfFloatBranches, int numberOfRealBranches) const {}
-   void writeBranchNumbers(int numberOfFloatBranches, int numberOfRealBranches) const {}
+   bool synchronizeCurrentFlow(unsigned& /* floatSelection */, unsigned& /* realSelection */,
+         int /* numberOfFloatBranches */, int /* numberOfRealBranches */) const { return true; }
+   void readUntilBranchNumbers(int& /* numberOfFloatBranches */, int& /* numberOfRealBranches */) const {}
+   void selectBranch(unsigned& /* floatSelection */, unsigned& /* realSelection */,
+         int /* numberOfFloatBranches */, int /* numberOfRealBranches */) const {}
+   void writeBranchNumbers(int /* numberOfFloatBranches */, int /* numberOfRealBranches */) const {}
    void clearSynchronizationBranches() const {}
 };
 
@@ -376,7 +376,7 @@ class TBaseFloatAffine : public TypeExecutionPath, public FloatDigitsHelper {
          };
       }
    template <class TypeFloatAffine>
-   void notifyForDivisionByZero(const TypeFloatAffine& source) const
+   void notifyForDivisionByZero(const TypeFloatAffine& /* source */) const
       {  if (inherited::doesFollowFlow() && inherited::getMode() == BaseExecutionPath::MRealAndImplementation
                && inherited::doesAssumeInput()) {
             inherited::assumeSourceLine();
@@ -388,7 +388,7 @@ class TBaseFloatAffine : public TypeExecutionPath, public FloatDigitsHelper {
          };
       }
    template <class TypeFloatAffine>
-   void notifyForNegativeSqrt(const TypeFloatAffine& source) const
+   void notifyForNegativeSqrt(const TypeFloatAffine& /* source */) const
       {  if (inherited::doesFollowFlow() && inherited::getMode() == BaseExecutionPath::MRealAndImplementation
                && inherited::doesAssumeInput()) {
             inherited::assumeSourceLine();
@@ -412,7 +412,7 @@ class TBaseFloatAffine : public TypeExecutionPath, public FloatDigitsHelper {
          };
       }
    template <class TypeFloatAffine>
-   void notifyForNegativeOrNulLog(const TypeFloatAffine& source) const
+   void notifyForNegativeOrNulLog(const TypeFloatAffine& /* source */) const
       {  if (inherited::doesFollowFlow() && inherited::getMode() == BaseExecutionPath::MRealAndImplementation
                && inherited::doesAssumeInput()) {
             inherited::assumeSourceLine();

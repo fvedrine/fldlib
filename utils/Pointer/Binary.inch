@@ -143,14 +143,14 @@ class DefineDeclareTypeBinaryTree : public CustomImplBinaryTree {
      public:
       RouteFreeAction(DefineTypeBinaryTree&) {}
    
-      bool init(const DefineTypeBinaryTree& tree, Node* root) { return true; }
+      bool init(const DefineTypeBinaryTree& /* tree */, Node* /* root */) { return true; }
       bool ascent(Node* node, Node* oldNode)
          {  if (node)
                disconnectSon(node, oldNode);
             if (oldNode) delete oldNode;
             return true;
          }
-      bool descent(Node* node, Node* parent) { return true; }
+      bool descent(Node* /* node */, Node* /* parent */) { return true; }
       bool end(const DefineTypeBinaryTree& tree)
          {  if (tree.root())
                delete tree.root();
@@ -163,13 +163,13 @@ class DefineDeclareTypeBinaryTree : public CustomImplBinaryTree {
      public:
       RouteRemoveAction(DefineTypeBinaryTree&) {}
    
-      bool init(const DefineTypeBinaryTree& tree, Node* root) { return true; }
+      bool init(const DefineTypeBinaryTree& /* tree */, Node* /* root */) { return true; }
       bool ascent(Node* node, Node* oldNode)
          {  if (node)
                disconnectSon(node, oldNode);
             return true;
          }
-      bool descent(Node* node, Node* parent) { return true; }
+      bool descent(Node* /* node */, Node* /* parent */) { return true; }
       bool end(const DefineTypeBinaryTree& tree)
          { const_cast<DefineTypeBinaryTree&>(tree).clearRoot(); return true; }
    };
@@ -203,8 +203,8 @@ class DefineDeclareTypeBinaryTree : public CustomImplBinaryTree {
             };
          }
    
-      bool init(const DefineTypeBinaryTree& tree, Node* root) { return true; }
-      bool ascent(Node* node, Node* oldNode)
+      bool init(const DefineTypeBinaryTree& /* tree */, Node* /* root */) { return true; }
+      bool ascent(Node* /* node */, Node* oldNode)
          {  setBalance(getReference(cThisCursor), oldNode);
             cThisCursor.setToParent();
             return true;
@@ -255,7 +255,7 @@ class DefineDeclareTypeBinaryTree : public CustomImplBinaryTree {
       RouteValidityAction(const DefineTypeBinaryTree& tree)
          : uExpectedHeight(tree.height()), uLeftCount(tree.count()) {}
    
-      bool init(const DefineTypeBinaryTree& tree, Node* root)
+      bool init(const DefineTypeBinaryTree& /* tree */, Node* /* root */)
          {  return (--uLeftCount >= 0) && (--uExpectedHeight >= 0); }
       bool ascent(Node* node, Node* oldNode)
          {  bool result = oldNode->isValid();

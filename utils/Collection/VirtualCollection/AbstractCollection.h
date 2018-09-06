@@ -218,7 +218,7 @@ class AbstractCollection::CursorNotification
    typedef PNT::SharedPointer::Notification inherited;
 
   protected:
-   void update(AbstractCursor& cursor) {}
+   void update(AbstractCursor& /* cursor */) {}
 
   public:
    CursorNotification() {}

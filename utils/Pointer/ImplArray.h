@@ -147,7 +147,7 @@ class ImplArray : public EnhancedObject {
 
 template <class Execute, class TemplateParameters>
 inline bool
-ImplArray::foreachDo(TemplateParameters parameters, Execute& function, int index, int endIndex) const {
+ImplArray::foreachDo(TemplateParameters /* parameters */, Execute& function, int index, int endIndex) const {
    typedef typename TemplateParameters::Element Element;
    typedef typename TemplateParameters::Cast Cast;
 
@@ -160,7 +160,7 @@ ImplArray::foreachDo(TemplateParameters parameters, Execute& function, int index
 
 template <class Execute, class TemplateParameters>
 inline bool
-ImplArray::foreachReverseDo(TemplateParameters parameters, Execute& function, int index, int endIndex) const {
+ImplArray::foreachReverseDo(TemplateParameters /* parameters */, Execute& function, int index, int endIndex) const {
    typedef typename TemplateParameters::Element Element;
    typedef typename TemplateParameters::Cast Cast;
 

@@ -237,12 +237,12 @@ class TMultiArray : public GenericMultiArray {
    typedef TMultiArrayCursor<TypeElement, TypeKey, TypeCast> thisCursorType;
    typedef GenericMultiArray inherited;
 
-   virtual const EnhancedObject& key(const EnhancedObject& element) const override
+   virtual const EnhancedObject& key(const EnhancedObject& /* element */) const override
       {  AssumeUncalled return *(const EnhancedObject*) nullptr; }
 
-   LocationResult _locateKey(const EnhancedObject& source, const ExtendedLocateParameters& parameters,
-         VirtualMultiSortedCollectionCursor* cursor, const VirtualMultiSortedCollectionCursor* start,
-         const VirtualMultiSortedCollectionCursor* end) const override { AssumeUncalled return LocationResult(); }
+   LocationResult _locateKey(const EnhancedObject& /* source */, const ExtendedLocateParameters& /* parameters */,
+         VirtualMultiSortedCollectionCursor* /* cursor */, const VirtualMultiSortedCollectionCursor* /* start */,
+         const VirtualMultiSortedCollectionCursor* /* end */) const override { AssumeUncalled return LocationResult(); }
 
   public:
    typedef TypeKey Key;
@@ -253,7 +253,7 @@ class TMultiArray : public GenericMultiArray {
    typedef TInitialNewValues<TypeElement, TypeCast> InitialNewValues;
 
   protected:
-   virtual bool acceptElement(const EnhancedObject& source) const override { return true; }
+   virtual bool acceptElement(const EnhancedObject& /* source */) const override { return true; }
 
    virtual ComparisonResult _compareElement(const EnhancedObject& fst, const EnhancedObject& snd) const override
       { return TypeKey::compare(key((const TypeElement&) TypeCast::castFrom(fst)), key((const TypeElement&) TypeCast::castFrom(snd))); }

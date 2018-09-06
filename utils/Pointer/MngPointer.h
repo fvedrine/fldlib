@@ -149,6 +149,6 @@ class TMngPointer : public MngPointer {
    Element& operator*() const { return getElement(); }
 };
 
-}; // end of namespace
+} // end of namespace
 
 #endif // PNT_MngPointerH

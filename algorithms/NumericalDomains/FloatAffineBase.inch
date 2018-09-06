@@ -1128,7 +1128,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
             <BaseStoreTraits, URealBitsNumber, TypeBaseFloatAffine, USizeMantissaArgument, USizeExponentArgument, TypeImplementationArgument>&
 #endif
          source)
-   :  inherited(source), dValue(source.dValue)
+   :  inherited(source), dValue((TypeImplementation) source.dValue)
    {  buildImplementationFrom(source); }
 
 DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)

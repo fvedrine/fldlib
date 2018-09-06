@@ -166,14 +166,14 @@ class EnhancedObject {
 
   public:
    EnhancedObject() {}
-   EnhancedObject(const EnhancedObject& source) {}
+   EnhancedObject(const EnhancedObject&) {}
    virtual ~EnhancedObject() {}
 
 #endif
 
   protected:
-   virtual ComparisonResult _compare(const EnhancedObject& source) const { return CREqual; }
-   virtual void _assign(const EnhancedObject& source) {}
+   virtual ComparisonResult _compare(const EnhancedObject&) const { return CREqual; }
+   virtual void _assign(const EnhancedObject&) {}
 
   public:
    virtual EnhancedObject* createCopy() const
@@ -182,7 +182,7 @@ class EnhancedObject {
    DCompare(EnhancedObject)
    DAssign(EnhancedObject)
 
-   EnhancedObject& operator=(const EnhancedObject& source) { return *this; }
+   EnhancedObject& operator=(const EnhancedObject&) { return *this; }
 
    // Implementation of basic casts to avoid systematic dynamic_cast for the createSCopy() method
    static EnhancedObject* castToCopyHandler(EnhancedObject* source) { return source; }
@@ -401,8 +401,8 @@ class EExtendedParameters {
 
 class VirtualCast : public ExtendedParameters {
   protected:
-   virtual EnhancedObject* _castFrom(EnhancedObject* copyObject) const { AssumeUncalled return nullptr; }
-   virtual EnhancedObject* _castTo(EnhancedObject* collectionObject) const { AssumeUncalled return nullptr; }
+   virtual EnhancedObject* _castFrom(EnhancedObject*) const { AssumeUncalled return nullptr; }
+   virtual EnhancedObject* _castTo(EnhancedObject*) const { AssumeUncalled return nullptr; }
 
   public:
    VirtualCast() : ExtendedParameters() {}
