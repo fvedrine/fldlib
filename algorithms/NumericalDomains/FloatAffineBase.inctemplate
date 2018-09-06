@@ -1809,8 +1809,12 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sqrtA
             sqrtMin.sqrtAssign(tmpMin, tmpMax, minParams);
             minParams.clear();
          };
-         sqrtMax.sqrtAssign(tmpMin, tmpMax, minParams);
-         minParams.clear();
+         if (sqrtMax.isNegative())
+            sqrtMax.setZero();
+         else {
+            sqrtMax.sqrtAssign(tmpMin, tmpMax, minParams);
+            minParams.clear();
+         };
       };
       auto& symbolsManager = thisType::symbolsManager();
       eRealDomain.sqrtAssign(symbolsManager);
