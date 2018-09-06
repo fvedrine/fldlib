@@ -4060,7 +4060,15 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::simplifyWith(
 
          highLevelError.plusAssign(addHighLevelError, maxParams);
          maxParams.clear();
-         thisCopy.addCoefficient(constraintSymbolValue, constraintSymbol);
+         Cursor thisCopyCursor(thisCopy);
+         if (thisCopyCursor.setToLast()) {
+            while (thisCopyCursor.elementAt() > constraintSymbol && thisCopyCursor.setToPrevious()) {};
+            Coefficient* coeff = (Coefficient*) thisCopy.absorbGlobalElementAfter(
+                  createGlobal(constraintSymbol), thisCopyCursor);
+            coeff->setValue(constraintSymbolValue);
+         }
+         else
+            thisCopy.addCoefficient(constraintSymbolValue, constraintSymbol);
          PNT::AutoPointer<Coefficient> constraintSymbolValueAdditions;
          addAssignOptionCentral(thisCopy.dCentral, thisCopy.apcCentralAdditions,
                constraintSymbolValue, constraintSymbolValueAdditions, highLevelError,
