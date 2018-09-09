@@ -110,6 +110,9 @@ do
     elif [ "$param" == "-interface" ]
     then
       interface=1
+    elif [ "$param" == "-backtrace" ]
+    then
+      cxxflags+=" -DFLOAT_BACKTRACE"
     else
       ((opt_params_count--))
       break
@@ -191,6 +194,7 @@ then
   echo -e "\t-pure-zonotope\t\tin affine mode, keep maximal relationships among variables to the detriment of constraints"
   echo -e "\t-create-interval-trigger-percent x.xx\tin affine mode, replace the zonotope by the interval if the interval is x.xx% better than the zonotope"
   echo -e "\t-limit-noise-symbols-number xxx\t\tin affine mode, for each variable, limit the number of noise symbols by 2*xxx"
+  echo -e "\t-backtrace\t\twrite a backtrace at every warning"
   exit 1
 fi
 

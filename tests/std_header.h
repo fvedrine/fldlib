@@ -63,6 +63,12 @@
 #define FLOAT_INIT_FIRST_FOLLOW_EXE 
 #endif
 
+#ifdef FLOAT_BACKTRACE
+#define FLOAT_INIT_BACKTRACE init.setSupportBacktrace();
+#else
+#define FLOAT_INIT_BACKTRACE 
+#endif
+
 #ifdef FLOAT_AFFINE
 #ifdef FLOAT_SCENARIO
 #define FLOAT_PROG_SUFFIX "_diag_aff_scenario"
@@ -99,6 +105,7 @@
   FLOAT_INIT_SIMPLIFICATION                                                                      \
   FLOAT_INIT_LIMIT_NOISE_SYMBOLS_NUMBER                                                          \
   FLOAT_INIT_PURE_ZONOTOPE                                                                       \
+  FLOAT_INIT_BACKTRACE                                                                           \
   init.setResultFile(TOSTRING(PROG_NAME) FLOAT_PROG_SUFFIX);                                     \
   std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
   try {                                                                                          \
@@ -129,6 +136,7 @@
   FLOAT_INIT_SIMPLIFICATION                                                                      \
   FLOAT_INIT_LIMIT_NOISE_SYMBOLS_NUMBER                                                          \
   FLOAT_INIT_PURE_ZONOTOPE                                                                       \
+  FLOAT_INIT_BACKTRACE                                                                           \
   init.setResultFile(TOSTRING(PROG_NAME) FLOAT_PROG_SUFFIX);                                     \
   std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
   try {
@@ -213,6 +221,7 @@ static inline NumericalDomains::DoubleZonotope middle_of_double_with_error(old_d
   FLOAT_INIT_VERBOSE                                                                             \
   FLOAT_INIT_THRESHOLD                                                                           \
   FLOAT_INIT_FIRST_FOLLOW_EXE                                                                    \
+  FLOAT_INIT_BACKTRACE                                                                           \
   init.setResultFile(TOSTRING(PROG_NAME) "_diag_int");                                           \
   std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
   FLOAT_SPLIT_ALL(main, double::end(), double::end())
@@ -226,6 +235,7 @@ static inline NumericalDomains::DoubleZonotope middle_of_double_with_error(old_d
   FLOAT_INIT_VERBOSE                                                                             \
   FLOAT_INIT_THRESHOLD                                                                           \
   FLOAT_INIT_FIRST_FOLLOW_EXE                                                                    \
+  FLOAT_INIT_BACKTRACE                                                                           \
   init.setResultFile(TOSTRING(PROG_NAME) "_diag_int");                                           \
   std::cout << FLOAT_INIT_MESSAGE << std::endl;
 #define END_MAIN 
@@ -247,6 +257,7 @@ static inline NumericalDomains::DoubleZonotope middle_of_double_with_error(old_d
   FLOAT_INIT_VERBOSE                                                                             \
   FLOAT_INIT_THRESHOLD                                                                           \
   FLOAT_INIT_FIRST_FOLLOW_EXE                                                                    \
+  FLOAT_INIT_BACKTRACE                                                                           \
   init.setResultFile(TOSTRING(PROG_NAME) "_diag_exact");                                         \
   std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
   try {                                                                                          \
@@ -273,6 +284,7 @@ static inline NumericalDomains::DoubleZonotope middle_of_double_with_error(old_d
   FLOAT_INIT_VERBOSE                                                                             \
   FLOAT_INIT_THRESHOLD                                                                           \
   FLOAT_INIT_FIRST_FOLLOW_EXE                                                                    \
+  FLOAT_INIT_BACKTRACE                                                                           \
   init.setResultFile(TOSTRING(PROG_NAME) "_diag_exact");                                         \
   std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
   try {
