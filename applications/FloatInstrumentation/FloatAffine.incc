@@ -221,6 +221,39 @@ PNT::AutoPointer<TGConstraintsSet<Numerics::UnsignedBaseStoreTraits, FLOAT_REAL_
 ExecutionPath::apcsConstraints;
 BaseExecutionPathParams* ExecutionPath::pParams = nullptr;
 
+void
+BaseExecutionPathParams::ExtendedSymbolsManager::setSupportMapSymbols(const char* filename) {
+   if (!oMapSymbolsFile)
+      oMapSymbolsFile = new ExecutionPath::OFStream(filename);
+   fSupportMapSymbols = true;
+}
+
+Symbol*
+BaseExecutionPathParams::ExtendedSymbolsManager::createCentralSymbol() {
+   Symbol* result = inherited::createCentralSymbol();
+   if (oMapSymbolsFile && fSupportMapSymbols && result) {
+      oMapSymbolsFile->writesome(result->getOwnPrefix());
+      oMapSymbolsFile->write(result->getOrder(), false);
+      oMapSymbolsFile->writesome(": ");
+      writeSimplifiedBackTrace(*oMapSymbolsFile);
+      oMapSymbolsFile->put('\n');
+   };
+   return result;
+}
+
+Symbol*
+BaseExecutionPathParams::ExtendedSymbolsManager::createNoiseSymbol() {
+   Symbol* result = inherited::createNoiseSymbol();
+   if (oMapSymbolsFile && fSupportMapSymbols && result) {
+      oMapSymbolsFile->writesome(result->getOwnPrefix());
+      oMapSymbolsFile->write(result->getOrder(), false);
+      oMapSymbolsFile->writesome(": ");
+      writeSimplifiedBackTrace(*oMapSymbolsFile);
+      oMapSymbolsFile->put('\n');
+   };
+   return result;
+}
+
 BaseExecutionPathParams&
 ExecutionPath::setParams()
    {  if (!fClosedParams) {

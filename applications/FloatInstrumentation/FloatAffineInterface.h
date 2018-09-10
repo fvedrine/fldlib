@@ -427,6 +427,7 @@ class ExecutionPath {
    static void setSupportFirstFollowFloat();
    static void setSupportPureZonotope();
    static void setTrackErrorOrigin();
+   static void setSupportMapSymbols();
    static void setLimitNoiseSymbolsNumber(int limit);
    static void setSimplificationTriggerPercent(double percent);
 
@@ -444,6 +445,7 @@ class ExecutionPath {
       void setSupportFirstFollowFloat() { ExecutionPath::setSupportFirstFollowFloat(); }
       void setSupportPureZonotope() { ExecutionPath::setSupportPureZonotope(); }
       void setTrackErrorOrigin() { ExecutionPath::setTrackErrorOrigin(); }
+      void setSupportMapSymbols() { ExecutionPath::setSupportMapSymbols(); }
       void setLimitNoiseSymbolsNumber(int limit) { ExecutionPath::setLimitNoiseSymbolsNumber(limit); }
       void setResultFile(const char* fileSuffix) { initializeGlobals(fileSuffix); }
       void setSimplificationTriggerPercent(double percent) { ExecutionPath::setSimplificationTriggerPercent(percent); }

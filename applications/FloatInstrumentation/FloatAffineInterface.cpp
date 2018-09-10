@@ -178,6 +178,11 @@ ExecutionPath::setTrackErrorOrigin() {
 }
 
 void
+ExecutionPath::setSupportMapSymbols() {
+   DAffine::ExecutionPath::setSupportMapSymbols();
+}
+
+void
 ExecutionPath::setLimitNoiseSymbolsNumber(int limit) {
    DAffine::ExecutionPath::setLimitNoiseSymbolsNumber(limit);
 }

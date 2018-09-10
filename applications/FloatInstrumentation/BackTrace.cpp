@@ -41,6 +41,105 @@
 namespace NumericalDomains {
 
 void
+writeSimplifiedBackTrace(STG::IOObject::OSBase& out) { // code from unisim
+#if defined(__GNUC__) && (__GNUC__ >= 3) && defined(HAVE_CXXABI)
+   static const unsigned int max_depth = 32;
+
+   void* stack_addrs[max_depth+1];
+   int stack_depth = backtrace(stack_addrs, max_depth + 1);
+
+   char **stack_strings = backtrace_symbols(stack_addrs, stack_depth);
+   bool isFirst = true, isInLibrary = false;
+   for (int level = 1; level < stack_depth; level++) {
+      char *begin_of_mangled_name = 0;
+      char *end_of_mangled_name = 0;
+      char *begin_of_file_location = stack_strings[level];
+      char *begin_of_address = 0;
+      char *end_of_address = 0;
+
+      // find the parentheses and address offset surrounding the mangled name
+      char *pos = begin_of_file_location;
+      while(*pos) {
+         if (*pos == '(') {
+            *pos = 0;
+            pos++;
+            begin_of_mangled_name = pos;
+            break;
+         }
+         pos++;
+      }
+
+      while(*pos) {
+         if (*pos == '+') {
+            *pos = 0;
+            end_of_mangled_name = pos++;
+            break;
+         }
+         else if (*pos == ')') {
+            *pos = 0;
+            begin_of_mangled_name = 0;
+            pos++;
+            break;
+         }
+         pos++;
+      }
+
+      while(*pos) {
+         if (*pos == '[') {
+            pos++;
+            begin_of_address = pos;
+            break;
+         }
+         pos++;
+      }
+
+      while(*pos) {
+         if (*pos == ']') {
+            *pos = 0;
+            end_of_address = pos;
+            break;
+         }
+         pos++;
+      }
+
+      if (begin_of_mangled_name && end_of_mangled_name > begin_of_mangled_name) {
+         size_t length = end_of_mangled_name-begin_of_mangled_name; // initial length
+         char *output = 0;
+         int status;
+         char *demangled_name = abi::__cxa_demangle(begin_of_mangled_name, output, &length, &status);
+         // meaning of status:
+         // * 0: The demangling operation succeeded.
+         // * -1: A memory allocation failure occurred.
+         // * -2: mangled_name is not a valid name under the C++ ABI mangling rules.
+         // * -3: One of the arguments is invalid.
+         if (status == 0 && demangled_name) {
+            if (strncmp(demangled_name, "NumericalDomains::", 18) == 0) {
+               isInLibrary = true;
+               free(output);
+               free(demangled_name);
+               continue;
+            };
+         };
+         if (status != -1) free(output);
+         if (demangled_name) free(demangled_name);
+      }
+
+      if (begin_of_address && end_of_address) {
+         if (!isFirst)
+            out.writesome(", ");
+         out.put('[');
+         out.writesome(begin_of_address);
+         out.put(']');
+         isFirst = false;
+         if (isInLibrary)
+            break;
+      };
+   }
+   free(stack_strings);
+#endif
+}
+
+void
 writeBackTrace(STG::IOObject::OSBase& out) { // code from unisim
 #if defined(__GNUC__) && (__GNUC__ >= 3) && defined(HAVE_CXXABI)
    static const unsigned int max_depth = 32;

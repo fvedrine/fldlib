@@ -38,17 +38,33 @@ class BaseExecutionPathParams : public EnhancedObject {
    Numerics::DDouble::Access::ReadParameters rpMinParams, rpMaxParams, rpNearestParams;
    class ExtendedSymbolsManager : public SymbolsManager {
      private:
+      typedef SymbolsManager inherited;
+      STG::IOObject::OSBase* oMapSymbolsFile;
+      bool fSupportMapSymbols;
       PNT::AutoPointer<VirtualSymbolDefinitionTracker> apsdtDefinitionTracker;
 
      public:
-      ExtendedSymbolsManager() = default;
-      ExtendedSymbolsManager(const ExtendedSymbolsManager&) = default;
-      ExtendedSymbolsManager(ExtendedSymbolsManager&&) = default;
+      ExtendedSymbolsManager() : oMapSymbolsFile(nullptr), fSupportMapSymbols(false) {}
+      ExtendedSymbolsManager(const ExtendedSymbolsManager& source)
+         :  SymbolsManager(source), oMapSymbolsFile(nullptr), fSupportMapSymbols(false),
+            apsdtDefinitionTracker(source.apsdtDefinitionTracker) {}
+      ExtendedSymbolsManager(ExtendedSymbolsManager&& source)
+         :  SymbolsManager(source), oMapSymbolsFile(nullptr), fSupportMapSymbols(false),
+            apsdtDefinitionTracker(std::move(source.apsdtDefinitionTracker)) {}
+      virtual ~ExtendedSymbolsManager() override { if (oMapSymbolsFile) delete oMapSymbolsFile; }
 
       void absorbDefinitionTracker(VirtualSymbolDefinitionTracker* definitionTracker)
          {  apsdtDefinitionTracker.absorbElement(definitionTracker); }
       virtual VirtualSymbolDefinitionTracker* getSymbolDefinitionTracker() override
          {  return apsdtDefinitionTracker.isValidPointer() ? &apsdtDefinitionTracker.getElement() : nullptr; }
+
+      void setSupportMapSymbols(const char* filename);
+      void setSupportMapSymbols() { fSupportMapSymbols = true; }
+      void clearSupportMapSymbols() { fSupportMapSymbols = false; }
+      bool hasMapSymbols() const { return fSupportMapSymbols; }
+      void flushMapSymbolsFile() { if (oMapSymbolsFile) oMapSymbolsFile->flush(); }
+      virtual Symbol* createCentralSymbol() override;
+      virtual Symbol* createNoiseSymbol() override;
    };
 
    ExtendedSymbolsManager smSymbolsManager;
@@ -67,6 +83,11 @@ class BaseExecutionPathParams : public EnhancedObject {
 
    SymbolsManager::MergeTable& initialMergeTable() { return mtInitialTable; }
    SymbolsManager& symbolsManager() { return smSymbolsManager; }
+   bool hasMapSymbols() const { return smSymbolsManager.hasMapSymbols(); }
+   void setSupportMapSymbols(const char* filename) { smSymbolsManager.setSupportMapSymbols(filename); }
+   void setSupportMapSymbols() { smSymbolsManager.setSupportMapSymbols(); }
+   void clearSupportMapSymbols() { smSymbolsManager.clearSupportMapSymbols(); }
+   void flushMapSymbolsFile() { smSymbolsManager.flushMapSymbolsFile(); }
    Numerics::DDouble::Access::ReadParameters& nearestParams() { return rpNearestParams; }
    Numerics::DDouble::Access::ReadParameters& minParams() { return rpMinParams; }
    Numerics::DDouble::Access::ReadParameters& maxParams() { return rpMaxParams; }
@@ -416,6 +437,12 @@ class ExecutionPath : public BaseExecutionPath {
    static void setSupportFirstFollowFloat() { fSupportFirstFollowFloat = true; }
    static void setSupportPureZonotope() { fSupportPureZonotope = true; }
    static void setTrackErrorOrigin() { fTrackErrorOrigin = true; }
+   static void setSupportMapSymbols(const char* filename)
+      {  if (!pParams) setParams();
+         if (pParams) pParams->setSupportMapSymbols(filename);
+      }
+   static void setSupportMapSymbols() { if (pParams) pParams->setSupportMapSymbols(); }
+   static void clearSupportMapSymbols() { if (pParams) pParams->clearSupportMapSymbols(); }
    static bool hasLimitNoiseSymbolsNumber() { return uLimitNoiseSymbolsNumber > 0; }
    static int getLimitNoiseSymbolsNumber() { return uLimitNoiseSymbolsNumber; }
    static void setLimitNoiseSymbolsNumber(int limit) { uLimitNoiseSymbolsNumber = limit; }
@@ -436,12 +463,16 @@ class ExecutionPath : public BaseExecutionPath {
       void setTrackErrorOrigin() { ExecutionPath::setTrackErrorOrigin(); }
       void setLimitNoiseSymbolsNumber(int limit) { ExecutionPath::setLimitNoiseSymbolsNumber(limit); }
       void setResultFile(const char* fileSuffix) { initializeGlobals(fileSuffix); }
+      void setSupportMapSymbols(const char* filename) { ExecutionPath::setSupportMapSymbols(filename); }
       void setSimplificationTriggerPercent(double percent) { return ExecutionPath::setSimplificationTriggerPercent(percent); }
       ~Initialization() { finalizeGlobals(); }
    };
 
    class anticipated_termination { public: anticipated_termination() {} };
-   static void flushOut() { if (oTraceFile) oTraceFile->flush(); }
+   static void flushOut()
+      {  if (oTraceFile) oTraceFile->flush();
+         if (pParams && pParams->hasMapSymbols()) pParams->flushMapSymbolsFile();
+      }
    static void writeCurrentPath(std::ostream& out)
       {  currentPathExplorer->stackTrace().write(out, Numerics::BigInteger::FormatParameters().setBinary());
          out << ' ' << currentPathExplorer->numberOfUnstableBranches();

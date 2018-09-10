@@ -71,9 +71,9 @@
 
 #ifdef FLOAT_AFFINE
 #ifdef FLOAT_SCENARIO
-#define FLOAT_PROG_SUFFIX "_diag_aff_scenario"
+#define FLOAT_PROG_SUFFIX "_scenario"
 #else
-#define FLOAT_PROG_SUFFIX "_diag_aff"
+#define FLOAT_PROG_SUFFIX ""
 #endif
 
 #ifdef FLOAT_TRIGGER_PERCENT
@@ -100,6 +100,12 @@
 #define FLOAT_INIT_LIMIT_NOISE_SYMBOLS_NUMBER 
 #endif
 
+#ifdef FLOAT_MAP_SYMBOLS
+#define FLOAT_INIT_MAP_SYMBOLS(filename) init.setSupportMapSymbols(filename);
+#else
+#define FLOAT_INIT_MAP_SYMBOLS(filename) 
+#endif
+
 #ifdef FLOAT_LOOP_UNSTABLE
 #define INIT_MAIN                                                                                \
   NumericalDomains::FloatZonotope::Initialization init;                                          \
@@ -113,7 +119,8 @@
   FLOAT_INIT_PURE_ZONOTOPE                                                                       \
   FLOAT_INIT_BACKTRACE                                                                           \
   FLOAT_INIT_TRACK                                                                               \
-  init.setResultFile(TOSTRING(PROG_NAME) FLOAT_PROG_SUFFIX);                                     \
+  init.setResultFile(TOSTRING(PROG_NAME) "_diag_aff" FLOAT_PROG_SUFFIX);                         \
+  FLOAT_INIT_MAP_SYMBOLS(TOSTRING(PROG_NAME) FLOAT_PROG_SUFFIX "_map")                           \
   std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
   try {                                                                                          \
      FLOAT_SPLIT_ALL(main, double::end(), double::end())
@@ -146,7 +153,8 @@
   FLOAT_INIT_PURE_ZONOTOPE                                                                       \
   FLOAT_INIT_BACKTRACE                                                                           \
   FLOAT_INIT_TRACK                                                                               \
-  init.setResultFile(TOSTRING(PROG_NAME) FLOAT_PROG_SUFFIX);                                     \
+  init.setResultFile(TOSTRING(PROG_NAME) "_diag_aff" FLOAT_PROG_SUFFIX);                         \
+  FLOAT_INIT_MAP_SYMBOLS(TOSTRING(PROG_NAME) FLOAT_PROG_SUFFIX "_map")                           \
   std::cout << FLOAT_INIT_MESSAGE << std::endl;                                                  \
   try {
 #define END_MAIN                                                                                 \
