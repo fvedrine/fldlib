@@ -358,6 +358,20 @@ typedef double old_double;
 typedef long double old_long_double;
 
 #define FLOAT_IMPLEMENTATION 
+static inline float fld_float_from_string(const char* x) {
+   float result = 0;
+   sscanf(x, "%f", &result);
+   return result;
+}
+
+static inline double fld_double_from_string(const char* x) {
+   double result = 0;
+   sscanf(x, "%lf", &result);
+   return result;
+}
+
+#define FLD_FFROM_STRING fld_float_from_string
+#define FLD_DFROM_STRING fld_float_from_string
 
 static inline float rand_of_float(float x, float y)
    {  return x + (y-x)*((float) rand() / RAND_MAX); }
