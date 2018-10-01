@@ -23,6 +23,9 @@
 #include "FloatInstrumentation/FloatAffine.h"
 #include "FloatInstrumentation/FloatInterval.h"
 #include "FloatInstrumentation/FloatExact.h"
+#include "NumericalAnalysis/FloatAffineExecutionPath.template"
+#include <vector>
+#include "FloatInstrumentation/FloatAffine.incc"
 
 int main(int argc, char** argv) {
    std::string headerAffineFile = "./applications/FloatInstrumentation/AffineTypesSize.h";
