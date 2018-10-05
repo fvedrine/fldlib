@@ -1398,8 +1398,7 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignAddC
                const BuiltReal& sourceCopyCoeffValue = sourceCopyCoeff.getValue();
                if (expressionBuilder) {
                   expressionBuilder->addTerm(sourceCopyCoeffValue, sourceCopyCursor.elementAt());
-                  expressionBuilder->pushZeroConstant();
-                  expressionBuilder->addTerm(thisCoeffValue, thisCursor.elementAt());
+                  expressionBuilder->pushTerm(thisCoeffValue, thisCursor.elementAt());
                   expressionBuilder->applyBinaryMult();
                };
                addAssignAbsProduct(newCrossCoeffValue, crossCoeffAdditions,
@@ -1415,8 +1414,7 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignAddC
                const BuiltReal& thisCopyCoeffValue = thisCopyCoeff.getValue();
                if (expressionBuilder) {
                   expressionBuilder->addTerm(thisCopyCoeffValue, thisCopyCursor.elementAt());
-                  expressionBuilder->pushZeroConstant();
-                  expressionBuilder->addTerm(sourceCoeffValue, sourceCursor.elementAt());
+                  expressionBuilder->pushTerm(sourceCoeffValue, sourceCursor.elementAt());
                   expressionBuilder->applyBinaryMult();
                };
                addAssignAbsProduct(newCrossCoeffValue, crossCoeffAdditions,
@@ -1438,12 +1436,10 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::multAssignAddC
                const BuiltReal& thisCopyCoeffValue = thisCopyCoeff.getValue();
                if (expressionBuilder) {
                   expressionBuilder->addTerm(sourceCopyCoeffValue, sourceCopyCursor.elementAt());
-                  expressionBuilder->pushZeroConstant();
-                  expressionBuilder->addTerm(thisCoeffValue, thisCursor.elementAt());
+                  expressionBuilder->pushTerm(thisCoeffValue, thisCursor.elementAt());
                   expressionBuilder->applyBinaryMult();
                   expressionBuilder->addTerm(thisCopyCoeffValue, thisCopyCursor.elementAt());
-                  expressionBuilder->pushZeroConstant();
-                  expressionBuilder->addTerm(sourceCoeffValue, sourceCursor.elementAt());
+                  expressionBuilder->pushTerm(sourceCoeffValue, sourceCursor.elementAt());
                   expressionBuilder->applyBinaryMult();
                };
                addAssignDoubleAbsProduct(newCrossCoeffValue, crossCoeffAdditions,
