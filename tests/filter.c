@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
   S1= 0.0;
   E = DBETWEEN(-1.0,1.0);
   E0= DBETWEEN(-1.0,1.0);
-  N = 800;
+  N = 200;
 
   for (i=1;i<N;i++) {
     E1 = E0;
