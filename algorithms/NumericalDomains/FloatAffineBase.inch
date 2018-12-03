@@ -440,7 +440,21 @@ class DefineBaseFloatZonotope : public TypeBaseFloatAffine {
          eError.assume(in, intervalParams);
          in.assume(']');
       }
+
   public:
+   enum MultipleResult { MRFalse, MRTrue, MRTop };
+   enum CompareOperation { COLess, COLessOrEqual, COGreater, COGreaterOrEqual };
+   MultipleResult retrieveChoicesForCompare(CompareOperation operation, const thisType& source,
+         typename TypeBaseFloatAffine::BooleanChoice& realChoice,
+         typename TypeBaseFloatAffine::BooleanChoice& errorChoice, bool doesAssumeErrorValue,
+         bool errorValue, EquationHolder& constraint, EquationHolder& constraintWithError) const;
+   bool setCompareResult(bool isLess, const thisType& source,
+         typename TypeBaseFloatAffine::BooleanChoice realChoice,
+         typename TypeBaseFloatAffine::BooleanChoice errorChoice,
+         typename TypeBaseFloatAffine::BooleanChoice realChoices,
+         typename TypeBaseFloatAffine::BooleanChoice errorChoices,
+         EquationHolder& constraint, EquationHolder& constraintWithError) const;
+
    void writeZonotope(STG::IOObject::OSBase& out) const
       {  out.writesome("r=[");
          eRealDomain.write(out, typename BuiltReal::WriteParameters().setDecimal());

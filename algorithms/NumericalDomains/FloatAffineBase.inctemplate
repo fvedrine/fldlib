@@ -300,15 +300,16 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::optim
 }
 
 DefineEquationTemplateHeader(URealBitsNumber)
-bool
-DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLessThan(
-      const thisType& source, bool& hasMultiple, bool executionResult,
-      bool doesAssumeErrorValue, bool errorValue) const {
-   typename TypeBaseFloatAffine::BooleanChoice
-      realChoice = TypeBaseFloatAffine::BCTop,
-      errorChoice = TypeBaseFloatAffine::BCTop;
+typename DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::MultipleResult
+DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::retrieveChoicesForCompare(
+      CompareOperation operation, const thisType& source,
+      typename TypeBaseFloatAffine::BooleanChoice& realChoice,
+      typename TypeBaseFloatAffine::BooleanChoice& errorChoice, bool doesAssumeErrorValue,
+      bool errorValue, EquationHolder& constraint, EquationHolder& constraintWithError) const {
+   realChoice = TypeBaseFloatAffine::BCTop;
+   errorChoice = TypeBaseFloatAffine::BCTop;
    BuiltReal min, max;
-   EquationHolder constraint(eRealDomain);
+   constraint = eRealDomain;
    auto& symbolsManager = thisType::symbolsManager();
    bool hasReal = doesComputeReal() && source.doesComputeReal();
    if (hasReal) {
@@ -323,7 +324,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
    };
 
    BuiltReal minWithError, maxWithError;
-   EquationHolder constraintWithError;
+   constraintWithError = EquationHolder();
    if (doesComputeError() && source.doesComputeError()) {
       if (hasReal)
          constraintWithError = constraint;
@@ -347,74 +348,118 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
          const_cast<thisType*>(this)->mergeComputeError(source);
    };
 
-   hasMultiple = false;
-   if (realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal()
-         && !max.isZero() && max.isNegative()) {
-      realChoice = TypeBaseFloatAffine::BCTrue;
-      if (!doesAssumeErrorValue) {
-         if (errorChoice == TypeBaseFloatAffine::BCNone)
-            return true;
-         if (!hasTopError()) {
-            if (!maxWithError.isZero() && maxWithError.isNegative())
-               return true;
-            if (minWithError.isZero() || minWithError.isPositive()
-                  || (minWithError.isNaN() && maxWithError.isNaN()))
-               errorChoice = TypeBaseFloatAffine::BCFalse;
-         };
-      }
-      else if (errorChoice == TypeBaseFloatAffine::BCTrue)
-         return true;
+   bool isRealSureTrue = false;
+   if (realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal())
+      isRealSureTrue =
+            (operation == COLess ? (!max.isZero() && max.isNegative())
+          : (operation == COLessOrEqual ? (max.isZero() || max.isNegative())
+          : (operation == COGreater ? (!min.isZero() && min.isPositive())
+          : (operation == COGreaterOrEqual ? (min.isZero() || min.isPositive()) : false))));
+   bool isRealSureFalse = false;
+   if (realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal() && !isRealSureTrue)
+      isRealSureFalse =
+            (operation == COLess ? (min.isZero() || min.isPositive())
+          : (operation == COLessOrEqual ? (!min.isZero() && min.isPositive())
+          : (operation == COGreater ? (max.isZero() || max.isNegative())
+          : (operation == COGreaterOrEqual ? (!max.isZero() && max.isNegative()) : false))));
+   bool isImplementationSureTrue = false, isImplementationSureFalse = false;
+
+   if (!doesAssumeErrorValue && !hasTopError()) {
+      if ((!minWithError.isNaN() && !maxWithError.isNaN())
+            && ((realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal())
+               ? (isRealSureTrue || isRealSureFalse || (min.isNaN() && max.isNaN()))
+               : ((errorChoice != TypeBaseFloatAffine::BCNone)
+                  && ((realChoice == TypeBaseFloatAffine::BCNone)
+                     || (realChoice == TypeBaseFloatAffine::BCTop)))))
+         isImplementationSureTrue =
+               (operation == COLess ? (!maxWithError.isZero() && maxWithError.isNegative())
+             : (operation == COLessOrEqual ? (maxWithError.isZero() || maxWithError.isNegative())
+             : (operation == COGreater ? (!minWithError.isZero() && minWithError.isPositive())
+             : (operation == COGreaterOrEqual ? (minWithError.isZero() || minWithError.isPositive()) : false))));
+      if ((realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal())
+               ? (isRealSureTrue && !isImplementationSureTrue)
+               : ((errorChoice != TypeBaseFloatAffine::BCNone)
+                  && ((realChoice == TypeBaseFloatAffine::BCNone)
+                     || (realChoice == TypeBaseFloatAffine::BCTop))))
+         isImplementationSureFalse =
+               (operation == COLess ? (minWithError.isZero() || minWithError.isPositive())
+             : (operation == COLessOrEqual ? (!minWithError.isZero() && minWithError.isPositive())
+             : (operation == COGreater ? (maxWithError.isZero() || maxWithError.isNegative())
+             : (operation == COGreaterOrEqual ? (!maxWithError.isZero() && maxWithError.isNegative()) : false))));
    };
-   if (realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal()
-         && (min.isZero() || min.isPositive() || (min.isNaN() && max.isNaN()))) {
-      realChoice = TypeBaseFloatAffine::BCFalse;
-      if (!doesAssumeErrorValue) {
-         if (errorChoice == TypeBaseFloatAffine::BCNone)
-            return false;
-         if (!hasTopError()) {
-            if (minWithError.isZero() || minWithError.isPositive()
-                  || (minWithError.isNaN() && maxWithError.isNaN()))
-               return false;
-            if (!maxWithError.isZero() && maxWithError.isNegative())
-               errorChoice = TypeBaseFloatAffine::BCTrue;
-         };
+
+   if (realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal()) {
+      if (isRealSureTrue) {
+         realChoice = TypeBaseFloatAffine::BCTrue;
+         if (!doesAssumeErrorValue) {
+            if (errorChoice == TypeBaseFloatAffine::BCNone)
+               return MRTrue;
+            if (!hasTopError()) {
+               if (isImplementationSureTrue)
+                  return MRTrue;
+               if (isImplementationSureFalse || (minWithError.isNaN() && maxWithError.isNaN()))
+                  errorChoice = TypeBaseFloatAffine::BCFalse;
+            };
+         }
+         else if (errorChoice == TypeBaseFloatAffine::BCTrue)
+            return MRTrue;
       }
-      else if (errorChoice == TypeBaseFloatAffine::BCFalse)
-         return false;
+
+      if (isRealSureFalse || (min.isNaN() && max.isNaN())) {
+         realChoice = TypeBaseFloatAffine::BCFalse;
+         if (!doesAssumeErrorValue) {
+            if (errorChoice == TypeBaseFloatAffine::BCNone)
+               return MRFalse;
+            if (!hasTopError()) {
+               if (isImplementationSureFalse || (minWithError.isNaN() && maxWithError.isNaN()))
+                  return MRFalse;
+               if (isImplementationSureTrue)
+                  errorChoice = TypeBaseFloatAffine::BCTrue;
+            };
+         }
+         else if (errorChoice == TypeBaseFloatAffine::BCFalse)
+            return MRFalse;
+      };
    }
    if (!doesAssumeErrorValue) {
       if (errorChoice != TypeBaseFloatAffine::BCNone) {
          if (realChoice == TypeBaseFloatAffine::BCNone) {
             if (!hasTopError()) {
-               if (minWithError.isZero() || minWithError.isPositive()
-                        || (minWithError.isNaN() && maxWithError.isNaN()))
-                  return false;
-               else if (!maxWithError.isZero() && maxWithError.isNegative())
-                  return true;
+               if (isImplementationSureFalse || (minWithError.isNaN() && maxWithError.isNaN()))
+                  return MRFalse;
+               if (isImplementationSureTrue)
+                  return MRTrue;
             };
          }
          else if (realChoice == TypeBaseFloatAffine::BCTop) {
             if (!hasTopError()) {
-               if (minWithError.isZero() || minWithError.isPositive()
-                     || (minWithError.isNaN() && maxWithError.isNaN()))
-                  errorChoice = TypeBaseFloatAffine::BCFalse;
-               else if (!maxWithError.isZero() && maxWithError.isNegative())
+               if (isImplementationSureTrue)
                   errorChoice = TypeBaseFloatAffine::BCTrue;
+               if (isImplementationSureFalse || (minWithError.isNaN() && maxWithError.isNaN()))
+                  errorChoice = TypeBaseFloatAffine::BCFalse;
             };
          };
       };
    }
    else if (realChoice == TypeBaseFloatAffine::BCNone)
-      return errorValue;
+      return errorValue ? MRTrue : MRFalse;
+   return MRTop;
+}
 
-   hasMultiple = true;
-   bool doesRestrictFlow = (realChoice != TypeBaseFloatAffine::BCNone)
-         && (errorChoice != TypeBaseFloatAffine::BCNone);
-   int cases = TypeBaseFloatAffine::getCasesNumber(realChoice, errorChoice);
-   TypeBaseFloatAffine::retrieveBranch(cases, realChoice, errorChoice, executionResult);
+DefineEquationTemplateHeader(URealBitsNumber)
+bool
+DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::setCompareResult(
+      bool isLess, const thisType& source, typename TypeBaseFloatAffine::BooleanChoice realChoice,
+      typename TypeBaseFloatAffine::BooleanChoice errorChoice,
+      typename TypeBaseFloatAffine::BooleanChoice realChoices,
+      typename TypeBaseFloatAffine::BooleanChoice errorChoices,
+      EquationHolder& constraint, EquationHolder& constraintWithError) const {
+   bool doesRestrictFlow = (realChoices != TypeBaseFloatAffine::BCNone)
+         && (errorChoices != TypeBaseFloatAffine::BCNone);
    if (doesRestrictFlow)
       doesRestrictFlow = (realChoice == TypeBaseFloatAffine::BCNone)
             || (errorChoice == TypeBaseFloatAffine::BCNone);
+   auto& symbolsManager = thisType::symbolsManager();
    bool doesTakeThen;
    if (realChoice == TypeBaseFloatAffine::BCTrue) {
       BuiltReal newMin, newMax, newSourceMin, newSourceMax;
@@ -423,7 +468,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
       if (errorChoice != TypeBaseFloatAffine::BCTrue) {
          if (doesComputeError() && source.doesComputeError()) {
             hasInverseErrorFlow = true;
-            optimizeUnstableForRealFlow(source, true /* isRealLess */, hasThisIntervalConstraint,
+            optimizeUnstableForRealFlow(source, isLess /* isRealLess */, hasThisIntervalConstraint,
                   hasSourceIntervalConstraint, newMin, newMax, newSourceMin, newSourceMax);
          };
          const_cast<thisType*>(this)->mergeNoError();
@@ -432,9 +477,9 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
          Symbol* constrainedSymbol = symbolsManager
                .createDefinedSymbol(TemplateTraits(), constraint);
          bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraint.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager,
+            ? constraint.simplifyAllEquationsIf(*constrainedSymbol, isLess, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
-            : constraint.simplifyAllEquations(*constrainedSymbol, true, symbolsManager);
+            : constraint.simplifyAllEquations(*constrainedSymbol, isLess, symbolsManager);
          if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
             if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
                expressionBuilder->assumeCleared();
@@ -443,16 +488,17 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
             };
          };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraint, true);
+            constraints().pushConstraint().setFrom(constraint, isLess);
          if ((!hasTopError() && errorChoice == TypeBaseFloatAffine::BCTrue)
                || hasInverseErrorFlow) {
             Symbol* constrainedErrorSymbol = symbolsManager
                   .createDefinedSymbol(TemplateTraits(), constraintWithError);
             bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
                ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol,
-                     !hasInverseErrorFlow, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
+                     isLess ? !hasInverseErrorFlow : hasInverseErrorFlow, symbolsManager,
+                     TypeBaseFloatAffine::getConditionSameBranch())
                : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol,
-                     !hasInverseErrorFlow, symbolsManager);
+                     isLess ? !hasInverseErrorFlow : hasInverseErrorFlow, symbolsManager);
             if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
                if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
                   expressionBuilder->assumeCleared();
@@ -461,7 +507,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
                };
             };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-               constraints().pushConstraint().setFrom(constraintWithError, !hasInverseErrorFlow);
+               constraints().pushConstraint().setFrom(constraintWithError,
+                     isLess ? !hasInverseErrorFlow : hasInverseErrorFlow);
          };
       };
       optimizeUnstableForRealFlowWithInterval(source, hasThisIntervalConstraint,
@@ -475,7 +522,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
       if (errorChoice != TypeBaseFloatAffine::BCFalse) {
          if (doesComputeError() && source.doesComputeError()) {
             hasInverseErrorFlow = true;
-            optimizeUnstableForRealFlow(source, false /* isRealLess */, hasThisIntervalConstraint,
+            optimizeUnstableForRealFlow(source, !isLess /* isRealLess */, hasThisIntervalConstraint,
                   hasSourceIntervalConstraint, newMin, newMax, newSourceMin, newSourceMax);
          };
          const_cast<thisType*>(this)->mergeNoError();
@@ -484,9 +531,9 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
          Symbol* constrainedSymbol = symbolsManager
                .createDefinedSymbol(TemplateTraits(), constraint);
          bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraint.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager,
+            ? constraint.simplifyAllEquationsIf(*constrainedSymbol, !isLess, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
-            : constraint.simplifyAllEquations(*constrainedSymbol, false, symbolsManager);
+            : constraint.simplifyAllEquations(*constrainedSymbol, !isLess, symbolsManager);
          if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
             if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
                expressionBuilder->assumeCleared();
@@ -495,16 +542,17 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
             };
          };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraint, false);
+            constraints().pushConstraint().setFrom(constraint, !isLess);
          if ((!hasTopError() && errorChoice == TypeBaseFloatAffine::BCFalse)
                || hasInverseErrorFlow) {
             Symbol* constrainedErrorSymbol = symbolsManager
                   .createDefinedSymbol(TemplateTraits(), constraintWithError);
             bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
                ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol,
-                     hasInverseErrorFlow, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
+                     isLess ? hasInverseErrorFlow : !hasInverseErrorFlow, symbolsManager,
+                     TypeBaseFloatAffine::getConditionSameBranch())
                : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol,
-                     hasInverseErrorFlow, symbolsManager);
+                     isLess ? hasInverseErrorFlow : !hasInverseErrorFlow, symbolsManager);
             if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
                if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
                   expressionBuilder->assumeCleared();
@@ -513,7 +561,8 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
                };
             };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-               constraints().pushConstraint().setFrom(constraintWithError, hasInverseErrorFlow);
+               constraints().pushConstraint().setFrom(constraintWithError,
+                     isLess ? hasInverseErrorFlow : !hasInverseErrorFlow);
          };
       };
       optimizeUnstableForRealFlowWithInterval(source, hasThisIntervalConstraint,
@@ -527,7 +576,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
            hasThisIntervalConstraint = false, hasSourceIntervalConstraint = false;
       if (doesComputeReal() && source.doesComputeReal()) {
          hasInverseRealFlow = true;
-         optimizeUnstableForImplementationFlow(source, true /* isImplementationLess */, hasThisIntervalConstraint,
+         optimizeUnstableForImplementationFlow(source, isLess /* isImplementationLess */, hasThisIntervalConstraint,
                hasSourceIntervalConstraint, newMinError, newMaxError, newSourceMinError, newSourceMaxError);
       };
       const_cast<thisType*>(this)->mergeNoReal();
@@ -535,9 +584,9 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
          Symbol* constrainedErrorSymbol = symbolsManager
                .createDefinedSymbol(TemplateTraits(), constraintWithError);
          bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, true,
+            ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, isLess,
                   symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
-            : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, true, symbolsManager);
+            : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, isLess, symbolsManager);
          if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
             if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
                expressionBuilder->assumeCleared();
@@ -546,15 +595,15 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
             };
          };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraintWithError, true);
+            constraints().pushConstraint().setFrom(constraintWithError, isLess);
          if (hasInverseRealFlow) {
             Symbol* constrainedRealSymbol = symbolsManager
                   .createDefinedSymbol(TemplateTraits(), constraint);
             bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
                ? constraint.simplifyAllEquationsIf(*constrainedRealSymbol,
-                     false /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
+                     !isLess /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraint.simplifyAllEquations(*constrainedRealSymbol,
-                     false /* isNegative */, symbolsManager);
+                     !isLess /* isNegative */, symbolsManager);
             if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
                if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
                   expressionBuilder->assumeCleared();
@@ -563,7 +612,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
                };
             };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-               constraints().pushConstraint().setFrom(constraint, false /* isNegative */);
+               constraints().pushConstraint().setFrom(constraint, !isLess /* isNegative */);
          };
       };
       optimizeUnstableForImplementationFlowWithInterval(source, hasThisIntervalConstraint,
@@ -578,7 +627,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
            hasThisIntervalConstraint = false, hasSourceIntervalConstraint = false;
       if (doesComputeReal() && source.doesComputeReal()) {
          hasInverseRealFlow = true;
-         optimizeUnstableForImplementationFlow(source, false /* isImplementationLess */, hasThisIntervalConstraint,
+         optimizeUnstableForImplementationFlow(source, !isLess /* isImplementationLess */, hasThisIntervalConstraint,
                hasSourceIntervalConstraint, newMinError, newMaxError, newSourceMinError, newSourceMaxError);
       };
       const_cast<thisType*>(this)->mergeNoReal();
@@ -586,9 +635,9 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
          Symbol* constrainedErrorSymbol = symbolsManager
                .createDefinedSymbol(TemplateTraits(), constraintWithError);
          bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, false, symbolsManager,
+            ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, !isLess, symbolsManager,
                   TypeBaseFloatAffine::getConditionSameBranch())
-            : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, false, symbolsManager);
+            : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, !isLess, symbolsManager);
          if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
             if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
                expressionBuilder->assumeCleared();
@@ -597,15 +646,15 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
             };
          };
          if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraintWithError, false);
+            constraints().pushConstraint().setFrom(constraintWithError, !isLess);
          if (hasInverseRealFlow) {
             Symbol* constrainedRealSymbol = symbolsManager
                   .createDefinedSymbol(TemplateTraits(), constraint);
             bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
                ? constraint.simplifyAllEquationsIf(*constrainedRealSymbol,
-                     true /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
+                     isLess /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
                : constraint.simplifyAllEquations(*constrainedRealSymbol,
-                     true /* isNegative */, symbolsManager);
+                     isLess /* isNegative */, symbolsManager);
             if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
                if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
                   expressionBuilder->assumeCleared();
@@ -614,7 +663,7 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
                };
             };
             if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-               constraints().pushConstraint().setFrom(constraint, true /* isNegative */);
+               constraints().pushConstraint().setFrom(constraint, isLess /* isNegative */);
          };
       };
       optimizeUnstableForImplementationFlowWithInterval(source, hasThisIntervalConstraint,
@@ -622,6 +671,26 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLes
       doesTakeThen = false;
    }
    return doesTakeThen;
+}
+
+DefineEquationTemplateHeader(URealBitsNumber)
+bool
+DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLessThan(
+      const thisType& source, bool& hasMultiple, bool executionResult,
+      bool doesAssumeErrorValue, bool errorValue) const {
+   typename TypeBaseFloatAffine::BooleanChoice realChoices, errorChoices;
+   EquationHolder constraint, constraintWithError;
+   MultipleResult result = retrieveChoicesForCompare(COLess, source, realChoices, errorChoices,
+         doesAssumeErrorValue, errorValue, constraint, constraintWithError);
+   hasMultiple = false;
+   if (result != MRTop)
+      return result == MRTrue;
+   hasMultiple = true;
+   typename TypeBaseFloatAffine::BooleanChoice realChoice = realChoices, errorChoice = errorChoices;
+   int cases = TypeBaseFloatAffine::getCasesNumber(realChoice, errorChoice);
+   TypeBaseFloatAffine::retrieveBranch(cases, realChoice, errorChoice, executionResult);
+   return setCompareResult(true /* isLess */, source, realChoice, errorChoice,
+         realChoices, errorChoices, constraint, constraintWithError);
 }
 
 DefineEquationTemplateHeader(URealBitsNumber)
@@ -629,324 +698,19 @@ bool
 DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isLessOrEqualThan(
       const thisType& source, bool& hasMultiple, bool executionResult,
       bool doesAssumeErrorValue, bool errorValue) const {
-   typename TypeBaseFloatAffine::BooleanChoice
-      realChoice = TypeBaseFloatAffine::BCTop,
-      errorChoice = TypeBaseFloatAffine::BCTop;
-   BuiltReal min, max;
-   EquationHolder constraint(eRealDomain);
-   auto& symbolsManager = thisType::symbolsManager();
-   bool hasReal = doesComputeReal() && source.doesComputeReal();
-   if (hasReal) {
-      constraint.minusAssign(source.eRealDomain, Equation::PCSourceRValue, symbolsManager);
-      constraints().retrieveBound(constraint, min, max);
-   }
-   else {
-      realChoice = (hasNoReal() || source.hasNoReal())
-         ? TypeBaseFloatAffine::BCNone : TypeBaseFloatAffine::BCTop;
-      if (doesComputeReal())
-         const_cast<thisType*>(this)->mergeComputeReal(source);
-   };
-
-   BuiltReal minWithError, maxWithError;
-   EquationHolder constraintWithError;
-   if (doesComputeError() && source.doesComputeError()) {
-      if (hasReal)
-         constraintWithError = constraint;
-      else if (source.doesComputeReal()) {
-         constraintWithError = source.eRealDomain;
-         constraintWithError.oppositeAssign();
-      };
-      constraintWithError.plusAssign(eError, Equation::PCSourceRValue, symbolsManager);
-      constraintWithError.minusAssign(source.eError, Equation::PCSourceRValue, symbolsManager);
-      constraints().retrieveBound(constraintWithError, minWithError, maxWithError);
-      if (doesAssumeErrorValue)
-         errorChoice = errorValue ? TypeBaseFloatAffine::BCTrue : TypeBaseFloatAffine::BCFalse;
-   }
-   else {
-      if (!doesAssumeErrorValue)
-         errorChoice = (hasNoError() || source.hasNoError())
-            ? TypeBaseFloatAffine::BCNone : TypeBaseFloatAffine::BCTop;
-      else
-         errorChoice = errorValue ? TypeBaseFloatAffine::BCTrue : TypeBaseFloatAffine::BCFalse;
-      if (doesComputeError())
-         const_cast<thisType*>(this)->mergeComputeError(source);
-   };
-
+   typename TypeBaseFloatAffine::BooleanChoice realChoices, errorChoices;
    hasMultiple = false;
-   if (realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal()
-         && (max.isZero() || max.isNegative())) {
-      realChoice = TypeBaseFloatAffine::BCTrue;
-      if (!doesAssumeErrorValue) {
-         if (errorChoice == TypeBaseFloatAffine::BCNone)
-            return true;
-         if (!hasTopError()) {
-            if (maxWithError.isZero() || maxWithError.isNegative())
-               return true;
-            if ((!minWithError.isZero() && minWithError.isPositive())
-                  || (minWithError.isNaN() && maxWithError.isNaN()))
-               errorChoice = TypeBaseFloatAffine::BCFalse;
-         }
-      }
-      else if (errorChoice == TypeBaseFloatAffine::BCTrue)
-         return true;
-   };
-   if (realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal()
-         && ((!min.isZero() && min.isPositive()) || (min.isNaN() && max.isNaN()))) {
-      realChoice = TypeBaseFloatAffine::BCFalse;
-      if (!doesAssumeErrorValue) {
-         if (errorChoice == TypeBaseFloatAffine::BCNone)
-            return false;
-         if (!hasTopError()) {
-            if ((!minWithError.isZero() && minWithError.isPositive())
-                  || (minWithError.isNaN() && maxWithError.isNaN()))
-               return false;
-            if (maxWithError.isZero() || maxWithError.isNegative())
-               errorChoice = TypeBaseFloatAffine::BCTrue;
-         };
-      }
-      else if (errorChoice == TypeBaseFloatAffine::BCFalse)
-         return false;
-   }
-   if (!doesAssumeErrorValue) {
-      if (errorChoice != TypeBaseFloatAffine::BCNone) {
-         if (realChoice == TypeBaseFloatAffine::BCNone) {
-            if (!hasTopError()) {
-               if ((!minWithError.isZero() && minWithError.isPositive())
-                     || (minWithError.isNaN() && maxWithError.isNaN()))
-                  return false;
-               else if (maxWithError.isZero() || maxWithError.isNegative())
-                  return true;
-            };
-         }
-         else if (realChoice == TypeBaseFloatAffine::BCTop) {
-            if (!hasTopError()) {
-               if ((!minWithError.isZero() && minWithError.isPositive())
-                     || (minWithError.isNaN() && maxWithError.isNaN()))
-                  errorChoice = TypeBaseFloatAffine::BCFalse;
-               else if (maxWithError.isZero() || maxWithError.isNegative())
-                  errorChoice = TypeBaseFloatAffine::BCTrue;
-            };
-         };
-      };
-   }
-   else if (realChoice == TypeBaseFloatAffine::BCNone)
-      return errorValue;
-
+   EquationHolder constraint, constraintWithError;
+   MultipleResult result = retrieveChoicesForCompare(COLessOrEqual, source, realChoices,
+         errorChoices, doesAssumeErrorValue, errorValue, constraint, constraintWithError);
+   if (result != MRTop)
+      return result == MRTrue;
    hasMultiple = true;
-   bool doesRestrictFlow = (realChoice != TypeBaseFloatAffine::BCNone)
-         && (errorChoice != TypeBaseFloatAffine::BCNone);
+   typename TypeBaseFloatAffine::BooleanChoice realChoice = realChoices, errorChoice = errorChoices;
    int cases = TypeBaseFloatAffine::getCasesNumber(realChoice, errorChoice);
    TypeBaseFloatAffine::retrieveBranch(cases, realChoice, errorChoice, executionResult);
-   if (doesRestrictFlow)
-      doesRestrictFlow = (realChoice == TypeBaseFloatAffine::BCNone)
-            || (errorChoice == TypeBaseFloatAffine::BCNone);
-   bool doesTakeThen;
-   if (realChoice == TypeBaseFloatAffine::BCTrue) {
-      BuiltReal newMin, newMax, newSourceMin, newSourceMax;
-      bool hasInverseErrorFlow = false,
-           hasThisIntervalConstraint = false, hasSourceIntervalConstraint = false;
-      if (errorChoice != TypeBaseFloatAffine::BCTrue) {
-         if (doesComputeError() && source.doesComputeError()) {
-            hasInverseErrorFlow = true;
-            optimizeUnstableForRealFlow(source, true /* isRealLess */, hasThisIntervalConstraint,
-                  hasSourceIntervalConstraint, newMin, newMax, newSourceMin, newSourceMax);
-         };
-         const_cast<thisType*>(this)->mergeNoError();
-      };
-      if (!hasTopReal()) {
-         Symbol* constrainedSymbol = symbolsManager
-               .createDefinedSymbol(TemplateTraits(), constraint);
-         bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraint.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager,
-                  TypeBaseFloatAffine::getConditionSameBranch())
-            : constraint.simplifyAllEquations(*constrainedSymbol, true, symbolsManager);
-         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-               expressionBuilder->assumeCleared();
-               constraint.writeExpression(expressionBuilder);
-               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
-            };
-         };
-         if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraint, true);
-         if ((!hasTopError() && errorChoice == TypeBaseFloatAffine::BCTrue)
-               || hasInverseErrorFlow) {
-            Symbol* constrainedErrorSymbol = symbolsManager
-                  .createDefinedSymbol(TemplateTraits(), constraintWithError);
-            bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-               ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol,
-                     !hasInverseErrorFlow, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
-               : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol,
-                     !hasInverseErrorFlow, symbolsManager);
-            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-                  expressionBuilder->assumeCleared();
-                  constraintWithError.writeExpression(expressionBuilder);
-                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
-               };
-            };
-            if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-               constraints().pushConstraint().setFrom(constraintWithError, !hasInverseErrorFlow);
-         };
-      };
-      optimizeUnstableForRealFlowWithInterval(source, hasThisIntervalConstraint,
-            hasSourceIntervalConstraint, newMin, newMax, newSourceMin, newSourceMax);
-      doesTakeThen = true;
-   }
-   else if (realChoice == TypeBaseFloatAffine::BCFalse) {
-      BuiltReal newMin, newMax, newSourceMin, newSourceMax;
-      bool hasInverseErrorFlow = false,
-           hasThisIntervalConstraint = false, hasSourceIntervalConstraint = false;
-      if (errorChoice != TypeBaseFloatAffine::BCFalse) {
-         if (doesComputeError() && source.doesComputeError()) {
-            hasInverseErrorFlow = true;
-            optimizeUnstableForRealFlow(source, false /* isRealLess */, hasThisIntervalConstraint,
-                  hasSourceIntervalConstraint, newMin, newMax, newSourceMin, newSourceMax);
-         };
-         const_cast<thisType*>(this)->mergeNoError();
-      };
-      if (!hasTopReal()) {
-         Symbol* constrainedSymbol = symbolsManager
-               .createDefinedSymbol(TemplateTraits(), constraint);
-         bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraint.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager,
-                  TypeBaseFloatAffine::getConditionSameBranch())
-            : constraint.simplifyAllEquations(*constrainedSymbol, false, symbolsManager);
-         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-               expressionBuilder->assumeCleared();
-               constraint.writeExpression(expressionBuilder);
-               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
-            };
-         };
-         if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraint, false);
-         if ((!hasTopError() && errorChoice == TypeBaseFloatAffine::BCFalse)
-               || hasInverseErrorFlow) {
-            Symbol* constrainedErrorSymbol = symbolsManager
-                  .createDefinedSymbol(TemplateTraits(), constraintWithError);
-            bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-               ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol,
-                     hasInverseErrorFlow, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
-               : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol,
-                     hasInverseErrorFlow, symbolsManager);
-            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-                  expressionBuilder->assumeCleared();
-                  constraintWithError.writeExpression(expressionBuilder);
-                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
-               };
-            };
-            if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-               constraints().pushConstraint().setFrom(constraintWithError, hasInverseErrorFlow);
-         };
-      };
-      optimizeUnstableForRealFlowWithInterval(source, hasThisIntervalConstraint,
-            hasSourceIntervalConstraint, newMin, newMax, newSourceMin, newSourceMax);
-      doesTakeThen = false;
-   }
-   else if (errorChoice == TypeBaseFloatAffine::BCTrue) {
-      AssumeCondition(realChoice == TypeBaseFloatAffine::BCNone)
-      BuiltReal newMinError, newMaxError, newSourceMinError, newSourceMaxError;
-      bool hasInverseRealFlow = false,
-           hasThisIntervalConstraint = false, hasSourceIntervalConstraint = false;
-      if (doesComputeReal() && source.doesComputeReal()) {
-         hasInverseRealFlow = true;
-         optimizeUnstableForImplementationFlow(source, true /* isImplementationLess */, hasThisIntervalConstraint,
-               hasSourceIntervalConstraint, newMinError, newMaxError, newSourceMinError, newSourceMaxError);
-      };
-      const_cast<thisType*>(this)->mergeNoReal();
-      if (!hasTopError()) {
-         Symbol* constrainedErrorSymbol = symbolsManager
-               .createDefinedSymbol(TemplateTraits(), constraintWithError);
-         bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, true, symbolsManager,
-                  TypeBaseFloatAffine::getConditionSameBranch())
-            : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, true, symbolsManager);
-         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-               expressionBuilder->assumeCleared();
-               constraintWithError.writeExpression(expressionBuilder);
-               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
-            };
-         };
-         if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraintWithError, true);
-         if (hasInverseRealFlow) {
-            Symbol* constrainedRealSymbol = symbolsManager
-                  .createDefinedSymbol(TemplateTraits(), constraint);
-            bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-               ? constraint.simplifyAllEquationsIf(*constrainedRealSymbol,
-                     false /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
-               : constraint.simplifyAllEquations(*constrainedRealSymbol,
-                     false /* isNegative */, symbolsManager);
-            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-                  expressionBuilder->assumeCleared();
-                  constraint.writeExpression(expressionBuilder);
-                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedRealSymbol, *expressionBuilder);
-               };
-            };
-            if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-               constraints().pushConstraint().setFrom(constraint, false /* isNegative */);
-         };
-      };
-      optimizeUnstableForImplementationFlowWithInterval(source, hasThisIntervalConstraint,
-            hasSourceIntervalConstraint, newMinError, newMaxError, newSourceMinError, newSourceMaxError);
-      doesTakeThen = true;
-   }
-   else {
-      AssumeCondition(errorChoice == TypeBaseFloatAffine::BCFalse
-         && realChoice == TypeBaseFloatAffine::BCNone)
-      BuiltReal newMinError, newMaxError, newSourceMinError, newSourceMaxError;
-      bool hasInverseRealFlow = false,
-           hasThisIntervalConstraint = false, hasSourceIntervalConstraint = false;
-      if (doesComputeReal() && source.doesComputeReal()) {
-         hasInverseRealFlow = true;
-         optimizeUnstableForImplementationFlow(source, false /* isImplementationLess */, hasThisIntervalConstraint,
-               hasSourceIntervalConstraint, newMinError, newMaxError, newSourceMinError, newSourceMaxError);
-      };
-      const_cast<thisType*>(this)->mergeNoReal();
-      if (!hasTopError()) {
-         Symbol* constrainedErrorSymbol = symbolsManager
-               .createDefinedSymbol(TemplateTraits(), constraintWithError);
-         bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, false, symbolsManager,
-                  TypeBaseFloatAffine::getConditionSameBranch())
-            : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, false, symbolsManager);
-         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-               expressionBuilder->assumeCleared();
-               constraintWithError.writeExpression(expressionBuilder);
-               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
-            };
-         };
-         if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraintWithError, false);
-         if (hasInverseRealFlow) {
-            Symbol* constrainedRealSymbol = symbolsManager
-                  .createDefinedSymbol(TemplateTraits(), constraint);
-            bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-               ? constraint.simplifyAllEquationsIf(*constrainedRealSymbol,
-                     true /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
-               : constraint.simplifyAllEquations(*constrainedRealSymbol,
-                     true /* isNegative */, symbolsManager);
-            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-                  expressionBuilder->assumeCleared();
-                  constraint.writeExpression(expressionBuilder);
-                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedRealSymbol, *expressionBuilder);
-               };
-            };
-            if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-               constraints().pushConstraint().setFrom(constraint, true /* isNegative */);
-         };
-      };
-      optimizeUnstableForImplementationFlowWithInterval(source, hasThisIntervalConstraint,
-            hasSourceIntervalConstraint, newMinError, newMaxError, newSourceMinError, newSourceMaxError);
-      doesTakeThen = false;
-   }
-   return doesTakeThen;
+   return setCompareResult(true /* isLess */, source, realChoice, errorChoice,
+         realChoices, errorChoices, constraint, constraintWithError);
 }
 
 DefineEquationTemplateHeader(URealBitsNumber)
@@ -954,324 +718,19 @@ bool
 DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGreaterOrEqualThan(
       const thisType& source, bool& hasMultiple, bool executionResult,
       bool doesAssumeErrorValue, bool errorValue) const {
-   typename TypeBaseFloatAffine::BooleanChoice
-      realChoice = TypeBaseFloatAffine::BCTop,
-      errorChoice = TypeBaseFloatAffine::BCTop;
-   BuiltReal min, max;
-   EquationHolder constraint(eRealDomain);
-   auto& symbolsManager = thisType::symbolsManager();
-   bool hasReal = doesComputeReal() && source.doesComputeReal();
-   if (hasReal) {
-      constraint.minusAssign(source.eRealDomain, Equation::PCSourceRValue, symbolsManager);
-      constraints().retrieveBound(constraint, min, max);
-   }
-   else {
-      realChoice = (hasNoReal() || source.hasNoReal())
-         ? TypeBaseFloatAffine::BCNone : TypeBaseFloatAffine::BCTop;
-      if (doesComputeReal())
-         const_cast<thisType*>(this)->mergeComputeReal(source);
-   };
-
-   BuiltReal minWithError, maxWithError;
-   EquationHolder constraintWithError;
-   if (doesComputeError() && source.doesComputeError()) {
-      if (hasReal)
-         constraintWithError = constraint;
-      else if (source.doesComputeReal()) {
-         constraintWithError = source.eRealDomain;
-         constraintWithError.oppositeAssign();
-      };
-      constraintWithError.plusAssign(eError, Equation::PCSourceRValue, symbolsManager);
-      constraintWithError.minusAssign(source.eError, Equation::PCSourceRValue, symbolsManager);
-      constraints().retrieveBound(constraintWithError, minWithError, maxWithError);
-      if (doesAssumeErrorValue)
-         errorChoice = errorValue ? TypeBaseFloatAffine::BCTrue : TypeBaseFloatAffine::BCFalse;
-   }
-   else {
-      if (!doesAssumeErrorValue)
-         errorChoice = (hasNoError() || source.hasNoError())
-            ? TypeBaseFloatAffine::BCNone : TypeBaseFloatAffine::BCTop;
-      else
-         errorChoice = errorValue ? TypeBaseFloatAffine::BCTrue : TypeBaseFloatAffine::BCFalse;
-      if (doesComputeError())
-         const_cast<thisType*>(this)->mergeComputeError(source);
-   };
-
+   typename TypeBaseFloatAffine::BooleanChoice realChoices, errorChoices;
    hasMultiple = false;
-   if (realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal()
-         && (min.isZero() || min.isPositive())) {
-      realChoice = TypeBaseFloatAffine::BCTrue;
-      if (!doesAssumeErrorValue) {
-         if (errorChoice == TypeBaseFloatAffine::BCNone)
-            return true;
-         if (!hasTopError()) {
-            if (minWithError.isZero() || minWithError.isNegative())
-               return true;
-            if ((!maxWithError.isZero() && maxWithError.isPositive())
-                  || (minWithError.isNaN() && maxWithError.isNaN()))
-               errorChoice = TypeBaseFloatAffine::BCFalse;
-         };
-      }
-      else if (errorChoice == TypeBaseFloatAffine::BCTrue)
-         return true;
-   };
-   if (realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal()
-         && ((!max.isZero() && max.isNegative()) || (min.isNaN() && max.isNaN()))) {
-      realChoice = TypeBaseFloatAffine::BCFalse;
-      if (!doesAssumeErrorValue) {
-         if (errorChoice == TypeBaseFloatAffine::BCNone)
-            return false;
-         if (!hasTopError()) {
-            if ((!maxWithError.isZero() && maxWithError.isNegative())
-                  || (minWithError.isNaN() && maxWithError.isNaN()))
-               return false;
-            if (minWithError.isZero() || minWithError.isPositive())
-               errorChoice = TypeBaseFloatAffine::BCTrue;
-         };
-      }
-      else if (errorChoice == TypeBaseFloatAffine::BCFalse)
-         return false;
-   }
-   if (!doesAssumeErrorValue) {
-      if (errorChoice != TypeBaseFloatAffine::BCNone) {
-         if (realChoice == TypeBaseFloatAffine::BCNone) {
-            if (!hasTopError()) {
-               if ((!maxWithError.isZero() && maxWithError.isNegative())
-                     || (minWithError.isNaN() && maxWithError.isNaN()))
-                  return false;
-               else if (minWithError.isZero() || minWithError.isPositive())
-                  return true;
-            };
-         }
-         else if (realChoice == TypeBaseFloatAffine::BCTop) {
-            if (!hasTopError()) {
-               if ((!maxWithError.isZero() && maxWithError.isNegative())
-                     || (minWithError.isNaN() && maxWithError.isNaN()))
-                  errorChoice = TypeBaseFloatAffine::BCFalse;
-               else if (minWithError.isZero() || minWithError.isPositive())
-                  errorChoice = TypeBaseFloatAffine::BCTrue;
-            };
-         };
-      };
-   }
-   else if (realChoice == TypeBaseFloatAffine::BCNone)
-      return errorValue;
-
+   EquationHolder constraint, constraintWithError;
+   MultipleResult result = retrieveChoicesForCompare(COGreaterOrEqual, source, realChoices,
+         errorChoices, doesAssumeErrorValue, errorValue, constraint, constraintWithError);
+   if (result != MRTop)
+      return result == MRTrue;
    hasMultiple = true;
-   bool doesRestrictFlow = (realChoice != TypeBaseFloatAffine::BCNone)
-         && (errorChoice != TypeBaseFloatAffine::BCNone);
+   typename TypeBaseFloatAffine::BooleanChoice realChoice = realChoices, errorChoice = errorChoices;
    int cases = TypeBaseFloatAffine::getCasesNumber(realChoice, errorChoice);
    TypeBaseFloatAffine::retrieveBranch(cases, realChoice, errorChoice, executionResult);
-   if (doesRestrictFlow)
-      doesRestrictFlow = (realChoice == TypeBaseFloatAffine::BCNone)
-            || (errorChoice == TypeBaseFloatAffine::BCNone);
-   bool doesTakeThen;
-   if (realChoice == TypeBaseFloatAffine::BCTrue) {
-      BuiltReal newMin, newMax, newSourceMin, newSourceMax;
-      bool hasInverseErrorFlow = false,
-           hasThisIntervalConstraint = false, hasSourceIntervalConstraint = false;
-      if (errorChoice != TypeBaseFloatAffine::BCTrue) {
-         if (doesComputeError() && source.doesComputeError()) {
-            hasInverseErrorFlow = true;
-            optimizeUnstableForRealFlow(source, false /* isRealLess */, hasThisIntervalConstraint,
-                  hasSourceIntervalConstraint, newMin, newMax, newSourceMin, newSourceMax);
-         };
-         const_cast<thisType*>(this)->mergeNoError();
-      };
-      if (!hasTopReal()) {
-         Symbol* constrainedSymbol = symbolsManager
-               .createDefinedSymbol(TemplateTraits(), constraint);
-         bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraint.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager,
-                  TypeBaseFloatAffine::getConditionSameBranch())
-            : constraint.simplifyAllEquations(*constrainedSymbol, false, symbolsManager);
-         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-               expressionBuilder->assumeCleared();
-               constraint.writeExpression(expressionBuilder);
-               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
-            };
-         };
-         if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraint, false);
-         if ((!hasTopError() && errorChoice == TypeBaseFloatAffine::BCTrue)
-               || hasInverseErrorFlow) {
-            Symbol* constrainedErrorSymbol = symbolsManager
-                  .createDefinedSymbol(TemplateTraits(), constraintWithError);
-            bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-               ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol,
-                     hasInverseErrorFlow, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
-               : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol,
-                     hasInverseErrorFlow, symbolsManager);
-            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-                  expressionBuilder->assumeCleared();
-                  constraintWithError.writeExpression(expressionBuilder);
-                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
-               };
-            };
-            if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-               constraints().pushConstraint().setFrom(constraintWithError, hasInverseErrorFlow);
-         };
-      };
-      optimizeUnstableForRealFlowWithInterval(source, hasThisIntervalConstraint,
-            hasSourceIntervalConstraint, newMin, newMax, newSourceMin, newSourceMax);
-      doesTakeThen = true;
-   }
-   else if (realChoice == TypeBaseFloatAffine::BCFalse) {
-      BuiltReal newMin, newMax, newSourceMin, newSourceMax;
-      bool hasInverseErrorFlow = false,
-           hasThisIntervalConstraint = false, hasSourceIntervalConstraint = false;
-      if (errorChoice != TypeBaseFloatAffine::BCFalse) {
-         if (doesComputeError() && source.doesComputeError()) {
-            hasInverseErrorFlow = true;
-            optimizeUnstableForRealFlow(source, true /* isRealLess */, hasThisIntervalConstraint,
-                  hasSourceIntervalConstraint, newMin, newMax, newSourceMin, newSourceMax);
-         };
-         const_cast<thisType*>(this)->mergeNoError();
-      };
-      if (!hasTopReal()) {
-         Symbol* constrainedSymbol = symbolsManager
-               .createDefinedSymbol(TemplateTraits(), constraint);
-         bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraint.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager,
-                  TypeBaseFloatAffine::getConditionSameBranch())
-            : constraint.simplifyAllEquations(*constrainedSymbol, true, symbolsManager);
-         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-               expressionBuilder->assumeCleared();
-               constraint.writeExpression(expressionBuilder);
-               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
-            };
-         };
-         if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraint, true);
-         if ((!hasTopError() && errorChoice == TypeBaseFloatAffine::BCFalse)
-               || hasInverseErrorFlow) {
-            Symbol* constrainedErrorSymbol = symbolsManager
-                  .createDefinedSymbol(TemplateTraits(), constraintWithError);
-            bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-               ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol,
-                     !hasInverseErrorFlow, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
-               : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol,
-                     !hasInverseErrorFlow, symbolsManager);
-            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-                  expressionBuilder->assumeCleared();
-                  constraintWithError.writeExpression(expressionBuilder);
-                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
-               };
-            };
-            if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-               constraints().pushConstraint().setFrom(constraintWithError, !hasInverseErrorFlow);
-         };
-      };
-      optimizeUnstableForRealFlowWithInterval(source, hasThisIntervalConstraint,
-            hasSourceIntervalConstraint, newMin, newMax, newSourceMin, newSourceMax);
-      doesTakeThen = false;
-   }
-   else if (errorChoice == TypeBaseFloatAffine::BCTrue) {
-      AssumeCondition(realChoice == TypeBaseFloatAffine::BCNone)
-      BuiltReal newMinError, newMaxError, newSourceMinError, newSourceMaxError;
-      bool hasInverseRealFlow = false,
-           hasThisIntervalConstraint = false, hasSourceIntervalConstraint = false;
-      if (doesComputeReal() && source.doesComputeReal()) {
-         hasInverseRealFlow = true;
-         optimizeUnstableForImplementationFlow(source, false /* isImplementationLess */, hasThisIntervalConstraint,
-               hasSourceIntervalConstraint, newMinError, newMaxError, newSourceMinError, newSourceMaxError);
-      };
-      const_cast<thisType*>(this)->mergeNoReal();
-      if (!hasTopError()) {
-         Symbol* constrainedErrorSymbol = symbolsManager
-               .createDefinedSymbol(TemplateTraits(), constraintWithError);
-         bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, false, symbolsManager,
-                  TypeBaseFloatAffine::getConditionSameBranch())
-            : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, false, symbolsManager);
-         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-               expressionBuilder->assumeCleared();
-               constraintWithError.writeExpression(expressionBuilder);
-               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
-            };
-         };
-         if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraintWithError, false);
-         if (hasInverseRealFlow) {
-            Symbol* constrainedRealSymbol = symbolsManager
-                  .createDefinedSymbol(TemplateTraits(), constraint);
-            bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-               ? constraint.simplifyAllEquationsIf(*constrainedRealSymbol,
-                     true /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
-               : constraint.simplifyAllEquations(*constrainedRealSymbol,
-                     true /* isNegative */, symbolsManager);
-            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-                  expressionBuilder->assumeCleared();
-                  constraint.writeExpression(expressionBuilder);
-                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedRealSymbol, *expressionBuilder);
-               };
-            };
-            if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-               constraints().pushConstraint().setFrom(constraint, true /* isNegative */);
-         };
-      };
-      optimizeUnstableForImplementationFlowWithInterval(source, hasThisIntervalConstraint,
-            hasSourceIntervalConstraint, newMinError, newMaxError, newSourceMinError, newSourceMaxError);
-      doesTakeThen = true;
-   }
-   else {
-      AssumeCondition(errorChoice == TypeBaseFloatAffine::BCFalse
-         && realChoice == TypeBaseFloatAffine::BCNone)
-      BuiltReal newMinError, newMaxError, newSourceMinError, newSourceMaxError;
-      bool hasInverseRealFlow = false,
-           hasThisIntervalConstraint = false, hasSourceIntervalConstraint = false;
-      if (doesComputeReal() && source.doesComputeReal()) {
-         hasInverseRealFlow = true;
-         optimizeUnstableForImplementationFlow(source, true /* isImplementationLess */, hasThisIntervalConstraint,
-               hasSourceIntervalConstraint, newMinError, newMaxError, newSourceMinError, newSourceMaxError);
-      };
-      const_cast<thisType*>(this)->mergeNoReal();
-      if (!hasTopError()) {
-         Symbol* constrainedErrorSymbol = symbolsManager
-               .createDefinedSymbol(TemplateTraits(), constraintWithError);
-         bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, true, symbolsManager,
-                  TypeBaseFloatAffine::getConditionSameBranch())
-            : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, true, symbolsManager);
-         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-               expressionBuilder->assumeCleared();
-               constraintWithError.writeExpression(expressionBuilder);
-               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
-            };
-         };
-         if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraintWithError, true);
-         if (hasInverseRealFlow) {
-            Symbol* constrainedRealSymbol = symbolsManager
-                  .createDefinedSymbol(TemplateTraits(), constraint);
-            bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-               ? constraint.simplifyAllEquationsIf(*constrainedRealSymbol,
-                     false /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
-               : constraint.simplifyAllEquations(*constrainedRealSymbol,
-                     false /* isNegative */, symbolsManager);
-            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-                  expressionBuilder->assumeCleared();
-                  constraint.writeExpression(expressionBuilder);
-                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedRealSymbol, *expressionBuilder);
-               };
-            };
-            if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-               constraints().pushConstraint().setFrom(constraint, false /* isNegative */);
-         };
-      };
-      optimizeUnstableForImplementationFlowWithInterval(source, hasThisIntervalConstraint,
-            hasSourceIntervalConstraint, newMinError, newMaxError, newSourceMinError, newSourceMaxError);
-      doesTakeThen = false;
-   }
-   return doesTakeThen;
+   return setCompareResult(false /* isLess */, source, realChoice, errorChoice,
+         realChoices, errorChoices, constraint, constraintWithError);
 }
 
 DefineEquationTemplateHeader(URealBitsNumber)
@@ -1279,323 +738,19 @@ bool
 DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGreaterThan(
       const thisType& source, bool& hasMultiple, bool executionResult,
       bool doesAssumeErrorValue, bool errorValue) const {
-   typename TypeBaseFloatAffine::BooleanChoice
-      realChoice = TypeBaseFloatAffine::BCTop,
-      errorChoice = TypeBaseFloatAffine::BCTop;
-   BuiltReal min, max;
-   EquationHolder constraint(eRealDomain);
-   auto& symbolsManager = thisType::symbolsManager();
-   bool hasReal = doesComputeReal() && source.doesComputeReal();
-   if (hasReal) {
-      constraint.minusAssign(source.eRealDomain, Equation::PCSourceRValue, symbolsManager);
-      constraints().retrieveBound(constraint, min, max);
-   }
-   else {
-      realChoice = (hasNoReal() || source.hasNoReal())
-         ? TypeBaseFloatAffine::BCNone : TypeBaseFloatAffine::BCTop;
-      if (doesComputeReal())
-         const_cast<thisType*>(this)->mergeComputeReal(source);
-   };
-
-   BuiltReal minWithError, maxWithError;
-   EquationHolder constraintWithError;
-   if (doesComputeError() && source.doesComputeError()) {
-      if (hasReal)
-         constraintWithError = constraint;
-      else if (source.doesComputeReal()) {
-         constraintWithError = source.eRealDomain;
-         constraintWithError.oppositeAssign();
-      };
-      constraintWithError.plusAssign(eError, Equation::PCSourceRValue, symbolsManager);
-      constraintWithError.minusAssign(source.eError, Equation::PCSourceRValue, symbolsManager);
-      constraints().retrieveBound(constraintWithError, minWithError, maxWithError);
-      if (doesAssumeErrorValue)
-         errorChoice = errorValue ? TypeBaseFloatAffine::BCTrue : TypeBaseFloatAffine::BCFalse;
-   }
-   else {
-      if (!doesAssumeErrorValue)
-         errorChoice = (hasNoError() || source.hasNoError())
-            ? TypeBaseFloatAffine::BCNone : TypeBaseFloatAffine::BCTop;
-      else
-         errorChoice = errorValue ? TypeBaseFloatAffine::BCTrue : TypeBaseFloatAffine::BCFalse;
-      if (doesComputeError())
-         const_cast<thisType*>(this)->mergeComputeError(source);
-   };
-
+   typename TypeBaseFloatAffine::BooleanChoice realChoices, errorChoices;
    hasMultiple = false;
-   if (realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal()
-         && (!min.isZero() && min.isPositive())) {
-      realChoice = TypeBaseFloatAffine::BCTrue;
-      if (!doesAssumeErrorValue) {
-         if (errorChoice == TypeBaseFloatAffine::BCNone)
-            return true;
-         if (!hasTopError()) {
-            if (!minWithError.isZero() && minWithError.isPositive())
-               return true;
-            if (maxWithError.isZero() || maxWithError.isNegative()
-                  || (minWithError.isNaN() && maxWithError.isNaN()))
-               errorChoice = TypeBaseFloatAffine::BCFalse;
-         };
-      }
-      else if (errorChoice == TypeBaseFloatAffine::BCTrue)
-         return true;
-   };
-   if (realChoice != TypeBaseFloatAffine::BCNone && !hasTopReal()
-         && (max.isZero() || max.isNegative() || (min.isNaN() && max.isNaN()))) {
-      realChoice = TypeBaseFloatAffine::BCFalse;
-      if (!doesAssumeErrorValue) {
-         if (errorChoice == TypeBaseFloatAffine::BCNone)
-            return false;
-         if (!hasTopError()) {
-            if (maxWithError.isZero() || maxWithError.isNegative()
-                  || (minWithError.isNaN() && maxWithError.isNaN()))
-               return false;
-            if (!minWithError.isZero() && minWithError.isPositive())
-               errorChoice = TypeBaseFloatAffine::BCTrue;
-         };
-      }
-      else if (errorChoice == TypeBaseFloatAffine::BCFalse)
-         return false;
-   }
-   if (!doesAssumeErrorValue) {
-      if (errorChoice != TypeBaseFloatAffine::BCNone) {
-         if (realChoice == TypeBaseFloatAffine::BCNone) {
-            if (!hasTopError()) {
-               if (maxWithError.isZero() || maxWithError.isNegative()
-                     || (minWithError.isNaN() && maxWithError.isNaN()))
-                  return false;
-               else if (!minWithError.isZero() && minWithError.isPositive())
-                  return true;
-            };
-         }
-         else if (realChoice == TypeBaseFloatAffine::BCTop) {
-            if (!hasTopError()) {
-               if (maxWithError.isZero() || maxWithError.isNegative()
-                     || (minWithError.isNaN() && maxWithError.isNaN()))
-                  errorChoice = TypeBaseFloatAffine::BCFalse;
-               else if (!minWithError.isZero() && minWithError.isPositive())
-                  errorChoice = TypeBaseFloatAffine::BCTrue;
-            };
-         };
-      };
-   }
-   else if (realChoice == TypeBaseFloatAffine::BCNone)
-      return errorValue;
-
+   EquationHolder constraint, constraintWithError;
+   MultipleResult result = retrieveChoicesForCompare(COGreater, source, realChoices, errorChoices,
+         doesAssumeErrorValue, errorValue, constraint, constraintWithError);
+   if (result != MRTop)
+      return result == MRTrue;
    hasMultiple = true;
-   bool doesRestrictFlow = (realChoice != TypeBaseFloatAffine::BCNone)
-         && (errorChoice != TypeBaseFloatAffine::BCNone);
+   typename TypeBaseFloatAffine::BooleanChoice realChoice = realChoices, errorChoice = errorChoices;
    int cases = TypeBaseFloatAffine::getCasesNumber(realChoice, errorChoice);
    TypeBaseFloatAffine::retrieveBranch(cases, realChoice, errorChoice, executionResult);
-   if (doesRestrictFlow)
-      doesRestrictFlow = (realChoice == TypeBaseFloatAffine::BCNone)
-            || (errorChoice == TypeBaseFloatAffine::BCNone);
-   bool doesTakeThen;
-   if (realChoice == TypeBaseFloatAffine::BCTrue) {
-      BuiltReal newMin, newMax, newSourceMin, newSourceMax;
-      bool hasInverseErrorFlow = false,
-           hasThisIntervalConstraint = false, hasSourceIntervalConstraint = false;
-      if (errorChoice != TypeBaseFloatAffine::BCTrue) {
-         if (doesComputeError() && source.doesComputeError()) {
-            hasInverseErrorFlow = true;
-            optimizeUnstableForRealFlow(source, false /* isRealLess */, hasThisIntervalConstraint,
-                  hasSourceIntervalConstraint, newMin, newMax, newSourceMin, newSourceMax);
-         };
-         const_cast<thisType*>(this)->mergeNoError();
-      };
-      if (!hasTopReal()) {
-         Symbol* constrainedSymbol = symbolsManager
-               .createDefinedSymbol(TemplateTraits(), constraint);
-         bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraint.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager,
-                  TypeBaseFloatAffine::getConditionSameBranch())
-            : constraint.simplifyAllEquations(*constrainedSymbol, false, symbolsManager);
-         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-               expressionBuilder->assumeCleared();
-               constraint.writeExpression(expressionBuilder);
-               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
-            };
-         };
-         if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraint, false);
-         if ((!hasTopError() && errorChoice == TypeBaseFloatAffine::BCTrue)
-               || hasInverseErrorFlow) {
-            Symbol* constrainedErrorSymbol = symbolsManager
-                  .createDefinedSymbol(TemplateTraits(), constraintWithError);
-            bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-               ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol,
-                     hasInverseErrorFlow, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
-               : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol,
-                     hasInverseErrorFlow, symbolsManager);
-            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-                  expressionBuilder->assumeCleared();
-                  constraintWithError.writeExpression(expressionBuilder);
-                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
-               };
-            };
-            if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-               constraints().pushConstraint().setFrom(constraintWithError, hasInverseErrorFlow);
-         };
-      };
-      optimizeUnstableForRealFlowWithInterval(source, hasThisIntervalConstraint,
-            hasSourceIntervalConstraint, newMin, newMax, newSourceMin, newSourceMax);
-      doesTakeThen = true;
-   }
-   else if (realChoice == TypeBaseFloatAffine::BCFalse) {
-      BuiltReal newMin, newMax, newSourceMin, newSourceMax;
-      bool hasInverseErrorFlow = false,
-           hasThisIntervalConstraint = false, hasSourceIntervalConstraint = false;
-      if (errorChoice != TypeBaseFloatAffine::BCFalse) {
-         if (doesComputeError() && source.doesComputeError()) {
-            hasInverseErrorFlow = true;
-            optimizeUnstableForRealFlow(source, true /* isRealLess */, hasThisIntervalConstraint,
-                  hasSourceIntervalConstraint, newMin, newMax, newSourceMin, newSourceMax);
-         };
-         const_cast<thisType*>(this)->mergeNoError();
-      };
-      if (!hasTopReal()) {
-         Symbol* constrainedSymbol = symbolsManager
-               .createDefinedSymbol(TemplateTraits(), constraint);
-         bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraint.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager,
-                  TypeBaseFloatAffine::getConditionSameBranch())
-            : constraint.simplifyAllEquations(*constrainedSymbol, true, symbolsManager);
-         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-               expressionBuilder->assumeCleared();
-               constraint.writeExpression(expressionBuilder);
-               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
-            };
-         };
-         if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraint, true);
-         if ((!hasTopError() && errorChoice == TypeBaseFloatAffine::BCFalse)
-               || hasInverseErrorFlow) {
-            Symbol* constrainedErrorSymbol = symbolsManager
-                  .createDefinedSymbol(TemplateTraits(), constraintWithError);
-            bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-               ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol,
-                     !hasInverseErrorFlow, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
-               : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol,
-                     !hasInverseErrorFlow, symbolsManager);
-            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-                  expressionBuilder->assumeCleared();
-                  constraintWithError.writeExpression(expressionBuilder);
-                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
-               };
-            };
-            if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-               constraints().pushConstraint().setFrom(constraintWithError, !hasInverseErrorFlow);
-         };
-      };
-      optimizeUnstableForRealFlowWithInterval(source, hasThisIntervalConstraint,
-            hasSourceIntervalConstraint, newMin, newMax, newSourceMin, newSourceMax);
-      doesTakeThen = false;
-   }
-   else if (errorChoice == TypeBaseFloatAffine::BCTrue) {
-      AssumeCondition(realChoice == TypeBaseFloatAffine::BCNone)
-      BuiltReal newMinError, newMaxError, newSourceMinError, newSourceMaxError;
-      bool hasInverseRealFlow = false,
-           hasThisIntervalConstraint = false, hasSourceIntervalConstraint = false;
-      if (doesComputeReal() && source.doesComputeReal()) {
-         hasInverseRealFlow = true;
-         optimizeUnstableForImplementationFlow(source, false /* isImplementationLess */, hasThisIntervalConstraint,
-               hasSourceIntervalConstraint, newMinError, newMaxError, newSourceMinError, newSourceMaxError);
-      };
-      const_cast<thisType*>(this)->mergeNoReal();
-      if (!hasTopError()) {
-         Symbol* constrainedErrorSymbol = symbolsManager
-               .createDefinedSymbol(TemplateTraits(), constraintWithError);
-         bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, false, symbolsManager,
-                  TypeBaseFloatAffine::getConditionSameBranch())
-            : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, false, symbolsManager);
-         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-               expressionBuilder->assumeCleared();
-               constraintWithError.writeExpression(expressionBuilder);
-               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
-            };
-         };
-         if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraintWithError, false);
-         if (hasInverseRealFlow) {
-            Symbol* constrainedRealSymbol = symbolsManager
-                  .createDefinedSymbol(TemplateTraits(), constraint);
-            bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-               ? constraint.simplifyAllEquationsIf(*constrainedRealSymbol,
-                     true /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
-               : constraint.simplifyAllEquations(*constrainedRealSymbol,
-                     true /* isNegative */, symbolsManager);
-            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-                  expressionBuilder->assumeCleared();
-                  constraint.writeExpression(expressionBuilder);
-                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedRealSymbol, *expressionBuilder);
-               };
-            };
-            if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-               constraints().pushConstraint().setFrom(constraint, true /* isNegative */);
-         };
-      };
-      optimizeUnstableForImplementationFlowWithInterval(source, hasThisIntervalConstraint,
-            hasSourceIntervalConstraint, newMinError, newMaxError, newSourceMinError, newSourceMaxError);
-      doesTakeThen = true;
-   }
-   else {
-      AssumeCondition(errorChoice == TypeBaseFloatAffine::BCFalse && realChoice == TypeBaseFloatAffine::BCNone)
-      BuiltReal newMinError, newMaxError, newSourceMinError, newSourceMaxError;
-      bool hasInverseRealFlow = false,
-           hasThisIntervalConstraint = false, hasSourceIntervalConstraint = false;
-      if (doesComputeReal() && source.doesComputeReal()) {
-         hasInverseRealFlow = true;
-         optimizeUnstableForImplementationFlow(source, true /* isImplementationLess */, hasThisIntervalConstraint,
-               hasSourceIntervalConstraint, newMinError, newMaxError, newSourceMinError, newSourceMaxError);
-      };
-      const_cast<thisType*>(this)->mergeNoReal();
-      if (!hasTopError()) {
-         Symbol* constrainedErrorSymbol = symbolsManager
-               .createDefinedSymbol(TemplateTraits(), constraintWithError);
-         bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraintWithError.simplifyAllEquationsIf(*constrainedErrorSymbol, true, symbolsManager,
-                  TypeBaseFloatAffine::getConditionSameBranch())
-            : constraintWithError.simplifyAllEquations(*constrainedErrorSymbol, true, symbolsManager);
-         if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-               expressionBuilder->assumeCleared();
-               constraintWithError.writeExpression(expressionBuilder);
-               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedErrorSymbol, *expressionBuilder);
-            };
-         };
-         if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraintWithError, true);
-         if (hasInverseRealFlow) {
-            Symbol* constrainedRealSymbol = symbolsManager
-                  .createDefinedSymbol(TemplateTraits(), constraint);
-            bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-               ? constraint.simplifyAllEquationsIf(*constrainedRealSymbol,
-                     false /* isNegative */, symbolsManager, TypeBaseFloatAffine::getConditionSameBranch())
-               : constraint.simplifyAllEquations(*constrainedRealSymbol,
-                     false /* isNegative */, symbolsManager);
-            if (auto* symbolDefinitionTracker = symbolsManager.getSymbolDefinitionTracker()) {
-               if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-                  expressionBuilder->assumeCleared();
-                  constraint.writeExpression(expressionBuilder);
-                  symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedRealSymbol, *expressionBuilder);
-               };
-            };
-            if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-               constraints().pushConstraint().setFrom(constraint, false /* isNegative */);
-         };
-      };
-      optimizeUnstableForImplementationFlowWithInterval(source, hasThisIntervalConstraint,
-            hasSourceIntervalConstraint, newMinError, newMaxError, newSourceMinError, newSourceMaxError);
-      doesTakeThen = false;
-   }
-   return doesTakeThen;
+   return setCompareResult(false /* isLess */, source, realChoice, errorChoice,
+         realChoices, errorChoices, constraint, constraintWithError);
 }
 
 DefineEquationTemplateHeader(URealBitsNumber)
