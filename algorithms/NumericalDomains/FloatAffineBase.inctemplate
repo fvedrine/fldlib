@@ -1005,9 +1005,9 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::isGre
          if (errorChoice == TypeBaseFloatAffine::BCNone)
             return true;
          if (!hasTopError()) {
-            if (maxWithError.isZero() || maxWithError.isNegative())
+            if (minWithError.isZero() || minWithError.isNegative())
                return true;
-            if ((!minWithError.isZero() && minWithError.isPositive())
+            if ((!maxWithError.isZero() && maxWithError.isPositive())
                   || (minWithError.isNaN() && maxWithError.isNaN()))
                errorChoice = TypeBaseFloatAffine::BCFalse;
          };
