@@ -1007,6 +1007,22 @@ class DefineBasicFloatZonotope : public DefineBaseFloatZonotope DefineEquationTe
    typedef TypeImplementation ImplementationType;
    TypeImplementation asImplementation() const { return dValue; }
    // roundMode=RMZero for C conversions, roundMode=RMNearest for Ada conversions, roundMode=RMLowest for floor
+   template <typename TypeConversion>
+   bool retrieveConcreteChoicesForConversion(ReadParametersBase::RoundMode roundMode,
+         typename inherited::EquationHolder& implementation, TypeConversion& baseResult,
+         unsigned& firstReal, unsigned& lastReal, unsigned& firstImplementation,
+         unsigned& lastImplementation, TypeConversion& realResultMin, TypeConversion& realResultMax,
+         TypeConversion& implementationResultMin, TypeConversion& implementationResultMax,
+         TypeConversion& realPlusErrorResultMin, TypeConversion& realPlusErrorResultMax,
+         TypeConversion& implementationBoundResultMin, TypeConversion& implementationBoundResultMax) const;
+   template <typename TypeConversion>
+   TypeConversion setConversionResult(ReadParametersBase::RoundMode roundMode,
+         typename TypeBaseFloatAffine::Mode mode, TypeConversion result, bool realChoice,
+         bool implementationChoice, TypeConversion alternativeResult, bool hasMultipleResults,
+         bool hasValidAlternative, typename inherited::EquationHolder& implementation,
+         TypeConversion realResultMin, TypeConversion realResultMax, TypeConversion implementationResultMin,
+         TypeConversion implementationResultMax, TypeConversion realPlusErrorResultMin, TypeConversion realPlusErrorResultMax,
+         TypeConversion implementationBoundResultMin, TypeConversion implementationBoundResultMax);
    int asInt(ReadParametersBase::RoundMode roundMode=ReadParametersBase::RMZero) const;
    unsigned asUnsigned(ReadParametersBase::RoundMode roundMode=ReadParametersBase::RMLowest) const;
    long int asLong(ReadParametersBase::RoundMode roundMode=ReadParametersBase::RMZero) const

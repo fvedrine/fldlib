@@ -6131,55 +6131,63 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
 }
 
 DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
-int
+template <typename TypeConversion>
+bool
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
-      ::asInt(ReadParametersBase::RoundMode roundMode) const {
-   typename inherited::GuardStateZonotope thisGuard(*this, true /* isConstEquation*/, false /* isXValue */);
-   // const_cast<thisType&>(*this).updateLocalState();
-   int realResultMin=0, realResultMax=-1, implementationResultMin=0, implementationResultMax=-1,
-      realPlusErrorResultMin=0, realPlusErrorResultMax=-1,
-      implementationBoundResultMin=0, implementationBoundResultMax=-1;
-   typename inherited::EquationHolder implementation;
+   ::retrieveConcreteChoicesForConversion(ReadParametersBase::RoundMode roundMode,
+         typename inherited::EquationHolder& implementation, TypeConversion& baseResult,
+         unsigned& firstReal, unsigned& lastReal, unsigned& firstImplementation,
+         unsigned& lastImplementation, TypeConversion& realResultMin, TypeConversion& realResultMax,
+         TypeConversion& implementationResultMin, TypeConversion& implementationResultMax,
+         TypeConversion& realPlusErrorResultMin, TypeConversion& realPlusErrorResultMax,
+         TypeConversion& implementationBoundResultMin, TypeConversion& implementationBoundResultMax) const {
+   realResultMin=1; realResultMax=0; implementationResultMin=1; implementationResultMax=0;
+   realPlusErrorResultMin=1; realPlusErrorResultMax=0;
+   implementationBoundResultMin=1; implementationBoundResultMax=0;
+
    auto roundParams = TypeBaseFloatAffine::nearestParams();
    if (roundMode != ReadParametersBase::RMNearest)
       roundParams.setRoundMode(roundMode);
+   firstReal = lastReal = firstImplementation = lastImplementation = 0;
+   bool isSigned = std::is_signed<TypeConversion>();
    if (this->doesComputeReal()) {
       BuiltReal min, max;
       getRealDomain().retrieveBound(min, max, false /* hasExternalCoefficient */);
 
       typename BuiltReal::IntConversion conversion;
-      min.retrieveInteger(conversion.setSigned(), roundParams);
+      min.retrieveInteger(isSigned ? conversion.setSigned() : conversion.setUnsigned(), roundParams);
       roundParams.clear();
-      realResultMin = conversion.asInt();
-      max.retrieveInteger(conversion.setSigned(), roundParams);
+      realResultMin = isSigned ? conversion.asInt() : conversion.asUnsignedInt();
+      max.retrieveInteger(isSigned ? conversion.setSigned() : conversion.setUnsigned(), roundParams);
       roundParams.clear();
-      realResultMax = conversion.asInt();
+      realResultMax = isSigned ? conversion.asInt() : conversion.asUnsignedInt();
    }
 
    if (this->doesComputeError()) {
-      implementation = getRealDomain();
+      if (this->doesComputeReal())
+         implementation = getRealDomain();
       implementation.plusAssign(getError(), Equation::PCSourceRValue, symbolsManager());
       BuiltReal min, max;
       constraints().retrieveBound(implementation, min, max);
 
       typename BuiltReal::IntConversion conversion;
-      min.retrieveInteger(conversion.setSigned(), roundParams);
+      min.retrieveInteger(isSigned ? conversion.setSigned() : conversion.setUnsigned(), roundParams);
       roundParams.clear();
-      implementationResultMin = realPlusErrorResultMin = conversion.asInt();
-      max.retrieveInteger(conversion.setSigned(), roundParams);
+      implementationResultMin = realPlusErrorResultMin = isSigned ? conversion.asInt() : conversion.asUnsignedInt();
+      max.retrieveInteger(isSigned ? conversion.setSigned() : conversion.setUnsigned(), roundParams);
       roundParams.clear();
-      implementationResultMax = realPlusErrorResultMax = conversion.asInt();
+      implementationResultMax = realPlusErrorResultMax = isSigned ? conversion.asInt() : conversion.asUnsignedInt();
       {  typename BuiltDouble::IntConversion conversion;
-         bfMin.retrieveInteger(conversion.setSigned(), roundParams);
+         bfMin.retrieveInteger(isSigned ? conversion.setSigned() : conversion.setUnsigned(), roundParams);
          roundParams.clear();
-         implementationBoundResultMin = conversion.asInt();
+         implementationBoundResultMin = isSigned ? conversion.asInt() : conversion.asUnsignedInt();
          if (implementationBoundResultMin > implementationResultMin)
             implementationResultMin = implementationBoundResultMin;
       };
       {  typename BuiltDouble::IntConversion conversion;
-         bfMax.retrieveInteger(conversion.setSigned(), roundParams);
+         bfMax.retrieveInteger(isSigned ? conversion.setSigned() : conversion.setUnsigned(), roundParams);
          roundParams.clear();
-         implementationBoundResultMax = conversion.asInt();
+         implementationBoundResultMax = isSigned ? conversion.asInt() : conversion.asUnsignedInt();
          if (implementationBoundResultMax < implementationResultMax)
             implementationResultMax = implementationBoundResultMax;
       };
@@ -6187,60 +6195,74 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
 
    if (realResultMin == realResultMax
          && ((implementationResultMin > implementationResultMax)
-            || (implementationResultMin == realResultMin && implementationResultMin == implementationResultMax)))
-      return realResultMin;
+            || (implementationResultMin == realResultMin && implementationResultMin == implementationResultMax))) {
+      baseResult = realResultMin;
+      return true;
+   }
 
-   if (implementationResultMin == implementationResultMax && (realResultMin > realResultMax))
-      return implementationResultMin;
+   if (implementationResultMin == implementationResultMax && (realResultMin > realResultMax)) {
+      baseResult = implementationResultMin;
+      return true;
+   };
 
    if ((realResultMax - realResultMin >= (1 << 12))
-         || (implementationResultMax - implementationResultMin >= (1 << 12)))
-      return (int) dValue;
+         || (implementationResultMax - implementationResultMin >= (1 << 12))) {
+      baseResult = (TypeConversion) dValue;
+      return true;
+   };
 
-   unsigned firstReal = (realResultMin <= realResultMax) ? 0 : 1;
-   unsigned lastReal = (realResultMin <= realResultMax) ? (realResultMax-realResultMin) : 0;
-   int baseResult = (realResultMin <= realResultMax) ? realResultMin : implementationResultMin;
+   firstReal = (realResultMin <= realResultMax) ? 0 : 1;
+   lastReal = (realResultMin <= realResultMax) ? (realResultMax-realResultMin) : 0;
+   baseResult = (realResultMin <= realResultMax) ? realResultMin : implementationResultMin;
    if ((realResultMin <= realResultMax) && (implementationResultMin <= implementationResultMax)
          && (implementationResultMin < realResultMin)) {
       baseResult = implementationResultMin;
       firstReal += (realResultMin - baseResult);
       lastReal += (realResultMin - baseResult);
    };
-   unsigned firstImplementation = (implementationResultMin <= implementationResultMax) ? 0 : 1;
-   unsigned lastImplementation = (implementationResultMin <= implementationResultMax)
+   firstImplementation = (implementationResultMin <= implementationResultMax) ? 0 : 1;
+   lastImplementation = (implementationResultMin <= implementationResultMax)
       ? (implementationResultMax-implementationResultMin) : 0;
    if ((realResultMin <= realResultMax) && (implementationResultMin <= implementationResultMax)
          && (realResultMin < implementationResultMin)) {
       firstImplementation += (implementationResultMin - baseResult);
       lastImplementation += (implementationResultMin - baseResult);
    };
+   return false;
+}
 
-   unsigned casesNumber = TypeBaseFloatAffine::getConversionNumber(firstReal, lastReal,
-         firstImplementation, lastImplementation);
-   bool realChoice = this->doesComputeReal(), implementationChoice = this->doesComputeError();
-   typename TypeBaseFloatAffine::Mode mode = inherited::getMode();
-   unsigned ualternativeResult;
-   int result = baseResult + TypeBaseFloatAffine::getConversionBranch(casesNumber,
-         firstReal, lastReal, firstImplementation, lastImplementation,
-         realChoice, implementationChoice, (unsigned) ((int) dValue - baseResult), ualternativeResult);
-   int alternativeResult = baseResult + ualternativeResult;
-
-   auto& maxParams = TypeBaseFloatAffine::maxParams();
+DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
+template <typename TypeConversion>
+TypeConversion
+DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
+   ::setConversionResult(ReadParametersBase::RoundMode roundMode, typename TypeBaseFloatAffine::Mode mode,
+         TypeConversion result, bool realChoice, bool implementationChoice,
+         TypeConversion alternativeResult, bool hasMultipleResults, bool hasValidAlternative,
+         typename inherited::EquationHolder& implementation, TypeConversion realResultMin,
+         TypeConversion realResultMax, TypeConversion implementationResultMin,
+         TypeConversion implementationResultMax, TypeConversion realPlusErrorResultMin,
+         TypeConversion realPlusErrorResultMax, TypeConversion implementationBoundResultMin,
+         TypeConversion implementationBoundResultMax) {
    auto& minParams = TypeBaseFloatAffine::minParams();
+   auto& maxParams = TypeBaseFloatAffine::maxParams();
+   bool isSigned = std::is_signed<TypeConversion>();
    if (realChoice) {
       if (!implementationChoice) {
-         AssumeCondition(ualternativeResult != ~0U && alternativeResult != result)
+         AssumeCondition(hasValidAlternative && alternativeResult != result)
          if (inherited::doesComputeError()) {
             if (!optimizeUnstableConversionForRealFlow(result, alternativeResult,
-                     result, alternativeResult, true /* isSigned */,
-                     casesNumber > 1, mode, minParams, maxParams, roundMode))
+                     isSigned ? result : 0, isSigned ? alternativeResult : 0, isSigned /* isSigned */,
+                     hasMultipleResults, mode, minParams, maxParams, roundMode))
                return result;
             const_cast<thisType*>(this)->mergeNoError();
          };
       };
       if ((realResultMin <= realResultMax) && (result+1 < realResultMax)) {
          typename BuiltReal::IntConversion conversion;
-         conversion.setSigned();
+         if (isSigned)
+            conversion.setSigned();
+         else
+            conversion.setUnsigned();
          conversion.assign(result+1);
          BuiltReal newMax;
          newMax.setInteger(conversion, maxParams);
@@ -6267,7 +6289,10 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
 
       if ((realResultMin <= realResultMax) && (result > realResultMin)) {
          typename BuiltReal::IntConversion conversion;
-         conversion.setSigned();
+         if (isSigned)
+            conversion.setSigned();
+         else
+            conversion.setUnsigned();
          conversion.assign(result);
          BuiltReal newMin;
          newMin.setInteger(conversion, minParams);
@@ -6295,11 +6320,11 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
 
    if (implementationChoice) {
       if (!realChoice) {
-         AssumeCondition(ualternativeResult != ~0U && alternativeResult != result)
+         AssumeCondition(hasValidAlternative && alternativeResult != result)
          if (inherited::doesComputeError()) {
             if (!optimizeUnstableConversionForImplementationFlow(result, alternativeResult,
-                     result, alternativeResult, true /* isSigned */, casesNumber > 1,
-                     mode, minParams, maxParams, roundMode))
+                     isSigned ? result : 0, isSigned ? alternativeResult : 0, isSigned /* isSigned */,
+                     hasMultipleResults, mode, minParams, maxParams, roundMode))
                return result;
             const_cast<thisType*>(this)->mergeNoReal();
             implementation = getError();
@@ -6307,7 +6332,10 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
       };
       if ((realPlusErrorResultMin <= realPlusErrorResultMax) && (result+1 < realPlusErrorResultMax)) {
          typename BuiltReal::IntConversion conversion;
-         conversion.setSigned();
+         if (isSigned)
+            conversion.setSigned();
+         else
+            conversion.setUnsigned();
          conversion.assign(result+1);
          BuiltReal newMax;
          newMax.setInteger(conversion, maxParams);
@@ -6335,7 +6363,10 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
 
       if ((realPlusErrorResultMin <= realPlusErrorResultMax) && (result > realPlusErrorResultMin)) {
          typename BuiltReal::IntConversion conversion;
-         conversion.setSigned();
+         if (isSigned)
+            conversion.setSigned();
+         else
+            conversion.setUnsigned();
          conversion.assign(result);
          BuiltReal newMin;
          newMin.setInteger(conversion, minParams);
@@ -6363,11 +6394,14 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
 
       if (result < implementationBoundResultMax) {
          typename BuiltDouble::IntConversion conversion;
-         conversion.setSigned();
+         if (isSigned)
+            conversion.setSigned();
+         else
+            conversion.setUnsigned();
          conversion.assign(result);
          const_cast<thisType&>(*this).bfMax.setInteger(conversion, maxParams);
          maxParams.clear();
-         if (bfMax.isPositive()) {
+         if (!isSigned || bfMax.isPositive()) {
             BuiltDouble one;
             one.setOne();
             const_cast<thisType&>(*this).bfMax.plusAssign(one, maxParams);
@@ -6378,11 +6412,14 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
 
       if (result > implementationBoundResultMin) {
          typename BuiltDouble::IntConversion conversion;
-         conversion.setSigned();
+         if (isSigned)
+            conversion.setSigned();
+         else
+            conversion.setUnsigned();
          conversion.assign(result);
          const_cast<thisType&>(*this).bfMin.setInteger(conversion, minParams);
          minParams.clear();
-         if (bfMin.isNegative()) {
+         if (isSigned && bfMin.isNegative()) {
             BuiltDouble one;
             one.setOne();
             const_cast<thisType&>(*this).bfMin.minusAssign(one, minParams);
@@ -6408,270 +6445,73 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
 }
 
 DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
-unsigned
+int
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
-      ::asUnsigned(ReadParametersBase::RoundMode roundMode) const {
+      ::asInt(ReadParametersBase::RoundMode roundMode) const {
    typename inherited::GuardStateZonotope thisGuard(*this, true /* isConstEquation*/, false /* isXValue */);
    // const_cast<thisType&>(*this).updateLocalState();
-   unsigned realResultMin=1, realResultMax=0, implementationResultMin=1, implementationResultMax=0,
-      realPlusErrorResultMin=1, realPlusErrorResultMax=0,
-      implementationBoundResultMin=1, implementationBoundResultMax=0;
+   int realResultMin, realResultMax, implementationResultMin, implementationResultMax,
+      realPlusErrorResultMin, realPlusErrorResultMax,
+      implementationBoundResultMin, implementationBoundResultMax;
+
+   int baseResult;
+   unsigned firstReal, lastReal, firstImplementation, lastImplementation;
    typename inherited::EquationHolder implementation;
-   auto roundParams = TypeBaseFloatAffine::nearestParams();
-   if (roundMode != ReadParametersBase::RMNearest)
-      roundParams.setRoundMode(roundMode);
-   if (this->doesComputeReal()) {
-      BuiltReal min, max;
-      getRealDomain().retrieveBound(min, max, false /* hasExternalCoefficient */);
-
-      typename BuiltReal::IntConversion conversion;
-      min.retrieveInteger(conversion.setUnsigned(), roundParams);
-      roundParams.clear();
-      realResultMin = conversion.asUnsignedInt();
-      max.retrieveInteger(conversion.setUnsigned(), roundParams);
-      roundParams.clear();
-      realResultMax = conversion.asUnsignedInt();
-   }
-
-   if (this->doesComputeError()) {
-      implementation = getRealDomain();
-      implementation.plusAssign(getError(), Equation::PCSourceRValue, symbolsManager());
-      BuiltReal min, max;
-      constraints().retrieveBound(implementation, min, max);
-
-      typename BuiltReal::IntConversion conversion;
-      min.retrieveInteger(conversion.setUnsigned(), roundParams);
-      roundParams.clear();
-      implementationResultMin = realPlusErrorResultMin = conversion.asUnsignedInt();
-      max.retrieveInteger(conversion.setUnsigned(), roundParams);
-      roundParams.clear();
-      implementationResultMax = realPlusErrorResultMax = conversion.asUnsignedInt();
-      {  typename BuiltDouble::IntConversion conversion;
-         bfMin.retrieveInteger(conversion.setUnsigned(), roundParams);
-         roundParams.clear();
-         implementationBoundResultMin = conversion.asUnsignedInt();
-         if (implementationBoundResultMin > implementationResultMin)
-            implementationResultMin = implementationBoundResultMin;
-      };
-      {  typename BuiltDouble::IntConversion conversion;
-         bfMax.retrieveInteger(conversion.setUnsigned(), roundParams);
-         roundParams.clear();
-         implementationBoundResultMax = conversion.asUnsignedInt();
-         if (implementationBoundResultMax < implementationResultMax)
-            implementationResultMax = implementationBoundResultMax;
-      };
-   };
-
-   if (realResultMin == realResultMax
-         && ((implementationResultMin > implementationResultMax)
-            || (implementationResultMin == realResultMin && implementationResultMin == implementationResultMax)))
-      return realResultMin;
-
-   if (implementationResultMin == implementationResultMax && (realResultMin > realResultMax))
-      return implementationResultMin;
-
-   if ((realResultMax - realResultMin >= (1 << 12))
-         || (implementationResultMax - implementationResultMin >= (1 << 12)))
-      return (unsigned) dValue;
-
-   unsigned firstReal = (realResultMin <= realResultMax) ? 0 : 1;
-   unsigned lastReal = (realResultMin <= realResultMax) ? (realResultMax-realResultMin) : 0;
-   unsigned baseResult = (realResultMin <= realResultMax) ? realResultMin : implementationResultMin;
-   if ((realResultMin <= realResultMax) && (implementationResultMin <= implementationResultMax)
-         && (implementationResultMin < realResultMin)) {
-      baseResult = implementationResultMin;
-      firstReal += (realResultMin - baseResult);
-      lastReal += (realResultMin - baseResult);
-   };
-   unsigned firstImplementation = (implementationResultMin <= implementationResultMax) ? 0 : 1;
-   unsigned lastImplementation = (implementationResultMin <= implementationResultMax)
-      ? (implementationResultMax-implementationResultMin) : 0;
-   if ((realResultMin <= realResultMax) && (implementationResultMin <= implementationResultMax)
-         && (realResultMin < implementationResultMin)) {
-      firstImplementation += (implementationResultMin - baseResult);
-      lastImplementation += (implementationResultMin - baseResult);
-   };
+   if (retrieveConcreteChoicesForConversion(roundMode, implementation, baseResult, firstReal,
+            lastReal, firstImplementation, lastImplementation, realResultMin, realResultMax,
+            implementationResultMin, implementationResultMax, realPlusErrorResultMin,
+            realPlusErrorResultMax, implementationBoundResultMin, implementationBoundResultMax))
+      return baseResult;
 
    unsigned casesNumber = TypeBaseFloatAffine::getConversionNumber(firstReal, lastReal,
          firstImplementation, lastImplementation);
    bool realChoice = this->doesComputeReal(), implementationChoice = this->doesComputeError();
    typename TypeBaseFloatAffine::Mode mode = inherited::getMode();
-   unsigned alternativeResult;
+   unsigned ualternativeResult;
+   int result = baseResult + TypeBaseFloatAffine::getConversionBranch(casesNumber,
+         firstReal, lastReal, firstImplementation, lastImplementation,
+         realChoice, implementationChoice, (unsigned) ((int) dValue - baseResult), ualternativeResult);
+   int alternativeResult = baseResult + ualternativeResult;
+   return const_cast<thisType*>(this)->setConversionResult(roundMode, mode, result, realChoice,
+         implementationChoice, alternativeResult, casesNumber > 1, ualternativeResult != ~0U,
+         implementation, realResultMin, realResultMax, implementationResultMin,
+         implementationResultMax, realPlusErrorResultMin, realPlusErrorResultMax,
+         implementationBoundResultMin, implementationBoundResultMax);
+}
+
+DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
+unsigned
+DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
+      ::asUnsigned(ReadParametersBase::RoundMode roundMode) const {
+   typename inherited::GuardStateZonotope thisGuard(*this, true /* isConstEquation*/, false /* isXValue */);
+   // const_cast<thisType&>(*this).updateLocalState();
+   unsigned realResultMin, realResultMax, implementationResultMin, implementationResultMax,
+      realPlusErrorResultMin, realPlusErrorResultMax,
+      implementationBoundResultMin, implementationBoundResultMax;
+
+   unsigned baseResult;
+   unsigned firstReal, lastReal, firstImplementation, lastImplementation;
+   typename inherited::EquationHolder implementation;
+   if (retrieveConcreteChoicesForConversion(roundMode, implementation, baseResult, firstReal,
+            lastReal, firstImplementation, lastImplementation, realResultMin, realResultMax,
+            implementationResultMin, implementationResultMax, realPlusErrorResultMin,
+            realPlusErrorResultMax, implementationBoundResultMin, implementationBoundResultMax))
+      return baseResult;
+
+   unsigned casesNumber = TypeBaseFloatAffine::getConversionNumber(firstReal, lastReal,
+         firstImplementation, lastImplementation);
+   bool realChoice = this->doesComputeReal(), implementationChoice = this->doesComputeError();
+   typename TypeBaseFloatAffine::Mode mode = inherited::getMode();
+   unsigned ualternativeResult;
    unsigned result = baseResult + TypeBaseFloatAffine::getConversionBranch(casesNumber,
          firstReal, lastReal, firstImplementation, lastImplementation,
-         realChoice, implementationChoice, (unsigned) ((unsigned) dValue - baseResult), alternativeResult);
-   alternativeResult += baseResult;
-
-   auto& minParams = TypeBaseFloatAffine::minParams();
-   auto& maxParams = TypeBaseFloatAffine::maxParams();
-   if (realChoice) {
-      if (!implementationChoice) {
-         AssumeCondition(alternativeResult != ~0U && alternativeResult != result)
-         if (inherited::doesComputeError()) {
-            if (!optimizeUnstableConversionForRealFlow(result, alternativeResult, 0, 0, false /* isSigned */,
-                     casesNumber > 1, mode, minParams, maxParams, roundMode))
-               return result;
-            const_cast<thisType*>(this)->mergeNoError();
-         };
-      };
-      if ((realResultMin <= realResultMax) && (result+1 < realResultMax)) {
-         typename BuiltReal::IntConversion conversion;
-         conversion.setUnsigned();
-         conversion.assign(result+1);
-         BuiltReal newMax;
-         newMax.setInteger(conversion, maxParams);
-         maxParams.clear();
-         Equation constraint(getRealDomain());
-         constraint.getSCentral().minusAssign(newMax, minParams);
-         minParams.clear();
-         Symbol* constrainedSymbol = symbolsManager()
-               .createDefinedSymbol(typename inherited::TemplateTraits(), constraint);
-         bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraint.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager(),
-                  TypeBaseFloatAffine::getConditionSameBranch())
-            : constraint.simplifyAllEquations(*constrainedSymbol, true, symbolsManager());
-         if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
-            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-               expressionBuilder->assumeCleared();
-               constraint.writeExpression(expressionBuilder);
-               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
-            };
-         };
-         if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraint, true);
-      };
-
-      if ((realResultMin <= realResultMax) && (result > realResultMin)) {
-         typename BuiltReal::IntConversion conversion;
-         conversion.setUnsigned();
-         conversion.assign(result);
-         BuiltReal newMin;
-         newMin.setInteger(conversion, minParams);
-         minParams.clear();
-         Equation constraint(getRealDomain());
-         constraint.getSCentral().minusAssign(newMin, maxParams);
-         maxParams.clear();
-         Symbol* constrainedSymbol = symbolsManager()
-               .createDefinedSymbol(typename inherited::TemplateTraits(), constraint);
-         bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraint.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager(),
-                  TypeBaseFloatAffine::getConditionSameBranch())
-            : constraint.simplifyAllEquations(*constrainedSymbol, false, symbolsManager());
-         if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
-            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-               expressionBuilder->assumeCleared();
-               constraint.writeExpression(expressionBuilder);
-               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
-            };
-         };
-         if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraint, false);
-      };
-   };
-
-   if (implementationChoice) {
-      if (!realChoice) {
-         AssumeCondition(alternativeResult != ~0U && alternativeResult != result)
-         if (inherited::doesComputeError()) {
-            if (!optimizeUnstableConversionForImplementationFlow(result, alternativeResult,
-                     0, 0, false /* isSigned */, casesNumber > 1,
-                     mode, minParams, maxParams, roundMode))
-               return result;
-            const_cast<thisType*>(this)->mergeNoReal();
-            implementation = getError();
-         };
-      };
-      if ((realPlusErrorResultMin <= realPlusErrorResultMax) && (result+1 < realPlusErrorResultMax)) {
-         typename BuiltReal::IntConversion conversion;
-         conversion.setUnsigned();
-         conversion.assign(result+1);
-         BuiltReal newMax;
-         newMax.setInteger(conversion, maxParams);
-         maxParams.clear();
-         addSemiUlp(newMax);
-         Equation constraint(implementation);
-         constraint.getSCentral().minusAssign(newMax, minParams);
-         minParams.clear();
-         Symbol* constrainedSymbol = symbolsManager()
-               .createDefinedSymbol(typename inherited::TemplateTraits(), constraint);
-         bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraint.simplifyAllEquationsIf(*constrainedSymbol, true, symbolsManager(),
-                  TypeBaseFloatAffine::getConditionSameBranch())
-            : constraint.simplifyAllEquations(*constrainedSymbol, true, symbolsManager());
-         if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
-            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-               expressionBuilder->assumeCleared();
-               constraint.writeExpression(expressionBuilder);
-               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
-            };
-         };
-         if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraint, true);
-      };
-
-      if ((realPlusErrorResultMin <= realPlusErrorResultMax) && (result > realPlusErrorResultMin)) {
-         typename BuiltReal::IntConversion conversion;
-         conversion.setUnsigned();
-         conversion.assign(result);
-         BuiltReal newMin;
-         newMin.setInteger(conversion, minParams);
-         minParams.clear();
-         subSemiUlp(newMin);
-         Equation constraint(implementation);
-         constraint.getSCentral().minusAssign(newMin, maxParams);
-         maxParams.clear();
-         Symbol* constrainedSymbol = symbolsManager()
-               .createDefinedSymbol(typename inherited::TemplateTraits(), constraint);
-         bool hasAllSimplified = TypeBaseFloatAffine::hasMultipleBranches()
-            ? constraint.simplifyAllEquationsIf(*constrainedSymbol, false, symbolsManager(),
-                  TypeBaseFloatAffine::getConditionSameBranch())
-            : constraint.simplifyAllEquations(*constrainedSymbol, false, symbolsManager());
-         if (auto* symbolDefinitionTracker = symbolsManager().getSymbolDefinitionTracker()) {
-            if (VirtualExpressionBuilder* expressionBuilder = symbolDefinitionTracker->getExpressionBuilder()) {
-               expressionBuilder->assumeCleared();
-               constraint.writeExpression(expressionBuilder);
-               symbolDefinitionTracker->setDefinition(BuiltReal(1U), *constrainedSymbol, *expressionBuilder);
-            };
-         };
-         if (!hasAllSimplified && TypeBaseFloatAffine::doesAllowSimplex())
-            constraints().pushConstraint().setFrom(constraint, false);
-      };
-
-      if (result < implementationBoundResultMax) {
-         typename BuiltDouble::IntConversion conversion;
-         conversion.setUnsigned();
-         conversion.assign(result);
-         const_cast<thisType&>(*this).bfMax.setInteger(conversion, maxParams);
-         maxParams.clear();
-         BuiltDouble one;
-         one.setOne();
-         const_cast<thisType&>(*this).bfMax.plusAssign(one, maxParams);
-         maxParams.clear();
-         const_cast<thisType&>(*this).bfMax.setToPrevious();
-      };
-
-      if (result > implementationBoundResultMin) {
-         typename BuiltDouble::IntConversion conversion;
-         conversion.setUnsigned();
-         conversion.assign(result);
-         const_cast<thisType&>(*this).bfMin.setInteger(conversion, minParams);
-         minParams.clear();
-      };
-      if (realChoice) {
-         const_cast<thisType*>(this)->restrictErrorFromRealAndImplementation();
-         const_cast<thisType*>(this)->restrictRealFromErrorAndImplementation();
-         const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
-      };
-   };
-
-   bool isUnstable = mode != inherited::getMode();
-   if (implementationChoice
-         && !const_cast<thisType*>(this)->restrictImplementationFromRealAndError())
-      TypeBaseFloatAffine::throwEmptyBranch(isUnstable);
-   if (TypeBaseFloatAffine::getMode() == TypeBaseFloatAffine::MRealAndImplementation)
-      const_cast<thisType*>(this)->restrictRelativeErrorFromRealAndError();
-   TypeBaseFloatAffine::notifyForBranchCompare(*this, isUnstable);
-   return result;
+         realChoice, implementationChoice, (unsigned) ((int) dValue - baseResult), ualternativeResult);
+   unsigned alternativeResult = baseResult + ualternativeResult;
+   return const_cast<thisType*>(this)->setConversionResult(roundMode, mode, result, realChoice,
+         implementationChoice, alternativeResult, casesNumber > 1, ualternativeResult != ~0U,
+         implementation, realResultMin, realResultMax, implementationResultMin,
+         implementationResultMax, realPlusErrorResultMin, realPlusErrorResultMax,
+         implementationBoundResultMin, implementationBoundResultMax);
 }
 
 DefineBasicFloatZonotopeTemplateHeader(URealBitsNumber, USizeMantissa, USizeExponent)
