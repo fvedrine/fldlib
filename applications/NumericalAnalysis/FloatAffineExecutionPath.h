@@ -443,6 +443,15 @@ class TBaseFloatAffine : public TypeExecutionPath, public FloatDigitsHelper {
       }
    void retrieveBranch(int cases, BaseExecutionPath::BooleanChoice& realChoice,
          BaseExecutionPath::BooleanChoice& errorChoice, bool executionResult) const;
+   static unsigned getConversionValue(unsigned realNumber, unsigned implementationNumber,
+         unsigned firstReal, unsigned lastReal, unsigned firstImplementation, unsigned lastImplementation,
+         unsigned commonNumber, unsigned firstCommon, unsigned lastCommon, unsigned executionResult,
+         unsigned result, bool realChoice, bool implementationChoice);
+   unsigned getConversionBranch(unsigned conversionNumber,
+         unsigned firstReal, unsigned lastReal, unsigned firstImplementation, unsigned lastImplementation,
+         bool& realChoice, bool& implementationChoice, unsigned executionResult, unsigned& alternativeResult) const;
+
+  public:
    unsigned getConversionNumber(unsigned firstReal, unsigned lastReal,
          unsigned firstImplementation, unsigned lastImplementation) const
       {  unsigned firstCommon = (firstReal < firstImplementation) ? firstImplementation : firstReal;
@@ -461,13 +470,6 @@ class TBaseFloatAffine : public TypeExecutionPath, public FloatDigitsHelper {
             result = 2*realNumber*implementationNumber - commonNumber; /* most of cases are unstable */
          return result;
       }
-   static unsigned getConversionValue(unsigned realNumber, unsigned implementationNumber,
-         unsigned firstReal, unsigned lastReal, unsigned firstImplementation, unsigned lastImplementation,
-         unsigned commonNumber, unsigned firstCommon, unsigned lastCommon, unsigned executionResult,
-         unsigned result, bool realChoice, bool implementationChoice);
-   unsigned getConversionBranch(unsigned conversionNumber,
-         unsigned firstReal, unsigned lastReal, unsigned firstImplementation, unsigned lastImplementation,
-         bool& realChoice, bool& implementationChoice, unsigned executionResult, unsigned& alternativeResult) const;
 
   public:
    enum State

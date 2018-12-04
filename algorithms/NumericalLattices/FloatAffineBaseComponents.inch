@@ -90,7 +90,6 @@
 #define DefineBuiltDoubleTraits GBuiltDoubleTraits
 #define DefineBuiltReal TGBuiltReal
 #define DefineReadDouble TGReadDouble
-#define DefineBuiltDoubleTraits GBuiltDoubleTraits
 #define DefineBuiltDouble TGBuiltDouble
 #define DefineRealMantissaExponentTemplateParameters(RealBitsNumber, SizeMantissa, SizeExponent) \
    <BaseStoreTraits, RealBitsNumber, SizeMantissa, SizeExponent>

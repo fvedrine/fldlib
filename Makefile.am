@@ -23,6 +23,7 @@ nobase_pkginclude_HEADERS =                                       \
    utils/StandardClasses/StandardClasses.macro                    \
    utils/StandardClasses/StandardClasses.hpp                      \
    utils/StandardClasses/IOStreamMethods.inch                     \
+   utils/StandardClasses/IOStreamMethods.incc                     \
    utils/StandardClasses/Persistence.h                            \
    utils/Pointer/Vector.h                                         \
    utils/Pointer/ImplList.h                                       \

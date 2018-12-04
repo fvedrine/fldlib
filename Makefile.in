@@ -334,6 +334,7 @@ am__nobase_pkginclude_HEADERS_DIST =  \
 	utils/StandardClasses/StandardClasses.macro \
 	utils/StandardClasses/StandardClasses.hpp \
 	utils/StandardClasses/IOStreamMethods.inch \
+	utils/StandardClasses/IOStreamMethods.incc \
 	utils/StandardClasses/Persistence.h utils/Pointer/Vector.h \
 	utils/Pointer/ImplList.h utils/Pointer/ImplArray.h \
 	utils/Pointer/Pointer.h utils/Pointer/MngPointer.h \
@@ -655,6 +656,7 @@ CLEANFILES = $(bin_SCRIPTS)
 @FLOAT_LIB_INTERFACE_FALSE@   utils/StandardClasses/StandardClasses.macro                    \
 @FLOAT_LIB_INTERFACE_FALSE@   utils/StandardClasses/StandardClasses.hpp                      \
 @FLOAT_LIB_INTERFACE_FALSE@   utils/StandardClasses/IOStreamMethods.inch                     \
+@FLOAT_LIB_INTERFACE_FALSE@   utils/StandardClasses/IOStreamMethods.incc                     \
 @FLOAT_LIB_INTERFACE_FALSE@   utils/StandardClasses/Persistence.h                            \
 @FLOAT_LIB_INTERFACE_FALSE@   utils/Pointer/Vector.h                                         \
 @FLOAT_LIB_INTERFACE_FALSE@   utils/Pointer/ImplList.h                                       \
