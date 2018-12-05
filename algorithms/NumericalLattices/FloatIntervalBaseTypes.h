@@ -135,7 +135,9 @@ fillContent(TypeBuiltDouble& builtDouble, const TypeImplementation& source, cons
          : ((*mask) & ~((~0U) << shift));
       builtDouble.getSMantissa() <<= 1;
    }
-   {  unsigned char* mask = (unsigned char*) doubleContent;
+   {  unsigned charContent[sourceSizeInSizeofUnsigned*sizeof(unsigned)] = {};
+      memcpy(charContent, doubleContent, sizeof(doubleContent));
+      unsigned char* mask = (unsigned char*) charContent;
       unsigned char* signedMask = mask;
       typedef typename TypeFloatDigitsHelper::template TFloatDigits<TypeImplementation> FloatDigits;
       if (!isBigEndian()) {
