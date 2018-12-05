@@ -36,7 +36,7 @@
 
 typedef NumericalDomains::DAffine::FloatDigitsHelper::TFloatDigits<long double> LongDoubleFloatDigits;
 
-template class Numerics::DInteger::TBigCellIntAlgo<Numerics::DInteger::TCellIntegerTraits<(FLOAT_REAL_BITS_NUMBER +8*sizeof(unsigned)-1)/(8*sizeof(unsigned))> >;
+template class Numerics::DInteger::TBigCellInt<Numerics::DInteger::TCellIntegerTraits<(FLOAT_REAL_BITS_NUMBER +8*sizeof(unsigned)-1)/(8*sizeof(unsigned))> >;
 template class Numerics::TBuiltDouble<NumericalDomains::DAffine::BuiltDoubleTraits<FLOAT_REAL_BITS_NUMBER, 23, 8> >;
 template class Numerics::TBuiltDouble<NumericalDomains::DAffine::BuiltDoubleTraits<FLOAT_REAL_BITS_NUMBER, 52, 11> >;
 template class Numerics::TBuiltDouble<NumericalDomains::DAffine::BuiltDoubleTraits<FLOAT_REAL_BITS_NUMBER, LongDoubleFloatDigits::UBitSizeMantissa, LongDoubleFloatDigits::UBitSizeExponent> >;
