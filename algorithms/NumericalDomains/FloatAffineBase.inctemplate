@@ -3847,7 +3847,7 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          BuiltReal upperMaxDenormalized = getUpperMaxDenormalized();
          BuiltReal oppositeOfUpperMaxDenormalized = upperMaxDenormalized;
          oppositeOfUpperMaxDenormalized.opposite();
-         BuiltReal minDenormalized = getMinDenormalized();
+         // BuiltReal minDenormalized = getMinDenormalized();
          if (min.isNegative() != max.isNegative()
                || (!min.isNegative() ? min < upperMaxDenormalized
                                      : max > oppositeOfUpperMaxDenormalized)) {

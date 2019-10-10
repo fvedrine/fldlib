@@ -420,7 +420,6 @@ class TGBigCellInt<BaseStoreTraits, DInteger::TGCellIntegerTraits<BaseStoreTrait
             BaseStoreTraits::storeIntoMidHighPart(midValue, svalue());
          else
             BaseStoreTraits::storeIntoMidLowPart(midValue, svalue());
-         return *this;
       }
 
    class BitArray {
