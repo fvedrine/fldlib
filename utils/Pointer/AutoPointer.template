@@ -69,14 +69,13 @@ template <class Element>
 void
 TAutoPointer<Element>::assign(Element* newElement, Init) {
    if (newElement == peElement)
-      return *this;
+      return;
 
    if (peElement)
       delete peElement;
    peElement = nullptr;
    if (newElement)
       peElement = newElement;
-   return *this;
 }
 
 template <class Element>

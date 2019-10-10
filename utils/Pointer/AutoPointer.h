@@ -104,7 +104,7 @@ class TAutoPointer : public EnhancedObject {
    Element* peElement;
 
   protected:
-   virtual ComparisonResult _compare(const EnhancedObject& source) const;
+   virtual ComparisonResult _compare(const EnhancedObject& source) const override;
 
   public:
    class Init {};
@@ -129,7 +129,7 @@ class TAutoPointer : public EnhancedObject {
    operator Element*() const { return peElement; }
    const Element* key() const { return peElement; }
    operator const PElement&() const { return peElement; }
-   virtual bool isValid() const { return peElement != nullptr; }
+   virtual bool isValid() const override { return peElement != nullptr; }
 
    Element* operator->() const { AssumeCondition(peElement) return peElement; }
    Element& operator*() const { AssumeCondition(peElement) return *peElement; }
