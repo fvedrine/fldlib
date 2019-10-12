@@ -3743,6 +3743,7 @@ void
 DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNumber, USizeMantissa, USizeExponent)
       ::addSemiUlpToError(bool isBeforeValidImplementation) {
    if (!isBeforeValidImplementation && bfMin.compareValue(bfMax) == CREqual) {
+      bool doesRequireErrorComputation = false;
       if (inherited::doesComputeError()) {
          BuiltReal implementation;
          typename BuiltReal::FloatConversion conversion;
@@ -3759,20 +3760,31 @@ DefineBasicFloatZonotope DefineBasicFloatZonotopeTemplateParameters(URealBitsNum
          nearestParams.clear();
 
          if (inherited::doesComputeReal()) {
-            getSError() = getSRealDomain();
-            getSError().oppositeAssign();
-            auto& nearestParams = TypeBaseFloatAffine::nearestParams();
-            getSError().getSCentral().plusAssign(implementation, nearestParams);
-            BuiltReal highLevelError;
-            getSError().adjustComputation(getSError().getSCentral(), highLevelError);
-            getSError().addHighLevel(highLevelError, symbolsManager(), false /* hasExternalCoefficient */);
+            BuiltReal minDomain, maxDomain, minErr, maxErr;
+            getRealDomain().retrieveBound(minDomain, maxDomain, false);
+            getError().retrieveBound(minErr, maxErr, false);
+            maxDomain.minusAssign(minDomain, TypeBaseFloatAffine::maxParams());
+            TypeBaseFloatAffine::maxParams().clear();
+            minErr.opposite();
+            if (maxDomain >= maxErr && maxDomain >= minErr)
+               doesRequireErrorComputation = true;
+            else {
+               getSError() = getSRealDomain();
+               getSError().oppositeAssign();
+               auto& nearestParams = TypeBaseFloatAffine::nearestParams();
+               getSError().getSCentral().plusAssign(implementation, nearestParams);
+               BuiltReal highLevelError;
+               getSError().adjustComputation(getSError().getSCentral(), highLevelError);
+               getSError().addHighLevel(highLevelError, symbolsManager(), false /* hasExternalCoefficient */);
+            }
          }
          else {
             getSError().clear(&symbolsManager());
             getSError().getSCentral() = implementation;
          };
       }
-      return;
+      if (!doesRequireErrorComputation)
+         return;
    }
 
    BuiltReal maxError;
