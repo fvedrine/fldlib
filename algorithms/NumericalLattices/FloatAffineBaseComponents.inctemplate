@@ -4435,7 +4435,8 @@ DefineConstraint DefineEquationTemplateParameters(URealBitsNumber)::Vertex::addS
          while (compareSymbol == CRLess)
             compareSymbol = vertexCursor.setToNext()
                ? vertexCursor.elementAt().getSymbol().compare(symbol) : CRGreater;
-         if ((wasOnSymbol = (compareSymbol == CREqual)) == false) // compareSymbol = CRGreater
+         wasOnSymbol = (compareSymbol == CREqual);
+         if (wasOnSymbol == false) // compareSymbol = CRGreater
             inherited::add(new ValueForSymbol(symbol),
                COL::VirtualCollection::ExtendedInsertionParameters()
                   .setFreeOnError().setBefore().setRemote(), &vertexCursor);
@@ -4798,7 +4799,8 @@ DefineConstraint DefineEquationTemplateParameters(URealBitsNumber)::Solver::upda
                   while (compareSymbol == CRLess)
                      compareSymbol = equationCursor.setToNext()
                         ? equationCursor.elementAt().getSymbol().compare(symbol) : CRGreater;
-                  if ((wasOnSymbol = (compareSymbol == CREqual)) == false)
+                  wasOnSymbol = (compareSymbol == CREqual);
+                  if (wasOnSymbol == false)
                      equation.getSLinearPart().add(new BaseTerm(symbol, add),
                         COL::VirtualCollection::ExtendedInsertionParameters()
                            .setFreeOnError().setBefore().setRemote(),
