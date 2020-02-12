@@ -690,7 +690,16 @@ class DefineBigCellInt : protected DefineBigCellIntAlgo DefineBigCellTemplatePar
 #ifdef DefineGeneric
    Carry multAssign(BaseTypeConstReference source) { return inherited::multAssign(source); }
 #endif
+
+// class recursive instantiation that is stopped when the mult operation is no more used
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winjected-class-name"
+#endif
    typedef typename inherited::MultResult MultResult;
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
    void mult(const thisType& source, MultResult& result) const;
    thisType& operator*=(const thisType& source)
       {  MultResult result;
@@ -1159,7 +1168,15 @@ class DefineBigInt
          };
          return result;    
       }
+// class recursive instantiation that is stopped when the mult operation is no more used
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winjected-class-name"
+#endif
    typedef typename inherited::MultResult MultResult;
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
    void mult(const thisType& source, MultResult& result) const
       {  typename IntegerTraits::CellTraits::MultResult localResult;
          localResult.setSize(2*IntegerTraits::cellTraits().getSize());

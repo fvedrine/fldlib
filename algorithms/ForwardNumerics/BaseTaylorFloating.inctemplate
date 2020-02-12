@@ -309,8 +309,11 @@ template <class TypeDouble, class TypeDouble_n, class TypeBigInteger>
 void
 DefineTaylorDouble<TypeDouble, TypeDouble_n, TypeBigInteger>::expAssign(TypeDouble& errorMin,
       TypeDouble& errorMax, ReadParameters& params) {
-   if (inherited::isInftyExponent())
+   if (inherited::isInftyExponent()) {
+      if (inherited::isNegative())
+         inherited::setZero();
       return;
+   }
    int powerTwo = 0;
    inherited oneHalf(0x1, this);
    oneHalf.divAssign(0x2, params);

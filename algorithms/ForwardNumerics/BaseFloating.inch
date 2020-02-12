@@ -162,7 +162,7 @@ class DefineBuiltDoubleTraits : public DDouble::DefineBuiltAccess {
 #endif
    static const int BitSizeMantissa = UBitSizeMantissa;
    static const int BitSizeExponent = UBitSizeExponent;
-   typedef unsigned char CharChunk[UBitSizeMantissa+UBitSizeExponent+1];
+   typedef unsigned char CharChunk[(UBitSizeMantissa+UBitSizeExponent+1+7)/8];
    void setChunkSize(int chunkSize) const { AssumeCondition(chunkSize == (UBitSizeMantissa+UBitSizeExponent+1+7)/8) }
    void copyChunk(CharChunk& chunk, const void* sourceChunk, int chunkSize) const
       {  AssumeCondition(chunkSize == (UBitSizeMantissa+UBitSizeExponent+1+7)/8)

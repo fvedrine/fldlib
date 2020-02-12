@@ -86,7 +86,21 @@ class DefineTaylorDouble : public TypeDouble {
          {  if (params.isApproximate()) {
                EnhancedDouble semiUlp;
                semiUlp.setBasicExponent(inherited::getBasicExponent());
-               semiUlp.getSBasicExponent().minusAssign(inherited::bitSizeMantissa()+1);
+               if (semiUlp.getBasicExponent() > inherited::bitSizeMantissa()+1) {
+                  semiUlp.getSBasicExponent().minusAssign(inherited::bitSizeMantissa()+1);
+                  semiUlp.getSMantissa().clear();
+               }
+               else {
+                  int diff = inherited::bitSizeMantissa()+1 - semiUlp.getBasicExponent()[0];
+                  semiUlp.getSBasicExponent().clear();
+                  if (diff < inherited::bitSizeMantissa()+1) {
+                     semiUlp.getSMantissa() >>= 1;
+                     semiUlp.getSMantissa().setBitArray(EnhancedDouble::bitSizeMantissa()-1, true);
+                  }
+                  semiUlp.getSMantissa() >>= diff;
+                  if (semiUlp.getMantissa().isZero())
+                     semiUlp.getSMantissa() = 1U;
+               }
                if (params.isUpApproximate()) {
                   typename TypeDouble::ReadParameters maxParams(params);
                   maxParams.setHighestRound();

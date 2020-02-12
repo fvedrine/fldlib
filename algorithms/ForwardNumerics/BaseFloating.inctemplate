@@ -3793,6 +3793,7 @@ DefineBuiltDouble<TypeTraits>::readDecimal(STG::IOObject::ISBase& in, ReadParame
 template <class TypeTraits>
 void
 DefineBuiltDouble<TypeTraits>::read(STG::IOObject::ISBase& in, ReadParameters& params) {
+#ifdef StandardClassesHPP
    if (params.isNative()) {
       in.assume('[');
       int read = in.get();
@@ -3804,6 +3805,7 @@ DefineBuiltDouble<TypeTraits>::read(STG::IOObject::ISBase& in, ReadParameters& p
       in.assume(']');
    }
    else
+#endif
       readDecimal(in, params);
 }
 
@@ -3892,7 +3894,7 @@ DefineBuiltDouble<TypeTraits>::writeDecimal(STG::IOObject::OSBase& out) const {
 #ifdef StandardClassesHPP
             if (indexExponent < successiveExponents.count() - 1)
 #else
-            if (indexExponent < successiveExponents.size() - 1)
+            if (indexExponent < (int) successiveExponents.size() - 1)
 #endif
             {  exponentAdditional *= 2;
                ++indexExponent;
@@ -4054,6 +4056,7 @@ DefineBuiltDouble<TypeTraits>::write(STG::IOObject::OSBase& out, const WritePara
          out.put('-');
       out << queryExponent().getValue();
    }
+#ifdef StandardClassesHPP
    else if (params.isNative()) {
       out.writesome(isPositive() ? "[+][" : "[-][");
       biExponent.write(out, typename Exponent::FormatParameters().setFullHexaDecimal(biExponent.getSize()));
@@ -4061,6 +4064,7 @@ DefineBuiltDouble<TypeTraits>::write(STG::IOObject::OSBase& out, const WritePara
       biMantissa.write(out, typename Mantissa::FormatParameters().setFullHexaDecimal(biMantissa.getSize()));
       out.put(']');
    }
+#endif
    else
       writeDecimal(out);
 }

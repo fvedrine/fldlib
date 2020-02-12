@@ -51,6 +51,7 @@ class DoubleTraits {
    static const int UBitSizeMantissa = DBL_MANT_DIG-1;
    static const int UByteSizeImplementation = sizeof(TypeFloat);
    static const int UBitSizeExponent = UByteSizeImplementation*8-DBL_MANT_DIG;
+   static const int UBitFullSizeExponent = UBitSizeExponent;
    static unsigned int getMaxExponent() { return DBL_MAX_EXP-1; }
    static unsigned int getZeroExponent() { return DBL_MAX_EXP-1; }
    static double epsilon() { return DBL_EPSILON; }
@@ -69,6 +70,7 @@ class FloatTraits {
    static const int UBitSizeMantissa = FLT_MANT_DIG-1;
    static const int UByteSizeImplementation = sizeof(TypeFloat);
    static const int UBitSizeExponent = UByteSizeImplementation*8-FLT_MANT_DIG;
+   static const int UBitFullSizeExponent = UBitSizeExponent;
    inline static unsigned int getMaxExponent() { return FLT_MAX_EXP-1; }
    inline static unsigned int getZeroExponent() { return FLT_MAX_EXP-1; }
    inline static float epsilon() { return FLT_EPSILON; }
