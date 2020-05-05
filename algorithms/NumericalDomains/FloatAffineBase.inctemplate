@@ -1079,13 +1079,16 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sqrtA
          return;
       };
 
-      BuiltReal sqrtMin, sqrtMax;
+      BuiltReal sqrtMin, sqrtMax, sqrtMinPlusErr, sqrtMaxPlusErr, errMin, errMax;
       if (hasError) {
          auto& minParams = TypeBaseFloatAffine::minParams();
+         auto& maxParams = TypeBaseFloatAffine::maxParams();
          sqrtMin = eRealDomain.getSCentral();
-         sqrtMin.plusAssign(eError.getSCentral(), minParams);
+         sqrtMinPlusErr = sqrtMax = sqrtMin;
+         sqrtMinPlusErr.plusAssign(eError.getCentral(), maxParams);
+         sqrtMaxPlusErr = sqrtMinPlusErr;
          minParams.clear();
-         sqrtMax = sqrtMin;
+         errMax = errMin = eError.getCentral();
          {  typename Equation::Cursor cursor(eRealDomain), errorCursor(eError);
             bool wasOnSymbol = true;
             if (cursor.setToFirst()) {
@@ -1100,15 +1103,23 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sqrtA
                      AssumeCondition(dynamic_cast<const typename Equation::Coefficient*>(&errorCursor.globalElementAt()))
                      const BuiltReal& coefficientValue = ((const typename Equation::Coefficient&) errorCursor.globalElementAt()).getValue();
                      if (coefficientValue.isPositive()) {
-                        sqrtMin.minusAssign(coefficientValue, minParams);
+                        sqrtMinPlusErr.minusAssign(coefficientValue, maxParams);
+                        maxParams.clear();
+                        errMin.minusAssign(coefficientValue, minParams);
                         minParams.clear();
-                        sqrtMax.plusAssign(coefficientValue, minParams);
+                        sqrtMaxPlusErr.plusAssign(coefficientValue, maxParams);
+                        maxParams.clear();
+                        errMax.plusAssign(coefficientValue, minParams);
                         minParams.clear();
                      }
                      else {
-                        sqrtMin.plusAssign(coefficientValue, minParams);
+                        sqrtMinPlusErr.plusAssign(coefficientValue, maxParams);
+                        maxParams.clear();
+                        errMin.plusAssign(coefficientValue, minParams);
                         minParams.clear();
-                        sqrtMax.minusAssign(coefficientValue, minParams);
+                        sqrtMaxPlusErr.minusAssign(coefficientValue, maxParams);
+                        maxParams.clear();
+                        errMax.minusAssign(coefficientValue, minParams);
                         minParams.clear();
                      };
                      compareSymbol = errorCursor.setToNext()
@@ -1120,14 +1131,22 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sqrtA
                   if (compareSymbol == CRGreater) {
                      wasOnSymbol = false;
                      if (coefficientValue.isPositive()) {
+                        sqrtMinPlusErr.minusAssign(coefficientValue, maxParams);
+                        maxParams.clear();
                         sqrtMin.minusAssign(coefficientValue, minParams);
                         minParams.clear();
+                        sqrtMaxPlusErr.plusAssign(coefficientValue, maxParams);
+                        maxParams.clear();
                         sqrtMax.plusAssign(coefficientValue, minParams);
                         minParams.clear();
                      }
                      else {
+                        sqrtMinPlusErr.plusAssign(coefficientValue, maxParams);
+                        maxParams.clear();
                         sqrtMin.plusAssign(coefficientValue, minParams);
                         minParams.clear();
+                        sqrtMaxPlusErr.minusAssign(coefficientValue, maxParams);
+                        maxParams.clear();
                         sqrtMax.minusAssign(coefficientValue, minParams);
                         minParams.clear();
                      };
@@ -1136,35 +1155,18 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sqrtA
                      wasOnSymbol = true;
                      AssumeCondition(dynamic_cast<const typename Equation::Coefficient*>(&errorCursor.globalElementAt()))
                      BuiltReal errorValue = ((const typename Equation::Coefficient&) errorCursor.globalElementAt()).getValue();
-                     errorValue.opposite();
-                     if (errorValue >= coefficientValue) {
-                        errorValue.minusAssign(coefficientValue, maxParams);
-                        maxParams.clear();
-                     }
-                     else {
-                        errorValue.minusAssign(coefficientValue, minParams);
-                        minParams.clear();
-                     };
                      if (errorValue.isPositive()) {
-                        sqrtMin.minusAssign(errorValue, minParams);
+                        errMin.minusAssign(errorValue, minParams);
                         minParams.clear();
-                        sqrtMax.plusAssign(errorValue, minParams);
+                        errMax.plusAssign(errorValue, minParams);
                         minParams.clear();
                      }
                      else {
-                        sqrtMin.plusAssign(errorValue, minParams);
+                        errMin.plusAssign(errorValue, minParams);
                         minParams.clear();
-                        sqrtMax.minusAssign(errorValue, minParams);
+                        errMax.minusAssign(errorValue, minParams);
                         minParams.clear();
-                     };
-                  };
-               } while (cursor.setToNext());
-               if (wasOnSymbol)
-                  errorCursor.setToNext();
-               if (errorCursor.isValid()) {
-                  do {
-                     AssumeCondition(dynamic_cast<const typename Equation::Coefficient*>(&errorCursor.globalElementAt()))
-                     const BuiltReal& coefficientValue = ((const typename Equation::Coefficient&) errorCursor.globalElementAt()).getValue();
+                     }
                      if (coefficientValue.isPositive()) {
                         sqrtMin.minusAssign(coefficientValue, minParams);
                         minParams.clear();
@@ -1175,6 +1177,55 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sqrtA
                         sqrtMin.plusAssign(coefficientValue, minParams);
                         minParams.clear();
                         sqrtMax.minusAssign(coefficientValue, minParams);
+                        minParams.clear();
+                     }
+                     errorValue.opposite();
+                     if (errorValue >= coefficientValue) {
+                        sqrtMinPlusErr.minusAssign(errorValue, maxParams);
+                        maxParams.clear();
+                        sqrtMinPlusErr.plusAssign(coefficientValue, maxParams);
+                        maxParams.clear();
+                        sqrtMaxPlusErr.plusAssign(errorValue, maxParams);
+                        maxParams.clear();
+                        sqrtMaxPlusErr.minusAssign(coefficientValue, maxParams);
+                        maxParams.clear();
+                     }
+                     else {
+                        sqrtMinPlusErr.plusAssign(errorValue, maxParams);
+                        maxParams.clear();
+                        sqrtMinPlusErr.minusAssign(coefficientValue, maxParams);
+                        maxParams.clear();
+                        sqrtMaxPlusErr.minusAssign(errorValue, maxParams);
+                        maxParams.clear();
+                        sqrtMaxPlusErr.plusAssign(coefficientValue, maxParams);
+                        maxParams.clear();
+                     };
+                  };
+               } while (cursor.setToNext());
+               if (wasOnSymbol)
+                  errorCursor.setToNext();
+               if (errorCursor.isValid()) {
+                  do {
+                     AssumeCondition(dynamic_cast<const typename Equation::Coefficient*>(&errorCursor.globalElementAt()))
+                     const BuiltReal& errorValue = ((const typename Equation::Coefficient&) errorCursor.globalElementAt()).getValue();
+                     if (errorValue.isPositive()) {
+                        sqrtMinPlusErr.minusAssign(errorValue, maxParams);
+                        maxParams.clear();
+                        errMin.minusAssign(errorValue, minParams);
+                        minParams.clear();
+                        sqrtMaxPlusErr.plusAssign(errorValue, maxParams);
+                        maxParams.clear();
+                        errMax.plusAssign(errorValue, minParams);
+                        minParams.clear();
+                     }
+                     else {
+                        sqrtMinPlusErr.plusAssign(errorValue, maxParams);
+                        maxParams.clear();
+                        errMin.plusAssign(errorValue, minParams);
+                        minParams.clear();
+                        sqrtMaxPlusErr.minusAssign(errorValue, maxParams);
+                        maxParams.clear();
+                        errMax.minusAssign(errorValue, minParams);
                         minParams.clear();
                      };
                   } while (errorCursor.setToNext());
@@ -1188,11 +1239,23 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sqrtA
             sqrtMin.sqrtAssign(tmpMin, tmpMax, minParams);
             minParams.clear();
          };
+         if (sqrtMinPlusErr.isNegative())
+            sqrtMinPlusErr.setZero();
+         else {
+            sqrtMinPlusErr.sqrtAssign(tmpMin, tmpMax, maxParams);
+            maxParams.clear();
+         };
          if (sqrtMax.isNegative())
             sqrtMax.setZero();
          else {
             sqrtMax.sqrtAssign(tmpMin, tmpMax, minParams);
             minParams.clear();
+         };
+         if (sqrtMaxPlusErr.isNegative())
+            sqrtMaxPlusErr.setZero();
+         else {
+            sqrtMaxPlusErr.sqrtAssign(tmpMin, tmpMax, maxParams);
+            maxParams.clear();
          };
       };
       auto& symbolsManager = thisType::symbolsManager();
@@ -1206,116 +1269,37 @@ DefineBaseFloatZonotope DefineEquationTemplateParameters(URealBitsNumber)::sqrtA
          eError.divAssign(eRealDomain, Equation::PCSourceRValue, symbolsManager);
          eError.divAssign(BuiltReal(2U), symbolsManager);
 
-         BuiltReal computeSqrtMin(eRealDomain.getSCentral());
          auto& maxParams = TypeBaseFloatAffine::maxParams();
          auto& minParams = TypeBaseFloatAffine::minParams();
-         computeSqrtMin.plusAssign(eError.getSCentral(), maxParams);
+         BuiltReal newCoeffMin = sqrtMinPlusErr;
+         newCoeffMin.minusAssign(sqrtMin, maxParams);
          maxParams.clear();
-         BuiltReal computeSqrtMax = computeSqrtMin;
-         if (computeSqrtMin.isNegative())
-            computeSqrtMin.setZero();
-         {  typename Equation::Cursor cursor(eRealDomain), errorCursor(eError);
-            bool wasOnSymbol = true;
-            if (cursor.setToFirst()) {
-               do {
-                  const Symbol& symbol = cursor.elementAt();
-                  if (wasOnSymbol)
-                     errorCursor.setToNext();
-                  ComparisonResult compareSymbol = errorCursor.isValid()
-                     ? errorCursor.elementAt().compare(symbol) : CRGreater;
-                  while (compareSymbol == CRLess) {
-                     AssumeCondition(dynamic_cast<const typename Equation::Coefficient*>(&errorCursor.globalElementAt()))
-                     const BuiltReal& coefficientValue = ((const typename Equation::Coefficient&) errorCursor.globalElementAt()).getValue();
-                     if (coefficientValue.isPositive()) {
-                        computeSqrtMin.minusAssign(coefficientValue, maxParams);
-                        maxParams.clear();
-                        computeSqrtMax.plusAssign(coefficientValue, maxParams);
-                        maxParams.clear();
-                     }
-                     else {
-                        computeSqrtMin.plusAssign(coefficientValue, maxParams);
-                        maxParams.clear();
-                        computeSqrtMax.minusAssign(coefficientValue, maxParams);
-                        maxParams.clear();
-                     };
-                     compareSymbol = errorCursor.setToNext()
-                        ? errorCursor.elementAt().compare(symbol) : CRGreater;
-                  };
-                  
-                  AssumeCondition(dynamic_cast<const typename Equation::Coefficient*>(&cursor.globalElementAt()))
-                  const BuiltReal& coefficientValue = ((const typename Equation::Coefficient&) cursor.globalElementAt()).getValue();
-                  if (compareSymbol == CRGreater) {
-                     if (coefficientValue.isPositive()) {
-                        computeSqrtMin.minusAssign(coefficientValue, maxParams);
-                        maxParams.clear();
-                        computeSqrtMax.plusAssign(coefficientValue, maxParams);
-                        maxParams.clear();
-                     }
-                     else {
-                        computeSqrtMin.plusAssign(coefficientValue, maxParams);
-                        maxParams.clear();
-                        computeSqrtMax.minusAssign(coefficientValue, maxParams);
-                        maxParams.clear();
-                     };
-                  }
-                  else { // compareSymbol == CREqual
-                     AssumeCondition(dynamic_cast<const typename Equation::Coefficient*>(&errorCursor.globalElementAt()))
-                     BuiltReal errorValue = ((const typename Equation::Coefficient&) errorCursor.globalElementAt()).getValue();
-                     errorValue.opposite();
-                     if (errorValue >= coefficientValue) {
-                        errorValue.minusAssign(coefficientValue, minParams);
-                        minParams.clear();
-                     }
-                     else {
-                        errorValue.minusAssign(coefficientValue, maxParams);
-                        maxParams.clear();
-                     };
-                     if (errorValue.isPositive()) {
-                        computeSqrtMin.minusAssign(errorValue, maxParams);
-                        maxParams.clear();
-                        computeSqrtMax.plusAssign(errorValue, maxParams);
-                        maxParams.clear();
-                     }
-                     else {
-                        computeSqrtMin.plusAssign(errorValue, maxParams);
-                        maxParams.clear();
-                        computeSqrtMax.minusAssign(errorValue, maxParams);
-                        maxParams.clear();
-                     };
-                  };
-               } while (cursor.setToNext());
-               if (errorCursor.isValid()) {
-                  do {
-                     AssumeCondition(dynamic_cast<const typename Equation::Coefficient*>(&errorCursor.globalElementAt()))
-                     const BuiltReal& coefficientValue = ((const typename Equation::Coefficient&) errorCursor.globalElementAt()).getValue();
-                     if (coefficientValue.isPositive()) {
-                        computeSqrtMin.minusAssign(coefficientValue, maxParams);
-                        maxParams.clear();
-                        computeSqrtMax.plusAssign(coefficientValue, maxParams);
-                        maxParams.clear();
-                     }
-                     else {
-                        computeSqrtMin.plusAssign(coefficientValue, maxParams);
-                        maxParams.clear();
-                        computeSqrtMax.minusAssign(coefficientValue, maxParams);
-                        maxParams.clear();
-                     };
-                  } while (errorCursor.setToNext());
-               };
-            };
-         };
-         sqrtMin.minusAssign(computeSqrtMin, minParams);
+         BuiltReal tmpMin = errMin;
+         tmpMin.divAssign(2U, minParams);
          minParams.clear();
-         sqrtMax.minusAssign(computeSqrtMax, minParams);
+         tmpMin.divAssign(sqrtMin, minParams);
          minParams.clear();
-         if (sqrtMax < sqrtMin)
-            sqrtMin = sqrtMax;
-         sqrtMin.divAssign(2U, minParams);
+         newCoeffMin.minusAssign(tmpMin, maxParams);
+         maxParams.clear();
+
+         BuiltReal newCoeffMax = sqrtMaxPlusErr;
+         newCoeffMax.minusAssign(sqrtMax, maxParams);
+         maxParams.clear();
+         BuiltReal tmpMax = errMax;
+         tmpMax.divAssign(2U, minParams);
          minParams.clear();
-         if (!sqrtMin.isZero()) {
+         tmpMax.divAssign(sqrtMax, minParams);
+         minParams.clear();
+         newCoeffMax.minusAssign(tmpMax, maxParams);
+         maxParams.clear();
+
+         if (newCoeffMax < newCoeffMin)
+            newCoeffMax = newCoeffMin;
+
+         if (!newCoeffMax.isZero()) {
             Equation additionalError;
-            additionalError.setCentral(sqrtMin);
-            additionalError.addCoefficient(sqrtMin, *symbolsManager.createNoiseSymbol());
+            additionalError.setCentral(newCoeffMax);
+            additionalError.addCoefficient(newCoeffMax, *symbolsManager.createNoiseSymbol());
             eError.plusAssign(additionalError, Equation::PCSourceXValue, symbolsManager);
          };
       };
