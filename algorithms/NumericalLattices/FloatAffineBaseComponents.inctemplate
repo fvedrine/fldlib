@@ -3113,6 +3113,8 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::sqrtAssign(
 
    if (sqrtMin.isNegative() && !sqrtMin.isZero())
       return false;
+   if (sqrtMin.isZero())
+      sqrtMin.setPositive();
    {  BuiltReal tmpMin, tmpMax;
       sqrtMin.sqrtAssign(tmpMin, tmpMax, minParams);
       minParams.clear();
