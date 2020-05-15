@@ -1029,12 +1029,19 @@ class DefineEquation
 
    void notifyUpdate(Notification& notification) const
       {  inherited::notifyUpdate(notification); }
+   void notifySafeUpdate(Notification& notification) const
+      {  inherited::notifySafeUpdate(notification); }
 
   public:
    void notifyUpdate(std::function<void(DefineEquation DefineSEquationTemplateParameters(URealBitsNumber)&)> function) const
       {  PNT::TFunctionPointerNotification<PNT::SharedCollection, DefineEquation DefineSEquationTemplateParameters(URealBitsNumber) >
             notification(function);
          inherited::notifyUpdate(notification);
+      }
+   void notifySafeUpdate(std::function<void(DefineEquation DefineSEquationTemplateParameters(URealBitsNumber)&)> function) const
+      {  PNT::TFunctionPointerNotification<PNT::SharedCollection, DefineEquation DefineSEquationTemplateParameters(URealBitsNumber) >
+            notification(function);
+         inherited::notifySafeUpdate(notification);
       }
 
   private:

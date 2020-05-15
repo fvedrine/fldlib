@@ -308,6 +308,13 @@ class SharedCollection : public COL::TImplList<DSharedCollection::GlobalElement,
                pnNotification(*parent);
             return true;
          }
+      bool addVisited(SharedCollection& parent)
+         {  return vcVisited.locateOrAdd(parent); }
+      void applySafeVisited()
+         {  int count = vcVisited.count();
+            for (int index = 0; index < count; ++index)
+               pnNotification(*vcVisited.elementAt(index));
+         }
    };
    friend class GlobalNotification;
 
@@ -369,6 +376,30 @@ class SharedCollection : public COL::TImplList<DSharedCollection::GlobalElement,
             });
          AssumeCondition(uReferences == 0)
          inherited::freeAll();
+      }
+   void notifySafeUpdate(Notification& notification) const
+      {  notification.setOrigin(*this);
+         GlobalNotification globalNotification(notification);
+         inherited::foreachDo([&notification, &globalNotification](GlobalElement& globalThis)
+            {  LocalElement& element = (LocalElement&) globalThis.getElement();
+               if (!element.calls().isEmpty() && ((!notification.getOrigin()
+                     || !element.calls().isSingleton()))) {
+                  const auto& callers = element.calls();
+                  auto *current = callers.getFirst(), *last = callers.getLast();
+                  while (current != last) {
+                     AssumeCondition(current->pscParent)
+                     SharedCollection* parent = current->pscParent;
+                     if (parent != notification.getOrigin())
+                        globalNotification.addVisited(*parent);
+                     current = callers.getNext(current);
+                  }
+                  SharedCollection* parent = current->pscParent;
+                  if (parent != notification.getOrigin())
+                     globalNotification.addVisited(*parent);
+               }
+               return true;
+            });
+         globalNotification.applySafeVisited();
       }
    void notifyUpdate(Notification& notification) const
       {  notification.setOrigin(*this);

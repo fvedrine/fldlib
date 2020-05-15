@@ -4391,7 +4391,7 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::simplifyAllEqu
       Symbol& symbol, bool isNegative, SymbolsManager& manager, bool hasExternalCoefficient) const {
    BuiltReal normalization = getNormalization(isNegative, nullptr, hasExternalCoefficient);
    bool result = true;
-   notifyUpdate(
+   notifySafeUpdate(
          [this, &symbol, &normalization, &result, &manager, hasExternalCoefficient]
          (thisType& equation)
       {  if (!equation.isDefinition())
@@ -4409,7 +4409,7 @@ DefineEquation DefineEquationTemplateParameters(URealBitsNumber)::simplifyAllEqu
       bool hasExternalCoefficient) const {
    BuiltReal normalization = getNormalization(isNegative, nullptr, hasExternalCoefficient);
    bool result = true;
-   notifyUpdate(
+   notifySafeUpdate(
          [this, &symbol, &normalization, &result, &manager, &condition, hasExternalCoefficient]
          (thisType& equation)
       {  if (!equation.isDefinition() && condition(equation))

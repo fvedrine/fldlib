@@ -216,9 +216,11 @@ bool
 ImplList::isValid() const {
    if (pileFirst) {
       ImplListElement* cursor = pileFirst;
-      while (cursor->getNext() && (cursor->getNext() != pileFirst))
+      while (cursor->getNext() && (cursor->getNext() != pileFirst)) {
          if (!cursor->isValid())
             return false;
+         cursor = cursor->getNext();
+      }
       if (cursor->getNext() != pileFirst)
          return false;
    };
